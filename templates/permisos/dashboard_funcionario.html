@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Mi Dashboard{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6">
+    <!-- Header con saludo -->
+    <div class="mb-6 sm:mb-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">¡Hola, {{ user.get_full_name }}!</h2>
+        <p class="text-gray-600 mt-1 text-sm sm:text-base">Bienvenido a tu panel de control</p>
+    </div>
+
+    <!-- Tarjeta de Días Disponibles -->
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl shadow-xl p-6 sm:p-8 mb-6 sm:mb-8 text-white">
+        <div class="flex items-center justify-between">
+            <div class="flex-1">
+                <p class="text-blue-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Días Administrativos</p>
+                <div class="mt-2 sm:mt-3 flex items-baseline">
+                    <span class="text-3xl sm:text-4xl lg:text-5xl font-bold
+                        {% if dias_disponibles < 2 %}text-red-200
+                        {% elif dias_disponibles < 4 %}text-yellow-200
+                        {% else %}text-white{% endif %}">
+                        {{ dias_disponibles|floatformat:1 }}
+                    </span>
+                    <span class="text-lg sm:text-xl lg:text-2xl font-medium ml-2 text-blue-100">/ {{ dias_totales|floatformat:1 }}</span>
+                </div>
+                <p class="text-blue-100 text-xs sm:text-sm mt-2">días disponibles</p>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-full p-4 sm:p-6 ml-4">
+                <i class="fas fa-calendar-check text-3xl sm:text-4xl lg:text-5xl"></i>
+            </div>
+        </div>
+
+        <!-- Barra de progreso con colores dinámicos -->
+        <div class="mt-6 bg-white bg-opacity-20 rounded-full h-3 overflow-hidden">
+            {% widthratio dias_disponibles dias_totales 100 as porcentaje %}
+            <div class="h-full rounded-full transition-all duration-500 
+                {% if dias_disponibles >= 4 %}bg-green-400
+                {% elif dias_disponibles >= 2 %}bg-yellow-400
+                {% else %}bg-red-400{% endif %}" style="width: {{ porcentaje }}%">
+            </div>
+        </div>
+
+        <!-- Mensaje de advertencia -->
+        {% if dias_disponibles <= 1 %} <div class="mt-3 flex items-center text-red-200">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            <span class="text-sm font-medium">¡Quedan pocos días disponibles!</span>
+    </div>
+    {% elif dias_disponibles < 2 %} <div class="mt-3 flex items-center text-yellow-200">
+        <i class="fas fa-info-circle mr-2"></i>
+        <span class="text-sm font-medium">Considera planificar tus días restantes</span>
+</div>
+{% endif %}
+</div>
+
+<!-- Acciones Rápidas -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+    <a href="{% url 'solicitar_permiso' %}"
+        class="group bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-lg transition-all p-4 sm:p-6 border-2 border-transparent hover:border-blue-500 touch-manipulation">
+        <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+                <h3 class="text-base sm:text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition truncate">Solicitar Días
+                </h3>
+                <p class="text-gray-600 text-xs sm:text-sm mt-1">Crear nueva solicitud</p>
+            </div>
+            <div
+                class="bg-blue-100 text-blue-600 rounded-full p-3 sm:p-4 group-hover:bg-blue-600 group-hover:text-white transition ml-3 flex-shrink-0">
+                <i class="fas fa-calendar-plus text-xl sm:text-2xl"></i>
+            </div>
+        </div>
+    </a>
+
+    <a href="{% url 'licencia_list' %}"
+        class="group bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-lg transition-all p-4 sm:p-6 border-2 border-transparent hover:border-green-500 touch-manipulation">
+        <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+                <h3 class="text-base sm:text-lg font-semibold text-gray-900 group-hover:text-green-600 transition truncate">Mis Licencias
+                </h3>
+                <p class="text-gray-600 text-xs sm:text-sm mt-1">Ver licencias médicas</p>
+            </div>
+            <div
+                class="bg-green-100 text-green-600 rounded-full p-3 sm:p-4 group-hover:bg-green-600 group-hover:text-white transition ml-3 flex-shrink-0">
+                <i class="fas fa-file-medical text-xl sm:text-2xl"></i>
+            </div>
+        </div>
+    </a>
+</div>
+
+<!-- Mis Solicitudes Recientes -->
+<div class="bg-white rounded-lg sm:rounded-xl shadow-sm overflow-hidden">
+    <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-base sm:text-lg font-semibold text-gray-900">Mis Solicitudes Recientes</h3>
+        <a href="{% url 'dashboard_funcionario' %}" class="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium">
+            Ver todas <i class="fas fa-arrow-right ml-1"></i>
+        </a>
+    </div>
+
+    {% if solicitudes %}
+    <!-- Desktop Table View (hidden on mobile) -->
+    <div class="hidden md:block overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha
+                        Inicio</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Días
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Término</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Estado</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Observación</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for solicitud in solicitudes %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar text-blue-600 mr-2"></i>
+                            <span class="text-sm font-medium text-gray-900">{{ solicitud.fecha_inicio|date:"d/m/Y" }}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-500">Días solicitados</p>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <i class="fas fa-clock text-blue-600"></i>
+                                <span
+                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
+                                    {{ solicitud.dias_solicitados }} días
+                                </span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {{ solicitud.fecha_termino|date:"d/m/Y" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if solicitud.estado == 'APROBADO' %}
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i> Aprobado
+                        </span>
+                        {% elif solicitud.estado == 'RECHAZADO' %}
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                            <i class="fas fa-times-circle mr-1"></i> Rechazado
+                        </span>
+                        {% else %}
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+                            <i class="fas fa-clock mr-1"></i> Pendiente
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        <div class="space-y-2">
+                            {% if solicitud.observacion %}
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 uppercase">Motivo (Funcionario):</p>
+                                <p class="text-gray-700">{{ solicitud.observacion }}</p>
+                            </div>
+                            {% endif %}
+                            {% if solicitud.motivo_rechazo %}
+                            <div class="{% if solicitud.observacion %}mt-2 pt-2 border-t border-gray-200{% endif %}">
+                                <p class="text-xs font-semibold text-red-600 uppercase">Observación (Director):</p>
+                                <p class="text-gray-700">{{ solicitud.motivo_rechazo }}</p>
+                            </div>
+                            {% endif %}
+                            {% if not solicitud.observacion and not solicitud.motivo_rechazo %}
+                            <span class="text-gray-400 italic">Sin observaciones</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mobile Card View (hidden on desktop) -->
+    <div class="md:hidden space-y-3 p-4">
+        {% for solicitud in solicitudes %}
+        <div class="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
+            <!-- Card Header -->
+            <div class="px-4 py-3 bg-white border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-calendar text-blue-600 mr-2"></i>
+                        <span class="text-sm font-medium text-gray-900">{{ solicitud.fecha_inicio|date:"d/m/Y" }}</span>
+                    </div>
+                    {% if solicitud.estado == 'APROBADO' %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                        <i class="fas fa-check-circle mr-1"></i> Aprobado
+                    </span>
+                    {% elif solicitud.estado == 'RECHAZADO' %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                        <i class="fas fa-times-circle mr-1"></i> Rechazado
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+                        <i class="fas fa-clock mr-1"></i> Pendiente
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Card Content -->
+            <div class="px-4 py-3 space-y-3">
+                <!-- Días y Fechas -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-clock text-orange-500"></i>
+                        <span class="text-sm text-gray-900">
+                            <span class="font-semibold">{{ solicitud.dias_solicitados }} días</span>
+                        </span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-gray-500">Hasta</div>
+                        <div class="text-sm font-medium text-gray-900">{{ solicitud.fecha_termino|date:"d/m/Y" }}</div>
+                    </div>
+                </div>
+
+                <!-- Observaciones -->
+                {% if solicitud.observacion or solicitud.motivo_rechazo %}
+                <div class="space-y-2">
+                    {% if solicitud.observacion %}
+                    <div>
+                        <span class="text-xs font-bold text-gray-500 uppercase">Motivo:</span>
+                        <p class="text-sm text-gray-700 mt-1">{{ solicitud.observacion }}</p>
+                    </div>
+                    {% endif %}
+                    {% if solicitud.motivo_rechazo %}
+                    <div class="{% if solicitud.observacion %}mt-2 pt-2 border-t border-gray-200{% endif %}">
+                        <span class="text-xs font-bold text-red-600 uppercase">Observación:</span>
+                        <p class="text-sm text-red-700 mt-1">{{ solicitud.motivo_rechazo }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="px-4 sm:px-6 py-8 sm:py-12 text-center">
+        <i class="fas fa-inbox text-gray-300 text-4xl sm:text-5xl mb-4"></i>
+        <p class="text-gray-500 mb-4 text-sm sm:text-base">No tienes solicitudes recientes</p>
+        <a href="{% url 'solicitar_permiso' %}"
+            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm sm:text-base">
+            <i class="fas fa-plus mr-2"></i>
+            Crear primera solicitud
+        </a>
+    </div>
+    {% endif %}
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6">
+    <div class="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Gestión de Usuarios</h2>
+            <p class="text-gray-600 mt-2 text-sm sm:text-base">Administra los usuarios, roles y saldos de días administrativos</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+            <a href="{% url 'bulk_import_users' %}"
+                class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200 touch-manipulation">
+                <i class="fas fa-file-excel mr-2"></i>
+                <span class="hidden sm:inline">Importar Excel</span>
+                <span class="sm:hidden">Importar</span>
+            </a>
+            <a href="{% url 'user_create' %}"
+                class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 touch-manipulation">
+                <i class="fas fa-user-plus mr-2"></i>
+                <span class="hidden sm:inline">Crear Usuario</span>
+                <span class="sm:hidden">Crear</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Buscador -->
+    <div class="mb-4 sm:mb-6 bg-white rounded-lg shadow-sm p-4">
+        <form method="get" class="flex flex-col sm:flex-row gap-2">
+            <div class="flex-1 relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input type="text" name="search" value="{{ request.GET.search }}"
+                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="Buscar por nombre, RUN o correo...">
+            </div>
+            <div class="flex gap-2">
+                <button type="submit"
+                    class="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors touch-manipulation">
+                    Buscar
+                </button>
+                {% if request.GET.search %}
+                <a href="{% url 'user_list' %}"
+                    class="flex-1 sm:flex-none px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors text-center touch-manipulation">
+                    Limpiar
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    {% if bulk_passwords %}
+    <div class="mb-8 bg-green-50 border-l-4 border-green-500 p-6 rounded-r-lg shadow-sm">
+        <div class="flex justify-between items-start">
+            <div>
+                <h3 class="text-lg font-semibold text-green-900 mb-2">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Usuarios Importados Exitosamente
+                </h3>
+                <p class="text-green-800 mb-4">
+                    Se han generado las siguientes contraseñas temporales.
+                    <strong>Por favor, cópialas ahora ya que no se volverán a mostrar.</strong>
+                </p>
+            </div>
+            <button onclick="this.parentElement.parentElement.style.display='none'"
+                class="text-green-700 hover:text-green-900">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="bg-white rounded-lg border border-green-200 overflow-hidden">
+            <table class="min-w-full divide-y divide-green-100">
+                <thead class="bg-green-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-green-800 uppercase">RUN</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-green-800 uppercase">Contraseña Generada
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-green-100">
+                    {% for run, password in bulk_passwords.items %}
+                    <tr>
+                        <td class="px-6 py-3 text-sm font-medium text-gray-900">{{ run }}</td>
+                        <td class="px-6 py-3 text-sm font-mono text-gray-600 select-all bg-gray-50">{{ password }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4 text-right">
+            <button onclick="window.print()" class="text-sm text-green-700 hover:text-green-900 font-medium underline">
+                <i class="fas fa-print mr-1"></i> Imprimir lista
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Lista de Usuarios -->
+    <div class="bg-white rounded-lg sm:rounded-xl shadow-sm overflow-hidden mt-4 sm:mt-6">
+        <!-- Desktop Table View (hidden on mobile) -->
+        <div class="hidden md:block overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
+                            onclick="window.location.href='?sort={% if current_sort == 'name' %}name_desc{% else %}name{% endif %}'">
+                            <div class="flex items-center space-x-1">
+                                <span>Usuario</span>
+                                <span class="text-gray-400">
+                                    {% if current_sort == 'name' %}
+                                    <i class="fas fa-sort-alpha-down text-blue-600"></i>
+                                    {% elif current_sort == 'name_desc' %}
+                                    <i class="fas fa-sort-alpha-up text-blue-600"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort"></i>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
+                            onclick="window.location.href='?sort={% if current_sort == 'role' %}role_desc{% else %}role{% endif %}'">
+                            <div class="flex items-center space-x-1">
+                                <span>Rol</span>
+                                <span class="text-gray-400">
+                                    {% if current_sort == 'role' %}
+                                    <i class="fas fa-sort-amount-down text-blue-600"></i>
+                                    {% elif current_sort == 'role_desc' %}
+                                    <i class="fas fa-sort-amount-up text-blue-600"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort"></i>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
+                            onclick="window.location.href='?sort={% if current_sort == 'tipo' %}tipo_desc{% else %}tipo{% endif %}'">
+                            <div class="flex items-center space-x-1">
+                                <span>Tipo</span>
+                                <span class="text-gray-400">
+                                    {% if current_sort == 'tipo' %}
+                                    <i class="fas fa-sort-amount-down text-blue-600"></i>
+                                    {% elif current_sort == 'tipo_desc' %}
+                                    <i class="fas fa-sort-amount-up text-blue-600"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort"></i>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
+                            onclick="window.location.href='?sort={% if current_sort == 'dias' %}dias_asc{% else %}dias{% endif %}'">
+                            <div class="flex items-center space-x-1">
+                                <span>Días Disponibles</span>
+                                <span class="text-gray-400">
+                                    {% if current_sort == 'dias' %}
+                                    <i class="fas fa-sort-numeric-down text-blue-600"></i>
+                                    {% elif current_sort == 'dias_asc' %}
+                                    <i class="fas fa-sort-numeric-up text-blue-600"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort"></i>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for user in users %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div
+                                    class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                                    {{ user.first_name|first|upper }}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ user.get_full_name }}</div>
+                                    <div class="text-xs text-gray-500">{{ user.run }}</div>
+                                    <div class="text-xs text-gray-400">{{ user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if user.role == 'DIRECTOR' %}bg-purple-100 text-purple-800
+                                {% elif user.role == 'SECRETARIA' %}bg-pink-100 text-pink-800
+                                {% elif user.role == 'ADMIN' %}bg-gray-100 text-gray-800
+                                {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                {{ user.get_role_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if user.tipo_funcionario == 'DOCENTE' %}bg-green-100 text-green-800
+                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ user.get_tipo_funcionario_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if user.dias_disponibles > 4 %}
+                            <span
+                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                {{ user.dias_disponibles }} días
+                            </span>
+                            {% elif user.dias_disponibles >= 2 %}
+                            <span
+                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                {{ user.dias_disponibles }} días
+                            </span>
+                            {% else %}
+                            <span
+                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                {{ user.dias_disponibles }} días
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex justify-end space-x-3">
+                                <a href="{% url 'user_edit' user.pk %}"
+                                    class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-md transition-colors duration-200"
+                                    title="Editar">
+                                    <i class="fas fa-edit text-lg"></i>
+                                </a>
+                                <a href="{% url 'user_delete' user.pk %}"
+                                    class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-md transition-colors duration-200"
+                                    title="Eliminar">
+                                    <i class="fas fa-trash-alt text-lg"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                            No hay usuarios registrados
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Card View (hidden on desktop) -->
+        <div class="md:hidden space-y-3 p-4">
+            {% for user in users %}
+            <div class="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
+                <!-- Card Header -->
+                <div class="px-4 py-3 bg-white border-b border-gray-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                            {{ user.first_name|first|upper }}
+                        </div>
+                        <div class="ml-3 flex-1 min-w-0">
+                            <div class="text-sm font-medium text-gray-900 truncate">{{ user.get_full_name }}</div>
+                            <div class="text-xs text-gray-500">{{ user.run }}</div>
+                            <div class="text-xs text-gray-400 truncate">{{ user.email }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Content -->
+                <div class="px-4 py-3 space-y-3">
+                    <!-- Rol y Tipo -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                {% if user.role == 'DIRECTOR' %}bg-purple-100 text-purple-800
+                                {% elif user.role == 'SECRETARIA' %}bg-pink-100 text-pink-800
+                                {% elif user.role == 'ADMIN' %}bg-gray-100 text-gray-800
+                                {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                {{ user.get_role_display }}
+                            </span>
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                {% if user.tipo_funcionario == 'DOCENTE' %}bg-green-100 text-green-800
+                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ user.get_tipo_funcionario_display }}
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            {% if user.dias_disponibles > 4 %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                {{ user.dias_disponibles }} días
+                            </span>
+                            {% elif user.dias_disponibles >= 2 %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                {{ user.dias_disponibles }} días
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                {{ user.dias_disponibles }} días
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Actions -->
+                <div class="px-4 py-3 bg-white border-t border-gray-200">
+                    <div class="flex space-x-3">
+                        <a href="{% url 'user_edit' user.pk %}"
+                            class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 touch-manipulation">
+                            <i class="fas fa-edit mr-2"></i>
+                            Editar
+                        </a>
+                        <a href="{% url 'user_delete' user.pk %}"
+                            class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 touch-manipulation">
+                            <i class="fas fa-trash-alt mr-2"></i>
+                            Eliminar
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-8">
+                <i class="fas fa-users text-gray-300 text-4xl mb-4"></i>
+                <p class="text-gray-500">No hay usuarios registrados</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+/* Minimal Font Awesome CSS with sidebar icons */
+@font-face {
+  font-family: "Font Awesome 6 Free";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-regular-400.woff2") format("woff2"),
+       url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-regular-400.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Font Awesome 6 Free";
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2") format("woff2"),
+       url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff") format("woff");
+}
+
+.fas,
+.far {
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+}
+
+.far {
+  font-weight: 400;
+}
+
+/* Sidebar icons */
+.fa-home:before { content: "\f015"; }
+.fa-file-invoice-dollar:before { content: "\f571"; }
+.fa-clock:before { content: "\f017"; }
+.fa-calendar-plus:before { content: "\f271"; }
+.fa-file-medical:before { content: "\f477"; }
+.fa-tasks:before { content: "\f0ae"; }
+.fa-users:before { content: "\f0c0"; }
+.fa-calendar-check:before { content: "\f274"; }
+.fa-notes-medical:before { content: "\f479"; }
+.fa-user-clock:before { content: "\f4fd"; }
+.fa-upload:before { content: "\f093"; }
+.fa-clipboard-list:before { content: "\f46d"; }
+.fa-file-upload:before { content: "\f574"; }
+.fa-exclamation-triangle:before { content: "\f071"; }
+.fa-calendar-star:before { content: "\f736"; }
+.fa-tachometer-alt:before { content: "\f3fd"; }
+.fa-chart-line:before { content: "\f201"; }
+.fa-sign-out-alt:before { content: "\f2f5"; }
+.fa-clipboard-check:before { content: "\f46c"; }
+.fa-envelope:before { content: "\f0e0"; }
+.fa-lock:before { content: "\f023"; }
+.fa-sign-in-alt:before { content: "\f2f6"; }
+.fa-times:before { content: "\f00d"; }
+.fa-bars:before { content: "\f0c9"; }
+.fa-info-circle:before { content: "\f05a"; }
+.fa-exclamation-circle:before { content: "\f06a"; }
+
+/* Base styles */
+.fa {
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  display: inline-block;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  line-height: 1;
+}

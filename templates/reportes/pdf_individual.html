@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 10pt;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 15px;
+        }
+
+        .header h1 {
+            color: #1e40af;
+            margin: 0 0 10px 0;
+            font-size: 20pt;
+        }
+
+        .header p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        .info-box {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            width: 150px;
+            color: #4b5563;
+        }
+
+        .info-value {
+            color: #111827;
+        }
+
+        .section-title {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #1e40af;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            background: #2563eb;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-size: 9pt;
+        }
+
+        td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 9pt;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .summary-box {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .summary-box h3 {
+            margin-top: 0;
+            color: #1e40af;
+        }
+
+        .stat {
+            display: inline-block;
+            margin-right: 20px;
+        }
+
+        .stat-label {
+            font-weight: bold;
+            color: #4b5563;
+        }
+
+        .stat-value {
+            color: #1e40af;
+            font-size: 12pt;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 8pt;
+            color: #9ca3af;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Reporte Individual</h1>
+        <p><strong>Funcionario:</strong> {{ funcionario.get_full_name }}</p>
+        <p><strong>RUN:</strong> {{ funcionario.run }}</p>
+        {% if year or fecha_inicio or fecha_fin %}
+        <p style="font-size: 9pt;">
+            {% if year %}Año: {{ year }} | {% endif %}
+            {% if fecha_inicio %}Desde: {{ fecha_inicio }} | {% endif %}
+            {% if fecha_fin %}Hasta: {{ fecha_fin }}{% endif %}
+        </p>
+        {% endif %}
+    </div>
+
+    <div class="info-box">
+        <div class="info-row">
+            <span class="info-label">Días Disponibles:</span>
+            <span class="info-value">{{ funcionario.dias_disponibles|floatformat:1 }} días</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Correo Electrónico:</span>
+            <span class="info-value">{{ funcionario.email }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Rol:</span>
+            <span class="info-value">{{ funcionario.get_role_display }}</span>
+        </div>
+    </div>
+
+    <div class="summary-box">
+        <h3>Resumen del Período</h3>
+        <div class="stat">
+            <span class="stat-label">Total Días Usados:</span>
+            <span class="stat-value">{{ total_dias_usados|floatformat:1 }}</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Total Licencias:</span>
+            <span class="stat-value">{{ licencias.count }}</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Días en Licencia:</span>
+            <span class="stat-value">{{ total_dias_licencias }}</span>
+        </div>
+    </div>
+
+    <div class="section-title">Permisos Administrativos Aprobados</div>
+    {% if permisos %}
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha Inicio</th>
+                <th>Fecha Fin</th>
+                <th>Días</th>
+                <th>Motivo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for permiso in permisos %}
+            <tr>
+                <td>{{ permiso.fecha_inicio|date:"d/m/Y" }}</td>
+                <td>{{ permiso.fecha_fin|date:"d/m/Y" }}</td>
+                <td>{{ permiso.dias_solicitados|floatformat:1 }}</td>
+                <td>{{ permiso.motivo }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No hay permisos en el período seleccionado</div>
+    {% endif %}
+
+    <div class="section-title">Licencias Médicas</div>
+    {% if licencias %}
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha Inicio</th>
+                <th>Fecha Fin</th>
+                <th>Días</th>
+                <th>Tipo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for licencia in licencias %}
+            <tr>
+                <td>{{ licencia.fecha_inicio|date:"d/m/Y" }}</td>
+                <td>{{ licencia.fecha_fin|date:"d/m/Y" }}</td>
+                <td>{{ licencia.dias }}</td>
+                <td>{{ licencia.tipo }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No hay licencias médicas en el período seleccionado</div>
+    {% endif %}
+
+    <div class="footer">
+        Documento generado automáticamente - {{ "now"|date:"d/m/Y H:i" }}
+    </div>
+</body>
+
+</html>

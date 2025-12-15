@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Reporte de Funcionarios{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-900">Reporte Detallado de Funcionarios</h2>
+        <p class="text-gray-600 mt-2">Visualiza el estado de días administrativos y licencias médicas de todos los
+            funcionarios</p>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-filter mr-2 text-blue-600"></i>
+            Filtros de Búsqueda
+        </h3>
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <!-- Búsqueda por nombre/RUN -->
+                <div class="md:col-span-5">
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar Funcionario</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" name="search" id="search" value="{{ filtros.search }}"
+                            placeholder="Nombre o RUN..."
+                            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <!-- Año -->
+                <div class="md:col-span-3">
+                    <label for="year" class="block text-sm font-medium text-gray-700 mb-1">Año</label>
+                    <select name="year" id="year"
+                        class="block w-full px-3 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg">
+                        <option value="">Todos los años</option>
+                        {% for y in years %}
+                        <option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Botón buscar -->
+                <div class="md:col-span-4 flex items-end">
+                    <button type="submit"
+                        class="w-full inline-flex justify-center items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <i class="fas fa-filter mr-2"></i>
+                        Aplicar Filtros
+                    </button>
+                </div>
+            </div>
+
+            <!-- Rango de fechas (colapsable) -->
+            <details class="group border-t pt-4">
+                <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900 flex items-center">
+                    <i class="fas fa-calendar-alt mr-2 text-gray-500"></i>
+                    Filtros avanzados (Rango de fechas)
+                    <i class="fas fa-chevron-down ml-2 text-gray-400 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="fecha_inicio" class="block text-sm font-medium text-gray-700 mb-1">Fecha
+                            Inicio</label>
+                        <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ filtros.fecha_inicio }}"
+                            class="block w-full px-3 py-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="fecha_fin" class="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
+                        <input type="date" name="fecha_fin" id="fecha_fin" value="{{ filtros.fecha_fin }}"
+                            class="block w-full px-3 py-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </div>
+            </details>
+        </form>
+    </div>
+
+    <!-- Tarjetas de estadísticas -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+        <!-- Total Funcionarios -->
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                        <i class="fas fa-users text-white text-2xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Funcionarios</dt>
+                            <dd class="text-2xl font-bold text-gray-900">{{ total_funcionarios }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Días Administrativos -->
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+                        <i class="fas fa-calendar-check text-white text-2xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Días Admin. Restantes</dt>
+                            <dd class="text-2xl font-bold text-gray-900">{{ total_dias_restantes|floatformat:1 }}</dd>
+                            <dd class="text-xs text-gray-500">de {{ total_dias_asignados|floatformat:1 }} asignados</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Licencias -->
+        <div class="bg-white overflow-hidden shadow-sm rounded-xl">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-red-500 rounded-md p-3">
+                        <i class="fas fa-file-medical text-white text-2xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Licencias Médicas</dt>
+                            <dd class="text-2xl font-bold text-gray-900">{{ total_licencias_count }}</dd>
+                            <dd class="text-xs text-gray-500">{{ total_dias_licencias }} días totales</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de funcionarios -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
+                            Funcionario</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Asignados</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Usados</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                            Restantes</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Licencias</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Días Lic.</th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Última Act.</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for empleado in empleados_data %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div
+                                    class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-sm">
+                                    {{ empleado.funcionario.first_name|first|upper }}{{
+                                    empleado.funcionario.last_name|first|upper }}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ empleado.funcionario.get_full_name
+                                        }}</div>
+                                    <div class="text-xs text-gray-500">{{ empleado.funcionario.run }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <span class="text-sm font-medium text-gray-900">{{ empleado.dias_totales|floatformat:1
+                                }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ empleado.dias_usados|floatformat:1 }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex flex-col items-center space-y-1">
+                                <span
+                                    class="text-sm font-bold {% if empleado.dias_restantes <= 1 %}text-red-600{% elif empleado.dias_restantes <= 3 %}text-yellow-600{% else %}text-green-600{% endif %}">
+                                    {{ empleado.dias_restantes|floatformat:1 }}
+                                </span>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="{% if empleado.dias_restantes <= 1 %}bg-red-500{% elif empleado.dias_restantes <= 3 %}bg-yellow-500{% else %}bg-green-500{% endif %} h-2 rounded-full transition-all"
+                                        style="width: {% if empleado.dias_totales > 0 %}{% widthratio empleado.dias_restantes empleado.dias_totales 100 %}%{% else %}0%{% endif %}">
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                                {{ empleado.total_licencias }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <span class="text-sm text-gray-900">{{ empleado.dias_licencias }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if empleado.ultima_actividad %}
+                            <div class="flex items-center text-sm text-gray-900">
+                                <i class="fas fa-calendar-day text-gray-400 mr-2"></i>
+                                {{ empleado.ultima_actividad|date:"d/m/Y" }}
+                            </div>
+                            {% else %}
+                            <span class="text-sm text-gray-400 italic">Sin actividad</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center">
+                                <i class="fas fa-users text-gray-300 text-5xl mb-4"></i>
+                                <p class="text-gray-500 text-lg font-medium">No se encontraron funcionarios</p>
+                                <p class="text-gray-400 text-sm mt-2">Intenta ajustar los filtros de búsqueda</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,383 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Mi Asistencia{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-900">Mi Registro de Asistencia</h2>
+        <p class="text-gray-600 mt-2">Revisa tus registros de asistencia del mes seleccionado</p>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="flex justify-between items-start mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Filtros de Búsqueda</h3>
+            <a href="{% url 'asistencia:reporte_asistencia_individual' anio mes %}"
+               class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                <i class="fas fa-file-pdf mr-2"></i> Generar Reporte PDF
+            </a>
+        </div>
+        <form method="get" class="flex flex-wrap gap-4">
+            <div>
+                <label for="mes" class="block text-sm font-medium text-gray-700 mb-1">Mes</label>
+                <select name="mes" id="mes" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    {% for mes_num, mes_nombre in meses %}
+                    <option value="{{ mes_num }}" {% if mes == mes_num|stringformat:'s' %}selected{% endif %}>
+                        {{ mes_nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="anio" class="block text-sm font-medium text-gray-700 mb-1">Año</label>
+                <select name="anio" id="anio" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    {% for anio_option in anios_disponibles %}
+                    <option value="{{ anio_option }}" {% if anio == anio_option|stringformat:'s' %}selected{% endif %}>
+                        {{ anio_option }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-end gap-2">
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    <i class="fas fa-search mr-2"></i>Filtrar
+                </button>
+                <form method="post" action="{% url 'asistencia:recalcular_estado' %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+                            onclick="return confirm('¿Está seguro de que desea recalcular el estado de todos sus registros de asistencia? Esto actualizará los estados según su horario actual y permisos/licencias.')">
+                        <i class="fas fa-sync-alt mr-2"></i>Recalcular Estado
+                    </button>
+                </form>
+            </div>
+        </form>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100">
+                    <i class="fas fa-calendar text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Días Registrados</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ estadisticas.total_dias }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Días Puntuales</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ estadisticas.dias_puntuales }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100">
+                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Días con Retraso</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ estadisticas.dias_retraso }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-red-100">
+                    <i class="fas fa-times-circle text-red-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Días Ausentes</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ estadisticas.dias_ausente }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100">
+                    <i class="fas fa-business-time text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Horas Totales</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        {% if estadisticas.total_horas_trabajadas_mes %}
+                            {{ estadisticas.total_horas_trabajadas_mes }} h
+                        {% else %}
+                            -
+                        {% endif %}
+                    </p>
+                    <p class="text-xs text-gray-500">
+                        {% if estadisticas.dias_con_tiempo_trabajado %}
+                            {{ estadisticas.dias_con_tiempo_trabajado }} días registrados
+                        {% else %}
+                            Requiere migración
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Horas Semanales -->
+    {% if estadisticas.horas_semanales %}
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Horas Efectivas por Semana - {{ mes }}/{{ anio }}</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% for semana, horas in estadisticas.horas_semanales.items %}
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-blue-900">{{ semana }}</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ horas }} h</p>
+                    </div>
+                    <div class="p-2 bg-blue-200 rounded-full">
+                        <i class="fas fa-clock text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Información de Porcentaje y Retrasos -->
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Porcentaje de Puntualidad -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">Porcentaje de Puntualidad</h3>
+                <p class="text-sm text-gray-600 mt-1">Mes {{ mes }}/{{ anio }}</p>
+                <div class="mt-4">
+                    <div class="text-3xl font-bold text-blue-600">{{ estadisticas.porcentaje_puntualidad }}%</div>
+                    <div class="w-full bg-gray-200 rounded-full h-3 mt-2">
+                        <div class="bg-blue-600 h-3 rounded-full" style="width: {{ estadisticas.porcentaje_puntualidad }}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Minutos de Retraso -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">Minutos de Retraso</h3>
+                <p class="text-sm text-gray-600 mt-1">Total acumulado del mes</p>
+                <div class="mt-4">
+                    <div class="text-3xl font-bold {% if estadisticas.total_minutos_retraso_mes >= 60 %}text-red-600{% else %}text-gray-900{% endif %}">
+                        {{ estadisticas.total_minutos_retraso_mes }} min
+                    </div>
+                    <div class="mt-2">
+                        {% if estadisticas.total_minutos_retraso_mes >= 60 %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>Excede límite (60 min)
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-check-circle mr-2"></i>Dentro del límite
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Registros -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Registros de Asistencia - {{ mes }}/{{ anio }}</h3>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario Estipulado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entrada Real</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salida Real</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiempo Trabajado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Retraso</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for registro in registros %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ registro.fecha|date:"d/m/Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if registro.horario_asignado %}
+                                {{ registro.horario_asignado.hora_entrada|time:"H:i" }}
+                            {% else %}
+                                <span class="text-gray-400">Sin horario</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if registro.hora_entrada_real %}
+                                {{ registro.hora_entrada_real|time:"H:i" }}
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if registro.hora_salida_real %}
+                                {{ registro.hora_salida_real|time:"H:i" }}
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if registro.minutos_trabajados %}
+                                {{ registro.horas_trabajadas }} h ({{ registro.minutos_trabajados }} min)
+                            {% elif registro.hora_entrada_real and registro.hora_salida_real %}
+                                <span class="text-orange-600">Pendiente</span>
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if registro.minutos_retraso > 0 %}
+                                <span class="text-red-600 font-medium">{{ registro.minutos_retraso }} min</span>
+                            {% else %}
+                                <span class="text-green-600">0 min</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if registro.estado == 'PUNTUAL' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i> Puntual
+                                </span>
+                            {% elif registro.estado == 'RETRASO' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    <i class="fas fa-clock mr-1"></i> Retraso
+                                </span>
+                            {% elif registro.estado == 'AUSENTE' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <i class="fas fa-times-circle mr-1"></i> Ausente
+                                </span>
+                            {% elif registro.estado == 'JUSTIFICADO' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <i class="fas fa-check mr-1"></i> Justificado
+                                </span>
+                            {% elif registro.estado == 'DIA_ADMINISTRATIVO' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    <i class="fas fa-calendar-check mr-1"></i> Día Administrativo
+                                </span>
+                            {% elif registro.estado == 'LICENCIA_MEDICA' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                    <i class="fas fa-notes-medical mr-1"></i> Licencia Médica
+                                </span>
+                            {% elif registro.estado == 'DIA_FESTIVO' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                    <i class="fas fa-calendar-star mr-1"></i> Día Festivo
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    {{ registro.get_estado_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {% if registro.estado in 'RETRASO,AUSENTE' and not registro.alegacion %}
+                                <button onclick="abrirModalAlegacion({{ registro.id }})"
+                                        class="text-yellow-600 hover:text-yellow-900 p-1 rounded"
+                                        title="Presentar alegación">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </button>
+                            {% elif registro.alegacion %}
+                                <span class="text-blue-600" title="Alegación presentada">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                            <i class="fas fa-calendar-times text-4xl mb-4"></i>
+                            <p class="text-lg font-medium">No hay registros de asistencia</p>
+                            <p class="text-sm mt-2">No tienes registros de asistencia para el período seleccionado</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal de Alegación -->
+    <div id="modalAlegacion" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Presentar Alegación</h3>
+                <form id="formAlegacion" method="post" action="{% url 'asistencia:crear_alegacion' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="registro_id" id="registroIdAlegacion">
+                    <div class="mb-4">
+                        <label for="motivoAlegacion" class="block text-sm font-medium text-gray-700 mb-2">Motivo de la alegación</label>
+                        <textarea name="motivo" id="motivoAlegacion" rows="4"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                placeholder="Explique el motivo de su desacuerdo con este registro..."
+                                required></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label for="evidenciaAlegacion" class="block text-sm font-medium text-gray-700 mb-2">Evidencia (opcional)</label>
+                        <input type="file" name="evidencia" id="evidenciaAlegacion"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                               accept="image/*,.pdf,.doc,.docx">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="cerrarModalAlegacion()"
+                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            Enviar Alegación
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function () {
+    const currentPath = window.location.pathname;
+    $('.sidebar-link').each(function () {
+        if ($(this).attr('href') === currentPath) { $(this).addClass('active'); }
+    });
+});
+
+function abrirModalAlegacion(registroId) {
+    $('#registroIdAlegacion').val(registroId);
+    $('#modalAlegacion').removeClass('hidden');
+}
+
+function cerrarModalAlegacion() {
+    $('#modalAlegacion').addClass('hidden');
+    $('#formAlegacion')[0].reset();
+}
+
+// Cerrar modal al hacer clic fuera
+$('#modalAlegacion').click(function(e) {
+    if (e.target === this) {
+        cerrarModalAlegacion();
+    }
+});
+</script>
+{% endblock %}

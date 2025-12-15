@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Vista General de Liquidaciones{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6">
+    <!-- Header -->
+    <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Vista General de Liquidaciones</h2>
+            <p class="text-gray-600 mt-2 text-sm sm:text-base">Administra y visualiza todas las liquidaciones de sueldo del sistema</p>
+        </div>
+        <a href="{% url 'carga_liquidaciones' %}"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 touch-manipulation">
+            <i class="fas fa-file-upload mr-2"></i>
+            Cargar Liquidaciones
+        </a>
+    </div>
+
+    <!-- Funcionarios con Liquidaciones -->
+    <div class="bg-white rounded-lg sm:rounded-xl shadow-sm overflow-hidden">
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900">Funcionarios con Liquidaciones</h3>
+                    <p class="text-xs sm:text-sm text-gray-600 mt-1">Haz clic en un funcionario para ver sus liquidaciones detalladas</p>
+                </div>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full lg:w-auto">
+                    <span class="text-xs sm:text-sm text-gray-600">Ordenar por:</span>
+                    <div class="flex flex-wrap gap-1">
+                        <a href="?sort=name" class="px-2 sm:px-3 py-1 text-xs font-medium rounded-md {% if current_sort == 'name' %}bg-blue-100 text-blue-800{% else %}text-gray-600 hover:text-gray-900 hover:bg-gray-100{% endif %} transition">
+                            Nombre A-Z
+                        </a>
+                        <a href="?sort=name_desc" class="px-2 sm:px-3 py-1 text-xs font-medium rounded-md {% if current_sort == 'name_desc' %}bg-blue-100 text-blue-800{% else %}text-gray-600 hover:text-gray-900 hover:bg-gray-100{% endif %} transition">
+                            Nombre Z-A
+                        </a>
+                        <a href="?sort=role" class="px-2 sm:px-3 py-1 text-xs font-medium rounded-md {% if current_sort == 'role' %}bg-blue-100 text-blue-800{% else %}text-gray-600 hover:text-gray-900 hover:bg-gray-100{% endif %} transition">
+                            Rol A-Z
+                        </a>
+                        <a href="?sort=role_desc" class="px-2 sm:px-3 py-1 text-xs font-medium rounded-md {% if current_sort == 'role_desc' %}bg-blue-100 text-blue-800{% else %}text-gray-600 hover:text-gray-900 hover:bg-gray-100{% endif %} transition">
+                            Rol Z-A
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if funcionarios_con_info %}
+        <!-- Desktop Table View (hidden on mobile) -->
+        <div class="hidden lg:block overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funcionario</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estadísticas</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for info in funcionarios_con_info %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <span class="text-sm font-semibold text-blue-600">
+                                        {{ info.usuario.first_name.0 }}{{ info.usuario.last_name.0 }}
+                                    </span>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ info.usuario.get_full_name }}</div>
+                                    <div class="text-sm text-gray-500">RUT: {{ info.usuario.run }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if info.usuario.role == 'FUNCIONARIO' %}bg-blue-100 text-blue-800
+                                {% elif info.usuario.role == 'DIRECTOR' %}bg-green-100 text-green-800
+                                {% elif info.usuario.role == 'DIRECTIVO' %}bg-purple-100 text-purple-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ info.usuario.get_role_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-6">
+                                <div class="text-center">
+                                    <p class="text-lg font-bold text-gray-900">{{ info.total_liquidaciones }}</p>
+                                    <p class="text-xs text-gray-500">Total</p>
+                                </div>
+                                {% if info.ultima_liquidacion %}
+                                <div class="text-center">
+                                    <p class="text-sm font-medium text-gray-900">
+                                        {{ info.ultima_liquidacion.mes }}/{{ info.ultima_liquidacion.anio }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">Última</p>
+                                </div>
+                                {% endif %}
+                                <div class="text-center">
+                                    <p class="text-sm font-medium text-gray-900">{{ info.anios|length }}</p>
+                                    <p class="text-xs text-gray-500">Años</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a href="{% url 'admin_funcionario_liquidaciones' info.usuario.id %}"
+                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                                <i class="fas fa-eye mr-2"></i>
+                                Ver
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Card View (hidden on desktop) -->
+        <div class="lg:hidden space-y-3 p-4">
+            {% for info in funcionarios_con_info %}
+            <div class="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
+                <!-- Card Header -->
+                <div class="px-4 py-3 bg-white border-b border-gray-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            <span class="text-sm font-semibold text-blue-600">
+                                {{ info.usuario.first_name.0 }}{{ info.usuario.last_name.0 }}
+                            </span>
+                        </div>
+                        <div class="ml-3 flex-1 min-w-0">
+                            <div class="text-sm font-medium text-gray-900 truncate">{{ info.usuario.get_full_name }}</div>
+                            <div class="text-xs text-gray-500">RUT: {{ info.usuario.run }}</div>
+                            <div class="mt-1">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                    {% if info.usuario.role == 'FUNCIONARIO' %}bg-blue-100 text-blue-800
+                                    {% elif info.usuario.role == 'DIRECTOR' %}bg-green-100 text-green-800
+                                    {% elif info.usuario.role == 'DIRECTIVO' %}bg-purple-100 text-purple-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ info.usuario.get_role_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Content -->
+                <div class="px-4 py-3">
+                    <!-- Estadísticas -->
+                    <div class="grid grid-cols-3 gap-4 mb-4">
+                        <div class="text-center">
+                            <p class="text-xl font-bold text-gray-900">{{ info.total_liquidaciones }}</p>
+                            <p class="text-xs text-gray-500">Total</p>
+                        </div>
+                        {% if info.ultima_liquidacion %}
+                        <div class="text-center">
+                            <p class="text-sm font-medium text-gray-900">
+                                {{ info.ultima_liquidacion.mes }}/{{ info.ultima_liquidacion.anio }}
+                            </p>
+                            <p class="text-xs text-gray-500">Última</p>
+                        </div>
+                        {% else %}
+                        <div class="text-center">
+                            <p class="text-sm font-medium text-gray-400">-</p>
+                            <p class="text-xs text-gray-500">Última</p>
+                        </div>
+                        {% endif %}
+                        <div class="text-center">
+                            <p class="text-sm font-medium text-gray-900">{{ info.anios|length }}</p>
+                            <p class="text-xs text-gray-500">Años</p>
+                        </div>
+                    </div>
+
+                    <!-- Botón de acción -->
+                    <a href="{% url 'admin_funcionario_liquidaciones' info.usuario.id %}"
+                        class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition touch-manipulation">
+                        <i class="fas fa-eye mr-2"></i>
+                        Ver Liquidaciones
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="px-4 sm:px-6 py-8 sm:py-12 text-center">
+            <i class="fas fa-file-invoice-dollar text-gray-300 text-4xl sm:text-5xl mb-4"></i>
+            <p class="text-gray-500 text-base sm:text-lg font-medium">No hay liquidaciones en el sistema</p>
+            <p class="text-gray-400 text-xs sm:text-sm mt-2">Las liquidaciones aparecerán aquí una vez que sean cargadas</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

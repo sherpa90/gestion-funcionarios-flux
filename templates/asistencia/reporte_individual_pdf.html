@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte Individual de Asistencia</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .info {
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">MUNICIPALIDAD DE PUERTO MONTT</div>
+        <div class="subtitle">DEPARTAMENTO ADMINISTRATIVO DE EDUCACIÓN MUNICIPAL</div>
+        <div class="subtitle">UNIDAD DE RECURSOS HUMANOS</div>
+
+        <div class="title" style="margin-top: 20px;">INFORME ASISTENCIA LABORAL</div>
+
+        <div class="info">
+            <strong>Establecimiento:</strong> Colegio Los Alerces Puerto Montt
+        </div>
+        <div class="info">
+            <strong>Mes de Informe:</strong> {{ nombre_mes }} {{ anio }}
+        </div>
+        <div class="info">
+            <strong>Funcionario:</strong> {{ funcionario.get_full_name }}
+        </div>
+        <div class="info">
+            <strong>RUT:</strong> {{ funcionario.run }}
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 20%;">Fecha</th>
+                <th style="width: 20%;">Hora</th>
+                <th style="width: 20%;">Tipo</th>
+                <th style="width: 40%;">Detalle</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for atraso in atrasos_detalle %}
+            <tr>
+                <td style="text-align: center;">{{ atraso.fecha|date:"d/m/Y" }}</td>
+                <td style="text-align: center;">
+                    {% if atraso.hora_entrada %}
+                        {{ atraso.hora_entrada|time:"H:i" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td style="text-align: center;">Atraso</td>
+                <td style="text-align: center;">{{ atraso.minutos_retraso }} minutos de retraso</td>
+            </tr>
+            {% endfor %}
+            {% for inasistencia in inasistencias_detalle %}
+            <tr>
+                <td style="text-align: center;">{{ inasistencia.fecha|date:"d/m/Y" }}</td>
+                <td style="text-align: center;">
+                    {% if inasistencia.hora_esperada %}
+                        {{ inasistencia.hora_esperada|time:"H:i" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td style="text-align: center;">Inasistencia</td>
+                <td style="text-align: center;">No registró asistencia</td>
+            </tr>
+            {% endfor %}
+            {% for justificacion in justificaciones_detalle %}
+            <tr>
+                <td style="text-align: center;">{{ justificacion.fecha|date:"d/m/Y" }}</td>
+                <td style="text-align: center;">-</td>
+                <td style="text-align: center;">Justificado</td>
+                <td style="text-align: center;">
+                    {% if justificacion.tipo == 'permiso' %}
+                        Día administrativo aprobado
+                    {% elif justificacion.tipo == 'licencia' %}
+                        Licencia médica
+                    {% else %}
+                        Ausencia justificada
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not atrasos_detalle and not inasistencias_detalle %}
+            <tr>
+                <td colspan="4" style="text-align: center; font-style: italic;">Sin atrasos ni inasistencias en el período</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Reporte generado el {{ fecha_actual|date:"d/m/Y" }} a las {{ fecha_actual|time:"H:i" }}
+    </div>
+</body>
+</html>

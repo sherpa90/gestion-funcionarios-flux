@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Subir Licencia Médica{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8 text-center">
+        <h2 class="text-3xl font-bold text-gray-900">Subir Licencia Médica</h2>
+        <p class="text-gray-600 mt-2">Registro de licencias médicas para funcionarios.</p>
+    </div>
+
+    <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl overflow-hidden border border-white/20">
+        <div class="p-8">
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-md">
+                    <div class="flex">
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">Errores en el formulario</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                {{ form.non_field_errors }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-2">
+                    {% if user.role == 'SECRETARIA' or user.role == 'ADMIN' %}
+                    <div class="sm:col-span-2">
+                        <label for="{{ form.usuario.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+                        {{ form.usuario }}
+                        {% if form.usuario.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.usuario.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">Selecciona el usuario al que pertenece esta licencia</p>
+                    </div>
+                    {% endif %}
+
+                    <div>
+                        <label for="{{ form.fecha_inicio.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700 mb-1">Fecha de Inicio</label>
+                        {{ form.fecha_inicio }}
+                        {% if form.fecha_inicio.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.fecha_inicio.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.dias.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700 mb-1">Días de Licencia</label>
+                        {{ form.dias }}
+                        {% if form.dias.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.dias.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label for="{{ form.archivo.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700 mb-1">Archivo Adjunto <span
+                                class="text-gray-400 font-normal">(Opcional)</span></label>
+                        {{ form.archivo }}
+                        {% if form.archivo.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.archivo.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end space-x-4 pt-4">
+                    <a href="{% url 'licencia_list' %}"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        Cancelar
+                    </a>
+                    <button type="submit"
+                        class="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-0.5">
+                        Subir Licencia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

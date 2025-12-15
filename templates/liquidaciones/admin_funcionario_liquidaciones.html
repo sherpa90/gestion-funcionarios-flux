@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Liquidaciones de {{ funcionario.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header con navegación -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <nav class="flex mb-4" aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                        <li class="inline-flex items-center">
+                            <a href="{% url 'admin_liquidaciones_overview' %}"
+                                class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                Vista General
+                            </a>
+                        </li>
+                        <li>
+                            <div class="flex items-center">
+                                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                                <span class="text-sm font-medium text-gray-500">{{ funcionario.get_full_name }}</span>
+                            </div>
+                        </li>
+                    </ol>
+                </nav>
+                <h2 class="text-3xl font-bold text-gray-900">Liquidaciones de {{ funcionario.get_full_name }}</h2>
+                <p class="text-gray-600 mt-2">RUT: {{ funcionario.run }} • Rol: {{ funcionario.get_role_display }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas del Funcionario -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium uppercase">Total Liquidaciones</p>
+                    <p class="text-4xl font-bold mt-2">{{ estadisticas_funcionario.total_liquidaciones }}</p>
+                </div>
+                <div class="bg-white/20 rounded-full p-4">
+                    <i class="fas fa-file-invoice-dollar text-3xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm font-medium uppercase">Años con Liquidaciones</p>
+                    <p class="text-4xl font-bold mt-2">{{ estadisticas_funcionario.anios_con_liquidaciones }}</p>
+                </div>
+                <div class="bg-white/20 rounded-full p-4">
+                    <i class="fas fa-calendar-alt text-3xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-sm font-medium uppercase">Promedio por Año</p>
+                    <p class="text-4xl font-bold mt-2">{{ estadisticas_funcionario.promedio_por_anio }}</p>
+                    <p class="text-purple-100 text-xs mt-1">liquidaciones</p>
+                </div>
+                <div class="bg-white/20 rounded-full p-4">
+                    <i class="fas fa-chart-line text-3xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liquidaciones por Año -->
+    {% if liquidaciones_por_anio %}
+    <div class="space-y-8">
+        {% for anio, liquidaciones_anio in liquidaciones_por_anio.items %}
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <h3 class="text-xl font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-calendar text-blue-600 mr-3"></i>
+                    Liquidaciones {{ anio }}
+                    <span class="ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        {{ liquidaciones_anio|length }} liquidacion{{ liquidaciones_anio|length|pluralize }}
+                    </span>
+                </h3>
+            </div>
+
+            <div class="divide-y divide-gray-200">
+                {% for liquidacion in liquidaciones_anio %}
+                <div class="px-6 py-4 hover:bg-gray-50 transition">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-shrink-0">
+                                <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                                    <i class="fas fa-file-invoice-dollar text-green-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-3">
+                                    <p class="text-sm font-medium text-gray-900">
+                                        Liquidación {{ liquidacion.mes }}/{{ liquidacion.anio }}
+                                    </p>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        Disponible
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-500">
+                                    Cargada el {{ liquidacion.fecha_subida|date:"d/m/Y" }} a las {{ liquidacion.fecha_subida|date:"H:i" }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-3">
+                            <!-- Tamaño del archivo -->
+                            {% if liquidacion.archivo %}
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">Tamaño</p>
+                                <p class="text-sm font-medium text-gray-900">
+                                    {{ liquidacion.archivo.size }} bytes
+                                </p>
+                            </div>
+                            {% endif %}
+
+                            <!-- Acciones -->
+                            <div class="flex space-x-2">
+                                {% if liquidacion.archivo %}
+                                <a href="{{ liquidacion.archivo.url }}" target="_blank"
+                                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                                    <i class="fas fa-eye mr-2"></i>
+                                    Ver PDF
+                                </a>
+                                <a href="{{ liquidacion.archivo.url }}" download
+                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                                    <i class="fas fa-download mr-2"></i>
+                                    Descargar
+                                </a>
+                                <form action="{% url 'admin_eliminar_liquidacion' liquidacion.id %}" method="post"
+                                      onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta liquidación? Esta acción no se puede deshacer.')"
+                                      class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition">
+                                        <i class="fas fa-trash mr-2"></i>
+                                        Eliminar
+                                    </button>
+                                </form>
+                                {% else %}
+                                <span class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-500 bg-gray-50 cursor-not-allowed">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    Archivo no disponible
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-12 text-center">
+            <i class="fas fa-file-invoice-dollar text-gray-300 text-5xl mb-4"></i>
+            <p class="text-gray-500 text-lg font-medium">No hay liquidaciones para este funcionario</p>
+            <p class="text-gray-400 text-sm mt-2">Las liquidaciones aparecerán aquí una vez que sean cargadas</p>
+            <div class="mt-6">
+                <a href="{% url 'admin_liquidaciones_overview' %}"
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Volver a la vista general
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

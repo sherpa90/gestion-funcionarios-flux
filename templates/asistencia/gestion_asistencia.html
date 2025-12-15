@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Gestión de Asistencia{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="bg-blue-600 px-6 py-4">
+            <h2 class="text-xl font-bold text-white">Gestión de Asistencia</h2>
+            <p class="text-blue-100 text-sm mt-1">Vista administrativa de todos los funcionarios con registros de asistencia</p>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="bg-gray-50 px-6 py-4 border-b">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">{{ estadisticas.total_usuarios }}</div>
+                    <div class="text-sm text-gray-600">Funcionarios con Asistencia</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">{{ estadisticas.total_registros }}</div>
+                    <div class="text-sm text-gray-600">Total Registros</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-yellow-600">{{ estadisticas.registros_puntuales }}</div>
+                    <div class="text-sm text-gray-600">Registros Puntuales</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-red-600">{{ estadisticas.porcentaje_puntualidad }}%</div>
+                    <div class="text-sm text-gray-600">Puntualidad General</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="p-6 border-b bg-gray-50">
+            <form method="get" class="flex flex-col sm:flex-row gap-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Buscar Funcionario</label>
+                    <input type="text" name="search" value="{{ filtros_aplicados.search }}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Nombre, apellido o RUT">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        <i class="fas fa-search mr-2"></i>Buscar
+                    </button>
+                </div>
+            </form>
+            {% if filtros_aplicados.search %}
+            <div class="mt-4">
+                <a href="{% url 'asistencia:gestion_asistencia' %}" class="text-sm text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-times mr-1"></i>Limpiar búsqueda
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Acciones -->
+        <div class="p-6 border-b bg-gray-50">
+            <div class="flex justify-between items-center">
+                <div class="flex space-x-3">
+                    <a href="{% url 'asistencia:carga_registros' %}"
+                       class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                        <i class="fas fa-upload mr-2"></i> Cargar Registros del Reloj
+                    </a>
+                    <button onclick="confirmarEliminacionTotal()"
+                            class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                        <i class="fas fa-trash-alt mr-2"></i> Eliminar Todas las Asistencias
+                    </button>
+                </div>
+                <div class="flex space-x-2 items-center">
+                    <select name="mes" class="px-3 py-2 border border-gray-300 rounded-md text-sm" form="report-form">
+                        <option value="">Mes</option>
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                    <select name="anio" class="px-3 py-2 border border-gray-300 rounded-md text-sm" form="report-form">
+                        <option value="">Año</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                    <form id="report-form" method="get" action="{% url 'asistencia:reporte_asistencia_mensual' %}" class="inline">
+                        <button type="submit" class="inline-flex items-center px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition text-sm">
+                            <i class="fas fa-file-pdf mr-2"></i> PDF
+                        </button>
+                    </form>
+                    <a href="{% url 'asistencia:descargar_asistencia' %}"
+                       class="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm">
+                        <i class="fas fa-download mr-2"></i> Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Funcionarios -->
+        <div class="p-6">
+            {% if usuarios_con_stats %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
+                                onclick="sortBy('name')">
+                                <div class="flex items-center space-x-1">
+                                    <span>Funcionario</span>
+                                    <span class="text-gray-400">
+                                        {% if current_sort == 'name' %}
+                                        <i class="fas fa-sort-alpha-down text-blue-600"></i>
+                                        {% elif current_sort == 'name_desc' %}
+                                        <i class="fas fa-sort-alpha-up text-blue-600"></i>
+                                        {% else %}
+                                        <i class="fas fa-sort"></i>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
+                                onclick="sortBy('rut')">
+                                <div class="flex items-center space-x-1">
+                                    <span>RUT</span>
+                                    <span class="text-gray-400">
+                                        {% if current_sort == 'rut' %}
+                                        <i class="fas fa-sort-alpha-down text-blue-600"></i>
+                                        {% elif current_sort == 'rut_desc' %}
+                                        <i class="fas fa-sort-alpha-up text-blue-600"></i>
+                                        {% else %}
+                                        <i class="fas fa-sort"></i>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
+                                onclick="sortBy('role')">
+                                <div class="flex items-center space-x-1">
+                                    <span>Rol</span>
+                                    <span class="text-gray-400">
+                                        {% if current_sort == 'role' %}
+                                        <i class="fas fa-sort-amount-down text-blue-600"></i>
+                                        {% elif current_sort == 'role_desc' %}
+                                        <i class="fas fa-sort-amount-up text-blue-600"></i>
+                                        {% else %}
+                                        <i class="fas fa-sort"></i>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Registros</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Puntualidad</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último Registro</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for user_stats in usuarios_con_stats %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                            <span class="text-sm font-medium text-gray-700">
+                                                {{ user_stats.usuario.first_name.0 }}{{ user_stats.usuario.last_name.0 }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ user_stats.usuario.get_full_name }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ user_stats.usuario.run }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    {% if user_stats.usuario.role == 'FUNCIONARIO' %}bg-green-100 text-green-800{% endif %}
+                                    {% if user_stats.usuario.role == 'DIRECTOR' %}bg-blue-100 text-blue-800{% endif %}
+                                    {% if user_stats.usuario.role == 'SECRETARIA' %}bg-purple-100 text-purple-800{% endif %}
+                                    {% if user_stats.usuario.role == 'ADMIN' %}bg-red-100 text-red-800{% endif %}">
+                                    {{ user_stats.usuario.get_role_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ user_stats.total_registros }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if user_stats.porcentaje_puntualidad >= 80 %}bg-green-100 text-green-800{% endif %}
+                                    {% if user_stats.porcentaje_puntualidad >= 60 and user_stats.porcentaje_puntualidad < 80 %}bg-yellow-100 text-yellow-800{% endif %}
+                                    {% if user_stats.porcentaje_puntualidad < 60 %}bg-red-100 text-red-800{% endif %}">
+                                    {{ user_stats.porcentaje_puntualidad }}%
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if user_stats.ultimo_registro %}
+                                    {{ user_stats.ultimo_registro|date:"d/m/Y" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="{% url 'asistencia:detalle_usuario' user_stats.usuario.id %}"
+                                   class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-eye mr-1"></i>Ver Asistencia
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% if is_paginated %}
+            <div class="mt-6 flex justify-center">
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Anterior</span>
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    {% endif %}
+
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </span>
+
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}"
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Siguiente</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-12">
+                <i class="fas fa-users text-gray-300 text-5xl mb-4"></i>
+                <p class="text-gray-500 text-lg">No hay funcionarios con registros de asistencia.</p>
+                <p class="text-gray-400 text-sm mt-2">
+                    <a href="{% url 'asistencia:carga_registros' %}" class="text-blue-600 hover:text-blue-800">
+                        Cargar los primeros registros →
+                    </a>
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Función para ordenar manteniendo el filtro de búsqueda
+function sortBy(field) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentSort = urlParams.get('sort');
+
+    let newSort;
+    if (currentSort === field) {
+        newSort = field + '_desc';
+    } else {
+        newSort = field;
+    }
+
+    urlParams.set('sort', newSort);
+
+    // Mantener el filtro de búsqueda si existe
+    const search = urlParams.get('search');
+    if (search) {
+        urlParams.set('search', search);
+    }
+
+    window.location.href = '?' + urlParams.toString();
+}
+
+function confirmarEliminacionTotal() {
+    // Primera confirmación
+    if (!confirm('⚠️ ATENCIÓN: Esta acción eliminará TODOS los registros de asistencia de TODOS los funcionarios.\n\n¿Está seguro de que desea continuar?')) {
+        return;
+    }
+
+    // Segunda confirmación con texto específico
+    const confirmacion = prompt('Para confirmar la eliminación total, escriba "ELIMINAR_TODO" (en mayúsculas):');
+    if (confirmacion !== 'ELIMINAR_TODO') {
+        alert('Confirmación incorrecta. La eliminación ha sido cancelada.');
+        return;
+    }
+
+    // Crear y enviar formulario
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{% url "asistencia:eliminar_todas_asistencias" %}';
+
+    // CSRF token
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = 'csrfmiddlewaretoken';
+    csrfToken.value = '{{ csrf_token }}';
+    form.appendChild(csrfToken);
+
+    // Campo de confirmación
+    const confirmField = document.createElement('input');
+    confirmField.type = 'hidden';
+    confirmField.name = 'confirmacion';
+    confirmField.value = 'ELIMINAR_TODO';
+    form.appendChild(confirmField);
+
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+{% endblock %}

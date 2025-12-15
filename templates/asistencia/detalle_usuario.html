@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Asistencia de {{ usuario.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header con navegación -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <nav class="flex mb-4" aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                        <li class="inline-flex items-center">
+                            <a href="{% url 'asistencia:gestion_asistencia' %}"
+                                class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                Gestión de Asistencia
+                            </a>
+                        </li>
+                        <li>
+                            <div class="flex items-center">
+                                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                                <span class="text-sm font-medium text-gray-500">{{ usuario.get_full_name }}</span>
+                            </div>
+                        </li>
+                    </ol>
+                </nav>
+                <h2 class="text-3xl font-bold text-gray-900">Asistencia de {{ usuario.get_full_name }}</h2>
+                <p class="text-gray-600 mt-2">RUT: {{ usuario.run }} • Rol: {{ usuario.get_role_display }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas del Funcionario -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium uppercase">Total Registros</p>
+                    <p class="text-4xl font-bold mt-2">{{ estadisticas_funcionario.total_registros }}</p>
+                </div>
+                <div class="bg-white/20 rounded-full p-4">
+                    <i class="fas fa-calendar-alt text-3xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm font-medium uppercase">Años con Asistencia</p>
+                    <p class="text-4xl font-bold mt-2">{{ estadisticas_funcionario.anios_con_asistencia }}</p>
+                </div>
+                <div class="bg-white/20 rounded-full p-4">
+                    <i class="fas fa-calendar-check text-3xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-sm font-medium uppercase">Puntualidad</p>
+                    <p class="text-4xl font-bold mt-2">{{ estadisticas_funcionario.porcentaje_puntualidad }}%</p>
+                    <p class="text-purple-100 text-xs mt-1">{{ estadisticas_funcionario.registros_puntuales }}/{{ estadisticas_funcionario.total_registros }} puntuales</p>
+                </div>
+                <div class="bg-white/20 rounded-full p-4">
+                    <i class="fas fa-chart-line text-3xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del Horario -->
+    {% if horario_actual %}
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-clock text-blue-600 mr-2"></i>
+            Horario Asignado
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                <span class="text-sm text-gray-600">Hora de entrada:</span>
+                <span class="text-lg font-semibold text-blue-600">{{ horario_actual.hora_entrada|time:"H:i" }}</span>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                <span class="text-sm text-gray-600">Tolerancia:</span>
+                <span class="text-lg font-semibold text-green-600">{{ horario_actual.tolerancia_minutos }} min</span>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <span class="text-sm text-gray-600">Estado:</span>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if horario_actual.activo %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                    {% if horario_actual.activo %}Activo{% else %}Inactivo{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Acciones de Administración -->
+    {% if user.role in 'ADMIN,SECRETARIA' %}
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-cogs text-gray-600 mr-2"></i>
+            Acciones Administrativas
+        </h3>
+        <div class="flex space-x-4">
+            <form method="post" action="{% url 'asistencia:eliminar_todos_registros' user_id=usuario.id %}"
+                  onsubmit="return confirm('¿Estás seguro de que quieres eliminar TODOS los registros de asistencia de {{ usuario.get_full_name }}? Esta acción no se puede deshacer.')"
+                  class="inline">
+                {% csrf_token %}
+                <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                    <i class="fas fa-trash-alt mr-2"></i> Eliminar Todos los Registros
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Registros por Año -->
+    {% if registros_por_anio %}
+    <div class="space-y-8">
+        {% for anio, datos_anio in registros_por_anio.items %}
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <h3 class="text-xl font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-calendar text-blue-600 mr-3"></i>
+                    Registros {{ anio }}
+                    <span class="ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        {{ datos_anio.total_anio }} registro{{ datos_anio.total_anio|pluralize }}
+                    </span>
+                    <span class="ml-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        {{ datos_anio.puntuales_anio }} puntual{{ datos_anio.puntuales_anio|pluralize }}
+                    </span>
+                </h3>
+            </div>
+
+            <!-- Registros por Mes -->
+            {% for mes_num, datos_mes in datos_anio.registros_por_mes.items %}
+            <div class="border-b border-gray-100 last:border-b-0">
+                <div class="px-6 py-4 bg-gray-50 border-l-4 border-blue-500">
+                    <h4 class="text-lg font-medium text-gray-900 flex items-center">
+                        <i class="fas fa-calendar-day text-blue-600 mr-2"></i>
+                        {% for mes_info in meses %}
+                            {% if mes_info.0 == mes_num %}{{ mes_info.1 }}{% endif %}
+                        {% endfor %} {{ anio }}
+                        <span class="ml-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            {{ datos_mes.total }} día{{ datos_mes.total|pluralize }}
+                        </span>
+                        <span class="ml-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {{ datos_mes.puntuales }} puntual{{ datos_mes.puntuales|pluralize }}
+                        </span>
+                        {% if datos_mes.retrasos > 0 %}
+                        <span class="ml-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            {{ datos_mes.retrasos }} retraso{{ datos_mes.retrasos|pluralize }}
+                        </span>
+                        {% endif %}
+                        {% if datos_mes.ausentes > 0 %}
+                        <span class="ml-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            {{ datos_mes.ausentes }} ausente{{ datos_mes.ausentes|pluralize }}
+                        </span>
+                        {% endif %}
+                    </h4>
+                </div>
+
+                <!-- Tabla de registros del mes -->
+                <div class="px-6 pb-4">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entrada</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salida</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Retraso</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                    {% if user.role in 'ADMIN,SECRETARIA' %}
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for registro in datos_mes.registros %}
+                                <tr class="hover:bg-gray-50 {% if registro.alegacion %}bg-yellow-50 border-l-4 border-yellow-400{% endif %}">
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {{ registro.fecha|date:"d/m/Y" }}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                        {% if registro.horario_asignado %}
+                                            {{ registro.horario_asignado.hora_entrada|time:"H:i" }}
+                                        {% else %}
+                                            <span class="text-gray-400">Sin horario</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                        {% if registro.hora_entrada_real %}
+                                            {{ registro.hora_entrada_real|time:"H:i" }}
+                                        {% else %}
+                                            <span class="text-gray-400">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                        {% if registro.hora_salida_real %}
+                                            {{ registro.hora_salida_real|time:"H:i" }}
+                                        {% else %}
+                                            <span class="text-gray-400">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                        {% if registro.minutos_retraso > 0 %}
+                                            <span class="text-red-600 font-medium">{{ registro.minutos_retraso }} min</span>
+                                        {% else %}
+                                            <span class="text-green-600">0 min</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        {% if registro.estado == 'PUNTUAL' %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <i class="fas fa-check-circle mr-1"></i> Puntual
+                                            </span>
+                                        {% elif registro.estado == 'RETRASO' %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                <i class="fas fa-clock mr-1"></i> Retraso
+                                            </span>
+                                        {% elif registro.estado == 'AUSENTE' %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                <i class="fas fa-times-circle mr-1"></i> Ausente
+                                            </span>
+                                        {% elif registro.estado == 'SIN_HORARIO' %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i> Sin Horario
+                                            </span>
+                                        {% elif registro.estado == 'DIA_ADMINISTRATIVO' %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                <i class="fas fa-calendar-check mr-1"></i> Día Administrativo
+                                            </span>
+                                        {% elif registro.estado == 'LICENCIA_MEDICA' %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                                <i class="fas fa-notes-medical mr-1"></i> Licencia Médica
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                <i class="fas fa-info-circle mr-1"></i> {{ registro.get_estado_display }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    {% if user.role in 'ADMIN,SECRETARIA' %}
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                                        <form method="post" action="{% url 'asistencia:eliminar_registro' pk=registro.pk %}"
+                                              onsubmit="return confirm('¿Estás seguro de que quieres eliminar este registro?')"
+                                              class="inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="text-red-600 hover:text-red-900 text-sm">
+                                                <i class="fas fa-trash-alt mr-1"></i> Eliminar
+                                            </button>
+                                        </form>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-12 text-center">
+            <i class="fas fa-calendar-times text-gray-300 text-5xl mb-4"></i>
+            <p class="text-gray-500 text-lg font-medium">No hay registros de asistencia</p>
+            <p class="text-gray-400 text-sm mt-2">No se encontraron registros para este funcionario</p>
+            <div class="mt-6">
+                <a href="{% url 'asistencia:gestion_asistencia' %}"
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Volver a la gestión
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

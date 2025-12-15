@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Mis Licencias Médicas{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Mis Licencias Médicas</h2>
+        <p class="text-gray-600 mt-1">Visualiza tus licencias médicas organizadas por mes y año</p>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Filtros</h3>
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label for="year" class="block text-sm font-medium text-gray-700 mb-2">Año</label>
+                <select name="year" id="year" class="w-full">
+                    <option value="">Todos los años</option>
+                    {% for year in available_years %}
+                    <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="month" class="block text-sm font-medium text-gray-700 mb-2">Mes</label>
+                <select name="month" id="month" class="w-full">
+                    <option value="">Todos los meses</option>
+                    <option value="1" {% if selected_month == 1 %}selected{% endif %}>Enero</option>
+                    <option value="2" {% if selected_month == 2 %}selected{% endif %}>Febrero</option>
+                    <option value="3" {% if selected_month == 3 %}selected{% endif %}>Marzo</option>
+                    <option value="4" {% if selected_month == 4 %}selected{% endif %}>Abril</option>
+                    <option value="5" {% if selected_month == 5 %}selected{% endif %}>Mayo</option>
+                    <option value="6" {% if selected_month == 6 %}selected{% endif %}>Junio</option>
+                    <option value="7" {% if selected_month == 7 %}selected{% endif %}>Julio</option>
+                    <option value="8" {% if selected_month == 8 %}selected{% endif %}>Agosto</option>
+                    <option value="9" {% if selected_month == 9 %}selected{% endif %}>Septiembre</option>
+                    <option value="10" {% if selected_month == 10 %}selected{% endif %}>Octubre</option>
+                    <option value="11" {% if selected_month == 11 %}selected{% endif %}>Noviembre</option>
+                    <option value="12" {% if selected_month == 12 %}selected{% endif %}>Diciembre</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit"
+                    class="w-full bg-primary-600 text-white px-4 py-2.5 rounded-lg hover:bg-primary-700 transition">
+                    <i class="fas fa-filter mr-2"></i>Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Estadísticas del Año -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium">Total Licencias {{ current_year }}</p>
+                    <p class="text-4xl font-bold mt-2">{{ total_licencias_año }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-4">
+                    <i class="fas fa-file-medical text-3xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm font-medium">Total Días {{ current_year }}</p>
+                    <p class="text-4xl font-bold mt-2">{{ total_dias_año }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-4">
+                    <i class="fas fa-calendar-days text-3xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen Mensual -->
+    {% if stats_por_mes %}
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Resumen Mensual {{ current_year }}</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {% for stat in stats_por_mes %}
+            <div
+                class="bg-gray-50 rounded-lg p-4 text-center border-2 border-gray-200 hover:border-primary-300 transition">
+                <p class="text-xs font-medium text-gray-600 uppercase">{{ stat.month|date:"M" }}</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ stat.total_dias }}</p>
+                <p class="text-xs text-gray-500 mt-1">{{ stat.total_licencias }} lic.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabla de Licencias -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Detalle de Licencias</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha
+                            Inicio</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Días
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Registrado Por</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha
+                            Registro</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for licencia in licencias %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar text-primary-500 mr-2"></i>
+                                <span class="text-sm font-medium text-gray-900">{{ licencia.fecha_inicio|date:"d/m/Y" }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span
+                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                                {{ licencia.dias }} días
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {% if licencia.created_by %}
+                            {{ licencia.created_by.get_full_name }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ licencia.created_at|date:"d/m/Y H:i" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center">
+                            <i class="fas fa-inbox text-gray-300 text-4xl mb-3"></i>
+                            <p class="text-gray-500">No se encontraron licencias médicas</p>
+                            {% if selected_year or selected_month %}
+                            <a href="{% url 'licencia_list' %}"
+                                class="text-primary-600 hover:text-primary-700 text-sm mt-2 inline-block">
+                                Ver todas las licencias
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Resumen Anual -->
+    {% if stats_por_año %}
+    <div class="bg-white rounded-xl shadow-sm p-6 mt-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Resumen Histórico por Año</h3>
+        <div class="space-y-3">
+            {% for stat in stats_por_año %}
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-primary-100 text-primary-700 rounded-lg px-4 py-2 font-bold">
+                        {{ stat.year|date:"Y" }}
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">{{ stat.total_licencias }} licencias</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-2xl font-bold text-gray-900">{{ stat.total_dias }}</p>
+                    <p class="text-xs text-gray-500">días totales</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

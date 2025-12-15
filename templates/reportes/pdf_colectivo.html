@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 1.5cm;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 9pt;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 10px;
+        }
+
+        .header h1 {
+            color: #1e40af;
+            margin: 0 0 8px 0;
+            font-size: 18pt;
+        }
+
+        .header p {
+            margin: 3px 0;
+            color: #666;
+            font-size: 9pt;
+        }
+
+        .stats {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-weight: bold;
+            color: #4b5563;
+            font-size: 8pt;
+        }
+
+        .stat-value {
+            color: #1e40af;
+            font-size: 14pt;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            background: #2563eb;
+            color: white;
+            padding: 6px 4px;
+            text-align: left;
+            font-size: 8pt;
+        }
+
+        td {
+            padding: 5px 4px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 8pt;
+        }
+
+        tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 7pt;
+            font-weight: bold;
+        }
+
+        .badge-blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-purple {
+            background: #f3e8ff;
+            color: #6b21a8;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 7pt;
+            color: #9ca3af;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Reporte Colectivo de Funcionarios</h1>
+        <p><strong>Total Funcionarios:</strong> {{ total_funcionarios }}</p>
+        {% if year or fecha_inicio or fecha_fin %}
+        <p>
+            {% if year %}Año: {{ year }}{% endif %}
+            {% if fecha_inicio %} | Desde: {{ fecha_inicio }}{% endif %}
+            {% if fecha_fin %} | Hasta: {{ fecha_fin }}{% endif %}
+        </p>
+        {% endif %}
+    </div>
+
+    {% if empleados_data %}
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-label">FUNCIONARIOS</div>
+            <div class="stat-value">{{ total_funcionarios }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">DÍAS DISPONIBLES</div>
+            <div class="stat-value">{{ empleados_data|length }}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">LICENCIAS</div>
+            <div class="stat-value">{% for e in empleados_data %}{{ e.total_licencias|add:0 }}{% empty %}0{% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">Funcionario</th>
+                <th style="width: 12%;">RUN</th>
+                <th style="width: 12%;" class="text-center">Días Disp.</th>
+                <th style="width: 12%;" class="text-center">Días Usados</th>
+                <th style="width: 12%;" class="text-center">Licencias</th>
+                <th style="width: 12%;" class="text-center">Días Lic.</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for empleado in empleados_data %}
+            <tr>
+                <td><strong>{{ empleado.funcionario.get_full_name }}</strong></td>
+                <td>{{ empleado.funcionario.run }}</td>
+                <td class="text-center"><strong>{{ empleado.dias_disponibles|floatformat:1 }}</strong></td>
+                <td class="text-center">
+                    <span class="badge badge-blue">{{ empleado.dias_usados|floatformat:1 }}</span>
+                </td>
+                <td class="text-center">
+                    <span class="badge badge-purple">{{ empleado.total_licencias }}</span>
+                </td>
+                <td class="text-center">{{ empleado.dias_licencias }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>No se encontraron funcionarios con los filtros aplicados</p>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        Documento generado automáticamente - {{ "now"|date:"d/m/Y H:i" }}
+    </div>
+</body>
+
+</html>

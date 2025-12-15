@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Reportes y Estadísticas</h2>
+        <div class="flex space-x-3">
+            <a href="{% url 'reportes_funcionarios' %}"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                <i class="fas fa-users mr-2"></i>
+                Reporte de Funcionarios
+            </a>
+            <a href="{% url 'reportes_detallado' %}"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                    </path>
+                </svg>
+                Ver Reportes Detallados
+            </a>
+            <a href="{% url 'reportes_pdf' %}" target="_blank"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                    </path>
+                </svg>
+                Descargar PDF
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <!-- Solicitudes por Mes -->
+        <div class="bg-white overflow-hidden shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Solicitudes por Mes</h3>
+            <canvas id="chartMes"></canvas>
+        </div>
+
+        <!-- Distribución por Estado -->
+        <div class="bg-white overflow-hidden shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Distribución por Estado</h3>
+            <canvas id="chartEstado"></canvas>
+        </div>
+
+        <!-- Top 10 Usuarios -->
+        <div class="bg-white overflow-hidden shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Top 10 - Días Administrativos Tomados</h3>
+            <canvas id="chartUsuarios"></canvas>
+        </div>
+
+        <!-- Licencias por Mes -->
+        <div class="bg-white overflow-hidden shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Licencias Médicas por Mes</h3>
+            <canvas id="chartLicencias"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Solicitudes por Mes
+    const ctxMes = document.getElementById('chartMes').getContext('2d');
+    new Chart(ctxMes, {
+        type: 'bar',
+        data: {
+            labels: {{ labels_mes| safe }},
+        datasets: [{
+            label: 'Cantidad',
+            data: {{ data_mes| safe }},
+        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 1
+            }, {
+            label: 'Días Totales',
+            data: {{ data_dias_mes| safe }},
+        backgroundColor: 'rgba(16, 185, 129, 0.5)',
+        borderColor: 'rgba(16, 185, 129, 1)',
+        borderWidth: 1
+            }]
+        },
+        options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+    });
+
+    // Distribución por Estado
+    const ctxEstado = document.getElementById('chartEstado').getContext('2d');
+    new Chart(ctxEstado, {
+        type: 'pie',
+        data: {
+            labels: {{ labels_estado| safe }},
+        datasets: [{
+            data: {{ data_estado| safe }},
+        backgroundColor: [
+            'rgba(34, 197, 94, 0.7)',
+            'rgba(239, 68, 68, 0.7)',
+            'rgba(234, 179, 8, 0.7)'
+        ],
+        borderColor: [
+            'rgba(34, 197, 94, 1)',
+            'rgba(239, 68, 68, 1)',
+            'rgba(234, 179, 8, 1)'
+        ],
+        borderWidth: 1
+            }]
+        },
+        options: {
+        responsive: true
+    }
+    });
+
+    // Top Usuarios
+    const ctxUsuarios = document.getElementById('chartUsuarios').getContext('2d');
+    new Chart(ctxUsuarios, {
+        type: 'horizontalBar',
+        data: {
+            labels: {{ labels_usuarios| safe }},
+        datasets: [{
+            label: 'Días Tomados',
+            data: {{ data_usuarios| safe }},
+        backgroundColor: 'rgba(147, 51, 234, 0.5)',
+        borderColor: 'rgba(147, 51, 234, 1)',
+        borderWidth: 1
+            }]
+        },
+        options: {
+        responsive: true,
+        indexAxis: 'y',
+        scales: {
+            x: {
+                beginAtZero: true
+            }
+        }
+    }
+    });
+
+    // Licencias por Mes
+    const ctxLicencias = document.getElementById('chartLicencias').getContext('2d');
+    new Chart(ctxLicencias, {
+        type: 'line',
+        data: {
+            labels: {{ labels_licencias_mes| safe }},
+        datasets: [{
+            label: 'Cantidad',
+            data: {{ data_licencias_mes| safe }},
+        borderColor: 'rgba(239, 68, 68, 1)',
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        tension: 0.4
+            }, {
+            label: 'Días Totales',
+            data: {{ data_licencias_dias| safe }},
+        borderColor: 'rgba(234, 179, 8, 1)',
+        backgroundColor: 'rgba(234, 179, 8, 0.1)',
+        tension: 0.4
+            }]
+        },
+        options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Gestión de Horarios{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-900">Gestión de Horarios de Funcionarios</h2>
+        <p class="text-gray-600 mt-2">Administra los horarios de entrada de todos los funcionarios</p>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100">
+                    <i class="fas fa-users text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Funcionarios</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ funcionarios_data|length }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Con Horario</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_con_horario }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-red-100">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Sin Horario</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_sin_horario }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <a href="{% url 'asistencia:carga_horarios' %}"
+               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <i class="fas fa-upload mr-2"></i> Cargar Horarios desde Excel
+            </a>
+        </div>
+        <div>
+            <p class="text-sm text-gray-600">
+                <i class="fas fa-info-circle mr-1"></i>
+                También puedes gestionar horarios individualmente usando los botones de "Acciones"
+            </p>
+        </div>
+    </div>
+
+    <!-- Tabla de Funcionarios -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Funcionarios y sus Horarios</h3>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Funcionario
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            RUT
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Horario de Entrada
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Tolerancia
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Estado
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Acciones
+                            <span class="block text-xs font-normal text-gray-400 normal-case mt-1">
+                                Crear, editar, activar/desactivar
+                            </span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for data in funcionarios_data %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                        <span class="text-sm font-medium text-gray-700">
+                                            {{ data.funcionario.first_name.0 }}{{ data.funcionario.last_name.0 }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ data.funcionario.get_full_name }}
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        {{ data.funcionario.get_role_display }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ data.funcionario.run }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if data.horario %}
+                                {{ data.horario.hora_entrada|time:"H:i" }}
+                            {% else %}
+                                <span class="text-gray-400">No asignado</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if data.horario %}
+                                {{ data.horario.tolerancia_minutos }} min
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if data.horario and data.horario.activo %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i> Activo
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <i class="fas fa-times-circle mr-1"></i> Inactivo
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                {% if data.horario %}
+                                <a href="{% url 'asistencia:editar_horario' data.horario.pk %}"
+                                   class="text-blue-600 hover:text-blue-900 p-1 rounded" title="Editar horario">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="post" action="{% url 'asistencia:toggle_horario' data.horario.pk %}"
+                                      class="inline" onsubmit="return confirm('¿Estás seguro de {% if data.horario.activo %}desactivar{% else %}activar{% endif %} este horario?')">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="{% if data.horario.activo %}text-yellow-600 hover:text-yellow-900{% else %}text-green-600 hover:text-green-900{% endif %} p-1 rounded"
+                                            title="{% if data.horario.activo %}Desactivar horario{% else %}Activar horario{% endif %}">
+                                        <i class="fas fa-{% if data.horario.activo %}pause{% else %}play{% endif %}"></i>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <a href="{% url 'asistencia:crear_horario' data.funcionario.pk %}"
+                                   class="text-green-600 hover:text-green-900 p-1 rounded" title="Asignar horario">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <i class="fas fa-users text-4xl mb-4"></i>
+                            <p>No hay funcionarios registrados</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+Django>=5.0,<6.0
+psycopg2-binary>=2.9
+weasyprint>=60.0
+django-compressor>=4.0
+django-tailwind>=3.8
+gunicorn>=21.0
+python-dotenv>=1.0
+whitenoise>=6.0
+openpyxl>=3.1
+xlrd>=2.0.1
+pypdf>=3.17.0
+pdfplumber>=0.10.0
+
+# Security
+django-axes>=6.0
+
+# Monitoring and Observability
+sentry-sdk>=1.40.0
+django-health-check>=3.18.0
+psutil>=5.9.0

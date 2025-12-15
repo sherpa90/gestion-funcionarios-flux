@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Solicitar Días Administrativos{% endblock %}
+
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-900">Solicitar Días Administrativos</h2>
+        <p class="text-gray-600 mt-2">Completa el formulario para solicitar tus días administrativos</p>
+    </div>
+
+    <!-- Información de Saldo -->
+    <div class="{% if user.dias_disponibles < 2 %}bg-red-50 border-red-500
+        {% elif user.dias_disponibles < 4 %}bg-yellow-50 border-yellow-500
+        {% else %}bg-blue-50 border-blue-500{% endif %} border-l-4 p-4 mb-6 rounded-lg">
+        <div class="flex items-center">
+            <i class="fas fa-info-circle text-xl mr-3
+                {% if user.dias_disponibles < 2 %}text-red-500
+                {% elif user.dias_disponibles < 4 %}text-yellow-500
+                {% else %}text-blue-500{% endif %}"></i>
+            <div>
+                <p class="text-sm font-medium
+                    {% if user.dias_disponibles < 2 %}text-red-900
+                    {% elif user.dias_disponibles < 4 %}text-yellow-900
+                    {% else %}text-blue-900{% endif %}">Días Disponibles</p>
+                <p class="text-2xl font-bold
+                    {% if user.dias_disponibles < 2 %}text-red-700
+                    {% elif user.dias_disponibles < 4 %}text-yellow-700
+                    {% else %}text-blue-700{% endif %}">
+                    {{ user.dias_disponibles|floatformat:1 }} de 6.0 días
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white rounded-xl shadow-sm p-8">
+        {% if form.non_field_errors %}
+        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+            <div class="flex items-center">
+
+                <div class="text-sm text-red-700">
+                    {{ form.non_field_errors }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Fecha de Inicio -->
+            <div class="form-group">
+                <label for="{{ form.fecha_inicio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.fecha_inicio.label }}
+                </label>
+                {{ form.fecha_inicio }}
+                {% if form.fecha_inicio.errors %}
+                <p class="error-message mt-2">
+
+                    {{ form.fecha_inicio.errors.0 }}
+                </p>
+                {% endif %}
+                <p class="help-text">Selecciona un día hábil para iniciar tu permiso</p>
+            </div>
+
+            <!-- Días Solicitados -->
+            <div class="form-group">
+                <label for="{{ form.dias_solicitados.id_for_label }}"
+                    class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.dias_solicitados.label }}
+                </label>
+                {{ form.dias_solicitados }}
+                {% if form.dias_solicitados.errors %}
+                <p class="error-message mt-2">
+
+                    {{ form.dias_solicitados.errors.0 }}
+                </p>
+                {% endif %}
+                <p class="help-text">Puedes solicitar desde 0.5 hasta 3.0 días</p>
+            </div>
+
+            <!-- Jornada (solo para medio día) -->
+            <div id="jornada-container" class="form-group" style="display: none;">
+                <label for="{{ form.jornada.id_for_label }}"
+                    class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.jornada.label }}
+                </label>
+                <div class="space-y-2">
+                    {{ form.jornada }}
+                </div>
+                {% if form.jornada.errors %}
+                <p class="error-message mt-2">
+                    {{ form.jornada.errors.0 }}
+                </p>
+                {% endif %}
+                <p class="help-text">Selecciona si el medio día del permiso es para la mañana (AM) o tarde (PM)</p>
+            </div>
+
+            <!-- Observación -->
+            <div class="form-group">
+                <label for="{{ form.observacion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.observacion.label }}
+                    <span class="text-gray-400 text-xs ml-1">(Opcional)</span>
+                </label>
+                {{ form.observacion }}
+                {% if form.observacion.errors %}
+                <p class="error-message mt-2">
+
+                    {{ form.observacion.errors.0 }}
+                </p>
+                {% endif %}
+                <p class="help-text">Describe el motivo o justificación de tu solicitud</p>
+            </div>
+
+            <!-- Archivo de Justificación -->
+            <div class="form-group">
+                <label for="{{ form.archivo_justificacion.id_for_label }}"
+                    class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-file-upload mr-2 text-orange-500"></i>{{ form.archivo_justificacion.label }}
+                    <span class="text-gray-400 text-xs ml-1">(Opcional)</span>
+                </label>
+                <div
+                    class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-400 transition">
+                    <div class="space-y-1 text-center">
+                        <i class="fas fa-cloud-upload-alt text-gray-400 text-4xl mb-3"></i>
+                        <div class="flex text-sm text-gray-600">
+                            <label for="{{ form.archivo_justificacion.id_for_label }}"
+                                class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                                <span>Seleccionar archivo</span>
+                                {{ form.archivo_justificacion }}
+                            </label>
+                        </div>
+                        <p class="text-xs text-gray-500">PDF, JPG o PNG hasta 5MB</p>
+                    </div>
+                </div>
+                {% if form.archivo_justificacion.errors %}
+                <p class="error-message mt-2">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ form.archivo_justificacion.errors.0 }}
+                </p>
+                {% endif %}
+                <p class="help-text">{{ form.archivo_justificacion.help_text }}</p>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+                <a href="{% url 'dashboard_funcionario' %}"
+                    class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </a>
+                <button type="submit"
+                    class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                    <i class="fas fa-paper-plane mr-2"></i>Enviar Solicitud
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Información Adicional -->
+    <div class="mt-6 bg-gray-50 rounded-xl p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-3">
+            <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>Información Importante
+        </h3>
+        <ul class="space-y-2 text-sm text-gray-600">
+            <li class="flex items-start">
+                <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
+                <span>Las solicitudes deben ser aprobadas por el Director</span>
+            </li>
+            <li class="flex items-start">
+                <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
+                <span>Solo puedes solicitar días en fechas hábiles (lunes a viernes)</span>
+            </li>
+            <li class="flex items-start">
+                <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
+                <span>El documento de respaldo es opcional pero puede ayudar a justificar tu solicitud</span>
+            </li>
+            <li class="flex items-start">
+                <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
+                <span>Recibirás una notificación cuando tu solicitud sea procesada</span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<style>
+/* Estilos para los radio buttons de jornada */
+.jornada-radio input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 50%;
+    margin-right: 8px;
+    position: relative;
+    cursor: pointer;
+}
+
+.jornada-radio input[type="radio"]:checked {
+    border-color: #3b82f6;
+    background-color: #3b82f6;
+}
+
+.jornada-radio input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 8px;
+    height: 8px;
+    background-color: white;
+    border-radius: 50%;
+}
+
+.jornada-radio label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.jornada-radio label:hover {
+    background-color: #f3f4f6;
+}
+
+.jornada-radio input[type="radio"]:checked + label {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+}
+</style>
+
+<script>
+    // Mostrar nombre del archivo seleccionado
+    document.getElementById('{{ form.archivo_justificacion.id_for_label }}').addEventListener('change', function (e) {
+        const fileName = e.target.files[0]?.name;
+        if (fileName) {
+            const label = e.target.closest('.space-y-1');
+            const span = label.querySelector('span');
+            span.textContent = fileName;
+            span.classList.add('text-green-600', 'font-semibold');
+        }
+    });
+
+    // Mostrar/ocultar campo jornada basado en días solicitados
+    document.addEventListener('DOMContentLoaded', function() {
+        const diasSelect = document.getElementById('{{ form.dias_solicitados.id_for_label }}');
+        const jornadaContainer = document.getElementById('jornada-container');
+        const jornadaRadios = document.querySelectorAll('input[name="jornada"]');
+
+        function toggleJornada() {
+            const selectedValue = parseFloat(diasSelect.value);
+            // Mostrar jornada para cualquier valor que termine en .5 (medio día)
+            const esMedioDia = selectedValue % 1 === 0.5;
+            if (esMedioDia) {
+                jornadaContainer.style.display = 'block';
+                // Marcar como requerido
+                jornadaRadios.forEach(radio => {
+                    radio.required = true;
+                    radio.setAttribute('aria-required', 'true');
+                });
+            } else {
+                jornadaContainer.style.display = 'none';
+                // Quitar requerido
+                jornadaRadios.forEach(radio => {
+                    radio.required = false;
+                    radio.removeAttribute('aria-required');
+                });
+            }
+        }
+
+        // Event listener para cambios en el select
+        diasSelect.addEventListener('change', toggleJornada);
+
+        // Verificar estado inicial
+        toggleJornada();
+    });
+</script>
+{% endblock %}
