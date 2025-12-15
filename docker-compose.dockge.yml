@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  sgpal-web:
+    image: sgpal-web:latest
+    build: .
+    container_name: sgpal-web
+    restart: unless-stopped
+    volumes:
+      - media_data:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      - sgpal-db
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+    networks:
+      - sgpal-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  sgpal-db:
+    image: postgres:15
+    container_name: sgpal-db
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      - ./backups:/backups
+    environment:
+      - POSTGRES_USER=${SQL_USER:-sgpal_user}
+      - POSTGRES_PASSWORD=${SQL_PASSWORD:-change_this_secure_password}
+      - POSTGRES_DB=${SQL_DATABASE:-sgpal_db}
+    networks:
+      - sgpal-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SQL_USER:-sgpal_user} -d ${SQL_DATABASE:-sgpal_db}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  media_data:
+    driver: local
+
+networks:
+  sgpal-network:
+    driver: bridge
