@@ -106,95 +106,86 @@ python manage.py setup_data
 exit
 ```
 
-## 🌐 Paso 6: Configurar Nginx (Proxy Reverso)
+## 🌐 Paso 6: Configurar CloudPanel (Proxy Reverso)
 
-Crear archivo de configuración Nginx:
+CloudPanel incluye proxy reverso integrado. Configura el sitio web:
+
+### 6.1 Crear Sitio en CloudPanel
+
+1. **Accede a CloudPanel** (tu panel de control)
+2. **Ve a "Sites"** → **"Create Site"**
+3. **Configura:**
+   - **Domain**: `tramites.losalercespuertomontt.cl`
+   - **Site Type**: `Reverse Proxy` (o `PHP` si tienes opción)
+   - **Reverse Proxy URL**: `http://127.0.0.1:8000`
+
+### 6.2 Configuración SSL
+
+1. **En CloudPanel**, ve a tu sitio creado
+2. **SSL** → **"Let's Encrypt"**
+3. **Agrega los dominios:**
+   - `tramites.losalercespuertomontt.cl`
+   - `www.tramites.losalercespuertomontt.cl`
+4. **Haz clic en "Create Certificate"**
+
+### 6.3 Configuración Avanzada (Opcional)
+
+Si necesitas configuración personalizada, edita el archivo de configuración de Nginx en CloudPanel:
 
 ```nginx
-# /etc/nginx/sites-available/sgpal
-server {
-    listen 80;
-    server_name tramites.losalercespuertomontt.cl www.tramites.losalercespuertomontt.cl;
+# Configuración personalizada para SGPAL
+location / {
+    proxy_pass http://127.0.0.1:8000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
 
-    # Redirect HTTP to HTTPS
-    return 301 https://$server_name$request_uri;
+    # Timeouts
+    proxy_connect_timeout 60s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 60s;
+
+    # Buffers
+    proxy_buffering on;
+    proxy_buffer_size 4k;
+    proxy_buffers 8 4k;
 }
 
-server {
-    listen 443 ssl http2;
-    server_name tramites.losalercespuertomontt.cl www.tramites.losalercespuertomontt.cl;
+# Static files (si usas archivos locales)
+location /static/ {
+    alias /opt/stacks/sgpal-stack/staticfiles/;
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+}
 
-    # SSL Configuration
-    ssl_certificate /etc/letsencrypt/live/tramites.losalercespuertomontt.cl/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/tramites.losalercespuertomontt.cl/privkey.pem;
-
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
-
-    # Gzip compression
-    gzip on;
-    gzip_vary on;
-    gzip_min_length 1024;
-    gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
-
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # Timeout settings
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
-    }
-
-    # Static files (opcional, si no usas Whitenoise)
-    location /static/ {
-        alias /opt/stacks/sgpal-stack/staticfiles/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # Media files
-    location /media/ {
-        alias /opt/stacks/sgpal-stack/data/media/;
-        expires 1M;
-        add_header Cache-Control "public";
-    }
+# Media files
+location /media/ {
+    alias /opt/stacks/sgpal-stack/data/media/;
+    expires 1M;
+    add_header Cache-Control "public";
 }
 ```
 
-### 6.1 Habilitar Sitio
-```bash
-# Crear enlace simbólico
-sudo ln -s /etc/nginx/sites-available/sgpal /etc/nginx/sites-enabled/
+## 🔒 Paso 7: SSL con CloudPanel
 
-# Probar configuración
-sudo nginx -t
+CloudPanel maneja automáticamente los certificados SSL:
 
-# Recargar Nginx
-sudo systemctl reload nginx
-```
+### 7.1 Configuración SSL Automática
 
-## 🔒 Paso 7: SSL con Let's Encrypt
+1. **En CloudPanel**, selecciona tu sitio
+2. **Ve a la pestaña "SSL"**
+3. **Activa "Let's Encrypt"**
+4. **Agrega los dominios:**
+   - `tramites.losalercespuertomontt.cl`
+   - `www.tramites.losalercespuertomontt.cl`
+5. **CloudPanel renovará automáticamente** los certificados
 
-```bash
-# Instalar Certbot
-sudo apt install certbot python3-certbot-nginx
+### 7.2 Verificación SSL
 
-# Obtener certificado
-sudo certbot --nginx -d tramites.losalercespuertomontt.cl -d www.tramites.losalercespuertomontt.cl
-
-# Configurar renovación automática
-sudo crontab -e
-# Agregar: 0 12 * * * /usr/bin/certbot renew --quiet
-```
+- **CloudPanel** se encarga de la renovación automática
+- **No necesitas comandos manuales** de certbot
+- **Los certificados se renuevan** automáticamente antes de expirar
 
 ## 📊 Paso 8: Monitoreo y Mantenimiento
 
