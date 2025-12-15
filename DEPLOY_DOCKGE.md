@@ -44,7 +44,7 @@ nano .env
 **Variables críticas a configurar:**
 ```bash
 SECRET_KEY=tu-clave-secreta-muy-larga-y-segura
-DJANGO_ALLOWED_HOSTS=tu-dominio.com,www.tu-dominio.com
+DJANGO_ALLOWED_HOSTS=tramites.losalercespuertomontt.cl,www.tramites.losalercespuertomontt.cl
 SQL_PASSWORD=contraseña_segura_para_postgres
 EMAIL_HOST_USER=tu-email@gmail.com
 EMAIL_HOST_PASSWORD=tu-app-password
@@ -114,7 +114,7 @@ Crear archivo de configuración Nginx:
 # /etc/nginx/sites-available/sgpal
 server {
     listen 80;
-    server_name tu-dominio.com www.tu-dominio.com;
+    server_name tramites.losalercespuertomontt.cl www.tramites.losalercespuertomontt.cl;
 
     # Redirect HTTP to HTTPS
     return 301 https://$server_name$request_uri;
@@ -122,11 +122,11 @@ server {
 
 server {
     listen 443 ssl http2;
-    server_name tu-dominio.com www.tu-dominio.com;
+    server_name tramites.losalercespuertomontt.cl www.tramites.losalercespuertomontt.cl;
 
     # SSL Configuration
-    ssl_certificate /etc/letsencrypt/live/tu-dominio.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/tu-dominio.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/tramites.losalercespuertomontt.cl/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/tramites.losalercespuertomontt.cl/privkey.pem;
 
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -189,7 +189,7 @@ sudo systemctl reload nginx
 sudo apt install certbot python3-certbot-nginx
 
 # Obtener certificado
-sudo certbot --nginx -d tu-dominio.com -d www.tu-dominio.com
+sudo certbot --nginx -d tramites.losalercespuertomontt.cl -d www.tramites.losalercespuertomontt.cl
 
 # Configurar renovación automática
 sudo crontab -e
@@ -251,9 +251,9 @@ sudo nginx -t
 
 ## 🎯 URLs de Acceso
 
-- **Aplicación**: `https://tu-dominio.com`
-- **Admin Django**: `https://tu-dominio.com/admin/`
-- **Health Check**: `https://tu-dominio.com/health/`
+- **Aplicación**: `https://tramites.losalercespuertomontt.cl`
+- **Admin Django**: `https://tramites.losalercespuertomontt.cl/admin/`
+- **Health Check**: `https://tramites.losalercespuertomontt.cl/health/`
 
 ## 📞 Usuario Administrador
 
