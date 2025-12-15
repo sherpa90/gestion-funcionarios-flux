@@ -33,7 +33,7 @@ services:
       - ./backups:/backups
     environment:
       - POSTGRES_USER=${SQL_USER:-sgpal_prod_user}
-      - POSTGRES_PASSWORD="${SQL_PASSWORD:-change_this_secure_password}"
+      - POSTGRES_PASSWORD=${SQL_PASSWORD:-default_password_123}
       - POSTGRES_DB=${SQL_DATABASE:-sgpal_production}
     networks:
       - sgpal-network
