@@ -31,14 +31,22 @@ COPY .env /app/.env
 
 # Set environment variables for collectstatic (with defaults)
 ENV DEBUG=0
-ENV SECRET_KEY=change-this-in-production
-ENV DJANGO_ALLOWED_HOSTS="localhost 127.0.0.1 [::1] tramites.losalercespuertomontt.cl"
+ENV SECRET_KEY=ZXXBlDpBklnF3J1VkWJA9kACXn396D-0oxel35abYR4AkO8t3fG8qW3rQpgoTJNIYXg
+ENV DJANGO_ALLOWED_HOSTS=tramites.losalercespuertomontt.cl,www.tramites.losalercespuertomontt.cl,losalercespuertomontt.cl,localhost,127.0.0.1
 ENV SQL_ENGINE=django.db.backends.postgresql
-ENV SQL_DATABASE=sgpal_db
-ENV SQL_USER=sgpal_user
-ENV SQL_PASSWORD=change_this_secure_password
-ENV SQL_HOST=db
+ENV SQL_DATABASE=sgpal_production
+ENV SQL_USER=sgpal_prod_user
+ENV SQL_PASSWORD=Linuxhbk619047
+ENV SQL_HOST=sgpal-db
 ENV SQL_PORT=5432
+ENV EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+ENV EMAIL_HOST=smtp.gmail.com
+ENV EMAIL_PORT=587
+ENV EMAIL_USE_TLS=True
+ENV EMAIL_USE_SSL=False
+ENV EMAIL_HOST_USER=mrosas@losalercespuertomontt.cl
+ENV EMAIL_HOST_PASSWORD="bliw uumf uqtc kvai"
+ENV DEFAULT_FROM_EMAIL=noreply@tramites.losalercespuertomontt.cl
 
 RUN python manage.py collectstatic --noinput
 
