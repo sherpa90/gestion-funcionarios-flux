@@ -32,13 +32,13 @@ services:
       - postgres_data:/var/lib/postgresql/data/
       - ./backups:/backups
     environment:
-      - POSTGRES_USER=${SQL_USER:-sgpal_user}
-      - POSTGRES_PASSWORD=${SQL_PASSWORD:-change_this_secure_password}
-      - POSTGRES_DB=${SQL_DATABASE:-sgpal_db}
+      - POSTGRES_USER=${SQL_USER:-sgpal_prod_user}
+      - POSTGRES_PASSWORD="${SQL_PASSWORD:-change_this_secure_password}"
+      - POSTGRES_DB=${SQL_DATABASE:-sgpal_production}
     networks:
       - sgpal-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${SQL_USER:-sgpal_user} -d ${SQL_DATABASE:-sgpal_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${SQL_USER:-sgpal_prod_user} -d ${SQL_DATABASE:-sgpal_production}"]
       interval: 30s
       timeout: 10s
       retries: 3
