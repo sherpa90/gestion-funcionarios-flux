@@ -7,7 +7,8 @@ services:
     container_name: sgpal-web
     restart: unless-stopped
     volumes:
-      - media_data:/app/media
+      - ./data/media:/app/media
+      - ./logs:/app/logs
     ports:
       - "8000:8000"
     depends_on:
@@ -29,25 +30,19 @@ services:
     container_name: sgpal-db
     restart: unless-stopped
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
-      - ./backups:/backups
+      - ./data/postgres:/var/lib/postgresql/data/
+      - ./data/backups:/backups
     environment:
-      - POSTGRES_USER=${SQL_USER:-sgpal_prod_user}
-      - POSTGRES_PASSWORD=${SQL_PASSWORD:-default_password_123}
-      - POSTGRES_DB=${SQL_DATABASE:-sgpal_production}
+      - POSTGRES_USER=sgpal_prod_user
+      - POSTGRES_PASSWORD=Linuxhbk619047
+      - POSTGRES_DB=sgpal_production
     networks:
       - sgpal-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${SQL_USER:-sgpal_prod_user} -d ${SQL_DATABASE:-sgpal_production}"]
+      test: ["CMD-SHELL", "pg_isready -U sgpal_prod_user -d sgpal_production"]
       interval: 30s
       timeout: 10s
       retries: 3
-
-volumes:
-  postgres_data:
-    driver: local
-  media_data:
-    driver: local
 
 networks:
   sgpal-network:

@@ -5,6 +5,8 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 
+> ⚠️ **IMPORTANTE - SEGURIDAD**: Nunca commits credenciales reales. Usa `.env.production.example` como template y configura tus variables de entorno de forma segura.
+
 Sistema integral para la gestión de recursos humanos, control de asistencia, permisos, licencias médicas y liquidaciones de sueldo para instituciones educativas chilenas.
 
 ## 📋 Características Principales
@@ -66,8 +68,8 @@ Sistema integral para la gestión de recursos humanos, control de asistencia, pe
 
 2. **Configurar variables de entorno**
    ```bash
-   cp .env.example .env
-   # Editar .env con tus configuraciones
+   cp .env.production.example .env
+   # Editar .env con tus configuraciones REALES (nunca commits este archivo)
    ```
 
 3. **Levantar servicios**
@@ -179,6 +181,13 @@ pg_dump sgpal_db > backup.sql
 
 ## 🔒 Seguridad
 
+### Credenciales y Variables de Entorno
+- **Nunca commits archivos .env** con credenciales reales
+- Usa `.env.production.example` como template
+- Configura variables de entorno de forma segura en producción
+- El `.gitignore` excluye automáticamente archivos `.env*`
+
+### Seguridad de Aplicación
 - Autenticación robusta con RUT chileno
 - Protección contra fuerza bruta (Django Axes)
 - Encriptación de contraseñas

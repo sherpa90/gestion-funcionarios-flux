@@ -35,7 +35,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-$61nmgqyiaol^(u+s1-7!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', '1').lower() in ('true', '1', 'yes', 'on')
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost 127.0.0.1 [::1] tramites.losalercespuertomontt.cl').split(' ')
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,[::1],tramites.losalercespuertomontt.cl').split(',')]
+
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000').split(',')]
 
 
 # Application definition
@@ -63,13 +65,11 @@ INSTALLED_APPS = [
 
     # Health checks and monitoring
     'health_check',
-    'health_check.db',
-    'health_check.cache',
-    'health_check.storage',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

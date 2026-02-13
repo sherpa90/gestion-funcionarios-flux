@@ -1,264 +1,151 @@
 # 🚀 Despliegue en Dockge - SGPAL
 
-Guía completa para desplegar el Sistema de Gestión de Personal y Asistencia Laboral en Dockge.
+Guía para desplegar SGPAL en tu servidor Debian con Dockge y CloudPanel.
+
+## 📋 Tu Configuración Actual
+
+- ✅ **Servidor Debian** con Dockge corriendo
+- ✅ **CloudPanel** configurado en `www.losalercespuertomontt.cl`
+- ✅ **Dominio** `tramites.losalercespuertomontt.cl` configurado en CloudFlare
+- ✅ **Proxy reverso** listo para recibir conexiones en puerto 8000
+
+## 🔒 Seguridad Corregida
+
+**Importante**: Se han removido las credenciales expuestas del repositorio. Ahora usa `.env.production.example` como template seguro.
 
 ## 📋 Prerrequisitos
 
-- **Dockge** instalado y funcionando
-- **Acceso SSH** al servidor donde corre Dockge
-- **Dominio** (opcional pero recomendado)
+- **Acceso SSH** a tu servidor Debian
+- **Proyecto SGPAL** subido al servidor (en `/opt/stacks/sgpal-stack/`)
 
-## 📁 Paso 1: Preparar el Proyecto
+## ⚡ Despliegue en tu Servidor (4 pasos)
 
-### Opción A: Desde GitHub (Recomendado)
+### Paso 1: Subir el proyecto a tu servidor
 ```bash
-# Clonar el repositorio
+# Conectar por SSH a tu servidor Debian
+ssh usuario@tu-servidor
+
+# Ir al directorio de stacks de Dockge
 cd /opt/stacks/
-git clone https://github.com/TU_USUARIO/sgpal.git sgpal-stack
+
+# Crear directorio para SGPAL
+mkdir -p sgpal-stack
 cd sgpal-stack
-
-# Crear directorio para datos persistentes
-mkdir -p data/media data/backups
-```
-
-### Opción B: Subir Archivos Manualmente
-```bash
-# Crear directorio del stack
-mkdir -p /opt/stacks/sgpal-stack
-cd /opt/stacks/sgpal-stack
 
 # Subir todos los archivos del proyecto aquí
 # (usando SCP, SFTP, o tu método preferido)
 ```
 
-## ⚙️ Paso 2: Configurar Variables de Entorno
-
+### Paso 2: Configurar el proyecto
 ```bash
-# Copiar archivo de producción
-cp .env.production .env
+# Ejecutar configuración automática
+./setup_dockge.sh
+```
 
-# Editar con tus valores reales
+### Paso 3: Configurar variables de entorno
+```bash
+# Editar el archivo .env generado
 nano .env
 ```
 
-**Variables críticas a configurar:**
+**Variables críticas que DEBES verificar/cambiar:**
 ```bash
-SECRET_KEY=tu-clave-secreta-muy-larga-y-segura
-DJANGO_ALLOWED_HOSTS=tramites.losalercespuertomontt.cl,www.tramites.losalercespuertomontt.cl
-SQL_PASSWORD=contraseña_segura_para_postgres
+SECRET_KEY=tu-clave-secreta-muy-larga-y-segura-aqui
+SQL_PASSWORD=tu-contraseña-segura-para-postgres
 EMAIL_HOST_USER=tu-email@gmail.com
 EMAIL_HOST_PASSWORD=tu-app-password
 ```
 
-## 🐳 Paso 3: Configurar en Dockge
+### Paso 4: Desplegar en Dockge
+1. **Abrir Dockge** en tu navegador (normalmente `http://tu-servidor:5000`)
+2. **Hacer clic en "Add Stack"**
+3. **Nombre**: `SGPAL`
+4. **Pegar** el contenido completo de `docker-compose.dockge.yml`
+5. **Hacer clic en "Deploy"**
 
-### 3.1 Crear Nuevo Stack
-1. Abrir **Dockge** en tu navegador
-2. Hacer clic en **"Add Stack"**
-3. **Name**: `SGPAL`
-4. **Description**: `Sistema de Gestión de Personal y Asistencia Laboral`
+¡Listo! SGPAL estará disponible en `tramites.losalercespuertomontt.cl` a través de CloudPanel.
 
-### 3.2 Configurar Stack
-```yaml
-# Usar el contenido de docker-compose.dockge.yml
-# Copiar y pegar el contenido completo
-```
+## 🔧 Configuración Inicial (Después del despliegue)
 
-### 3.3 Variables de Entorno
-En la sección **Environment** de Dockge, agregar:
-```
-.env
-```
-
-### 3.4 Paths y Volúmenes
-Asegurarse de que los paths sean correctos:
-- **Compose Path**: `/opt/stacks/sgpal-stack/docker-compose.dockge.yml`
-- **Environment Path**: `/opt/stacks/sgpal-stack/.env`
-
-## 🚀 Paso 4: Desplegar
-
-1. Hacer clic en **"Deploy"** en Dockge
-2. Esperar a que se construya la imagen (primera vez toma tiempo)
-3. Verificar que ambos contenedores estén **"Running"**
-
-## 🔧 Paso 5: Configuración Inicial
-
-### 5.1 Ejecutar Migraciones
+### Crear Superusuario
 ```bash
 # Conectarse al contenedor web
 docker exec -it sgpal-web bash
 
-# Ejecutar migraciones
-python manage.py migrate
-
 # Crear superusuario
 python manage.py createsuperuser
 
-# Salir del contenedor
+# Salir
 exit
 ```
 
-### 5.2 Importar Datos de Prueba (Opcional)
-```bash
-# Si quieres datos de prueba
-docker exec -it sgpal-web bash
-python manage.py setup_data
-exit
-```
-
-## 🌐 Paso 6: Configurar CloudPanel (Proxy Reverso)
-
-CloudPanel incluye proxy reverso integrado. Configura el sitio web:
-
-### 6.1 Crear Sitio en CloudPanel
-
-1. **Accede a CloudPanel** (tu panel de control)
+### Configurar Proxy Reverso en CloudPanel
+1. **Accede a CloudPanel**
 2. **Ve a "Sites"** → **"Create Site"**
 3. **Configura:**
    - **Domain**: `tramites.losalercespuertomontt.cl`
-   - **Site Type**: `Reverse Proxy` (o `PHP` si tienes opción)
+   - **Site Type**: `Reverse Proxy`
    - **Reverse Proxy URL**: `http://127.0.0.1:8000`
 
-### 6.2 Configuración SSL
+### Configurar SSL
+1. **En CloudPanel**, selecciona el sitio creado
+2. **Ve a "SSL"** → **"Let's Encrypt"**
+3. **Agrega el dominio** `tramites.losalercespuertomontt.cl`
+4. **CloudPanel manejará automáticamente** la renovación de certificados
 
-1. **En CloudPanel**, ve a tu sitio creado
-2. **SSL** → **"Let's Encrypt"**
-3. **Agrega los dominios:**
-   - `tramites.losalercespuertomontt.cl`
-   - `www.tramites.losalercespuertomontt.cl`
-4. **Haz clic en "Create Certificate"**
+### Verificar que funciona
+- **Aplicación**: `https://tramites.losalercespuertomontt.cl`
+- **Admin**: `https://tramites.losalercespuertomontt.cl/admin/`
+- **Health Check**: `https://tramites.losalercespuertomontt.cl/health/`
 
-### 6.3 Configuración Avanzada (Opcional)
+## 🌐 Configuración con Proxy Reverso (Opcional)
 
-Si necesitas configuración personalizada, edita el archivo de configuración de Nginx en CloudPanel:
+Si usas un proxy reverso (como Nginx, CloudPanel, etc.), configura:
 
 ```nginx
-# Configuración personalizada para SGPAL
 location / {
     proxy_pass http://127.0.0.1:8000;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
-
-    # Timeouts
-    proxy_connect_timeout 60s;
-    proxy_send_timeout 60s;
-    proxy_read_timeout 60s;
-
-    # Buffers
-    proxy_buffering on;
-    proxy_buffer_size 4k;
-    proxy_buffers 8 4k;
-}
-
-# Static files (si usas archivos locales)
-location /static/ {
-    alias /opt/stacks/sgpal-stack/staticfiles/;
-    expires 1y;
-    add_header Cache-Control "public, immutable";
-}
-
-# Media files
-location /media/ {
-    alias /opt/stacks/sgpal-stack/data/media/;
-    expires 1M;
-    add_header Cache-Control "public";
 }
 ```
 
-## 🔒 Paso 7: SSL con CloudPanel
+## 🔧 Monitoreo y Troubleshooting
 
-CloudPanel maneja automáticamente los certificados SSL:
+### Health Check
+Visita `http://tu-servidor:8000/health/` para verificar el estado del sistema.
 
-### 7.1 Configuración SSL Automática
-
-1. **En CloudPanel**, selecciona tu sitio
-2. **Ve a la pestaña "SSL"**
-3. **Activa "Let's Encrypt"**
-4. **Agrega los dominios:**
-   - `tramites.losalercespuertomontt.cl`
-   - `www.tramites.losalercespuertomontt.cl`
-5. **CloudPanel renovará automáticamente** los certificados
-
-### 7.2 Verificación SSL
-
-- **CloudPanel** se encarga de la renovación automática
-- **No necesitas comandos manuales** de certbot
-- **Los certificados se renuevan** automáticamente antes de expirar
-
-## 📊 Paso 8: Monitoreo y Mantenimiento
-
-### Health Checks
-- **URL**: `https://tu-dominio.com/health/`
-- **Métricas**: CPU, Memoria, Base de datos, Aplicación
-
-### Backups
+### Ver Logs
 ```bash
-# Backup de base de datos
-docker exec sgpal-db pg_dump -U sgpal_prod_user sgpal_prod > /opt/stacks/sgpal-stack/data/backups/backup_$(date +%Y%m%d_%H%M%S).sql
-
-# Backup de archivos media
-tar -czf /opt/stacks/sgpal-stack/data/backups/media_$(date +%Y%m%d_%H%M%S).tar.gz /opt/stacks/sgpal-stack/data/media/
-```
-
-### Logs
-```bash
-# Ver logs de la aplicación
+# Logs de la aplicación
 docker logs -f sgpal-web
 
-# Ver logs de base de datos
+# Logs de la base de datos
 docker logs -f sgpal-db
 ```
 
-## 🔧 Paso 9: Troubleshooting
+### Problemas Comunes
+- **Contenedor no inicia**: Verifica las variables en `.env`
+- **Error de BD**: Revisa que PostgreSQL esté corriendo con `docker ps`
+- **Puerto ocupado**: Cambia el puerto 8000 en `docker-compose.dockge.yml`
 
-### Problema: Contenedor no inicia
-```bash
-# Ver logs detallados
-docker-compose -f docker-compose.dockge.yml logs
+## 🎯 Acceso al Sistema
 
-# Verificar variables de entorno
-docker exec sgpal-web env | grep -E "(SQL|DJANGO|SECRET)"
-```
-
-### Problema: Error de conexión a BD
-```bash
-# Verificar conectividad
-docker exec sgpal-web nc -zv sgpal-db 5432
-
-# Verificar credenciales
-docker exec sgpal-db psql -U sgpal_prod_user -d sgpal_prod -c "SELECT version();"
-```
-
-### Problema: Error 502 Bad Gateway
-```bash
-# Verificar que la app esté corriendo
-docker exec sgpal-web curl -f http://localhost:8000/health/
-
-# Verificar Nginx configuración
-sudo nginx -t
-```
-
-## 🎯 URLs de Acceso
+Después del despliegue y configuración de CloudPanel, accede a:
 
 - **Aplicación**: `https://tramites.losalercespuertomontt.cl`
-- **Admin Django**: `https://tramites.losalercespuertomontt.cl/admin/`
+- **Panel Admin**: `https://tramites.losalercespuertomontt.cl/admin/`
 - **Health Check**: `https://tramites.losalercespuertomontt.cl/health/`
 
-## 📞 Usuario Administrador
+## 📞 Primer Inicio de Sesión
 
-- **Email**: El que configuraste en `createsuperuser`
-- **Password**: El que configuraste en `createsuperuser`
-
-## 🚀 Próximos Pasos
-
-1. **Configurar usuarios reales** en el sistema
-2. **Importar datos históricos** si los tienes
-3. **Configurar backups automáticos**
-4. **Monitoreo avanzado** con Grafana/Prometheus
-5. **CDN** para archivos estáticos si es necesario
+1. Ve a `https://tramites.losalercespuertomontt.cl/admin/`
+2. Usa las credenciales del superusuario que creaste
 
 ---
 
 **¡Tu SGPAL está listo para producción!** 🎉
+
+El sistema está corriendo de forma segura con SSL automático gracias a CloudPanel y CloudFlare.

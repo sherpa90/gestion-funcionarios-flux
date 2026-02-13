@@ -1,12 +1,25 @@
 #!/bin/bash
+set -e
+
+# Default to sgpal-db if SQL_HOST not set
+SQL_HOST=${SQL_HOST:-sgpal-db}
+SQL_PORT=${SQL_PORT:-5432}
+
 # Wait for db
-while ! nc -z db 5432; do
-  echo "Waiting for database..."
+echo "Waiting for database at $SQL_HOST:$SQL_PORT..."
+while ! nc -z $SQL_HOST $SQL_PORT; do
   sleep 1
 done
+echo "Database started"
 
 # Run migrations
-python manage.py migrate
+python manage.py migrate --noinput
 
 # Start gunicorn
-exec gunicorn config.wsgi:application --bind 0.0.0.0:8000
+# Ensure gunicorn is installed or fallback/fail early
+if ! command -v gunicorn &> /dev/null; then
+    echo "gunicorn could not be found, installing..."
+    pip install gunicorn
+fi
+
+exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3

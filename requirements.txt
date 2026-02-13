@@ -10,11 +10,12 @@ openpyxl>=3.1
 xlrd>=2.0.1
 pypdf>=3.17.0
 pdfplumber>=0.10.0
+django-redis>=5.4
 
 # Security
 django-axes>=6.0
 
 # Monitoring and Observability
 sentry-sdk>=1.40.0
-django-health-check>=3.18.0
+django-health-check[database,cache,storage]>=3.18.0,<4.0
 psutil>=5.9.0
