@@ -5,6 +5,7 @@ class LicenciaMedica(models.Model):
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='licencias')
     fecha_inicio = models.DateField()
     dias = models.PositiveIntegerField()
+    archivo = models.FileField(upload_to='licencias/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='licencias_creadas', help_text="Usuario que registró la licencia")
 

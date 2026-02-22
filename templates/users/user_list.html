@@ -1,49 +1,49 @@
 {% extends 'base.html' %}
+{% load l10n %}
 
-{% block page_title %}Gestión de Usuarios{% endblock %}
+{% block title %}Gestión de Usuarios - SGPAL{% endblock %}
+{% block page_title %}Administración de Usuarios{% endblock %}
 
 {% block content %}
-<div class="p-4 sm:p-6">
-    <div class="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+<div class="p-4 sm:p-6 space-y-8">
+    <!-- Header Section -->
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
         <div>
-            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Gestión de Usuarios</h2>
-            <p class="text-gray-600 mt-2 text-sm sm:text-base">Administra los usuarios, roles y saldos de días administrativos</p>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Gestión de Usuarios</h2>
+            <p class="text-gray-500 mt-1 font-medium">Administra los usuarios, roles y saldos de días administrativos.
+            </p>
         </div>
-        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+        <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
             <a href="{% url 'bulk_import_users' %}"
-                class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200 touch-manipulation">
-                <i class="fas fa-file-excel mr-2"></i>
-                <span class="hidden sm:inline">Importar Excel</span>
-                <span class="sm:hidden">Importar</span>
+                class="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-green-700 shadow-lg shadow-green-100 transition-all">
+                <i class="fas fa-file-excel mr-2"></i> Importar Excel
             </a>
             <a href="{% url 'user_create' %}"
-                class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 touch-manipulation">
-                <i class="fas fa-user-plus mr-2"></i>
-                <span class="hidden sm:inline">Crear Usuario</span>
-                <span class="sm:hidden">Crear</span>
+                class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all">
+                <i class="fas fa-user-plus mr-2"></i> Crear Usuario
             </a>
         </div>
     </div>
 
-    <!-- Buscador -->
-    <div class="mb-4 sm:mb-6 bg-white rounded-lg shadow-sm p-4">
-        <form method="get" class="flex flex-col sm:flex-row gap-2">
+    <!-- Search Section -->
+    <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50">
+        <form method="get" class="flex flex-col md:flex-row gap-4">
             <div class="flex-1 relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i class="fas fa-search text-gray-400"></i>
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                    <i class="fas fa-search"></i>
                 </div>
                 <input type="text" name="search" value="{{ request.GET.search }}"
-                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    placeholder="Buscar por nombre, RUN o correo...">
+                    placeholder="Buscar por nombre, RUN o correo..."
+                    class="w-full pl-11 pr-4 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 focus:ring-4 focus:ring-blue-50 transition-all outline-none">
             </div>
             <div class="flex gap-2">
                 <button type="submit"
-                    class="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors touch-manipulation">
+                    class="flex-1 md:flex-none px-8 py-4 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-gray-800 transition-all">
                     Buscar
                 </button>
                 {% if request.GET.search %}
                 <a href="{% url 'user_list' %}"
-                    class="flex-1 sm:flex-none px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors text-center touch-manipulation">
+                    class="px-6 py-4 bg-gray-100 text-gray-500 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-gray-200 transition-all flex items-center justify-center">
                     Limpiar
                 </a>
                 {% endif %}
@@ -52,197 +52,158 @@
     </div>
 
     {% if bulk_passwords %}
-    <div class="mb-8 bg-green-50 border-l-4 border-green-500 p-6 rounded-r-lg shadow-sm">
-        <div class="flex justify-between items-start">
+    <!-- Bulk Success Alert -->
+    <div
+        class="bg-green-50 rounded-[2rem] border-2 border-green-100 p-6 md:p-8 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div>
-                <h3 class="text-lg font-semibold text-green-900 mb-2">
-                    <i class="fas fa-check-circle mr-2"></i>
-                    Usuarios Importados Exitosamente
+                <h3 class="text-xl font-black text-green-900 flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-100">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    Importación Exitosa
                 </h3>
-                <p class="text-green-800 mb-4">
-                    Se han generado las siguientes contraseñas temporales.
-                    <strong>Por favor, cópialas ahora ya que no se volverán a mostrar.</strong>
-                </p>
+                <p class="text-green-700 font-medium mt-2">Se han generado las siguientes contraseñas temporales.
+                    Cópialas ahora.</p>
             </div>
-            <button onclick="this.parentElement.parentElement.style.display='none'"
-                class="text-green-700 hover:text-green-900">
-                <i class="fas fa-times"></i>
+            <button onclick="window.print()"
+                class="text-xs font-black uppercase tracking-widest text-green-600 hover:text-green-700 bg-white px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all">
+                <i class="fas fa-print mr-2"></i> Imprimir lista
             </button>
         </div>
 
-        <div class="bg-white rounded-lg border border-green-200 overflow-hidden">
-            <table class="min-w-full divide-y divide-green-100">
-                <thead class="bg-green-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-green-800 uppercase">RUN</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-green-800 uppercase">Contraseña Generada
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-green-100">
-                    {% for run, password in bulk_passwords.items %}
-                    <tr>
-                        <td class="px-6 py-3 text-sm font-medium text-gray-900">{{ run }}</td>
-                        <td class="px-6 py-3 text-sm font-mono text-gray-600 select-all bg-gray-50">{{ password }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div class="mt-4 text-right">
-            <button onclick="window.print()" class="text-sm text-green-700 hover:text-green-900 font-medium underline">
-                <i class="fas fa-print mr-1"></i> Imprimir lista
-            </button>
+        <div class="bg-white rounded-3xl shadow-sm border border-green-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-green-50/50 border-b border-green-100">
+                        <tr>
+                            <th
+                                class="px-6 py-4 text-left text-[10px] font-black text-green-800 uppercase tracking-widest">
+                                RUN</th>
+                            <th
+                                class="px-6 py-4 text-left text-[10px] font-black text-green-800 uppercase tracking-widest">
+                                Contraseña Temporal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-green-50">
+                        {% for run, password in bulk_passwords.items %}
+                        <tr class="hover:bg-green-50/30 transition-colors">
+                            <td class="px-6 py-4 text-sm font-bold text-gray-900">{{ run }}</td>
+                            <td class="px-6 py-4">
+                                <code
+                                    class="bg-gray-50 px-3 py-1.5 rounded-lg text-sm font-mono text-green-700 select-all border border-gray-100">{{ password }}</code>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
     {% endif %}
 
-    <!-- Lista de Usuarios -->
-    <div class="bg-white rounded-lg sm:rounded-xl shadow-sm overflow-hidden mt-4 sm:mt-6">
-        <!-- Desktop Table View (hidden on mobile) -->
-        <div class="hidden md:block overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
-                            onclick="window.location.href='?sort={% if current_sort == 'name' %}name_desc{% else %}name{% endif %}'">
-                            <div class="flex items-center space-x-1">
-                                <span>Usuario</span>
-                                <span class="text-gray-400">
-                                    {% if current_sort == 'name' %}
-                                    <i class="fas fa-sort-alpha-down text-blue-600"></i>
-                                    {% elif current_sort == 'name_desc' %}
-                                    <i class="fas fa-sort-alpha-up text-blue-600"></i>
-                                    {% else %}
-                                    <i class="fas fa-sort"></i>
-                                    {% endif %}
-                                </span>
-                            </div>
-                        </th>
-                        <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
-                            onclick="window.location.href='?sort={% if current_sort == 'role' %}role_desc{% else %}role{% endif %}'">
-                            <div class="flex items-center space-x-1">
-                                <span>Rol</span>
-                                <span class="text-gray-400">
-                                    {% if current_sort == 'role' %}
-                                    <i class="fas fa-sort-amount-down text-blue-600"></i>
-                                    {% elif current_sort == 'role_desc' %}
-                                    <i class="fas fa-sort-amount-up text-blue-600"></i>
-                                    {% else %}
-                                    <i class="fas fa-sort"></i>
-                                    {% endif %}
-                                </span>
-                            </div>
-                        </th>
-                        <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
-                            onclick="window.location.href='?sort={% if current_sort == 'tipo' %}tipo_desc{% else %}tipo{% endif %}'">
-                            <div class="flex items-center space-x-1">
-                                <span>Tipo</span>
-                                <span class="text-gray-400">
-                                    {% if current_sort == 'tipo' %}
-                                    <i class="fas fa-sort-amount-down text-blue-600"></i>
-                                    {% elif current_sort == 'tipo_desc' %}
-                                    <i class="fas fa-sort-amount-up text-blue-600"></i>
-                                    {% else %}
-                                    <i class="fas fa-sort"></i>
-                                    {% endif %}
-                                </span>
-                            </div>
-                        </th>
-                        <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
-                            onclick="window.location.href='?sort={% if current_sort == 'dias' %}dias_asc{% else %}dias{% endif %}'">
-                            <div class="flex items-center space-x-1">
-                                <span>Días Disponibles</span>
-                                <span class="text-gray-400">
-                                    {% if current_sort == 'dias' %}
-                                    <i class="fas fa-sort-numeric-down text-blue-600"></i>
-                                    {% elif current_sort == 'dias_asc' %}
-                                    <i class="fas fa-sort-numeric-up text-blue-600"></i>
-                                    {% else %}
-                                    <i class="fas fa-sort"></i>
-                                    {% endif %}
-                                </span>
-                            </div>
-                        </th>
-                        <th scope="col"
-                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Acciones
-                        </th>
+    <!-- Directory Content -->
+    <div class="space-y-4">
+        <!-- Desktop Table (Hidden on small screens) -->
+        <div class="hidden lg:block bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 pb-20">
+            <table class="w-full">
+                <thead>
+                    <tr
+                        class="bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        <th class="px-8 py-5 text-left">Usuario</th>
+                        <th class="px-8 py-5 text-left">Rol / Tipo</th>
+                        <th class="px-8 py-5 text-left">Días Disp.</th>
+                        <th class="px-8 py-5 text-right">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-50">
                     {% for user in users %}
-                    <tr class="hover:bg-gray-50 transition-colors duration-150">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
+                    <tr class="hover:bg-gray-50/80 transition-all group">
+                        <td class="px-8 py-5">
+                            <div class="flex items-center gap-4">
                                 <div
-                                    class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-                                    {{ user.first_name|first|upper }}
+                                    class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex-shrink-0 flex items-center justify-center font-black text-lg shadow-lg shadow-blue-100">
+                                    {{ user.first_name.0 }}{{ user.last_name.0 }}
                                 </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ user.get_full_name }}</div>
-                                    <div class="text-xs text-gray-500">{{ user.run }}</div>
-                                    <div class="text-xs text-gray-400">{{ user.email }}</div>
+                                <div>
+                                    <h3
+                                        class="text-sm font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
+                                        {{ user.get_full_name }}</h3>
+                                    <p class="text-xs text-gray-400 font-medium mt-0.5">{{ user.run }} | {{ user.email
+                                        }}</p>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                {% if user.role == 'DIRECTOR' %}bg-purple-100 text-purple-800
-                                {% elif user.role == 'SECRETARIA' %}bg-pink-100 text-pink-800
-                                {% elif user.role == 'ADMIN' %}bg-gray-100 text-gray-800
-                                {% else %}bg-blue-100 text-blue-800{% endif %}">
-                                {{ user.get_role_display }}
-                            </span>
+                        <td class="px-8 py-5">
+                            <div class="flex flex-col gap-1.5">
+                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest inline-flex w-fit
+                                    {% if user.role == 'DIRECTOR' %}bg-purple-100 text-purple-700
+                                    {% elif user.role == 'SECRETARIA' %}bg-pink-100 text-pink-700
+                                    {% elif user.role == 'ADMIN' %}bg-gray-100 text-gray-700
+                                    {% else %}bg-blue-100 text-blue-700{% endif %}">
+                                    {{ user.get_role_display }}
+                                </span>
+                                {% if user.tipo_funcionario %}
+                                <span class="px-1 text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                    {{ user.get_tipo_funcionario_display }}
+                                </span>
+                                {% endif %}
+                            </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                {% if user.tipo_funcionario == 'DOCENTE' %}bg-green-100 text-green-800
-                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                                {{ user.get_tipo_funcionario_display }}
-                            </span>
+                        <td class="px-8 py-5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-full min-w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full 
+                                        {% if user.dias_disponibles > 4 %}bg-green-500
+                                        {% elif user.dias_disponibles >= 2 %}bg-amber-500
+                                        {% else %}bg-red-500{% endif %}"
+                                        style="width:{{ user.dias_disponibles_pct }}%"></div>
+                                </div>
+                                <span class="text-xs font-black text-gray-700">{{ user.dias_disponibles }}</span>
+                            </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {% if user.dias_disponibles > 4 %}
-                            <span
-                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                {{ user.dias_disponibles }} días
-                            </span>
-                            {% elif user.dias_disponibles >= 2 %}
-                            <span
-                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                {{ user.dias_disponibles }} días
-                            </span>
-                            {% else %}
-                            <span
-                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                {{ user.dias_disponibles }} días
-                            </span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex justify-end space-x-3">
-                                <a href="{% url 'user_edit' user.pk %}"
-                                    class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-md transition-colors duration-200"
-                                    title="Editar">
-                                    <i class="fas fa-edit text-lg"></i>
-                                </a>
-                                <a href="{% url 'user_delete' user.pk %}"
-                                    class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-md transition-colors duration-200"
-                                    title="Eliminar">
-                                    <i class="fas fa-trash-alt text-lg"></i>
-                                </a>
+                        <td class="px-8 py-5">
+                            <div class="flex justify-end gap-2">
+                                <div class="relative group/menu">
+                                    <button
+                                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <div
+                                        class="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-[100] p-2 space-y-1">
+                                        <a href="{% url 'user_edit' user.pk %}"
+                                            class="flex items-center gap-3 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all">
+                                            <i class="fas fa-edit w-4"></i> Editar
+                                        </a>
+                                        <a href="{% url 'reset_user_password' user.pk %}"
+                                            class="flex items-center gap-3 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-50 rounded-xl transition-all">
+                                            <i class="fas fa-key w-4"></i> Reset Clave
+                                        </a>
+                                        <a href="{% url 'admin_change_password' user.pk %}"
+                                            class="flex items-center gap-3 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-green-600 hover:bg-green-50 rounded-xl transition-all">
+                                            <i class="fas fa-lock w-4"></i> Cambiar Clave
+                                        </a>
+                                        {% if request.user.role == 'ADMIN' %}
+                                        <hr class="border-gray-50 my-1">
+                                        <a href="{% url 'user_delete' user.pk %}"
+                                            class="flex items-center gap-3 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-50 rounded-xl transition-all">
+                                            <i class="fas fa-trash-alt w-4"></i> Eliminar
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                            No hay usuarios registrados
+                        <td colspan="4" class="px-8 py-20 text-center">
+                            <div
+                                class="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-gray-200">
+                                <i class="fas fa-users-slash fa-3x"></i>
+                            </div>
+                            <h3 class="text-xl font-black text-gray-900 tracking-tight">No se encontraron usuarios</h3>
                         </td>
                     </tr>
                     {% endfor %}
@@ -250,83 +211,115 @@
             </table>
         </div>
 
-        <!-- Mobile Card View (hidden on desktop) -->
-        <div class="md:hidden space-y-3 p-4">
+        <!-- Mobile & Tablet View (Cards) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:hidden gap-6">
             {% for user in users %}
-            <div class="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
-                <!-- Card Header -->
-                <div class="px-4 py-3 bg-white border-b border-gray-200">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-                            {{ user.first_name|first|upper }}
-                        </div>
-                        <div class="ml-3 flex-1 min-w-0">
-                            <div class="text-sm font-medium text-gray-900 truncate">{{ user.get_full_name }}</div>
-                            <div class="text-xs text-gray-500">{{ user.run }}</div>
-                            <div class="text-xs text-gray-400 truncate">{{ user.email }}</div>
-                        </div>
+            <div
+                class="bg-white rounded-[2rem] border border-gray-100 shadow-lg shadow-blue-50/50 p-6 flex flex-col gap-6 group hover:border-blue-100 transition-all mb-12 last:mb-20">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex-shrink-0 flex items-center justify-center font-black text-xl shadow-lg shadow-blue-100">
+                        {{ user.first_name.0 }}{{ user.last_name.0 }}
+                    </div>
+                    <div class="min-w-0">
+                        <h3
+                            class="text-lg font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors truncate">
+                            {{ user.get_full_name }}</h3>
+                        <p class="text-xs text-gray-400 font-bold mt-1">{{ user.run }}</p>
                     </div>
                 </div>
 
-                <!-- Card Content -->
-                <div class="px-4 py-3 space-y-3">
-                    <!-- Rol y Tipo -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                {% if user.role == 'DIRECTOR' %}bg-purple-100 text-purple-800
-                                {% elif user.role == 'SECRETARIA' %}bg-pink-100 text-pink-800
-                                {% elif user.role == 'ADMIN' %}bg-gray-100 text-gray-800
-                                {% else %}bg-blue-100 text-blue-800{% endif %}">
-                                {{ user.get_role_display }}
-                            </span>
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                {% if user.tipo_funcionario == 'DOCENTE' %}bg-green-100 text-green-800
-                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                                {{ user.get_tipo_funcionario_display }}
-                            </span>
+                <div class="space-y-4">
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest
+                            {% if user.role == 'DIRECTOR' %}bg-purple-100 text-purple-700
+                            {% elif user.role == 'SECRETARIA' %}bg-pink-100 text-pink-700
+                            {% elif user.role == 'ADMIN' %}bg-gray-100 text-gray-700
+                            {% else %}bg-blue-100 text-blue-700{% endif %}">
+                            {{ user.get_role_display }}
+                        </span>
+                        {% if user.tipo_funcionario %}
+                        <span
+                            class="px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest bg-gray-50 text-gray-500 border border-gray-100">
+                            {{ user.get_tipo_funcionario_display }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <div
+                            class="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-400">
+                            <span>Días Administrativos</span>
+                            <span class="text-gray-900">{{ user.dias_disponibles }} Disp.</span>
                         </div>
-                        <div class="text-right">
-                            {% if user.dias_disponibles > 4 %}
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                {{ user.dias_disponibles }} días
-                            </span>
-                            {% elif user.dias_disponibles >= 2 %}
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                {{ user.dias_disponibles }} días
-                            </span>
-                            {% else %}
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                {{ user.dias_disponibles }} días
-                            </span>
-                            {% endif %}
+                        <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full 
+                                {% if user.dias_disponibles > 4 %}bg-green-500
+                                {% elif user.dias_disponibles >= 2 %}bg-amber-500
+                                {% else %}bg-red-500{% endif %}" style="width:{{ user.dias_disponibles_pct }}%">
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Card Actions -->
-                <div class="px-4 py-3 bg-white border-t border-gray-200">
-                    <div class="flex space-x-3">
-                        <a href="{% url 'user_edit' user.pk %}"
-                            class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 touch-manipulation">
-                            <i class="fas fa-edit mr-2"></i>
-                            Editar
+            <div class="grid grid-cols-2 gap-2 mt-auto">
+                <a href="{% url 'user_edit' user.pk %}"
+                    class="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-600 hover:text-white transition-all">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+                <div class="relative group/mobile-menu">
+                    <button
+                        class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 text-gray-400 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-gray-800 hover:text-white transition-all">
+                        Más <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div
+                        class="absolute right-0 bottom-full mb-2 w-full bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover/mobile-menu:opacity-100 group-hover/mobile-menu:visible transition-all z-50 p-2 space-y-1">
+                        <a href="{% url 'reset_user_password' user.pk %}"
+                            class="flex items-center gap-3 px-3 py-3 text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-50 rounded-xl">
+                            <i class="fas fa-key"></i> Reset Clave
                         </a>
+                        <a href="{% url 'admin_change_password' user.pk %}"
+                            class="flex items-center gap-3 px-3 py-3 text-[10px] font-black uppercase tracking-widest text-green-600 hover:bg-green-50 rounded-xl">
+                            <i class="fas fa-lock"></i> Cambiar Clave
+                        </a>
+                        {% if request.user.role == 'ADMIN' %}
+                        <hr class="border-gray-50 my-1">
                         <a href="{% url 'user_delete' user.pk %}"
-                            class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 touch-manipulation">
-                            <i class="fas fa-trash-alt mr-2"></i>
-                            Eliminar
+                            class="flex items-center gap-3 px-3 py-3 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-50 rounded-xl">
+                            <i class="fas fa-trash-alt"></i> Eliminar
                         </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-            {% empty %}
-            <div class="text-center py-8">
-                <i class="fas fa-users text-gray-300 text-4xl mb-4"></i>
-                <p class="text-gray-500">No hay usuarios registrados</p>
-            </div>
-            {% endfor %}
         </div>
+        {% empty %}
+        <div class="py-20 text-center col-span-full">
+            <i class="fas fa-users-slash fa-3x text-gray-200 mb-4"></i>
+            <h3 class="text-lg font-black text-gray-900">No se encontraron usuarios</h3>
+        </div>
+        {% endfor %}
     </div>
 </div>
+</div>
+
+<style>
+    /* Add progress bar multiplication workaround if needed or use custom classes */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-in {
+        animation: fadeIn 0.4s ease-out forwards;
+    }
+</style>
 {% endblock %}

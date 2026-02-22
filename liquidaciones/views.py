@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.http import HttpResponse
+from django.utils.html import escape
 from .forms import CargaLiquidacionesForm
 from .models import Liquidacion
 from .services import PayrollService, PayrollValidationService
@@ -131,7 +132,9 @@ class CargaLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, FormView):
 
             if errors:
                 logger.warning(f"Processing errors: {len(errors)}")
-                messages.warning(self.request, f"Problemas encontrados: <br>" + "<br>".join(errors[:5]))
+                # IMPORTANT: Escape HTML to prevent XSS attacks
+                errors_escaped = ['<br>'.join([escape(str(e)) for e in error.split('<br>')]) for error in errors[:5]]
+                messages.warning(self.request, f"Problemas encontrados: <br>" + "<br>".join(errors_escaped))
                 if len(errors) > 5:
                     messages.warning(self.request, f"... y {len(errors) - 5} problemas más.")
 

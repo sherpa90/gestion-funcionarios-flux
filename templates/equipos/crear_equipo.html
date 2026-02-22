@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Equipo - SGPAL{% endblock %}
+{% block page_title %}Nuevo Equipo{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 lg:p-10">
+    <div class="max-w-4xl mx-auto">
+        <!-- Breadcrumb / Back Link -->
+        <a href="{% url 'lista_equipos' %}"
+            class="inline-flex items-center text-sm font-bold text-gray-400 hover:text-blue-600 mb-8 transition-colors group">
+            <i class="fas fa-arrow-left mr-2 transition-transform group-hover:-translate-x-1"></i>
+            Regresar al Panel de Inventario
+        </a>
+
+        <div class="bg-white rounded-[2rem] shadow-2xl shadow-blue-50/50 border border-gray-100 overflow-hidden">
+            <!-- Header -->
+            <div class="px-8 py-6 border-b border-gray-50 bg-gray-50/30 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center mr-4 shadow-lg shadow-blue-100">
+                        <i class="fas fa-plus fa-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-gray-900 leading-tight">Registrar Nueva Unidad</h3>
+                        <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Completa los detalles
+                            técnicos del activo</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form method="post" class="p-8 space-y-10">
+                {% csrf_token %}
+
+                <!-- Main Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                    <!-- Tipo -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Tipo de
+                            Hardware <span class="text-red-500">*</span></label>
+                        <select name="tipo"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5"
+                            required>
+                            <option value="">Seleccionar Categoría...</option>
+                            {% for value, label in tipos %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Fecha -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Fecha de
+                            Adquisición</label>
+                        <input type="date" name="fecha_adquisicion"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5">
+                    </div>
+
+                    <!-- Marca -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Fabricante
+                            / Marca <span class="text-red-500">*</span></label>
+                        <input type="text" name="marca"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 placeholder-gray-300 transition-all font-bold py-3.5"
+                            required placeholder="Ej: Apple, Lenovo, Dell...">
+                    </div>
+
+                    <!-- Modelo -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Modelo
+                            Específico <span class="text-red-500">*</span></label>
+                        <input type="text" name="modelo"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 placeholder-gray-300 transition-all font-bold py-3.5"
+                            required placeholder="Ej: MacBook Pro M2">
+                    </div>
+
+                    <!-- N° Serie -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Número de
+                            Serie (S/N) <span class="text-red-500">*</span></label>
+                        <input type="text" name="numero_serie"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 placeholder-gray-300 transition-all font-mono py-3.5 font-bold uppercase"
+                            required placeholder="Ej: C02XJ4... ">
+                    </div>
+
+                    <!-- N° Inventario -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">ID de
+                            Inventario Interno <span class="text-red-500">*</span></label>
+                        <input type="text" name="numero_inventario"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 placeholder-gray-300 transition-all font-mono py-3.5 text-blue-700 font-bold uppercase"
+                            required placeholder="Ej: ACT-001">
+                    </div>
+                </div>
+
+                <!-- Assignment Section (Enhanced) -->
+                <div class="bg-blue-50/50 rounded-3xl p-6 border border-blue-100/50">
+                    <div class="flex items-center mb-6">
+                        <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                            <i class="fas fa-link text-xs"></i>
+                        </div>
+                        <h4 class="text-sm font-black text-blue-900 tracking-tight">Vinculación Inmediata de Funcionario
+                        </h4>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-1 gap-6">
+                        <div class="space-y-3">
+                            <label
+                                class="block text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">Asignar
+                                Responsable (Opcional)</label>
+                            <select name="funcionario" id="id_funcionario" class="w-full">
+                                <option value="">— Sin Vincular —</option>
+                                {% for func in funcionarios %}
+                                <option value="{{ func.id }}">{{ func.get_full_name }} ({{ func.run }})</option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-[10px] text-blue-400 font-bold italic-none mt-2 flex items-center">
+                                <i class="fas fa-info-circle mr-1 opacity-50"></i>
+                                Si vinculas a un funcionario, el equipo pasará automáticamente al estado "Asignado".
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="space-y-3">
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Observaciones /
+                        Notas de Estado</label>
+                    <textarea name="observaciones" rows="3"
+                        class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 placeholder-gray-300 transition-all font-bold py-3.5"
+                        placeholder="Detalles sobre ralladuras, entrega de accesorios, etc..."></textarea>
+                </div>
+
+                <!-- Footer / Buttons -->
+                <div class="flex items-center justify-end gap-4 pt-6 mt-6 border-t border-gray-50">
+                    <a href="{% url 'lista_equipos' %}"
+                        class="px-8 py-3 text-sm font-black text-gray-400 hover:text-gray-700 transition-all">
+                        Descartar
+                    </a>
+                    <button type="submit"
+                        class="px-10 py-3.5 bg-gray-900 text-white text-sm font-black rounded-2xl shadow-xl shadow-gray-200 hover:bg-black hover:scale-[1.02] active:scale-95 transition-all">
+                        <i class="fas fa-save mr-2"></i> Crear y Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#id_funcionario').select2({
+            placeholder: "Buscar funcionario por nombre o RUN...",
+            allowClear: true,
+            width: '100%'
+        });
+    });
+</script>
+{% endblock %}

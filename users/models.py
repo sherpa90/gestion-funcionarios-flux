@@ -36,6 +36,14 @@ class CustomUser(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['run', 'first_name', 'last_name']
 
+    @property
+    def dias_disponibles_pct(self):
+        """Calcula el porcentaje de días disponibles (máximo 6.0)"""
+        try:
+            return min(round((self.dias_disponibles / 6.0) * 100, 1), 100)
+        except (TypeError, ZeroDivisionError):
+            return 0
+
     def save(self, *args, **kwargs):
         # Normalizar el RUT antes de guardar (con puntos para formato chileno)
         if self.run:

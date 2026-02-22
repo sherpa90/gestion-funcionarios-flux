@@ -15,10 +15,25 @@ class SolicitudForm(forms.ModelForm):
         model = SolicitudPermiso
         fields = ['fecha_inicio', 'dias_solicitados', 'jornada', 'observacion', 'archivo_justificacion']
         widgets = {
-            'fecha_inicio': forms.DateInput(attrs={'type': 'date'}),
-            'dias_solicitados': forms.Select(attrs={'id': 'id_dias_solicitados'}),
-            'observacion': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Motivo o justificación de tu solicitud (opcional)'}),
-            'archivo_justificacion': forms.FileInput(attrs={'accept': '.pdf,.jpg,.jpeg,.png'}),
+            'fecha_inicio': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all uppercase tracking-widest'
+            }),
+            'dias_solicitados': forms.Select(attrs={
+                'id': 'id_dias_solicitados',
+                'class': 'w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all uppercase tracking-widest'
+            }),
+            'observacion': forms.Textarea(attrs={
+                'rows': 3,
+                'placeholder': '¿POR QUÉ NECESITAS ESTOS DÍAS? (OPCIONAL)',
+                'class': 'w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all uppercase tracking-widest resize-none'
+            }),
+            'archivo_justificacion': forms.FileInput(attrs={
+                'class': 'hidden',
+                'id': 'justificacion-file-input',
+                'onchange': 'handleFileSelect(this)',
+                'accept': '.pdf,.jpg,.jpeg,.png'
+            }),
         }
         labels = {
             'fecha_inicio': 'Fecha de Inicio',
@@ -88,7 +103,9 @@ class SolicitudBypassForm(forms.ModelForm):
 
     usuario = forms.ModelChoiceField(
         queryset=CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']).order_by('last_name', 'first_name'),
-        widget=forms.Select(attrs={'class': 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'}),
+        widget=forms.Select(attrs={
+            'class': 'w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all uppercase tracking-widest'
+        }),
         label="Usuario"
     )
 
@@ -96,9 +113,19 @@ class SolicitudBypassForm(forms.ModelForm):
         model = SolicitudPermiso
         fields = ['usuario', 'fecha_inicio', 'dias_solicitados', 'jornada', 'observacion']
         widgets = {
-            'fecha_inicio': forms.DateInput(attrs={'type': 'date', 'class': 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'}),
-            'dias_solicitados': forms.Select(attrs={'class': 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm', 'id': 'id_dias_solicitados'}),
-            'observacion': forms.Textarea(attrs={'rows': 3, 'class': 'mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm', 'placeholder': 'Motivo o comentarios (opcional)'}),
+            'fecha_inicio': forms.DateInput(attrs={
+                'type': 'date', 
+                'class': 'w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all uppercase tracking-widest'
+            }),
+            'dias_solicitados': forms.Select(attrs={
+                'class': 'w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all uppercase tracking-widest', 
+                'id': 'id_dias_solicitados'
+            }),
+            'observacion': forms.Textarea(attrs={
+                'rows': 3, 
+                'class': 'w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all uppercase tracking-widest resize-none', 
+                'placeholder': 'MOTIVO O COMENTARIOS (OPCIONAL)'
+            }),
         }
 
     def clean(self):

@@ -26,8 +26,7 @@
                         class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         <option value="">Todos los usuarios</option>
                         {% for u in usuarios %}
-                        <option value="{{ u.id }}" {% if filtros.usuario_id==u.id|stringformat:"s" %}selected{% endif
-                            %}>
+                        <option value="{{ u.id }}" {% if filtros.usuario_id == u.id|stringformat:"s" %}selected{% endif %}>
                             {{ u.run }} - {{ u.get_full_name }}
                         </option>
                         {% endfor %}

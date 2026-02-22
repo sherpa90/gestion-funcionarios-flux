@@ -29,15 +29,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-$61nmgqyiaol^(u+s1-7!_$xc1$q72ngu%b%gs$b*8idbg*+=j')
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', '1').lower() in ('true', '1', 'yes', 'on')
+# Default to False for security - must explicitly set DEBUG=True in development
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes', 'on')
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get('SECRET_KEY')
+# Allow fallback only in DEBUG mode (for local development and Docker builds)
+# In production (DEBUG=False), SECRET_KEY MUST be set
+if not SECRET_KEY:
+    if DEBUG:
+        # Fallback for local development only
+        SECRET_KEY = 'dev-secret-key-for-local-development-only-change-in-production'
+    else:
+        raise ValueError(
+            "SECRET_KEY environment variable is not set. "
+            "For production, generate a secure key: python -c 'import secrets; print(secrets.token_hex(50))'"
+        )
 
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,[::1],tramites.losalercespuertomontt.cl').split(',')]
 
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000').split(',')]
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
 
 
 # Application definition
@@ -59,9 +71,11 @@ INSTALLED_APPS = [
     'admin_dashboard',
     'liquidaciones',
     'asistencia',
+    'equipos',
+    'catalogos',  # Catálogos normalizados del sistema
 
     # Security
-    'axes',
+    # 'axes',
 
     # Health checks and monitoring
     'health_check',
@@ -76,8 +90,21 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'axes.middleware.AxesMiddleware',
+    # 'axes.middleware.AxesMiddleware',
 ]
+
+# Content Security Policy - OWASP A01:2021 Broken Access Control
+# Only enable in production with proper testing
+if not DEBUG:
+    SECURE_CONTENT_SECURITY_POLICY = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://code.jquery.com; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data: blob:; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none';"
+    )
 
 ROOT_URLCONF = 'config.urls'
 
@@ -91,6 +118,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'equipos.context_processors.pending_failures_count',
             ],
         },
     },
@@ -161,7 +189,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTHENTICATION_BACKENDS = [
-    'axes.backends.AxesBackend',
     'core.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -173,16 +200,26 @@ LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 
 # Security settings
-SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_COOKIE_AGE = 28800  # 8 hours (workday) - increased from 1 hour for usability
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_SECURE = not DEBUG  # Secure in production
+SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = not DEBUG  # Redirect all HTTP requests to HTTPS in production
 SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0  # 1 year in prod
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
 SECURE_HSTS_PRELOAD = not DEBUG
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
+
+# File upload limits (security)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB max for any single file
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB max for file uploads
+
+# Allowed hosts - strict in production
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
+if DEBUG:
+    ALLOWED_HOSTS.extend(['localhost', '127.0.0.1', '[::1]', 'testserver'])
 
 # Email Configuration
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
@@ -216,8 +253,8 @@ if SENTRY_DSN:
         ],
         # Performance Monitoring
         traces_sample_rate=1.0 if DEBUG else 0.1,
-        # Release Health
-        send_default_pii=True,
+        # Security: Don't send PII in production
+        send_default_pii=False,
         # Environment
         environment='development' if DEBUG else 'production',
     )

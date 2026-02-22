@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ titulo }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #2563eb;
+            color: white;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .funcionario-header {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>{{ titulo }}</h1>
+    <p><strong>Fecha:</strong> {{ fecha|date:"d/m/Y H:i" }}</p>
+
+    {% for usuario_id, data in prestamos_por_usuario.items %}
+    <h3>{{ data.funcionario.first_name }} {{ data.funcionario.last_name }} ({{ data.funcionario.run }})</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Equipo</th>
+                <th>Tipo</th>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>N° Inventario</th>
+                <th>Fecha Asignación</th>
+                <th>Fecha Devolución</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for prestamo in data.prestamos %}
+            <tr>
+                <td>{{ prestamo.equipo }}</td>
+                <td>{{ prestamo.equipo.get_tipo_display }}</td>
+                <td>{{ prestamo.equipo.marca }}</td>
+                <td>{{ prestamo.equipo.modelo }}</td>
+                <td>{{ prestamo.equipo.numero_inventario }}</td>
+                <td>{{ prestamo.fecha_asignacion|date:"d/m/Y" }}</td>
+                <td>{{ prestamo.fecha_devolucion|date:"d/m/Y"|default:"-" }}</td>
+                <td>{% if prestamo.activo %}Asignado{% else %}Devuelto{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endfor %}
+
+    <div class="footer">
+        <p>SGPAL - Sistema de Gestión de Personal y Asistencia Laboral</p>
+    </div>
+</body>
+
+</html>

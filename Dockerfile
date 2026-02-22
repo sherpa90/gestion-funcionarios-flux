@@ -3,6 +3,16 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+# Set default environment variables for build
+ENV DEBUG=True
+ENV SECRET_KEY=dev-secret-key-for-docker-build-only
+ENV DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+ENV SQL_DATABASE=sgpal_db
+ENV SQL_USER=sgpal_user
+ENV SQL_PASSWORD=sgpal_password
+ENV SQL_HOST=localhost
+ENV SQL_PORT=5432
+
 WORKDIR /app
 
 # Install system dependencies for WeasyPrint and Postgres

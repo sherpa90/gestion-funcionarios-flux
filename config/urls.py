@@ -16,6 +16,7 @@ urlpatterns = [
     path('licencias/', include('licencias.urls')),
     path('reportes/', include('reportes.urls')),
     path('liquidaciones/', include('liquidaciones.urls')),
+    path('equipos/', include('equipos.urls')),
     path('usuarios/', include('users.urls')),
     path('dashboard/admin/', include('admin_dashboard.urls')),
     path('asistencia/', include('asistencia.urls')),

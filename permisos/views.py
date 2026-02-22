@@ -4,7 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, Sum
 from .models import SolicitudPermiso
 from .forms import SolicitudForm, SolicitudBypassForm
 from users.models import CustomUser
@@ -24,9 +24,16 @@ class SolicitudCreateView(LoginRequiredMixin, CreateView):
             form.instance.dias_solicitados
         )
 
-        # Validar saldo
-        if self.request.user.dias_disponibles < form.instance.dias_solicitados:
-            form.add_error(None, "Saldo insuficiente.")
+        # Validar saldo considerando solicitudes pendientes
+        solicitudes_pendientes = SolicitudPermiso.objects.filter(
+            usuario=self.request.user,
+            estado='PENDIENTE'
+        ).aggregate(total=Sum('dias_solicitados'))['total'] or 0.0
+        
+        saldo_real = self.request.user.dias_disponibles - solicitudes_pendientes
+
+        if saldo_real < form.instance.dias_solicitados:
+            form.add_error(None, f"Saldo insuficiente. Tienes {self.request.user.dias_disponibles} días disponibles, pero {solicitudes_pendientes} día(s) están en solicitudes pendientes de aprobación.")
             return self.form_invalid(form)
 
         # Auto-aprobar si el usuario es DIRECTOR
@@ -60,10 +67,17 @@ class SolicitudBypassView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             form.instance.dias_solicitados
         )
         
-        # Validar saldo
+        # Validar saldo considerando solicitudes pendientes
         usuario = form.instance.usuario
-        if usuario.dias_disponibles < form.instance.dias_solicitados:
-            form.add_error(None, f"El usuario {usuario.get_full_name()} no tiene saldo suficiente (disponible: {usuario.dias_disponibles}).")
+        solicitudes_pendientes = SolicitudPermiso.objects.filter(
+            usuario=usuario,
+            estado='PENDIENTE'
+        ).aggregate(total=Sum('dias_solicitados'))['total'] or 0.0
+        
+        saldo_real = usuario.dias_disponibles - solicitudes_pendientes
+
+        if saldo_real < form.instance.dias_solicitados:
+            form.add_error(None, f"El usuario {usuario.get_full_name()} no tiene saldo suficiente. Saldo: {usuario.dias_disponibles} días, Pendiente: {solicitudes_pendientes} días.")
             return self.form_invalid(form)
         
         # Marcar como PENDIENTE (requiere aprobación del Director)
@@ -141,6 +155,19 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
         return self.request.user.role in ['DIRECTOR', 'ADMIN', 'SECRETARIA']
 
     def post(self, request, pk, action):
+        # Validate pk is a valid integer
+        try:
+            pk = int(pk)
+        except (ValueError, TypeError):
+            messages.error(request, 'Solicitud inválida.')
+            return redirect('dashboard_director')
+        
+        # Validate action is a valid choice
+        valid_actions = ['approve', 'reject', 'cancel']
+        if action not in valid_actions:
+            messages.error(request, 'Acción inválida.')
+            return redirect('dashboard_director')
+            
         solicitud = get_object_or_404(SolicitudPermiso, pk=pk)
 
         if action == 'approve':

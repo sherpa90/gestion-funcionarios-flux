@@ -1,87 +1,275 @@
 {% extends 'base.html' %}
+{% load l10n %}
 
-{% block page_title %}Subir Licencia Médica{% endblock %}
+{% block title %}Subir Licencia - SGPAL{% endblock %}
+{% block page_title %}Nueva Licencia Médica{% endblock %}
+
+{% block extra_head %}
+<!-- Tom Select CSS -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<style>
+    .ts-control {
+        border: none !important;
+        padding: 1.25rem 1.25rem !important;
+        background-color: #f9fafb !important;
+        border-radius: 1rem !important;
+        font-size: 0.875rem !important;
+        font-weight: 900 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+    }
+
+    .ts-wrapper.single .ts-control {
+        background-image: none !important;
+    }
+
+    .ts-dropdown {
+        border-radius: 1rem !important;
+        border: 1px solid #f3f4f6 !important;
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1) !important;
+        padding: 0.5rem !important;
+    }
+
+    .ts-dropdown .active {
+        background-color: #eff6ff !important;
+        color: #2563eb !important;
+        border-radius: 0.5rem !important;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Header -->
-    <div class="mb-8 text-center">
-        <h2 class="text-3xl font-bold text-gray-900">Subir Licencia Médica</h2>
-        <p class="text-gray-600 mt-2">Registro de licencias médicas para funcionarios.</p>
+<div class="p-4 sm:p-6 space-y-8 max-w-4xl mx-auto">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                <i class="fas fa-file-medical text-blue-600"></i>
+                Registro de Licencia
+            </h2>
+            <p class="text-gray-500 mt-1 font-medium">Ingresa los datos para registrar una ausencia por motivos de
+                salud.</p>
+        </div>
+        <a href="{% url 'licencia_list' %}"
+            class="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-400 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-gray-50 border border-gray-100 shadow-sm transition-all text-center">
+            <i class="fas fa-arrow-left mr-2"></i> Volver al Listado
+        </a>
     </div>
 
-    <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl overflow-hidden border border-white/20">
-        <div class="p-8">
-            <form method="post" enctype="multipart/form-data" class="space-y-6">
-                {% csrf_token %}
+    <form method="post" enctype="multipart/form-data" class="space-y-8">
+        {% csrf_token %}
 
-                {% if form.non_field_errors %}
-                <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-md">
-                    <div class="flex">
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-red-800">Errores en el formulario</h3>
-                            <div class="mt-2 text-sm text-red-700">
-                                {{ form.non_field_errors }}
-                            </div>
+        {% if form.non_field_errors %}
+        <div class="p-5 bg-red-50 rounded-[2rem] border border-red-100 flex items-start gap-4 animate-in">
+            <div class="w-10 h-10 rounded-xl bg-red-500 text-white flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-black text-red-800 uppercase tracking-widest mb-1">Errores en el formulario</h3>
+                <div class="text-xs text-red-600 font-bold uppercase tracking-widest leading-relaxed">
+                    {{ form.non_field_errors }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Left Side: Data Input -->
+            <div class="space-y-6">
+                <!-- User Selection (Visible for Admins/Secretaries) -->
+                {% if user.role == 'SECRETARIA' or user.role == 'ADMIN' %}
+                <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 space-y-4">
+                    <label class="block text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                        Funcionario Responsable
+                    </label>
+                    <div class="relative">
+                        {{ form.usuario }}
+                        <div
+                            class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-300">
+                            <i class="fas fa-search"></i>
                         </div>
                     </div>
+                    {% if form.usuario.errors %}
+                    <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{ form.usuario.errors.0 }}
+                    </p>
+                    {% endif %}
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Busca por RUN o nombre
+                        completo.</p>
                 </div>
                 {% endif %}
 
-                <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-2">
-                    {% if user.role == 'SECRETARIA' or user.role == 'ADMIN' %}
-                    <div class="sm:col-span-2">
-                        <label for="{{ form.usuario.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
-                        {{ form.usuario }}
-                        {% if form.usuario.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.usuario.errors.0 }}</p>
-                        {% endif %}
-                        <p class="mt-1 text-xs text-gray-500">Selecciona el usuario al que pertenece esta licencia</p>
-                    </div>
-                    {% endif %}
-
-                    <div>
-                        <label for="{{ form.fecha_inicio.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700 mb-1">Fecha de Inicio</label>
+                <!-- Date and Duration -->
+                <div
+                    class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="space-y-3">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                            Fecha de Inicio
+                        </label>
                         {{ form.fecha_inicio }}
                         {% if form.fecha_inicio.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.fecha_inicio.errors.0 }}</p>
+                        <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{
+                            form.fecha_inicio.errors.0 }}</p>
                         {% endif %}
                     </div>
-
-                    <div>
-                        <label for="{{ form.dias.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700 mb-1">Días de Licencia</label>
+                    <div class="space-y-3">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                            Cantidad de Días
+                        </label>
                         {{ form.dias }}
                         {% if form.dias.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.dias.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <div class="sm:col-span-2">
-                        <label for="{{ form.archivo.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700 mb-1">Archivo Adjunto <span
-                                class="text-gray-400 font-normal">(Opcional)</span></label>
-                        {{ form.archivo }}
-                        {% if form.archivo.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.archivo.errors.0 }}</p>
+                        <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{ form.dias.errors.0 }}
+                        </p>
                         {% endif %}
                     </div>
                 </div>
+            </div>
 
-                <div class="flex items-center justify-end space-x-4 pt-4">
-                    <a href="{% url 'licencia_list' %}"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                        Cancelar
-                    </a>
-                    <button type="submit"
-                        class="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-0.5">
-                        Subir Licencia
-                    </button>
+            <!-- Right Side: File Upload -->
+            <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 flex flex-col">
+                <label class="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-6">
+                    Documento de Respaldo <span class="text-gray-300 ml-2">(Opcional)</span>
+                </label>
+
+                <div id="drop-zone"
+                    class="relative flex-grow border-4 border-dashed border-gray-50 rounded-[2rem] p-12 flex flex-col items-center justify-center text-center transition-all hover:bg-blue-50/30 group cursor-pointer"
+                    onclick="document.getElementById('licencia-file-input').click()">
+
+                    {{ form.archivo }}
+
+                    <div id="file-visual"
+                        class="w-20 h-20 rounded-3xl bg-gray-50 text-gray-300 flex items-center justify-center text-3xl mb-4 group-hover:bg-white group-hover:text-blue-500 group-hover:shadow-xl transition-all">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+
+                    <h4 id="file-label"
+                        class="text-sm font-black text-gray-400 group-hover:text-gray-600 transition-colors uppercase tracking-widest">
+                        Arrastra o haz clic para subir
+                    </h4>
+                    <p class="text-[10px] text-gray-300 font-bold uppercase tracking-widest mt-2">Formatos: PDF, JPG,
+                        PNG (Máx 10MB)</p>
+
+                    <div id="file-preview"
+                        class="hidden absolute inset-0 bg-white rounded-[2rem] p-6 flex-col items-center justify-center text-center">
+                        <div
+                            class="w-16 h-16 rounded-2xl bg-green-50 text-green-500 flex items-center justify-center text-2xl mb-3">
+                            <i class="fas fa-check-double"></i>
+                        </div>
+                        <p id="selected-file-name"
+                            class="text-xs font-black text-gray-700 uppercase tracking-widest truncate max-w-full px-4">
+                        </p>
+                        <button type="button" onclick="resetFile(event)"
+                            class="mt-4 text-[9px] font-black text-red-500 uppercase tracking-widest hover:underline">
+                            Quitar archivo
+                        </button>
+                    </div>
                 </div>
-            </form>
+                {% if form.archivo.errors %}
+                <p class="mt-4 text-[10px] text-red-500 font-bold uppercase tracking-widest">{{ form.archivo.errors.0 }}
+                </p>
+                {% endif %}
+            </div>
         </div>
-    </div>
+
+        <!-- Action Button -->
+        <button type="submit"
+            class="w-full py-6 bg-gray-900 text-white text-[11px] font-black uppercase tracking-widest rounded-[2rem] hover:bg-blue-600 shadow-2xl transition-all flex items-center justify-center gap-3">
+            <i class="fas fa-save"></i> Registrar Licencia Médica
+        </button>
+    </form>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script>
+    // Initialize Tom Select
+    document.addEventListener('DOMContentLoaded', function () {
+        new TomSelect('#{{ form.usuario.id_for_label }}', {
+            create: false,
+            sortField: {
+                field: 'text',
+                direction: 'asc'
+            },
+            placeholder: 'BUSCA POR RUT O NOMBRE...',
+            plugins: ['dropdown_input'],
+        });
+    });
+
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            const fileName = input.files[0].name;
+            document.getElementById('selected-file-name').textContent = fileName;
+            document.getElementById('file-preview').classList.remove('hidden');
+            document.getElementById('file-preview').classList.add('flex');
+
+            // Visual feedback for drop zone
+            document.getElementById('drop-zone').classList.add('border-green-100', 'bg-green-50/20');
+        }
+    }
+
+    function resetFile(event) {
+        event.stopPropagation();
+        const input = document.getElementById('licencia-file-input');
+        input.value = '';
+        document.getElementById('file-preview').classList.add('hidden');
+        document.getElementById('file-preview').classList.remove('flex');
+
+        // Reset drop zone style
+        document.getElementById('drop-zone').classList.remove('border-green-100', 'bg-green-50/20');
+    }
+
+    // Drag and drop events
+    const dropZone = document.getElementById('drop-zone');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        dropZone.classList.add('bg-blue-50/50', 'border-blue-200');
+    }
+
+    function unhighlight(e) {
+        dropZone.classList.remove('bg-blue-50/50', 'border-blue-200');
+    }
+
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        const input = document.getElementById('licencia-file-input');
+        input.files = files;
+        handleFileSelect(input);
+    }
+</script>
+
+<style>
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-in {
+        animation: fadeIn 0.4s ease-out forwards;
+    }
+</style>
 {% endblock %}

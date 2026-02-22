@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Fallas - SGPAL{% endblock %}
+{% block page_title %}Control de Averías y Fallas{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 lg:p-8 bg-gray-50/50 min-h-full">
+    <div class="max-w-6xl mx-auto space-y-8">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+                <nav class="flex mb-4" aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 md:space-x-3 text-xs font-medium text-gray-500">
+                        <li class="inline-flex items-center">
+                            <i class="fa-solid fa-home mr-2"></i> Dashboard
+                        </li>
+                        <li>
+                            <div class="flex items-center">
+                                <i class="fa-solid fa-chevron-right mx-2 opacity-30"></i>
+                                <span>Administración</span>
+                            </div>
+                        </li>
+                    </ol>
+                </nav>
+                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Reportes de Fallas</h1>
+                <p class="mt-2 text-lg text-gray-600">Monitorea y gestiona los problemas técnicos reportados por los
+                    funcionarios.</p>
+            </div>
+
+            <div class="flex gap-3">
+                <div class="bg-white px-5 py-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600">
+                        <i class="fa-solid fa-circle-exclamation fa-lg"></i>
+                    </div>
+                    <div>
+                        <div class="text-xl font-black text-gray-900">{{ fallas.count }}</div>
+                        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Reportes Totales
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Failure List -->
+        <div class="space-y-4">
+            {% for falla in fallas %}
+            <div
+                class="group bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden p-6 flex flex-col md:flex-row gap-8 hover:shadow-xl hover:border-blue-100 transition-all duration-300">
+                <div class="flex-1 space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+                        <div class="flex items-center gap-5">
+                            <div
+                                class="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-blue-500 transition-colors shadow-inner">
+                                {% if falla.equipo.tipo == 'LAPTOP' %}<i class="fa-solid fa-laptop fa-2x"></i>
+                                {% elif falla.equipo.tipo == 'CELULAR' %}<i
+                                    class="fa-solid fa-mobile-screen-button fa-2x"></i>
+                                {% elif falla.equipo.tipo == 'IMPRESORA' %}<i class="fa-solid fa-print fa-2x"></i>
+                                {% else %}<i class="fa-solid fa-desktop fa-2x"></i>{% endif %}
+                            </div>
+                            <div>
+                                <h3
+                                    class="font-extrabold text-gray-900 text-xl group-hover:text-blue-600 transition-colors">
+                                    {{ falla.equipo.marca }} {{ falla.equipo.modelo }}</h3>
+                                <div class="flex flex-wrap items-center gap-2 mt-1">
+                                    <span
+                                        class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Reportado
+                                        por:</span>
+                                    <span
+                                        class="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-black rounded-lg uppercase">{{
+                                        falla.funcionario.get_full_name }}</span>
+                                    <span class="text-[10px] text-gray-300 mx-1">|</span>
+                                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Inv: #{{
+                                        falla.equipo.numero_inventario }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-end gap-2">
+                            <span class="px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm
+                                {% if falla.estado == 'REPORTADA' %}bg-red-50 text-red-600 border border-red-100
+                                {% elif falla.estado == 'EN_REVISION' %}bg-amber-50 text-amber-600 border border-amber-100
+                                {% elif falla.estado == 'REPARADA' %}bg-green-50 text-green-600 border border-green-100
+                                {% elif falla.estado == 'BAJA' %}bg-gray-900 text-white
+                                {% else %}bg-gray-50 text-gray-500 border border-gray-200{% endif %}">
+                                <i
+                                    class="fa-solid {% if falla.estado == 'REPORTADA' %}fa-bolt{% elif falla.estado == 'EN_REVISION' %}fa-spinner fa-spin-slow{% elif falla.estado == 'REPARADA' %}fa-check-double{% else %}fa-info-circle{% endif %} mr-2"></i>
+                                {{ falla.get_estado_display }}
+                            </span>
+                            <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{{
+                                falla.fecha_reporte|date:"d M, Y - H:i" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="relative">
+                        <div class="absolute -left-6 top-0 bottom-0 w-1 bg-red-100/50 rounded-full"></div>
+                        <div class="bg-red-50/20 p-5 rounded-3xl border border-red-50/50">
+                            <div
+                                class="text-xs font-bold text-red-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-comment-dots"></i> Detalle del Problema
+                            </div>
+                            <p class="text-base text-gray-700 leading-relaxed font-medium italic">"{{ falla.descripcion
+                                }}"</p>
+                        </div>
+                    </div>
+
+                    {% if falla.comentarios_tecnicos %}
+                    <div class="bg-blue-50/30 p-5 rounded-3xl border border-blue-50/50 flex gap-4">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-blue-200 shadow-sm shrink-0">
+                            <i class="fa-solid fa-wrench"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">Información
+                                Técnica / Resolución</p>
+                            <p class="text-sm text-blue-900 font-bold">"{{ falla.comentarios_tecnicos }}"</p>
+                            {% if falla.resuelto_por %}
+                            <div class="flex items-center gap-2 mt-2">
+                                <div
+                                    class="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center text-[8px] text-blue-600 font-black">
+                                    {{ falla.resuelto_por.first_name.0 }}
+                                </div>
+                                <p class="text-[9px] text-blue-300 font-bold uppercase">Gestión: {{
+                                    falla.resuelto_por.get_full_name }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Admin Action Panel -->
+                <div
+                    class="md:w-72 border-t md:border-t-0 md:border-l border-gray-100 pt-8 md:pt-0 md:pl-8 flex flex-col justify-center">
+                    <form action="{% url 'actualizar_estado_falla' falla.id %}" method="POST" class="space-y-4">
+                        {% csrf_token %}
+                        <div>
+                            <label
+                                class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Cambiar
+                                Estado</label>
+                            <div class="relative">
+                                <select name="estado"
+                                    class="w-full pl-4 pr-10 py-3 text-sm font-bold bg-gray-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-50 appearance-none transition-all outline-none text-gray-700">
+                                    {% for code, label in falla.ESTADO_FALLA_CHOICES %}
+                                    <option value="{{ code }}" {% if falla.estado == code %}selected{% endif %}>{{ label
+                                        }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">
+                                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label
+                                class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Comentarios</label>
+                            <textarea name="comentarios_tecnicos" rows="3"
+                                class="w-full px-4 py-3 text-xs font-semibold bg-gray-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-50 transition-all outline-none resize-none text-gray-600 placeholder-gray-300"
+                                placeholder="Escribe aquí los pasos realizados o la resolución...">{{ falla.comentarios_tecnicos }}</textarea>
+                        </div>
+
+                        <button type="submit"
+                            class="w-full py-4 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-600 shadow-xl shadow-gray-200 transition-all active:scale-95 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-save"></i>
+                            Guardar Cambios
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <div
+                class="bg-white rounded-[3rem] border border-gray-100 p-20 text-center max-w-2xl mx-auto border-dashed">
+                <div class="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fa-solid fa-check-circle fa-3x text-green-200"></i>
+                </div>
+                <h3 class="text-2xl font-black text-gray-900">Todo bajo control</h3>
+                <p class="text-gray-500 mt-2 text-lg">No hay reportes de fallas pendientes. Los equipos operan con
+                    normalidad.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes spin-slow {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .fa-spin-slow {
+        animation: spin-slow 3s linear infinite;
+    }
+</style>
+{% endblock %}

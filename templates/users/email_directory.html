@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Directorio de Correos - SGPAL{% endblock %}
+{% block page_title %}Directorio Institucional{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 space-y-8">
+    <!-- Header Section -->
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Directorio de Correos</h2>
+            <p class="text-gray-500 mt-1 font-medium">Buscador oficial de contactos y correos institucionales.</p>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50">
+        <form method="GET" action="{% url 'email_directory' %}" class="flex flex-col md:flex-row gap-4">
+            <div class="flex-1 relative">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <input type="text" name="search" value="{{ search_query }}"
+                    placeholder="Buscar por nombre, apellido o correo..."
+                    class="w-full pl-11 pr-4 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 focus:ring-4 focus:ring-blue-50 transition-all outline-none">
+            </div>
+            <button type="submit"
+                class="px-8 py-4 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center justify-center">
+                <i class="fa-solid fa-filter mr-2"></i> Buscar
+            </button>
+            {% if search_query %}
+            <a href="{% url 'email_directory' %}"
+                class="px-6 py-4 bg-gray-100 text-gray-500 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-gray-200 transition-all flex items-center justify-center">
+                Limpiar
+            </a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Directory List (Vertical Grouped) -->
+    <div class="space-y-6 max-w-4xl mx-auto pb-20">
+        {% for user in users %}
+        {% ifchanged user.first_name.0 %}
+        <div class="pt-8 pb-3 sticky top-0 bg-gray-50/95 backdrop-blur-sm z-30 transition-all">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center">
+                    <span class="text-sm font-black text-gray-600 uppercase">{{ user.first_name.0 }}</span>
+                </div>
+                <div class="h-px bg-gradient-to-r from-gray-200 to-transparent flex-1"></div>
+            </div>
+        </div>
+        {% endifchanged %}
+
+        <div
+            class="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm hover:shadow-xl hover:shadow-blue-50/50 hover:border-blue-100 transition-all group flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex-shrink-0 flex items-center justify-center font-black text-lg shadow-lg shadow-blue-100">
+                    {{ user.first_name.0 }}{{ user.last_name.0 }}
+                </div>
+                <div>
+                    <h3
+                        class="text-base font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
+                        {{ user.get_full_name }}</h3>
+                    <div class="flex items-center gap-2 mt-1">
+                        <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{{user.get_role_display }}</p>
+                        {% if user.tipo_funcionario %}
+                        <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                        <p class="text-[9px] text-blue-500 font-bold uppercase tracking-widest">{{ user.get_tipo_funcionario_display}}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <div
+                    class="flex-1 md:flex-initial flex items-center bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 group/mail hover:bg-white hover:border-blue-200 transition-all">
+                    <i class="fa-solid fa-envelope text-gray-400 mr-3 text-sm"></i>
+                    <span class="text-xs font-bold text-gray-700 truncate select-all">{{ user.email }}</span>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="copyToClipboard('{{ user.email }}', this)"
+                        class="w-11 h-11 flex items-center justify-center bg-gray-50 text-gray-400 rounded-2xl hover:bg-blue-600 hover:text-white transition-all shadow-sm group/copy"
+                        title="Copiar correo">
+                        <i class="fa-solid fa-copy text-sm"></i>
+                    </button>
+                    <a href="mailto:{{ user.email }}"
+                        class="w-11 h-11 flex items-center justify-center bg-gray-50 text-gray-400 rounded-2xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                        title="Enviar correo">
+                        <i class="fa-solid fa-paper-plane text-sm"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="py-24 text-center">
+            <div class="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-gray-200">
+                <i class="fa-solid fa-users-slash fa-3x"></i>
+            </div>
+            <h3 class="text-xl font-black text-gray-900 tracking-tight">No se encontraron resultados</h3>
+            <p class="text-gray-500 mt-2 font-medium">Prueba con otros términos de búsqueda.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Notification Toast -->
+<div id="copy-toast"
+    class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-2xl text-sm font-black tracking-wide shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 z-[60]">
+    <div class="flex items-center gap-3">
+        <i class="fa-solid fa-check-circle text-green-400"></i>
+        <span>¡Correo copiado al portapapeles!</span>
+    </div>
+</div>
+
+<script>
+    function copyToClipboard(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+            // Visual feedback on button
+            const icon = btn.querySelector('i');
+            const originalClass = icon.className;
+            icon.className = 'fa-solid fa-check';
+            btn.classList.add('bg-green-500', 'text-white');
+            btn.classList.remove('bg-gray-50', 'text-gray-400');
+
+            // Toast notification
+            const toast = document.getElementById('copy-toast');
+            toast.classList.remove('translate-y-20', 'opacity-0');
+
+            setTimeout(() => {
+                icon.className = originalClass;
+                btn.classList.remove('bg-green-500', 'text-white');
+                btn.classList.add('bg-gray-50', 'text-gray-400');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2000);
+        });
+    }
+</script>
+{% endblock %}

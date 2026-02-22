@@ -1,9 +1,12 @@
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, FormView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, FormView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
+from django import forms
 from .models import CustomUser
 from .forms import UserCreateForm, UserEditForm, BulkUserImportForm
 import openpyxl
@@ -95,9 +98,16 @@ class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         return self.request.user.role in ['SECRETARIA', 'ADMIN']
     
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # Pass the editing user to the form
+        kwargs['editing_user'] = self.request.user
+        return kwargs
+    
     def form_valid(self, form):
         messages.success(self.request, 'Usuario actualizado exitosamente')
         return super().form_valid(form)
+
 
 class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = CustomUser
@@ -105,7 +115,7 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     success_url = reverse_lazy('user_list')
     
     def test_func(self):
-        return self.request.user.role in ['SECRETARIA', 'ADMIN']
+        return self.request.user.role == 'ADMIN'
     
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, 'Usuario eliminado exitosamente')
@@ -145,7 +155,9 @@ class BulkUserImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
                     continue
                 
                 try:
-                    run, first_name, last_name, email, role, tipo_funcionario, dias = row[:7]
+                    # Rellenar row con None si tiene menos de 7 elementos
+                    row_list = list(row) + [None] * (7 - len(row))
+                    run, first_name, last_name, email, role, tipo_funcionario, dias = row_list[:7]
                     
                     # Validaciones básicas
                     if not run or not first_name or not last_name:
@@ -256,3 +268,236 @@ def download_template(request):
     response['Content-Disposition'] = 'attachment; filename=plantilla_usuarios.xlsx'
     
     return response
+
+
+class ResetUserPasswordView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """
+    Vista para que administradores reseteen la contraseña de un usuario.
+    Genera una nueva contraseña temporal y la muestra al administrador.
+    
+    Permisos:
+    - ADMIN: puede resetear cualquier contraseña
+    - SECRETARIA: puede resetear contraseñas de FUNCIONARIOS, DIRECTIVOS y SECRETARIAS
+                  (NO puede resetear DIRECTOR ni ADMIN)
+    """
+    template_name = 'users/reset_password.html'
+    
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+    
+    def can_reset_password(self, target_user):
+        """Verifica si el usuario actual puede resetear la contraseña del usuario objetivo"""
+        current_user = self.request.user
+        
+        # ADMIN puede resetear cualquier contraseña
+        if current_user.role == 'ADMIN':
+            return True
+        
+        # SECRETARIA puede resetear solo de FUNCIONARIO, DIRECTIVO y SECRETARIA
+        if current_user.role == 'SECRETARIA':
+            forbidden_roles = ['DIRECTOR', 'ADMIN']
+            return target_user.role not in forbidden_roles
+        
+        return False
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_id = self.kwargs.get('user_id')
+        target_user = get_object_or_404(CustomUser, id=user_id)
+        
+        # Verificar permisos
+        if not self.can_reset_password(target_user):
+            if self.request.user.role == 'SECRETARIA':
+                messages.error(
+                    self.request,
+                    'No tienes permisos para resetear la contraseña de directores o administradores.'
+                )
+            else:
+                messages.error(self.request, 'No tienes permisos para realizar esta acción.')
+            context['permission_denied'] = True
+            return context
+        
+        context['user'] = target_user
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        user_id = self.kwargs.get('user_id')
+        target_user = get_object_or_404(CustomUser, id=user_id)
+        
+        # Verificar permisos
+        if not self.can_reset_password(target_user):
+            messages.error(request, 'No tienes permisos para realizar esta acción.')
+            return redirect('user_list')
+        
+        # Generar nueva contraseña temporal
+        new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+        target_user.set_password(new_password)
+        target_user.save()
+        
+        # Mantener la sesión activa si se está reseteando la propia contraseña
+        if target_user == request.user:
+            update_session_auth_hash(request, target_user)
+        
+        messages.success(
+            request,
+            f'Contraseña de {target_user.get_full_name()} ha sido restablecida. '
+            f'Nueva contraseña temporal: {new_password}'
+        )
+        return redirect('user_list')
+
+
+class ChangeOwnPasswordView(LoginRequiredMixin, TemplateView):
+    """
+    Vista para que los usuarios cambien su propia contraseña.
+    Mantiene la sesión activa después del cambio.
+    """
+    template_name = 'users/change_password.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = PasswordChangeForm(self.request.user)
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Mantener la sesión activa después de cambiar la contraseña
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Tu contraseña ha sido cambiada exitosamente.')
+            return redirect('dashboard')
+        else:
+            messages.error(request, 'Por favor corrige los errores en el formulario.')
+        
+        context = self.get_context_data()
+        context['form'] = form
+        return self.render_to_response(context)
+
+
+class SetPasswordForm(forms.Form):
+    """Formulario para establecer una contraseña específica"""
+    password1 = forms.CharField(
+        label='Nueva contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        min_length=8
+    )
+    password2 = forms.CharField(
+        label='Confirmar contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        min_length=8
+    )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get('password1')
+        password2 = cleaned_data.get('password2')
+        
+        if password1 and password2:
+            if password1 != password2:
+                raise forms.ValidationError("Las contraseñas no coinciden.")
+            if len(password1) < 8:
+                raise forms.ValidationError("La contraseña debe tener al menos 8 caracteres.")
+        
+        return cleaned_data
+
+
+class AdminChangePasswordView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """
+    Vista para que ADMIN y SECRETARIA cambien la contraseña de un usuario.
+    
+    Permisos:
+    - ADMIN: puede cambiar cualquier contraseña
+    - SECRETARIA: puede cambiar contraseñas de FUNCIONARIOS, DIRECTIVOS y SECRETARIAS
+                  (NO puede cambiar DIRECTOR ni ADMIN)
+    """
+    template_name = 'users/admin_change_password.html'
+    
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+    
+    def can_change_password(self, target_user):
+        """Verifica si el usuario actual puede cambiar la contraseña del usuario objetivo"""
+        current_user = self.request.user
+        
+        # ADMIN puede cambiar cualquier contraseña
+        if current_user.role == 'ADMIN':
+            return True
+        
+        # SECRETARIA puede cambiar solo de FUNCIONARIO, DIRECTIVO y SECRETARIA
+        if current_user.role == 'SECRETARIA':
+            forbidden_roles = ['DIRECTOR', 'ADMIN']
+            return target_user.role not in forbidden_roles
+        
+        return False
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_id = self.kwargs.get('user_id')
+        target_user = get_object_or_404(CustomUser, id=user_id)
+        
+        # Verificar permisos
+        if not self.can_change_password(target_user):
+            if self.request.user.role == 'SECRETARIA':
+                messages.error(
+                    self.request,
+                    'No tienes permisos para cambiar la contraseña de directores o administradores.'
+                )
+            else:
+                messages.error(self.request, 'No tienes permisos para realizar esta acción.')
+            context['permission_denied'] = True
+            return context
+        
+        context['target_user'] = target_user
+        context['form'] = SetPasswordForm()
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        user_id = self.kwargs.get('user_id')
+        target_user = get_object_or_404(CustomUser, id=user_id)
+        
+        # Verificar permisos
+        if not self.can_change_password(target_user):
+            messages.error(request, 'No tienes permisos para realizar esta acción.')
+            return redirect('user_list')
+        
+        form = SetPasswordForm(request.POST)
+        if form.is_valid():
+            new_password = form.cleaned_data['password1']
+            target_user.set_password(new_password)
+            target_user.save()
+            
+            messages.success(
+                request,
+                f'La contraseña de {target_user.get_full_name()} ha sido cambiada exitosamente.'
+            )
+            return redirect('user_list')
+        
+        context = self.get_context_data(**kwargs)
+        context['form'] = form
+        return self.render_to_response(context)
+
+
+class EmailDirectoryView(LoginRequiredMixin, ListView):
+    """Vista para que todos los funcionarios vean el directorio de correos institucionales"""
+    model = CustomUser
+    template_name = 'users/email_directory.html'
+    context_object_name = 'users'
+    
+    def get_queryset(self):
+        queryset = CustomUser.objects.filter(is_active=True).order_by('first_name', 'last_name')
+        
+        # Búsqueda
+        search_query = self.request.GET.get('search', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(first_name__icontains=search_query) | 
+                Q(last_name__icontains=search_query) | 
+                Q(email__icontains=search_query)
+            )
+            
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('search', '')
+        return context

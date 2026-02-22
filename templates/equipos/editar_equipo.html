@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Equipo - SGPAL{% endblock %}
+{% block page_title %}Editar Registro{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 lg:p-10">
+    <div class="max-w-4xl mx-auto">
+        <!-- Breadcrumb / Back Link -->
+        <a href="{% url 'lista_equipos' %}"
+            class="inline-flex items-center text-sm font-bold text-gray-400 hover:text-blue-600 mb-8 transition-colors group">
+            <i class="fas fa-arrow-left mr-2 transition-transform group-hover:-translate-x-1"></i>
+            Regresar al Panel de Inventario
+        </a>
+
+        <div class="bg-white rounded-[2rem] shadow-2xl shadow-blue-50/50 border border-gray-100 overflow-hidden">
+            <!-- Header -->
+            <div class="px-8 py-6 border-b border-gray-50 bg-gray-50/30 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mr-4 shadow-lg shadow-indigo-100">
+                        <i class="fas fa-edit fa-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-gray-900 leading-tight">Editar Unidad #{{
+                            equipo.numero_inventario }}</h3>
+                        <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Actualización de ficha
+                            técnica y vinculación</p>
+                    </div>
+                </div>
+                <div class="hidden sm:block">
+                    <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider
+                        {% if equipo.estado ==  'DISPONIBLE' %}bg-green-50 text-green-700
+                        {% elif equipo.estado ==  'ASIGNADO' %}bg-blue-50 text-blue-700
+                        {% elif equipo.estado ==  'EN_REPARACION' %}bg-yellow-50 text-yellow-700
+                        {% else %}bg-red-50 text-red-700{% endif %}">
+                        Estado: {{ equipo.get_estado_display }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form method="post" class="p-8 space-y-10">
+                {% csrf_token %}
+
+                <!-- Main Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                    <!-- Tipo -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Tipo de
+                            Hardware <span class="text-red-500">*</span></label>
+                        <select name="tipo"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5"
+                            required>
+                            {% for value, label in tipos %}
+                            <option value="{{ value }}" {% if equipo.tipo == value %}selected{% endif %}>{{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Estado (El usuario puede cambiarlo manualmente también) -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Estado
+                            Operativo <span class="text-red-500">*</span></label>
+                        <select name="estado"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5"
+                            required>
+                            {% for value, label in estados %}
+                            <option value="{{ value }}" {% if equipo.estado == value %}selected{% endif %}>{{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Marca -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Fabricante
+                            / Marca <span class="text-red-500">*</span></label>
+                        <input type="text" name="marca" value="{{ equipo.marca }}"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5"
+                            required>
+                    </div>
+
+                    <!-- Modelo -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Modelo
+                            Específico <span class="text-red-500">*</span></label>
+                        <input type="text" name="modelo" value="{{ equipo.modelo }}"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5"
+                            required>
+                    </div>
+
+                    <!-- N° Serie -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Número de
+                            Serie (S/N) <span class="text-red-500">*</span></label>
+                        <input type="text" name="numero_serie" value="{{ equipo.numero_serie }}"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-mono py-3.5 font-bold uppercase"
+                            required>
+                    </div>
+
+                    <!-- N° Inventario -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">ID de
+                            Inventario Interno <span class="text-red-500">*</span></label>
+                        <input type="text" name="numero_inventario" value="{{ equipo.numero_inventario }}"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-mono py-3.5 text-blue-700 font-bold uppercase"
+                            required>
+                    </div>
+
+                    <!-- Fecha -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Fecha de
+                            Adquisición</label>
+                        <input type="date" name="fecha_adquisicion" value="{{ equipo.fecha_adquisicion|date:'Y-m-d' }}"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5">
+                    </div>
+                </div>
+
+                <!-- Assignment Section -->
+                <div class="bg-indigo-50/50 rounded-3xl p-6 border border-indigo-100/50">
+                    <div class="flex items-center mb-6">
+                        <div
+                            class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mr-3">
+                            <i class="fas fa-link text-xs"></i>
+                        </div>
+                        <h4 class="text-sm font-black text-indigo-900 tracking-tight">Gestión de Vínculo / Responsable
+                        </h4>
+                    </div>
+                    <div class="space-y-3">
+                        <label
+                            class="block text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1">Cambiar
+                            Funcionario Vinculado</label>
+                        <select name="funcionario" id="id_funcionario" class="w-full">
+                            <option value="">— Ninguno (Desvincular) —</option>
+                            {% for func in funcionarios %}
+                            <option value="{{ func.id }}" {% if prestamo_actual.funcionario.id == func.id %}selected{% endif %}>{{ func.get_full_name }} ({{ func.run }})</option>
+                            {% endfor %}
+                        </select>
+                        {% if prestamo_actual %}
+                        <p class="text-[10px] text-indigo-500 font-bold italic-none mt-2 flex items-center">
+                            <i class="fas fa-check-circle mr-1 opacity-50"></i>
+                            Vinculado actualmente a: {{ prestamo_actual.funcionario.get_full_name }} desde el {{
+                            prestamo_actual.fecha_asignacion|date:"d/m/Y" }}.
+                        </p>
+                        {% else %}
+                        <p class="text-[10px] text-gray-400 font-bold italic-none mt-2 flex items-center">
+                            <i class="fas fa-info-circle mr-1 opacity-50"></i>
+                            Esta unidad no tiene responsable asignado actualmente.
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="space-y-3">
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Observaciones
+                        Técnicas</label>
+                    <textarea name="observaciones" rows="3"
+                        class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5">{{ equipo.observaciones }}</textarea>
+                </div>
+
+                <!-- Footer / Buttons -->
+                <div class="flex items-center justify-end gap-4 pt-6 mt-6 border-t border-gray-50">
+                    <a href="{% url 'lista_equipos' %}"
+                        class="px-8 py-3 text-sm font-black text-gray-400 hover:text-gray-700 transition-all">
+                        Cancelar
+                    </a>
+                    <button type="submit"
+                        class="px-10 py-3.5 bg-gray-900 text-white text-sm font-black rounded-2xl shadow-xl shadow-gray-200 hover:bg-black hover:scale-[1.02] active:scale-95 transition-all">
+                        <i class="fas fa-sync-alt mr-2"></i> Actualizar Registro
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#id_funcionario').select2({
+            placeholder: "Buscar funcionario para vincular...",
+            allowClear: true,
+            width: '100%'
+        });
+    });
+</script>
+{% endblock %}
