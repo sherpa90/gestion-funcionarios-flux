@@ -39,10 +39,7 @@
                     <i class="fa-solid fa-laptop"></i>
                 </div>
                 <div>
-                    <div class="text-xl font-bold text-gray-900">
-                        {% for p in prestamos %}{% if p.equipo.tipo == 'LAPTOP' %}{{ forloop.counter }}{% break %}{%
-                        endif %}{% endfor %}
-                    </div>
+                    <div class="text-xl font-bold text-gray-900">{{ laptops_count }}</div>
                     <div class="text-[10px] text-gray-400 font-semibold uppercase">Laptops</div>
                 </div>
             </div>

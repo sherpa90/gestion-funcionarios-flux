@@ -291,8 +291,12 @@ def mis_equipos(request):
         activo=True
     ).select_related('equipo')
 
+    # Contar número de laptops
+    laptops_count = prestamos.filter(equipo__tipo='LAPTOP').count()
+
     context = {
-        'prestamos': prestamos
+        'prestamos': prestamos,
+        'laptops_count': laptops_count
     }
     return render(request, 'equipos/mis_equipos.html', context)
 
