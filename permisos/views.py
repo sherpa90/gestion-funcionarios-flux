@@ -133,7 +133,7 @@ class SolicitudDirectorDashboardView(LoginRequiredMixin, UserPassesTestMixin, Li
         # Agregar información de días disponibles para directores
         context['dias_disponibles'] = self.request.user.dias_disponibles
         # Total de días administrativos por año (usar valor del usuario o valor por defecto)
-        context['dias_totales'] = getattr(self.request.user, 'dias_totales', 6.0) or 6.0
+        context['dias_totales'] = getattr(self.request.user, 'dias_totales', 6.0)
         return context
 
 class SolicitudAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):

@@ -214,7 +214,7 @@
         const icon = document.getElementById('modalIcon');
         const form = document.getElementById('fallaForm');
 
-        form.action = '/equipos/falla/reportar/' + equipoId + '/';
+        form.action = "{% url 'reportar_falla' 0 %}".replace('0', equipoId);
         nameSpan.innerText = equipoName;
 
         icon.className = 'fa-solid';
