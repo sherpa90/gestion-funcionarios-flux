@@ -39,9 +39,8 @@
                     class="w-full pl-11 pr-10 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 appearance-none focus:ring-4 focus:ring-blue-50 transition-all outline-none">
                     <option value="">— Buscar o Seleccionar Funcionario —</option>
                     {% for func in funcionarios %}
-                    <option value="{{ func.id }}" {% if selected_funcionario and selected_funcionario.id == func.id %}selected{% endif %}>
-                        {{ func.get_full_name }} ({{ func.get_role_display }})
-                    </option>
+                    <option value="{{ func.id }}" {% if selected_funcionario and selected_funcionario.id==func.id
+                        %}selected{% endif %}>{{ func.get_full_name }} ({{ func.get_role_display }})</option>
                     {% endfor %}
                 </select>
                 <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-300">
@@ -160,16 +159,20 @@
                             </div>
                         </div>
                         <div class="flex gap-2 items-center">
+                            {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                             <a href="{% url 'editar_equipo' equipo.id %}"
                                 class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
                                 title="Editar">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            {% endif %}
+                            {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                             <a href="{% url 'devolver_equipo' equipo.prestamo_activo.id %}"
                                 class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all"
                                 title="Debe Devolverlo">
                                 <i class="fa-solid fa-arrow-rotate-left"></i>
                             </a>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}
@@ -283,6 +286,7 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex justify-end gap-1">
+                                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                                     {% if equipo.estado == 'DISPONIBLE' %}
                                     <a href="{% url 'asignar_equipo' equipo.id %}"
                                         class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all"
@@ -295,11 +299,14 @@
                                         title="Editar">
                                         <i class="fas fa-edit text-sm"></i>
                                     </a>
+                                    {% endif %}
+                                    {% if user.role == 'ADMIN' %}
                                     <a href="{% url 'eliminar_equipo' equipo.id %}"
                                         class="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                                         title="Eliminar">
                                         <i class="fas fa-trash-alt text-sm"></i>
                                     </a>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>

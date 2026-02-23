@@ -149,19 +149,14 @@
                         <i class="fa-solid fa-file-medical fa-fw mr-3"></i><span class="ml-3">Mis Licencias</span>
                     </a>
                     {% endif %}
-{% if user.role == 'FUNCIONARIO' or user.role == 'ADMIN' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
+                    {% if user.role == 'FUNCIONARIO' or user.role == 'ADMIN' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
                     <a href="{% url 'mis_equipos' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-laptop fa-fw mr-3"></i><span class="ml-3">Mis Equipos</span>
                     </a>
                     {% endif %}
-                    <a href="{% url 'change_password' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-key fa-fw mr-3"></i><span class="ml-3">Cambiar mi Contraseña</span>
-                    </a>
-
-                    <!-- Aprobaciones (Director) -->
-                    {% if user.role == 'DIRECTOR' %}
+                    <!-- Aprobaciones (Director, Directivo, Secretaria) -->
+                    {% if user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' or user.role == 'SECRETARIA' %}
                     <div class="pt-4 pb-2">
                         <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Aprobaciones</p>
                     </div>
@@ -250,7 +245,7 @@
                         <i class="fa-solid fa-chart-bar fa-fw mr-3"></i><span class="ml-3">Estadísticas</span>
                     </a>
                     {% endif %}
-                    {% if user.role == "SECRETARIA" or user.role == "ADMIN" or user.role == "DIRECTOR" or user.role == "DIRECTIVO" %}
+                    {% if user.role == 'SECRETARIA' or user.role == 'ADMIN' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
                     <a href="{% url 'reportes' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-chart-line fa-fw mr-3"></i><span class="ml-3">Reportes</span>
@@ -260,6 +255,10 @@
             </nav>
 
             <div class="p-4 border-t border-gray-700">
+                <a href="{% url 'change_password' %}"
+                    class="flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-700 text-gray-300 mb-2">
+                    <i class="fa-solid fa-key fa-fw mr-3"></i><span class="ml-3">Cambiar mi Contraseña</span>
+                </a>
                 <form action="{% url 'logout' %}" method="post">
                     {% csrf_token %}
                     <button type="submit"
@@ -279,7 +278,7 @@
                     <button id="mobile-menu-button" class="md:hidden text-gray-500 hover:text-gray-700 p-2 -ml-2">
                         <i class="fa-solid fa-bars text-lg fa-fw mr-3"></i>
                     </button>
-<h1 class="text-lg sm:text-xl font-semibold text-gray-800 ml-2 sm:ml-4 md:ml-0 truncate">{% block page_title %}Panel Principal{% endblock %}</h1>
+                    <h1 class="text-lg sm:text-xl font-semibold text-gray-800 ml-2 sm:ml-4 md:ml-0 truncate">{% block page_title %}Panel Principal{% endblock %}</h1>
                 </div>
                 <!-- Espacio para futuras acciones del header -->
                 <div class="flex items-center space-x-2">
@@ -368,19 +367,14 @@
                         <i class="fa-solid fa-file-medical fa-fw mr-3"></i><span class="ml-3">Mis Licencias</span>
                     </a>
                     {% endif %}
-{% if user.role == 'FUNCIONARIO' or user.role == 'ADMIN' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
+                    {% if user.role == 'FUNCIONARIO' or user.role == 'ADMIN' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
                     <a href="{% url 'mis_equipos' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-laptop fa-fw mr-3"></i><span class="ml-3">Mis Equipos</span>
                     </a>
                     {% endif %}
-                    <a href="{% url 'change_password' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-key fa-fw mr-3"></i><span class="ml-3">Cambiar mi Contraseña</span>
-                    </a>
-
-                    <!-- Aprobaciones (Director) -->
-                    {% if user.role == 'DIRECTOR' %}
+                    <!-- Aprobaciones (Director, Directivo, Secretaria) -->
+                    {% if user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' or user.role == 'SECRETARIA' %}
                     <div class="pt-4 pb-2">
                         <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Aprobaciones</p>
                     </div>
@@ -469,7 +463,7 @@
                         <i class="fa-solid fa-chart-bar fa-fw mr-3"></i><span class="ml-3">Estadísticas</span>
                     </a>
                     {% endif %}
-{% if user.role == 'SECRETARIA' or user.role == 'ADMIN' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
+                    {% if user.role == 'SECRETARIA' or user.role == 'ADMIN' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
                     <a href="{% url 'reportes' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-chart-line fa-fw mr-3"></i><span class="ml-3">Reportes</span>
@@ -479,6 +473,10 @@
             </nav>
 
             <div class="p-4 border-t border-gray-700">
+                <a href="{% url 'change_password' %}"
+                    class="flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-700 text-gray-300 mb-2">
+                    <i class="fa-solid fa-key fa-fw mr-3"></i><span class="ml-3">Cambiar mi Contraseña</span>
+                </a>
                 <form action="{% url 'logout' %}" method="post">
                     {% csrf_token %}
                     <button type="submit"

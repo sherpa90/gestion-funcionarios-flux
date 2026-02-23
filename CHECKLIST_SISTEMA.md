@@ -100,8 +100,37 @@
 
 ---
 
+## ⚠️ Pendiente: Reset Anual
+
+### Funcionalidades que requieren reset año a año:
+
+#### 1. Días Administrativos
+- [ ] **IMPLEMENTAR**: Reset automático de `dias_disponibles` a 6.0 por usuario al inicio de cada año
+- [ ] Actualmente: Campo `dias_disponibles` en modelo CustomUser con valor default 6.0
+- [ ] Ubicación código: `users/models.py`, `permisos/views.py`
+- [ ] Consideración: Necesita comando de management o tarea programada
+
+#### 2. Licencias Médicas
+- [ ] **IMPLEMENTAR**: Los reportes y estadísticas filtran por año pero los registros son acumulativos
+- [ ] Actualmente: Modelo LicenciaMedica registra todos los datos históricamente
+- [ ] Ubicación código: `licencias/models.py`, `reportes/views.py`
+- [ ] Consideración: Evaluar si se necesita archivar o resetear contadores anuales
+
+#### 3. Sección Reportes
+- [ ] **IMPLEMENTAR**: Los reportes ya filtran por año pero el sistema no tiene función de reset
+- [ ] Actualmente: Vista de reportes permite seleccionar año
+- [ ] Ubicación código: `reportes/views.py`
+- [ ] Consideración: Agregar función de reset o filtrado automático por año en curso
+
+---
+
 ## Notas
 
 El sistema se encuentra funcionando correctamente en todos sus módulos. No se detectaron errores ni issues pendientes.
+
+**IMPORTANTE**: Se requiere implementar un mecanismo de reset anual para:
+- Días administrativos (reiniciar a 6.0 cada 1 de enero)
+- Reportes (filtrado automático por año en curso)
+- Licencias médicas (evaluar necesidad de reset o archive)
 
 **Próxima verificación programada:** Mensual
