@@ -121,7 +121,8 @@ class SolicitudDirectorDashboardView(LoginRequiredMixin, UserPassesTestMixin, Li
     context_object_name = 'solicitudes'
 
     def test_func(self):
-        return self.request.user.role == 'DIRECTOR'
+        # DIRECTOR, DIRECTIVO y SECRETARIA pueden acceder
+        return self.request.user.role in ['DIRECTOR', 'DIRECTIVO', 'SECRETARIA']
 
     def get_queryset(self):
         return SolicitudPermiso.objects.filter(estado='PENDIENTE').order_by('created_at')
@@ -131,7 +132,8 @@ class SolicitudDirectorDashboardView(LoginRequiredMixin, UserPassesTestMixin, Li
         context['historial'] = SolicitudPermiso.objects.exclude(estado='PENDIENTE').order_by('-updated_at')[:10]
         # Agregar información de días disponibles para directores
         context['dias_disponibles'] = self.request.user.dias_disponibles
-        context['dias_totales'] = 6.0  # Total de días administrativos por año
+        # Total de días administrativos por año (usar valor del usuario o valor por defecto)
+        context['dias_totales'] = getattr(self.request.user, 'dias_totales', 6.0) or 6.0
         return context
 
 class SolicitudAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -140,7 +142,8 @@ class SolicitudAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     context_object_name = 'solicitudes'
 
     def test_func(self):
-        return self.request.user.role == 'DIRECTOR'
+        # DIRECTOR, DIRECTIVO y SECRETARIA pueden acceder
+        return self.request.user.role in ['DIRECTOR', 'DIRECTIVO', 'SECRETARIA']
 
     def get_queryset(self):
         return SolicitudPermiso.objects.filter(estado='PENDIENTE').order_by('created_at')
