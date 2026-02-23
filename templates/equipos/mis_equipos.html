@@ -73,11 +73,9 @@
                             <i class="fa-solid fa-desktop"></i>
                             {% endif %}
                         </div>
-                        <span class="text-xs font-semibold text-gray-500 uppercase">{{ prestamo.equipo.get_tipo_display
-                            }}</span>
+                        <span class="text-xs font-semibold text-gray-500 uppercase">{{ prestamo.equipo.get_tipo_display }}</span>
                     </div>
-                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">#{{
-                        prestamo.equipo.numero_inventario }}</span>
+                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">#{{ prestamo.equipo.numero_inventario }}</span>
                 </div>
 
                 <!-- Card Body -->
@@ -91,14 +89,12 @@
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <div>
                             <span class="text-gray-400 font-medium block">Asignación</span>
-                            <span class="text-gray-700 font-semibold">{{ prestamo.fecha_asignacion|date:"d M Y"
-                                }}</span>
+                            <span class="text-gray-700 font-semibold">{{ prestamo.fecha_asignacion|date:"d M Y" }}</span>
                         </div>
                         <div>
                             <span class="text-gray-400 font-medium block">Serie</span>
                             <span class="text-gray-700 font-mono text-[10px] truncate block"
-                                title="{{ prestamo.equipo.numero_serie }}">{{ prestamo.equipo.numero_serie|default:"-"
-                                }}</span>
+                                title="{{ prestamo.equipo.numero_serie }}">{{ prestamo.equipo.numero_serie|default:"-" }}</span>
                         </div>
                     </div>
 
