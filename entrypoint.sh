@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-# Default to sgpal-db if SQL_HOST not set
-SQL_HOST=${SQL_HOST:-sgpal-db}
+# Default to sgpal-db-myx9xn if SQL_HOST not set (Dokploy production)
+SQL_HOST=${SQL_HOST:-sgpal-db-myx9xn}
 SQL_PORT=${SQL_PORT:-5432}
 
 # Wait for db

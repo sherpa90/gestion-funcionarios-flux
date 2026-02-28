@@ -10,7 +10,7 @@ ENV DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
 ENV SQL_DATABASE=sgpal_db
 ENV SQL_USER=sgpal_user
 ENV SQL_PASSWORD=sgpal_password
-ENV SQL_HOST=localhost
+ENV SQL_HOST=sgpal-db-myx9xn
 ENV SQL_PORT=5432
 
 WORKDIR /app

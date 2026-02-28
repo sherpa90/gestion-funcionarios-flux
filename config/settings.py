@@ -47,9 +47,9 @@ if not SECRET_KEY:
             "For production, generate a secure key: python -c 'import secrets; print(secrets.token_hex(50))'"
         )
 
-ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,[::1],tramites.losalercespuertomontt.cl').split(',')]
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'tramites.losalercespuertomontt.cl,api.dokploy.com,localhost').split(',')]
 
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://tramites.losalercespuertomontt.cl').split(',') if origin.strip()]
 
 
 # Application definition
@@ -132,11 +132,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': os.environ.get('SQL_ENGINE', 'django.db.backends.sqlite3'),
-        'NAME': os.environ.get('SQL_DATABASE', BASE_DIR / 'db.sqlite3'),
-        'USER': os.environ.get('SQL_USER', 'user'),
-        'PASSWORD': os.environ.get('SQL_PASSWORD', 'password'),
-        'HOST': os.environ.get('SQL_HOST', 'localhost'),
+        'ENGINE': os.environ.get('SQL_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.environ.get('SQL_DATABASE', 'sgpal_db'),
+        'USER': os.environ.get('SQL_USER', 'sgpal_user'),
+        'PASSWORD': os.environ.get('SQL_PASSWORD', 'Sgpal2025Secure*'),
+        'HOST': os.environ.get('SQL_HOST', 'sgpal-db-myx9xn'),
         'PORT': os.environ.get('SQL_PORT', '5432'),
     }
 }
@@ -202,12 +202,12 @@ LOGOUT_REDIRECT_URL = 'login'
 # Security settings
 SESSION_COOKIE_AGE = 28800  # 8 hours (workday) - increased from 1 hour for usability
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() in ('true', '1', 'yes', 'on')
+CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'False').lower() in ('true', '1', 'yes', 'on')
 SECURE_SSL_REDIRECT = not DEBUG  # Redirect all HTTP requests to HTTPS in production
-SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0  # 1 year in prod
+SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '0'))  # 31536000 = 1 year in prod
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
-SECURE_HSTS_PRELOAD = not DEBUG
+SECURE_HSTS_PRELOAD = os.environ.get('SECURE_HSTS_PRELOAD', 'False').lower() in ('true', '1', 'yes', 'on')
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'

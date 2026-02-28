@@ -13,6 +13,9 @@ services:
     environment:
       - SQL_HOST=db
       - SQL_PORT=5432
+      - SQL_DATABASE=sgpal_db
+      - SQL_USER=sgpal_user
+      - SQL_PASSWORD=Sgpal2025Secure*
       - DEBUG=True
 
   db:
@@ -20,9 +23,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
-      - POSTGRES_USER=${SQL_USER:-sgpal_user}
-      - POSTGRES_PASSWORD=${SQL_PASSWORD:-change_this_secure_password}
-      - POSTGRES_DB=${SQL_DATABASE:-sgpal_db}
+      - POSTGRES_USER=sgpal_user
+      - POSTGRES_PASSWORD=Sgpal2025Secure*
+      - POSTGRES_DB=sgpal_db
 
 volumes:
   postgres_data:

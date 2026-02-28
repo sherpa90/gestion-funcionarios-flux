@@ -45,7 +45,7 @@ Ve a la pestaña **"Environment"** de tu aplicación y agrega las siguientes var
 | `SQL_DATABASE` | Nombre de la DB creada en Paso 2 |
 | `SQL_USER` | Usuario de la DB |
 | `SQL_PASSWORD` | Contraseña de la DB |
-| `SQL_HOST` | Host interno de la DB (ej. `dokploy-postgres-...`) |
+| `SQL_HOST` | Host interno de la DB (ej. `sgpal-db-myx9xn`) |
 | `SQL_PORT` | `5432` |
 | `EMAIL_HOST` | `smtp.gmail.com` (o tu proveedor) |
 | `EMAIL_PORT` | `587` |
