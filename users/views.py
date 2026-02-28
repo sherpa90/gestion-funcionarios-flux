@@ -26,8 +26,8 @@ class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return self.request.user.role in ['SECRETARIA', 'ADMIN']
     
     def get_queryset(self):
-        # Orden por defecto: Nombre (A-Z) usando first_name primero
-        queryset = CustomUser.objects.all().order_by('first_name', 'last_name')
+        # Orden por defecto: Más reciente primero
+        queryset = CustomUser.objects.all().select_related('horario').order_by('-date_joined')
         
         # Búsqueda
         search_query = self.request.GET.get('search', '')
@@ -40,7 +40,7 @@ class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             )
         
         # Aplicar ordenamiento si se solicita
-        sort_by = self.request.GET.get('sort', 'name')
+        sort_by = self.request.GET.get('sort', 'recent')
         
         if sort_by == 'name':
             queryset = queryset.order_by('first_name', 'last_name')
@@ -58,12 +58,16 @@ class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             queryset = queryset.order_by('-dias_disponibles')
         elif sort_by == 'dias_asc':
             queryset = queryset.order_by('dias_disponibles')
+        elif sort_by == 'recent':
+            queryset = queryset.order_by('-date_joined')
+        else:
+            queryset = queryset.order_by('-date_joined')
             
         return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['current_sort'] = self.request.GET.get('sort', 'name')
+        context['current_sort'] = self.request.GET.get('sort', 'recent')
         
         # Recuperar contraseñas de importación masiva y limpiar sesión
         if 'bulk_passwords' in self.request.session:
@@ -192,6 +196,16 @@ class BulkUserImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
                         role=role or 'FUNCIONARIO',
                         tipo_funcionario=tipo_funcionario or 'PLANTA',
                         dias_disponibles=dias or 6.0
+                    )
+                    
+                    # Crear horario por defecto (07:45 AM con 15 min tolerancia)
+                    from asistencia.models import HorarioFuncionario
+                    from datetime import time
+                    HorarioFuncionario.objects.create(
+                        funcionario=user,
+                        hora_entrada=time(7, 45),
+                        tolerancia_minutos=15,
+                        activo=True
                     )
                     
                     created_users.append(user)

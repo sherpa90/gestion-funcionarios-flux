@@ -3,175 +3,262 @@
 {% block page_title %}{% if object %}Editar Usuario{% else %}Crear Usuario{% endif %}{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-    <!-- Header -->
-    <div class="mb-6 sm:mb-8">
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">{% if object %}Editar Usuario{% else %}Crear Nuevo Usuario{% endif %}</h2>
-        <p class="text-gray-600 mt-2 text-sm sm:text-base">Completa la información para {% if object %}actualizar los datos del{% else %}registrar un nuevo{% endif %} funcionario en el sistema.</p>
-    </div>
+<div class="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">
+                {% if object %}Editar Usuario{% else %}Crear Nuevo Usuario{% endif %}
+            </h1>
+            <p class="mt-2 text-sm text-gray-600">
+                {% if object %}Actualiza los datos del{% else %}Registra un nuevo{% endif %} funcionario en el sistema
+            </p>
+        </div>
 
-    <div class="bg-white shadow-lg rounded-lg sm:rounded-xl overflow-hidden">
-        <div class="p-4 sm:p-8">
-            <form method="post" class="space-y-6">
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+            <!-- Card Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+                <h2 class="text-lg font-medium text-white flex items-center">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    {% if object %}Datos del Usuario{% else %}Nuevo Funcionario{% endif %}
+                </h2>
+            </div>
+
+            <form method="post" class="divide-y divide-gray-200">
                 {% csrf_token %}
 
                 {% if form.non_field_errors %}
-                <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-md">
+                <div class="bg-red-50 border-l-4 border-red-500 p-4">
                     <div class="flex">
                         <div class="flex-shrink-0">
                             <i class="fas fa-exclamation-circle text-red-500"></i>
                         </div>
                         <div class="ml-3">
-                            <h3 class="text-sm font-medium text-red-800">Errores en el formulario</h3>
-                            <div class="mt-2 text-sm text-red-700">
-                                {{ form.non_field_errors }}
-                            </div>
+                            <p class="text-sm text-red-700">{{ form.non_field_errors }}</p>
                         </div>
                     </div>
                 </div>
                 {% endif %}
 
-                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                    <!-- RUN -->
-                    <div class="sm:col-span-6">
-                        <label for="{{ form.run.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700">RUN</label>
-                        <div class="mt-1 rounded-md shadow-sm">
-                            {{ form.run }}
-                        </div>
-                        {% if form.run.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.run.errors.0 }}</p>
-                        {% endif %}
-                        {% if not object %}
-                        <p class="mt-1 text-xs text-gray-500">Formato: 12345678-K (se formateará automáticamente como 12.345.678-K)</p>
-                        {% else %}
-                        <p class="mt-1 text-xs text-gray-500">El RUN no puede ser modificado (formato chileno: 12.345.678-K)</p>
-                        {% endif %}
-                    </div>
+                <!-- Personal Information Section -->
+                <div class="px-6 py-6 space-y-6">
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider flex items-center">
+                        <i class="fas fa-id-card mr-2 text-blue-600"></i>
+                        Información Personal
+                    </h3>
 
-                    <!-- Nombres -->
-                    <div class="sm:col-span-3">
-                        <label for="{{ form.first_name.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700">Nombres</label>
-                        <div class="mt-1 rounded-md shadow-sm">
-                            {{ form.first_name }}
+                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                        <!-- RUN -->
+                        <div class="sm:col-span-3">
+                            <label for="{{ form.run.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                RUN <span class="text-red-500">*</span>
+                            </label>
+                            <div class="mt-1">
+                                {{ form.run }}
+                            </div>
+                            {% if form.run.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.run.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Formato: 12.345.678-K</p>
                         </div>
-                        {% if form.first_name.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
-                        {% endif %}
-                    </div>
 
-                    <!-- Apellidos -->
-                    <div class="sm:col-span-3">
-                        <label for="{{ form.last_name.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700">Apellidos</label>
-                        <div class="mt-1 rounded-md shadow-sm">
-                            {{ form.last_name }}
+                        <!-- Nombres -->
+                        <div class="sm:col-span-3">
+                            <label for="{{ form.first_name.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700">
+                                Nombres <span class="text-red-500">*</span>
+                            </label>
+                            <div class="mt-1">
+                                {{ form.first_name }}
+                            </div>
+                            {% if form.first_name.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
+                            {% endif %}
                         </div>
-                        {% if form.last_name.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
-                        {% endif %}
-                    </div>
 
-                    <!-- Email -->
-                    <div class="sm:col-span-6">
-                        <label for="{{ form.email.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
-                        <div class="mt-1 rounded-md shadow-sm">
-                            {{ form.email }}
+                        <!-- Apellidos -->
+                        <div class="sm:col-span-3">
+                            <label for="{{ form.last_name.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700">
+                                Apellidos <span class="text-red-500">*</span>
+                            </label>
+                            <div class="mt-1">
+                                {{ form.last_name }}
+                            </div>
+                            {% if form.last_name.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+                            {% endif %}
                         </div>
-                        {% if form.email.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
-                        {% endif %}
-                        <p class="mt-1 text-xs text-gray-500">Debe usar el dominio @losalercespuertomontt.cl</p>
-                    </div>
 
-                    <!-- Contraseña (solo para crear) -->
-                    {% if not object %}
-                    <div class="sm:col-span-6">
-                        <label for="{{ form.password.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700">Contraseña</label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            {{ form.password }}
-                            <button type="button" id="generatePassword"
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-blue-600 hover:text-blue-800">
-                                <i class="fas fa-sync-alt mr-1"></i> Generar
-                            </button>
+                        <!-- Email -->
+                        <div class="sm:col-span-3">
+                            <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                Correo Electrónico <span class="text-red-500">*</span>
+                            </label>
+                            <div class="mt-1">
+                                {{ form.email }}
+                            </div>
+                            {% if form.email.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Dominio: @losalercespuertomontt.cl</p>
                         </div>
-                        {% if form.password.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.password.errors.0 }}</p>
-                        {% endif %}
-                        <p class="mt-1 text-xs text-gray-500">Dejar vacío para generar automáticamente una contraseña segura de 8 caracteres</p>
-                    </div>
-                    {% endif %}
-
-                    <!-- Rol -->
-                    <div class="sm:col-span-3">
-                        <label for="{{ form.role.id_for_label }}" class="block text-sm font-medium text-gray-700">Rol de
-                            Usuario</label>
-                        <div class="mt-1">
-                            {{ form.role }}
-                        </div>
-                        {% if form.role.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.role.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Tipo Funcionario -->
-                    <div class="sm:col-span-3">
-                        <label for="{{ form.tipo_funcionario.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700">Tipo de Funcionario</label>
-                        <div class="mt-1">
-                            {{ form.tipo_funcionario }}
-                        </div>
-                        {% if form.tipo_funcionario.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.tipo_funcionario.errors.0 }}</p>
-                        {% endif %}
-                        <p class="mt-1 text-xs text-gray-500">Solo aplica si el rol es "Funcionario"</p>
-                    </div>
-
-                    <!-- Días Disponibles -->
-                    <div class="sm:col-span-6">
-                        <label for="{{ form.dias_disponibles.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700">Días Administrativos Disponibles</label>
-                        <div class="mt-1 rounded-md shadow-sm w-full sm:w-1/3">
-                            {{ form.dias_disponibles }}
-                        </div>
-                        {% if form.dias_disponibles.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.dias_disponibles.errors.0 }}</p>
-                        {% endif %}
-                        <p class="mt-1 text-xs text-gray-500">Por defecto 6 días. Puede usar decimales (ej: 5.5) o poner menos si es necesario</p>
                     </div>
                 </div>
 
+                <!-- Role and Type Section -->
+                <div class="px-6 py-6 space-y-6">
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider flex items-center">
+                        <i class="fas fa-user-tag mr-2 text-blue-600"></i>
+                        Rol y Funciones
+                    </h3>
+
+                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                        <!-- Rol -->
+                        <div class="sm:col-span-3">
+                            <label for="{{ form.role.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                Rol de Usuario <span class="text-red-500">*</span>
+                            </label>
+                            <div class="mt-1">
+                                {{ form.role }}
+                            </div>
+                            {% if form.role.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.role.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Tipo Funcionario -->
+                        <div class="sm:col-span-3">
+                            <label for="{{ form.tipo_funcionario.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700">
+                                Tipo de Funcionario
+                            </label>
+                            <div class="mt-1">
+                                {{ form.tipo_funcionario }}
+                            </div>
+                            {% if form.tipo_funcionario.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.tipo_funcionario.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Días Disponibles -->
+                        <div class="sm:col-span-3">
+                            <label for="{{ form.dias_disponibles.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700">
+                                Días Administrativos
+                            </label>
+                            <div class="mt-1">
+                                {{ form.dias_disponibles }}
+                            </div>
+                            {% if form.dias_disponibles.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.dias_disponibles.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Por defecto: 6 días</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schedule Section -->
+                <div class="px-6 py-6 space-y-6 bg-blue-50">
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider flex items-center">
+                        <i class="fas fa-clock mr-2 text-blue-600"></i>
+                        Horario de Trabajo
+                    </h3>
+
+                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                        <!-- Hora de Entrada -->
+                        <div class="sm:col-span-3">
+                            <label for="{{ form.hora_entrada.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700">
+                                Hora de Entrada
+                            </label>
+                            <div class="mt-1">
+                                {{ form.hora_entrada }}
+                            </div>
+                            {% if form.hora_entrada.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.hora_entrada.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Predeterminado: 07:45</p>
+                        </div>
+
+                        <!-- Tolerancia -->
+                        <div class="sm:col-span-3">
+                            <label for="{{ form.tolerancia_minutos.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700">
+                                Tolerancia (minutos)
+                            </label>
+                            <div class="mt-1">
+                                {{ form.tolerancia_minutos }}
+                            </div>
+                            {% if form.tolerancia_minutos.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.tolerancia_minutos.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Predeterminado: 5 minutos</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Password Section (only for create) -->
                 {% if not object %}
-                <div class="rounded-md bg-blue-50 p-4 border-l-4 border-blue-400">
-                    <div class="flex">
+                <div class="px-6 py-6 space-y-6">
+                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider flex items-center">
+                        <i class="fas fa-lock mr-2 text-blue-600"></i>
+                        Seguridad
+                    </h3>
+
+                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                        <div class="sm:col-span-4">
+                            <label for="{{ form.password.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700">
+                                Contraseña
+                            </label>
+                            <div class="mt-1 relative rounded-md shadow-sm">
+                                {{ form.password }}
+                                <button type="button" id="generatePassword"
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                    <i class="fas fa-sync-alt mr-1"></i> Generar
+                                </button>
+                            </div>
+                            {% if form.password.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Dejar vacío para generar automáticamente</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="px-6 py-4 bg-blue-50 border-t border-blue-100">
+                    <div class="flex items-start">
                         <div class="flex-shrink-0">
-                            <i class="fas fa-info-circle text-blue-400"></i>
+                            <i class="fas fa-info-circle text-blue-600"></i>
                         </div>
                         <div class="ml-3">
-                            <h3 class="text-sm font-medium text-blue-800">Información de Seguridad</h3>
-                            <div class="mt-2 text-sm text-blue-700">
-                                <p>Se generará una contraseña temporal automáticamente. Asegúrate de copiarla y
-                                    entregarla al usuario de forma segura después de crear la cuenta.</p>
-                            </div>
+                            <p class="text-sm text-blue-700">
+                                Se generará una contraseña temporal automáticamente. Asegúrate de copiarla y entregarla
+                                al usuario de forma segura después de crear la cuenta.
+                            </p>
                         </div>
                     </div>
                 </div>
                 {% endif %}
 
-                <div class="pt-4 sm:pt-5 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+                <!-- Action Buttons -->
+                <div
+                    class="px-6 py-4 bg-gray-50 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3">
                     <a href="{% url 'user_list' %}"
-                        class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 touch-manipulation">
+                        class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <i class="fas fa-times mr-2"></i>
                         Cancelar
                     </a>
                     <button type="submit"
-                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 touch-manipulation">
+                        class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                         {% if object %}
-                        <i class="fas fa-save mr-2"></i> Guardar Cambios
+                        <i class="fas fa-save mr-2"></i>
+                        Guardar Cambios
                         {% else %}
-                        <i class="fas fa-plus mr-2"></i> Crear Usuario
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Crear Usuario
                         {% endif %}
                     </button>
                 </div>
@@ -180,9 +267,54 @@
     </div>
 </div>
 
+<style>
+    /* Custom form input styles */
+    .form-input,
+    select,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="time"] {
+        @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm;
+        @apply focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+        @apply text-sm text-gray-900 placeholder-gray-400;
+    }
+
+    /* Make select and input have consistent height */
+    select,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="time"] {
+        @apply h-10;
+    }
+
+    /* Error state */
+    input.error,
+    select.error {
+        @apply border-red-300 focus:ring-red-500 focus:border-red-500;
+    }
+
+    /* Responsive improvements */
+    @media (max-width: 640px) {
+
+        .form-input,
+        select,
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        input[type="time"] {
+            @apply text-base;
+        }
+    }
+</style>
+
 <script>
     // Generar contraseña aleatoria
-    document.getElementById('generatePassword')?.addEventListener('click', function() {
+    document.getElementById('generatePassword')?.addEventListener('click', function () {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*';
         let password = '';
         for (let i = 0; i < 10; i++) {
@@ -190,11 +322,10 @@
         }
         const passwordField = document.querySelector('input[name="password"]');
         if (passwordField) {
-            passwordField.type = 'text'; // Mostrar temporalmente
+            passwordField.type = 'text';
             passwordField.value = password;
-            setTimeout(() => { passwordField.type = 'password'; }, 3000); // Ocultar después de 3s
+            setTimeout(() => { passwordField.type = 'password'; }, 3000);
         }
     });
 </script>
-
 {% endblock %}

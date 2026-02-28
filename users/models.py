@@ -49,7 +49,28 @@ class CustomUser(AbstractUser):
         if self.run:
             from core.utils import normalize_rut
             self.run = normalize_rut(self.run)
+        
+        # Determinar si es un nuevo usuario
+        is_new = self.pk is None
+        
+        # Guardar el usuario primero
         super().save(*args, **kwargs)
+        
+        # Si es un nuevo usuario, crear horario por defecto
+        if is_new:
+            try:
+                from asistencia.models import HorarioFuncionario
+                from datetime import time
+                # Verificar si ya existe un horario
+                if not HorarioFuncionario.objects.filter(funcionario=self).exists():
+                    HorarioFuncionario.objects.create(
+                        funcionario=self,
+                        hora_entrada=time(7, 45),
+                        tolerancia_minutos=5,
+                        activo=True
+                    )
+            except Exception as e:
+                print(f"Error al crear horario para {self.get_full_name()}: {e}")
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.run})"

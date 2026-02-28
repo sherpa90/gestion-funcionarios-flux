@@ -39,8 +39,7 @@
                     class="w-full pl-11 pr-10 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 appearance-none focus:ring-4 focus:ring-blue-50 transition-all outline-none">
                     <option value="">— Buscar o Seleccionar Funcionario —</option>
                     {% for func in funcionarios %}
-                    <option value="{{ func.id }}" {% if selected_funcionario and selected_funcionario.id==func.id
-                        %}selected{% endif %}>{{ func.get_full_name }} ({{ func.get_role_display }})</option>
+                    <option value="{{ func.id }}" {% if selected_funcionario and selected_funcionario.id == func.id %}selected{% endif %}>{{ func.get_full_name }} ({{ func.get_role_display }})</option>
                     {% endfor %}
                 </select>
                 <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-300">
