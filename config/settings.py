@@ -217,7 +217,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB max for any single file
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB max for file uploads
 
 # Allowed hosts - strict in production
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
+# ALLOWED_HOSTS already defined above (line 50)
 if DEBUG:
     ALLOWED_HOSTS.extend(['localhost', '127.0.0.1', '[::1]', 'testserver'])
 
