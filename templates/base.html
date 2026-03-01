@@ -141,7 +141,7 @@
                         <i class="fa-solid fa-address-book fa-fw mr-3"></i><span class="ml-3">Directorio de
                             Correos</span>
                     </a>
-                    {% if user.role == 'FUNCIONARIO' or user.role == 'ADMIN' %}
+                    {% if user.role == 'FUNCIONARIO' or user.role == 'ADMIN' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'solicitar_permiso' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-calendar-plus fa-fw mr-3"></i><span class="ml-3">Solicitar Días</span>
@@ -247,7 +247,7 @@
                     <div class="pt-4 pb-2">
                         <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Reportes</p>
                     </div>
-                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
                     <a href="{% url 'admin_dashboard:dashboard' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-chart-bar fa-fw mr-3"></i><span class="ml-3">Estadísticas</span>
@@ -367,7 +367,7 @@
                         <i class="fa-solid fa-address-book fa-fw mr-3"></i><span class="ml-3">Directorio de
                             Correos</span>
                     </a>
-                    {% if user.role == 'FUNCIONARIO' or user.role == 'ADMIN' %}
+                    {% if user.role == 'FUNCIONARIO' or user.role == 'ADMIN' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'solicitar_permiso' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-calendar-plus fa-fw mr-3"></i><span class="ml-3">Solicitar Días</span>
@@ -473,7 +473,7 @@
                     <div class="pt-4 pb-2">
                         <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Reportes</p>
                     </div>
-                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
                     <a href="{% url 'admin_dashboard:dashboard' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-chart-bar fa-fw mr-3"></i><span class="ml-3">Estadísticas</span>

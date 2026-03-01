@@ -36,8 +36,8 @@ class SolicitudCreateView(LoginRequiredMixin, CreateView):
             form.add_error(None, f"Saldo insuficiente. Tienes {self.request.user.dias_disponibles} días disponibles, pero {solicitudes_pendientes} día(s) están en solicitudes pendientes de aprobación.")
             return self.form_invalid(form)
 
-        # Auto-aprobar si el usuario es DIRECTOR
-        if self.request.user.role == 'DIRECTOR':
+        # Auto-aprobar si el usuario es DIRECTOR, DIRECTIVO o SECRETARIA
+        if self.request.user.role in ['DIRECTOR', 'DIRECTIVO', 'SECRETARIA']:
             form.instance.estado = 'APROBADO'
             # Descontar días inmediatamente
             self.request.user.dias_disponibles -= form.instance.dias_solicitados
