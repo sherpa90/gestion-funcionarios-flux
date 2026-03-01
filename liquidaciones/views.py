@@ -324,7 +324,7 @@ class AdminLiquidacionesOverviewView(LoginRequiredMixin, UserPassesTestMixin, Li
     # Sin paginacion - mostrar todos los usuarios
 
     def test_func(self):
-        return self.request.user.role == 'ADMIN'
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
 
     def get_queryset(self):
         # Obtener todos los usuarios del sistema (sin filtro de liquidaciones)
