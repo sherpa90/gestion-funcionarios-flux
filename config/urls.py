@@ -18,6 +18,7 @@ def serve_media(request, path):
     """
     from django.http import FileResponse, Http404
     import os
+    import time
     
     # Seguridad: evitar path traversal
     # El path no debe contener ../ o empezar con /
@@ -28,6 +29,13 @@ def serve_media(request, path):
     file_path = os.path.join(settings.MEDIA_ROOT, path)
     
     # Verificar que el archivo existe y esta dentro de MEDIA_ROOT
+    # Agregar reintentos por si el archivo se esta escribiendo
+    max_attempts = 3
+    for attempt in range(max_attempts):
+        if os.path.exists(file_path):
+            break
+        time.sleep(0.1)  # Esperar 100ms entre intentos
+    
     if not os.path.exists(file_path):
         raise Http404("File not found")
     
@@ -37,6 +45,10 @@ def serve_media(request, path):
     
     if not real_path.startswith(real_media_root):
         raise Http404("Access denied")
+    
+    # Verificar que el archivo es legible
+    if not os.access(file_path, os.R_OK):
+        raise Http404("File not readable")
     
     # Determinar el tipo de contenido basado en la extension
     if path.lower().endswith('.pdf'):
@@ -68,8 +80,10 @@ def serve_media(request, path):
             content_type=content_type,
             as_attachment=False
         )
-        # Agregar headers para cache
-        response['Cache-Control'] = 'public, max-age=3600'
+        # Agregar headers para evitar cache de nginx
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
         response['Content-Disposition'] = 'inline; filename=' + os.path.basename(path)
         return response
     except Exception:
