@@ -92,6 +92,16 @@ class CargaLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, FormView):
                             if usuario:
                                 logger.info(f"User matched: {usuario.get_full_name()} (RUT: {usuario.run})")
 
+                                # VALIDAR: Verificar que no exista una liquidación para ese mes/año
+                                from .services import PayrollValidationService
+                                puede_subir, msg_error = PayrollValidationService.can_upload_payroll(
+                                    self.request.user, usuario, mes, anio
+                                )
+                                if not puede_subir:
+                                    logger.warning(f"Page {page_num + 1}: {msg_error}")
+                                    errors.append(f"Página {page_num + 1}: {msg_error}")
+                                    continue
+
                                 # Usar servicio para crear liquidación
                                 # Necesitamos el contenido completo del PDF para extraer la página
                                 archivo.seek(0)  # Reset file pointer
@@ -317,11 +327,10 @@ class AdminLiquidacionesOverviewView(LoginRequiredMixin, UserPassesTestMixin, Li
         return self.request.user.role == 'ADMIN'
 
     def get_queryset(self):
-        # Obtener usuarios que tienen liquidaciones
-        usuarios_con_liquidaciones = Liquidacion.objects.values_list('funcionario', flat=True).distinct()
+        # Obtener todos los usuarios del sistema (sin filtro de liquidaciones)
+        # Mostrar todos los roles incluyendo ADMIN
         queryset = CustomUser.objects.filter(
-            id__in=usuarios_con_liquidaciones,
-            role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']
+            role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
         )
 
         # Aplicar ordenamiento

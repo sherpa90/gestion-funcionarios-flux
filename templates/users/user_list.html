@@ -51,6 +51,36 @@
         </form>
     </div>
 
+    <!-- Sorting and Filter Section -->
+    <div class="bg-white p-4 rounded-[2rem] border border-gray-100 shadow-lg">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-black text-gray-400 uppercase tracking-widest">Ordenar por:</span>
+                <div class="flex flex-wrap gap-1">
+                    <a href="?sort=name{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}"
+                        class="px-3 py-1.5 text-xs font-bold rounded-lg {% if current_sort == 'name' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} transition">
+                        Nombre A-Z
+                    </a>
+                    <a href="?sort=name_desc{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}"
+                        class="px-3 py-1.5 text-xs font-bold rounded-lg {% if current_sort == 'name_desc' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} transition">
+                        Nombre Z-A
+                    </a>
+                    <a href="?sort=role{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}"
+                        class="px-3 py-1.5 text-xs font-bold rounded-lg {% if current_sort == 'role' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} transition">
+                        Rol
+                    </a>
+                    <a href="?sort=recent{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}"
+                        class="px-3 py-1.5 text-xs font-bold rounded-lg {% if current_sort == 'recent' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} transition">
+                        Más Reciente
+                    </a>
+                </div>
+            </div>
+            <div class="text-xs font-medium text-gray-500">
+                {{ paginator.count }} usuarios en total
+            </div>
+        </div>
+    </div>
+
     {% if bulk_passwords %}
     <!-- Bulk Success Alert -->
     <div
@@ -319,6 +349,62 @@
             </div>
             {% endfor %}
         </div>
+
+        <!-- Paginación -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-8 flex justify-center">
+            <nav class="inline-flex rounded-xl overflow-hidden border border-gray-200">
+                {% if page_obj.has_previous %}
+                <a href="?page=1&sort={{ current_sort }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
+                    class="px-4 py-2 bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 border-r border-gray-200">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ page_obj.previous_page_number }}&sort={{ current_sort }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
+                    class="px-4 py-2 bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 border-r border-gray-200">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+                {% else %}
+                <span
+                    class="px-4 py-2 bg-gray-100 text-sm font-bold text-gray-400 border-r border-gray-200 cursor-not-allowed">
+                    <i class="fas fa-angle-double-left"></i>
+                </span>
+                <span
+                    class="px-4 py-2 bg-gray-100 text-sm font-bold text-gray-400 border-r border-gray-200 cursor-not-allowed">
+                    <i class="fas fa-angle-left"></i>
+                </span>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="px-4 py-2 bg-blue-600 text-sm font-bold text-white">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <a
+                    href="?page={{ num }}&sort={{ current_sort }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
+                    class="px-4 py-2 bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 border-l border-gray-200">
+                    {{ num }}</a>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&sort={{ current_sort }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
+                        class="px-4 py-2 bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 border-l border-gray-200">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}&sort={{ current_sort }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
+                        class="px-4 py-2 bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 border-l border-gray-200">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                    {% else %}
+                    <span
+                        class="px-4 py-2 bg-gray-100 text-sm font-bold text-gray-400 border-l border-gray-200 cursor-not-allowed">
+                        <i class="fas fa-angle-right"></i>
+                    </span>
+                    <span class="px-4 py-2 bg-gray-100 text-sm font-bold text-gray-400 cursor-not-allowed">
+                        <i class="fas fa-angle-double-right"></i>
+                    </span>
+                    {% endif %}
+            </nav>
+        </div>
+        {% endif %}
     </div>
 </div>
 </div>
