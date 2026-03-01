@@ -124,7 +124,8 @@
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">Solicita: <span class="font-bold">{{ solicitud.dias_solicitados}} días</span></div>
+                            <div class="text-sm text-gray-900">Solicita: <span class="font-bold">{{
+                                    solicitud.dias_solicitados}} días</span></div>
                             <div class="text-xs text-gray-500 mt-1">
                                 Saldo:
                                 <span
@@ -543,13 +544,11 @@
                                 <span class="text-xs font-bold uppercase">Cancelación:</span>
                                 {{ solicitud.motivo_cancelacion}}
                                 {% if solicitud.cancelled_by %}
-                                <br><span class="text-xs text-gray-500">Cancelado por: {{ solicitud.cancelled_by.get_full_name}}</span>
+                                <br><span class="text-xs text-gray-500">Cancelado por: {{
+                                    solicitud.cancelled_by.get_full_name}}</span>
                                 {% endif %}
                             </div>
-                            {% endif %}
-
-                            {% if not solicitud.observacion and not solicitud.motivo_rechazo and not
-                            solicitud.motivo_cancelacion %}
+                            {% if not solicitud.observacion and not solicitud.motivo_rechazo and not solicitud.motivo_cancelacion %}
                             <span class="text-gray-400 italic">Sin observaciones</span>
                             {% endif %}
                         </td>
@@ -624,7 +623,7 @@
                     </div>
                     {% endif %}
 
-                    {% if not solicitud.observacion and not solicitud.motivo_rechazo and not
+                    {% if not solicitud.observacion and not solicitud.motivo_rechazo and not solicitud.motivo_cancelacion %}
                     solicitud.motivo_cancelacion %}
                     <p class="text-sm text-gray-400 italic">Sin observaciones</p>
                     {% endif %}
