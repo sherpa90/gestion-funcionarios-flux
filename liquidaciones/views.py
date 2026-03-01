@@ -333,6 +333,16 @@ class AdminLiquidacionesOverviewView(LoginRequiredMixin, UserPassesTestMixin, Li
             role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
         )
 
+        # Buscador
+        search_query = self.request.GET.get('search', '')
+        if search_query:
+            queryset = queryset.filter(
+                Q(first_name__icontains=search_query) |
+                Q(last_name__icontains=search_query) |
+                Q(run__icontains=search_query) |
+                Q(email__icontains=search_query)
+            )
+
         # Aplicar ordenamiento
         sort_by = self.request.GET.get('sort', 'name')
         if sort_by == 'name':

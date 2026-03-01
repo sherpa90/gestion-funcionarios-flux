@@ -18,6 +18,27 @@
         </a>
     </div>
 
+    <!-- Buscador -->
+    <div class="mb-4">
+        <form method="get" class="flex gap-2">
+            <div class="flex-1">
+                <input type="text" name="search" value="{{ request.GET.search|default:'' }}"
+                    placeholder="Buscar por nombre, RUN o correo..."
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <button type="submit"
+                class="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition">
+                <i class="fas fa-search mr-1"></i> Buscar
+            </button>
+            {% if request.GET.search %}
+            <a href="{% url 'admin_liquidaciones_overview' %}"
+                class="px-4 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition">
+                <i class="fas fa-times mr-1"></i> Limpiar
+            </a>
+            {% endif %}
+        </form>
+    </div>
+
     <!-- Funcionarios con Liquidaciones -->
     <div class="bg-white rounded-lg sm:rounded-xl shadow-sm overflow-hidden">
         <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
@@ -31,19 +52,19 @@
                     class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full lg:w-auto">
                     <span class="text-xs sm:text-sm text-gray-600">Ordenar por:</span>
                     <div class="flex flex-wrap gap-1">
-                        <a href="?sort=name{% if page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}"
+                        <a href="?sort=name{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}"
                             class="px-2 sm:px-3 py-1 text-xs font-medium rounded-md {% if current_sort == 'name' %}bg-blue-100 text-blue-800{% else %}text-gray-600 hover:text-gray-900 hover:bg-gray-100{% endif %} transition">
                             Nombre A-Z
                         </a>
-                        <a href="?sort=name_desc{% if page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}"
+                        <a href="?sort=name_desc{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}"
                             class="px-2 sm:px-3 py-1 text-xs font-medium rounded-md {% if current_sort == 'name_desc' %}bg-blue-100 text-blue-800{% else %}text-gray-600 hover:text-gray-900 hover:bg-gray-100{% endif %} transition">
                             Nombre Z-A
                         </a>
-                        <a href="?sort=role{% if page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}"
+                        <a href="?sort=role{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}"
                             class="px-2 sm:px-3 py-1 text-xs font-medium rounded-md {% if current_sort == 'role' %}bg-blue-100 text-blue-800{% else %}text-gray-600 hover:text-gray-900 hover:bg-gray-100{% endif %} transition">
                             Rol A-Z
                         </a>
-                        <a href="?sort=role_desc{% if page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}"
+                        <a href="?sort=role_desc{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if page_obj.number > 1 %}&page={{ page_obj.number }}{% endif %}"
                             class="px-2 sm:px-3 py-1 text-xs font-medium rounded-md {% if current_sort == 'role_desc' %}bg-blue-100 text-blue-800{% else %}text-gray-600 hover:text-gray-900 hover:bg-gray-100{% endif %} transition">
                             Rol Z-A
                         </a>
@@ -214,12 +235,12 @@
                 </div>
                 <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                     {% if page_obj.has_previous %}
-                    <a href="?page=1&sort={{ current_sort }}"
+                    <a href="?page=1&sort={{ current_sort }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
                         class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                         <span class="sr-only">Primera</span>
                         <i class="fas fa-angle-double-left"></i>
                     </a>
-                    <a href="?page={{ page_obj.previous_page_number }}&sort={{ current_sort }}"
+                    <a href="?page={{ page_obj.previous_page_number }}&sort={{ current_sort }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
                         class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                         <span class="sr-only">Anterior</span>
                         <i class="fas fa-angle-left"></i>
@@ -245,7 +266,7 @@
                         {{ num }}
                     </span>
                     {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <a
-                        href="?page={{ num }}&sort={{ current_sort }}"
+                        href="?page={{ num }}&sort={{ current_sort }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
                         class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
                         {{ num }}
                         </a>
@@ -253,12 +274,12 @@
                         {% endfor %}
 
                         {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}&sort={{ current_sort }}"
+                        <a href="?page={{ page_obj.next_page_number }}&sort={{ current_sort }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
                             class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                             <span class="sr-only">Siguiente</span>
                             <i class="fas fa-angle-right"></i>
                         </a>
-                        <a href="?page={{ page_obj.paginator.num_pages }}&sort={{ current_sort }}"
+                        <a href="?page={{ page_obj.paginator.num_pages }}&sort={{ current_sort }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
                             class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                             <span class="sr-only">Última</span>
                             <i class="fas fa-angle-double-right"></i>
