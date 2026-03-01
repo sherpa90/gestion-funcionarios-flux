@@ -38,7 +38,8 @@
             </div>
         </div>
 
-        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-4 sm:p-6 text-white sm:col-span-2 lg:col-span-1">
+        <div
+            class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-4 sm:p-6 text-white sm:col-span-2 lg:col-span-1">
             <div class="flex items-center justify-between">
                 <div class="flex-1">
                     <p class="text-purple-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Historial</p>
@@ -61,7 +62,8 @@
                 <span class="hidden sm:inline">Solicitudes </span>Pendientes
             </h3>
             {% if solicitudes %}
-            <span class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold bg-red-100 text-red-800">
+            <span
+                class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold bg-red-100 text-red-800">
                 <i class="fas fa-exclamation-circle mr-1"></i>
                 {{ solicitudes.count }} pendiente{{ solicitudes.count|pluralize }}
             </span>
@@ -122,7 +124,8 @@
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">Solicita: <span class="font-bold">{{ solicitud.dias_solicitados }} días</span></div>
+                            <div class="text-sm text-gray-900">Solicita: <span class="font-bold">{{
+                                    solicitud.dias_solicitados }} días</span></div>
                             <div class="text-xs text-gray-500 mt-1">
                                 Saldo:
                                 <span
@@ -133,7 +136,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-2">
-                                {% if solicitud.estado == 'PENDIENTE' %}
+                                {% if solicitud.estado == 'PENDIENTE' and user.role != 'SECRETARIA' %}
                                 <form action="{% url 'solicitud_action' solicitud.pk 'approve' %}" method="post"
                                     class="inline">
                                     {% csrf_token %}
@@ -149,7 +152,8 @@
                                     <i class="fas fa-times mr-1"></i>
                                     Rechazar
                                 </button>
-                                {% elif solicitud.estado == 'APROBADO' and user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                                {% elif solicitud.estado == 'APROBADO' and user.role == 'ADMIN' or user.role ==
+                                'SECRETARIA' %}
                                 <button type="button"
                                     onclick="document.getElementById('cancel-modal-{{ solicitud.pk }}').classList.remove('hidden')"
                                     class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition shadow-sm">
@@ -240,8 +244,10 @@
                                                         </h3>
                                                         <div class="mt-2">
                                                             <p class="text-sm text-gray-500">
-                                                                ¿Estás seguro de que quieres cancelar esta solicitud aprobada?
-                                                                Se devolverán {{ solicitud.dias_solicitados }} días administrativos a {{ solicitud.usuario.get_full_name }}.
+                                                                ¿Estás seguro de que quieres cancelar esta solicitud
+                                                                aprobada?
+                                                                Se devolverán {{ solicitud.dias_solicitados }} días
+                                                                administrativos a {{ solicitud.usuario.get_full_name }}.
                                                             </p>
                                                         </div>
                                                         <div class="mt-4">
@@ -304,7 +310,8 @@
                     <div class="flex items-start space-x-3">
                         <i class="fas fa-calendar text-blue-500 mt-0.5"></i>
                         <div>
-                            <div class="text-sm font-medium text-gray-900">{{ solicitud.fecha_inicio|date:"d/m/Y" }}</div>
+                            <div class="text-sm font-medium text-gray-900">{{ solicitud.fecha_inicio|date:"d/m/Y" }}
+                            </div>
                             {% if solicitud.observacion %}
                             <div class="text-sm text-gray-600 mt-1">{{ solicitud.observacion }}</div>
                             {% endif %}
@@ -321,7 +328,8 @@
                         </div>
                         <div class="text-right">
                             <div class="text-xs text-gray-500">Saldo disponible</div>
-                            <div class="text-sm font-medium {% if solicitud.usuario.dias_disponibles >= 4 %}text-green-600{% elif solicitud.usuario.dias_disponibles >= 2 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                            <div
+                                class="text-sm font-medium {% if solicitud.usuario.dias_disponibles >= 4 %}text-green-600{% elif solicitud.usuario.dias_disponibles >= 2 %}text-yellow-600{% else %}text-red-600{% endif %}">
                                 {{ solicitud.usuario.dias_disponibles|floatformat:1 }} / 6.0
                             </div>
                         </div>
@@ -341,7 +349,7 @@
 
                 <!-- Card Actions -->
                 <div class="px-4 py-3 bg-gray-50 border-t border-gray-200">
-                    {% if solicitud.estado == 'PENDIENTE' %}
+                    {% if solicitud.estado == 'PENDIENTE' and user.role != 'SECRETARIA' %}
                     <div class="grid grid-cols-2 gap-3">
                         <form action="{% url 'solicitud_action' solicitud.pk 'approve' %}" method="post">
                             {% csrf_token %}
@@ -370,8 +378,9 @@
             </div>
 
             <!-- Mobile Reject Modal -->
-            <div id="reject-modal-mobile-{{ solicitud.pk }}" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
-                 aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div id="reject-modal-mobile-{{ solicitud.pk }}"
+                class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50" aria-labelledby="modal-title"
+                role="dialog" aria-modal="true">
                 <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                     <div class="w-full max-w-sm mx-auto bg-white rounded-lg shadow-xl">
                         <div class="px-4 py-3 border-b border-gray-200">
@@ -381,24 +390,22 @@
                             {% csrf_token %}
                             <div class="px-4 py-3">
                                 <label for="motivo_rechazo_mobile_{{ solicitud.pk }}"
-                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    class="block text-sm font-medium text-gray-700 mb-2">
                                     Motivo del rechazo (Opcional)
                                 </label>
-                                <textarea name="motivo_rechazo"
-                                          id="motivo_rechazo_mobile_{{ solicitud.pk }}"
-                                          rows="3"
-                                          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                                          placeholder="Puedes indicar el motivo del rechazo aquí..."></textarea>
+                                <textarea name="motivo_rechazo" id="motivo_rechazo_mobile_{{ solicitud.pk }}" rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                                    placeholder="Puedes indicar el motivo del rechazo aquí..."></textarea>
                             </div>
                             <div class="px-4 py-3 bg-gray-50 flex space-x-3">
                                 <button type="submit"
-                                        class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                                    class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
                                     <i class="fas fa-times mr-2"></i>
                                     Confirmar
                                 </button>
                                 <button type="button"
-                                        onclick="document.getElementById('reject-modal-mobile-{{ solicitud.pk }}').classList.add('hidden')"
-                                        class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    onclick="document.getElementById('reject-modal-mobile-{{ solicitud.pk }}').classList.add('hidden')"
+                                    class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                                     Cancelar
                                 </button>
                             </div>
@@ -409,8 +416,9 @@
 
             <!-- Mobile Cancel Modal -->
             {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
-            <div id="cancel-modal-mobile-{{ solicitud.pk }}" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50"
-                 aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div id="cancel-modal-mobile-{{ solicitud.pk }}"
+                class="hidden fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50" aria-labelledby="modal-title"
+                role="dialog" aria-modal="true">
                 <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                     <div class="w-full max-w-sm mx-auto bg-white rounded-lg shadow-xl">
                         <div class="px-4 py-3 border-b border-gray-200">
@@ -424,24 +432,23 @@
                                     Se devolverán {{ solicitud.dias_solicitados }} días administrativos.
                                 </p>
                                 <label for="motivo_cancelacion_mobile_{{ solicitud.pk }}"
-                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    class="block text-sm font-medium text-gray-700 mb-2">
                                     Motivo de la cancelación (Opcional)
                                 </label>
-                                <textarea name="motivo_cancelacion"
-                                          id="motivo_cancelacion_mobile_{{ solicitud.pk }}"
-                                          rows="3"
-                                          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500"
-                                          placeholder="Puedes indicar el motivo de la cancelación aquí..."></textarea>
+                                <textarea name="motivo_cancelacion" id="motivo_cancelacion_mobile_{{ solicitud.pk }}"
+                                    rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500"
+                                    placeholder="Puedes indicar el motivo de la cancelación aquí..."></textarea>
                             </div>
                             <div class="px-4 py-3 bg-gray-50 flex space-x-3">
                                 <button type="submit"
-                                        class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
+                                    class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700">
                                     <i class="fas fa-ban mr-2"></i>
                                     Confirmar
                                 </button>
                                 <button type="button"
-                                        onclick="document.getElementById('cancel-modal-mobile-{{ solicitud.pk }}').classList.add('hidden')"
-                                        class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    onclick="document.getElementById('cancel-modal-mobile-{{ solicitud.pk }}').classList.add('hidden')"
+                                    class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                                     Cancelar
                                 </button>
                             </div>
@@ -538,12 +545,14 @@
                                 <span class="text-xs font-bold uppercase">Cancelación:</span>
                                 {{ solicitud.motivo_cancelacion }}
                                 {% if solicitud.cancelled_by %}
-                                <br><span class="text-xs text-gray-500">Cancelado por: {{ solicitud.cancelled_by.get_full_name }}</span>
+                                <br><span class="text-xs text-gray-500">Cancelado por: {{
+                                    solicitud.cancelled_by.get_full_name }}</span>
                                 {% endif %}
                             </div>
                             {% endif %}
 
-                            {% if not solicitud.observacion and not solicitud.motivo_rechazo and not solicitud.motivo_cancelacion %}
+                            {% if not solicitud.observacion and not solicitud.motivo_rechazo and not
+                            solicitud.motivo_cancelacion %}
                             <span class="text-gray-400 italic">Sin observaciones</span>
                             {% endif %}
                         </td>
@@ -569,19 +578,23 @@
                         </div>
                     </div>
                     {% if solicitud.estado == 'APROBADO' %}
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                    <span
+                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
                         <i class="fas fa-check-circle mr-1"></i> Aprobado
                     </span>
                     {% elif solicitud.estado == 'RECHAZADO' %}
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                    <span
+                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
                         <i class="fas fa-times-circle mr-1"></i> Rechazado
                     </span>
                     {% elif solicitud.estado == 'CANCELADO' %}
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                    <span
+                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
                         <i class="fas fa-ban mr-1"></i> Cancelado
                     </span>
                     {% else %}
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+                    <span
+                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
                         <i class="fas fa-clock mr-1"></i> Pendiente
                     </span>
                     {% endif %}
@@ -608,12 +621,14 @@
                         <span class="text-xs font-bold text-gray-600 uppercase">Motivo de cancelación:</span>
                         <p class="text-sm text-gray-700 mt-1">{{ solicitud.motivo_cancelacion }}</p>
                         {% if solicitud.cancelled_by %}
-                        <p class="text-xs text-gray-500 mt-1">Cancelado por: {{ solicitud.cancelled_by.get_full_name }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Cancelado por: {{ solicitud.cancelled_by.get_full_name }}
+                        </p>
                         {% endif %}
                     </div>
                     {% endif %}
 
-                    {% if not solicitud.observacion and not solicitud.motivo_rechazo and not solicitud.motivo_cancelacion %}
+                    {% if not solicitud.observacion and not solicitud.motivo_rechazo and not
+                    solicitud.motivo_cancelacion %}
                     <p class="text-sm text-gray-400 italic">Sin observaciones</p>
                     {% endif %}
                 </div>

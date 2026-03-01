@@ -155,7 +155,8 @@ class SolicitudAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
 class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
-        return self.request.user.role in ['DIRECTOR', 'ADMIN', 'SECRETARIA']
+        # Solo DIRECTOR y ADMIN pueden aprobar/rechazar
+        return self.request.user.role in ['DIRECTOR', 'ADMIN']
 
     def post(self, request, pk, action):
         # Validate pk is a valid integer
