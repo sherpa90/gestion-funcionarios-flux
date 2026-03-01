@@ -51,8 +51,15 @@
         }
 
         @keyframes backgroundShift {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
+
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
         }
 
         .login-card {
@@ -136,9 +143,12 @@
         }
 
         @keyframes float {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: translateY(0) rotate(0deg);
             }
+
             50% {
                 transform: translateY(-20px) rotate(180deg);
             }
@@ -174,9 +184,13 @@
                 margin: 1rem;
                 padding: 1.5rem;
             }
-            .shape-1, .shape-2, .shape-3 {
+
+            .shape-1,
+            .shape-2,
+            .shape-3 {
                 display: none;
             }
+
             body {
                 padding: 1rem;
             }
@@ -234,8 +248,8 @@
                     Correo Institucional
                 </label>
                 <div class="input-group">
-                    <input type="email" name="username" id="id_username" class="form-input" placeholder="nombre.apellido@losalercespuertomontt.cl"
-                        required autofocus>
+                    <input type="email" name="username" id="id_username" class="form-input" placeholder="" required
+                        autofocus>
                     <i class="fas fa-envelope input-icon"></i>
                 </div>
                 {% if form.username.errors %}
