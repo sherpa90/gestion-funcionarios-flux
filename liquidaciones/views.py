@@ -321,7 +321,7 @@ class AdminLiquidacionesOverviewView(LoginRequiredMixin, UserPassesTestMixin, Li
     model = CustomUser
     template_name = 'liquidaciones/admin_liquidaciones_overview.html'
     context_object_name = 'funcionarios'
-    paginate_by = 20
+    # Sin paginacion - mostrar todos los usuarios
 
     def test_func(self):
         return self.request.user.role == 'ADMIN'
