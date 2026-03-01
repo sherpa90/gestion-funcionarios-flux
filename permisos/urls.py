@@ -2,13 +2,15 @@ from django.urls import path
 from .views import (
     SolicitudCreateView, SolicitudListView, SolicitudDirectorDashboardView,
     SolicitudAdminListView, SolicitudActionView, SolicitudBypassView,
-    SolicitudAdminManagementView, SolicitudAdminEditView, SolicitudAdminDeleteView
+    SolicitudAdminManagementView, SolicitudAdminEditView, SolicitudAdminDeleteView,
+    SolicitudCancelView
 )
 
 urlpatterns = [
     path('solicitar/', SolicitudCreateView.as_view(), name='solicitar_permiso'),
     path('ingresar-directo/', SolicitudBypassView.as_view(), name='solicitud_bypass'),
     path('mis-solicitudes/', SolicitudListView.as_view(), name='dashboard_funcionario'),
+    path('cancelar/<int:pk>/', SolicitudCancelView.as_view(), name='solicitud_cancel'),
     path('gestion/', SolicitudDirectorDashboardView.as_view(), name='dashboard_director'), # Dashboard con días disponibles
     path('gestion/admin/', SolicitudAdminListView.as_view(), name='solicitudes_admin'),
     path('admin/gestion/', SolicitudAdminManagementView.as_view(), name='admin_management'),

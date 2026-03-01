@@ -71,7 +71,7 @@
 
                     <!-- Acciones -->
                     <div class="flex gap-2 sm:flex-shrink-0">
-                        {% if solicitud.estado == 'PENDIENTE' and user.role != 'SECRETARIA' %}
+                        {% if solicitud.estado == 'PENDIENTE' and user.role == 'DIRECTOR' %}
                         <form action="{% url 'solicitud_action' solicitud.pk 'approve' %}" method="post">
                             {% csrf_token %}
                             <button type="submit" onclick="return confirm('¿Aprobar?')"
@@ -150,6 +150,7 @@
                             <th class="px-4 py-3 text-left font-medium text-gray-500">Días</th>
                             <th class="px-4 py-3 text-left font-medium text-gray-500">Estado</th>
                             <th class="px-4 py-3 text-left font-medium text-gray-500">Detalles</th>
+                            <th class="px-4 py-3 text-left font-medium text-gray-500">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -184,6 +185,20 @@
                                 {% if solicitud.observacion %}{{ solicitud.observacion|truncatechars:30 }}{% endif %}
                                 {% if solicitud.motivo_rechazo %}<br><span class="text-red-600">{{
                                     solicitud.motivo_rechazo|truncatechars:30 }}</span>{% endif %}
+                                {% if solicitud.motivo_cancelacion %}<br><span class="text-gray-600">{{
+                                    solicitud.motivo_cancelacion|truncatechars:30 }}</span>{% endif %}
+                            </td>
+                            <td class="px-4 py-3">
+                                {% if solicitud.estado == 'APROBADO' and user.role != 'FUNCIONARIO' %}
+                                <form action="{% url 'solicitud_action' solicitud.pk 'cancel' %}" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="motivo_cancelacion" value="Devolución por no uso">
+                                    <button type="submit" onclick="return confirm('¿Devolver días al funcionario?')"
+                                        class="text-red-600 hover:text-red-800 text-xs font-medium">
+                                        <i class="fas fa-undo mr-1"></i>Devolver
+                                    </button>
+                                </form>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}

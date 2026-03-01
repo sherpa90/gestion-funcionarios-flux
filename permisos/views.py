@@ -10,6 +10,27 @@ from .forms import SolicitudForm, SolicitudBypassForm
 from users.models import CustomUser
 from core.services import BusinessDayCalculator
 
+class SolicitudCancelView(LoginRequiredMixin, View):
+    """Vista para que el usuario pueda cancelar su propia solicitud pendiente"""
+    
+    def post(self, request, pk):
+        solicitud = get_object_or_404(SolicitudPermiso, pk=pk, usuario=request.user)
+        
+        # Solo puede cancelar si está pendiente
+        if solicitud.estado != 'PENDIENTE':
+            messages.error(request, 'Solo puedes cancelar solicitudes pendientes.')
+            return redirect('dashboard_funcionario')
+        
+        # Cancelar la solicitud
+        solicitud.estado = 'CANCELADO'
+        solicitud.motivo_cancelacion = request.POST.get('motivo_cancelacion', 'Cancelado por el solicitante')
+        solicitud.cancelled_by = request.user
+        solicitud.cancelled_at = timezone.now()
+        solicitud.save()
+        
+        messages.success(request, 'Solicitud cancelada correctamente.')
+        return redirect('dashboard_funcionario')
+
 class SolicitudCreateView(LoginRequiredMixin, CreateView):
     model = SolicitudPermiso
     form_class = SolicitudForm
@@ -36,8 +57,8 @@ class SolicitudCreateView(LoginRequiredMixin, CreateView):
             form.add_error(None, f"Saldo insuficiente. Tienes {self.request.user.dias_disponibles} días disponibles, pero {solicitudes_pendientes} día(s) están en solicitudes pendientes de aprobación.")
             return self.form_invalid(form)
 
-        # Auto-aprobar si el usuario es DIRECTOR, DIRECTIVO o SECRETARIA
-        if self.request.user.role in ['DIRECTOR', 'DIRECTIVO', 'SECRETARIA']:
+        # Auto-aprobar solo si el usuario es DIRECTOR (los demás perfiles requieren aprobación del director)
+        if self.request.user.role == 'DIRECTOR':
             form.instance.estado = 'APROBADO'
             # Descontar días inmediatamente
             self.request.user.dias_disponibles -= form.instance.dias_solicitados
@@ -106,7 +127,7 @@ class SolicitudListView(LoginRequiredMixin, ListView):
     context_object_name = 'solicitudes'
 
     def get_queryset(self):
-        return SolicitudPermiso.objects.filter(usuario=self.request.user).order_by('-created_at')[:5]
+        return SolicitudPermiso.objects.filter(usuario=self.request.user).order_by('-created_at')[:20]
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -189,8 +210,8 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
             solicitud.save()
             messages.success(request, 'Solicitud rechazada.')
         elif action == 'cancel':
-            # Solo admins y secretarias pueden cancelar solicitudes aprobadas
-            if request.user.role in ['ADMIN', 'SECRETARIA'] and solicitud.estado == 'APROBADO':
+            # Solo admins, secretarias y directores pueden cancelar solicitudes aprobadas
+            if request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR'] and solicitud.estado == 'APROBADO':
                 solicitud.estado = 'CANCELADO'
                 solicitud.motivo_cancelacion = request.POST.get('motivo_cancelacion', 'Cancelado por administrador')
                 solicitud.cancelled_by = request.user
