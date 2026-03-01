@@ -194,6 +194,7 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-boxes fa-fw mr-3"></i><span class="ml-3">Equipos</span>
                     </a>
+                    {% endif %}
                     {% if user.role != 'SECRETARIA' %}
                     <a href="{% url 'gestion_fallas' %}"
                         class="sidebar-link flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
@@ -419,6 +420,7 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-boxes fa-fw mr-3"></i><span class="ml-3">Equipos</span>
                     </a>
+                    {% endif %}
                     {% if user.role != 'SECRETARIA' %}
                     <a href="{% url 'gestion_fallas' %}"
                         class="sidebar-link flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
