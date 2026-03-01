@@ -3,49 +3,49 @@
 {% block page_title %}Mis Liquidaciones{% endblock %}
 
 {% block content %}
-<div class="p-6">
+<div class="p-4 sm:p-6">
     <!-- Header -->
-    <div class="mb-8">
-        <h2 class="text-3xl font-bold text-gray-900">Mis Liquidaciones de Sueldo</h2>
-        <p class="text-gray-600 mt-2">Tus liquidaciones organizadas por año</p>
+    <div class="mb-6 sm:mb-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Mis Liquidaciones de Sueldo</h2>
+        <p class="text-gray-600 mt-2 text-sm sm:text-base">Tus liquidaciones organizadas por año</p>
     </div>
 
     <!-- Estadísticas -->
     {% if estadisticas %}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-blue-100 text-sm font-medium uppercase">Total Liquidaciones</p>
-                    <p class="text-4xl font-bold mt-2">{{ estadisticas.total_liquidaciones }}</p>
+                    <p class="text-blue-100 text-xs sm:text-sm font-medium uppercase">Total Liquidaciones</p>
+                    <p class="text-3xl sm:text-4xl font-bold mt-2">{{ estadisticas.total_liquidaciones }}</p>
                 </div>
-                <div class="bg-white/20 rounded-full p-4">
-                    <i class="fas fa-file-invoice-dollar text-3xl"></i>
+                <div class="bg-white/20 rounded-full p-3 sm:p-4">
+                    <i class="fas fa-file-invoice-dollar text-2xl sm:text-3xl"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-green-100 text-sm font-medium uppercase">Años con Liquidaciones</p>
-                    <p class="text-4xl font-bold mt-2">{{ estadisticas.anios_con_liquidaciones }}</p>
+                    <p class="text-green-100 text-xs sm:text-sm font-medium uppercase">Años con Liquidaciones</p>
+                    <p class="text-3xl sm:text-4xl font-bold mt-2">{{ estadisticas.anios_con_liquidaciones }}</p>
                 </div>
-                <div class="bg-white/20 rounded-full p-4">
-                    <i class="fas fa-calendar-alt text-3xl"></i>
+                <div class="bg-white/20 rounded-full p-3 sm:p-4">
+                    <i class="fas fa-calendar-alt text-2xl sm:text-3xl"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-purple-100 text-sm font-medium uppercase">Promedio por Año</p>
-                    <p class="text-4xl font-bold mt-2">{{ estadisticas.promedio_por_anio }}</p>
+                    <p class="text-purple-100 text-xs sm:text-sm font-medium uppercase">Promedio por Año</p>
+                    <p class="text-3xl sm:text-4xl font-bold mt-2">{{ estadisticas.promedio_por_anio }}</p>
                     <p class="text-purple-100 text-xs mt-1">liquidaciones</p>
                 </div>
-                <div class="bg-white/20 rounded-full p-4">
-                    <i class="fas fa-chart-line text-3xl"></i>
+                <div class="bg-white/20 rounded-full p-3 sm:p-4">
+                    <i class="fas fa-chart-line text-2xl sm:text-3xl"></i>
                 </div>
             </div>
         </div>
@@ -54,81 +54,113 @@
 
     <!-- Liquidaciones por Año -->
     {% if liquidaciones_por_anio %}
-    <div class="space-y-8">
+    <div class="space-y-4 sm:space-y-6">
         {% for anio, liquidaciones_anio in liquidaciones_por_anio.items %}
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 flex justify-between items-center">
-                <h3 class="text-xl font-semibold text-gray-900 flex items-center">
-                    <i class="fas fa-calendar text-blue-600 mr-3"></i>
-                    Liquidaciones {{ anio }}
-                    <span class="ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                        {{ liquidaciones_anio|length }} liquidacion{{ liquidaciones_anio|length|pluralize }}
-                    </span>
-                </h3>
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden" data-year="{{ anio }}">
+            <!-- Año collapsible -->
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 flex justify-between items-center cursor-pointer hover:bg-blue-100 transition"
+                onclick="toggleYear('{{ anio }}')">
+                <div class="flex items-center">
+                    <i id="icon-{{ anio }}"
+                        class="fas fa-chevron-right text-blue-600 mr-3 transition-transform duration-200"></i>
+                    <h3 class="text-lg sm:text-xl font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-calendar text-blue-600 mr-2 sm:mr-3"></i>
+                        <span class="hidden sm:inline">Liquidaciones </span>{{ anio }}
+                        <span
+                            class="ml-2 sm:ml-3 inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-blue-100 text-blue-800">
+                            {{ liquidaciones_anio|length }}
+                        </span>
+                    </h3>
+                </div>
                 <a href="{% url 'descargar_liquidaciones_anio' anio %}"
-                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                    class="hidden sm:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
+                    onclick="event.stopPropagation()">
                     <i class="fas fa-download mr-2"></i>
-                    Descargar Año (ZIP)
+                    Descargar
+                </a>
+                <a href="{% url 'descargar_liquidaciones_anio' anio %}"
+                    class="sm:hidden inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition"
+                    onclick="event.stopPropagation()">
+                    <i class="fas fa-download"></i>
                 </a>
             </div>
 
-            <div class="divide-y divide-gray-200">
+            <!-- Lista de liquidaciones (colapsible) -->
+            <div id="year-{{ anio }}" class="divide-y divide-gray-200">
                 {% for liquidacion in liquidaciones_anio %}
-                <div class="px-6 py-4 hover:bg-gray-50 transition">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-4">
+                <div class="px-4 sm:px-6 py-4 hover:bg-gray-50 transition">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <!-- Mes prominentemente shown first -->
+                        <div class="flex items-center space-x-3 sm:space-x-4 order-1">
                             <div class="flex-shrink-0">
-                                <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                                    <i class="fas fa-file-invoice-dollar text-green-600 text-xl"></i>
+                                <div
+                                    class="w-14 h-14 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-md">
+                                    <span class="text-white font-bold text-lg sm:text-xl">
+                                        {{ liquidacion.mes }}
+                                    </span>
                                 </div>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="flex items-center space-x-3">
-                                    <p class="text-sm font-medium text-gray-900">
-                                        Liquidación {{ liquidacion.mes }}/{{ liquidacion.anio }}
+                                <div class="flex items-center space-x-2 flex-wrap">
+                                    <p class="text-base sm:text-lg font-bold text-gray-900">
+                                        {% if liquidacion.mes == 1 %}Enero
+                                        {% elif liquidacion.mes == 2 %}Febrero
+                                        {% elif liquidacion.mes == 3 %}Marzo
+                                        {% elif liquidacion.mes == 4 %}Abril
+                                        {% elif liquidacion.mes == 5 %}Mayo
+                                        {% elif liquidacion.mes == 6 %}Junio
+                                        {% elif liquidacion.mes == 7 %}Julio
+                                        {% elif liquidacion.mes == 8 %}Agosto
+                                        {% elif liquidacion.mes == 9 %}Septiembre
+                                        {% elif liquidacion.mes == 10 %}Octubre
+                                        {% elif liquidacion.mes == 11 %}Noviembre
+                                        {% elif liquidacion.mes == 12 %}Diciembre
+                                        {% endif %}
                                     </p>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                         <i class="fas fa-check-circle mr-1"></i>
                                         Disponible
                                     </span>
                                 </div>
-                                <p class="text-sm text-gray-500">
-                                    Cargada el {{ liquidacion.fecha_subida|date:"d/m/Y" }} a las {{ liquidacion.fecha_subida|date:"H:i" }}
+                                <p class="text-xs sm:text-sm text-gray-500 mt-1">
+                                    Cargada: {{ liquidacion.fecha_subida|date:"d/m/Y" }} a las {{
+                                    liquidacion.fecha_subida|date:"H:i" }}
                                 </p>
                             </div>
                         </div>
 
-                        <div class="flex items-center space-x-3">
-                            <!-- Tamaño del archivo -->
+                        <!-- Acciones -->
+                        <div
+                            class="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 order-2 ml-[4.5rem] sm:ml-0">
                             {% if liquidacion.archivo %}
-                            <div class="text-right">
-                                <p class="text-sm text-gray-500">Tamaño</p>
-                                <p class="text-sm font-medium text-gray-900">
-                                    {{ liquidacion.archivo.size }} bytes
-                                </p>
+                            <div class="text-right hidden sm:block">
+                                <p class="text-xs text-gray-500">Tamaño</p>
+                                <p class="text-xs font-medium text-gray-900">
+                                    {% if liquidacion.archivo.size < 1024 %}{{ liquidacion.archivo.size }} B {% elif
+                                        liquidacion.archivo.size < 1048576 %}{{
+                                        liquidacion.archivo.size|divisibleby:1024|floatformat:1 }} KB {% else %}{{
+                                        liquidacion.archivo.size|divisibleby:1048576|floatformat:1 }} MB{% endif %} </p>
                             </div>
-                            {% endif %}
-
-                            <!-- Acciones -->
                             <div class="flex space-x-2">
-                                {% if liquidacion.archivo %}
                                 <a href="{{ liquidacion.archivo.url }}" target="_blank"
-                                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
-                                    <i class="fas fa-eye mr-2"></i>
-                                    Ver PDF
+                                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs sm:text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                                    <i class="fas fa-eye mr-1 sm:mr-2"></i>
+                                    <span class="hidden sm:inline">Ver</span>
                                 </a>
                                 <a href="{{ liquidacion.archivo.url }}" download
-                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
-                                    <i class="fas fa-download mr-2"></i>
-                                    Descargar
+                                    class="inline-flex items-center px-3 py-2 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                                    <i class="fas fa-download mr-1 sm:mr-2"></i>
+                                    <span class="hidden sm:inline">Descargar</span>
                                 </a>
-                                {% else %}
-                                <span class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-500 bg-gray-50 cursor-not-allowed">
-                                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                                    Archivo no disponible
-                                </span>
-                                {% endif %}
                             </div>
+                            {% else %}
+                            <span
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs sm:text-sm font-medium rounded-md text-gray-500 bg-gray-50 cursor-not-allowed">
+                                <i class="fas fa-exclamation-triangle mr-1 sm:mr-2"></i>
+                                <span class="hidden sm:inline">No disponible</span>
+                            </span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -137,12 +169,47 @@
         </div>
         {% endfor %}
     </div>
+
+    <script>
+        // Por defecto, mostrar solo el año más reciente expandido
+        document.addEventListener('DOMContentLoaded', function () {
+            const years = document.querySelectorAll('[data-year]');
+            if (years.length > 1) {
+                // Cerrar todos los años excepto el primero
+                years.forEach((year, index) => {
+                    const yearKey = year.dataset.year;
+                    const content = document.getElementById('year-' + yearKey);
+                    const icon = document.getElementById('icon-' + yearKey);
+                    if (index > 0) {
+                        content.style.display = 'none';
+                        icon.classList.remove('rotate-90');
+                    } else {
+                        icon.classList.add('rotate-90');
+                    }
+                });
+            }
+        });
+
+        function toggleYear(anio) {
+            const content = document.getElementById('year-' + anio);
+            const icon = document.getElementById('icon-' + anio);
+
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.classList.add('rotate-90');
+            } else {
+                content.style.display = 'none';
+                icon.classList.remove('rotate-90');
+            }
+        }
+    </script>
     {% else %}
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div class="px-6 py-12 text-center">
-            <i class="fas fa-file-invoice-dollar text-gray-300 text-5xl mb-4"></i>
-            <p class="text-gray-500 text-lg font-medium">No tienes liquidaciones disponibles</p>
-            <p class="text-gray-400 text-sm mt-2">Las liquidaciones se cargan desde el módulo de administración</p>
+        <div class="px-4 sm:px-6 py-10 sm:py-12 text-center">
+            <i class="fas fa-file-invoice-dollar text-gray-300 text-4xl sm:text-5xl mb-4"></i>
+            <p class="text-gray-500 text-base sm:text-lg font-medium">No tienes liquidaciones disponibles</p>
+            <p class="text-gray-400 text-xs sm:text-sm mt-2">Las liquidaciones se cargan desde el módulo de
+                administración</p>
         </div>
     </div>
     {% endif %}
