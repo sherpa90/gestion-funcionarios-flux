@@ -365,7 +365,7 @@
                             Rechazar
                         </button>
                     </div>
-                    {% elif solicitud.estado == 'APROBADO' and user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                    {% elif solicitud.estado == 'APROBADO' and user.role == 'ADMIN' %}
                     <button type="button"
                         onclick="document.getElementById('cancel-modal-mobile-{{ solicitud.pk }}').classList.remove('hidden')"
                         class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition shadow-sm">
