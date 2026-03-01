@@ -189,6 +189,7 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-coins fa-fw mr-3"></i><span class="ml-3">Liquidaciones</span>
                     </a>
+                    {% if user.role != 'SECRETARIA' %}
                     <a href="{% url 'lista_equipos' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-boxes fa-fw mr-3"></i><span class="ml-3">Equipos</span>
@@ -206,6 +207,7 @@
                         </span>
                         {% endif %}
                     </a>
+                    {% endif %}
 
                     {% if user.role == 'ADMIN' %}
                     <!-- Control de Asistencia -->
@@ -411,6 +413,7 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-coins fa-fw mr-3"></i><span class="ml-3">Liquidaciones</span>
                     </a>
+                    {% if user.role != 'SECRETARIA' %}
                     <a href="{% url 'lista_equipos' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-boxes fa-fw mr-3"></i><span class="ml-3">Equipos</span>
@@ -428,6 +431,7 @@
                         </span>
                         {% endif %}
                     </a>
+                    {% endif %}
 
                     {% if user.role == 'ADMIN' %}
                     <!-- Control de Asistencia -->
