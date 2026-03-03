@@ -75,7 +75,7 @@ INSTALLED_APPS = [
     'catalogos',  # Catálogos normalizados del sistema
 
     # Security
-    'axes',
+    # 'axes',
 
     # Health checks and monitoring
     'health_check',
@@ -90,8 +90,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'axes.middleware.AxesMiddleware',
-    'core.middleware.CSPMiddleware',
+    # 'axes.middleware.AxesMiddleware',
 ]
 
 # Content Security Policy - OWASP A01:2021 Broken Access Control
@@ -190,7 +189,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTHENTICATION_BACKENDS = [
-    'axes.backends.AxesStandaloneBackend',
     'core.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
