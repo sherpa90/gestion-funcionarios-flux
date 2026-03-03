@@ -124,9 +124,10 @@
     <div class="header">
         <h1>Reporte Colectivo de Funcionarios</h1>
         <p><strong>Total Funcionarios:</strong> {{ total_funcionarios }}</p>
-        {% if year or fecha_inicio or fecha_fin %}
+        {% if year or mes or fecha_inicio or fecha_fin %}
         <p>
             {% if year %}Año: {{ year }}{% endif %}
+            {% if mes %} | Mes: {{ mes_nombre }}{% endif %}
             {% if fecha_inicio %} | Desde: {{ fecha_inicio }}{% endif %}
             {% if fecha_fin %} | Hasta: {{ fecha_fin }}{% endif %}
         </p>
@@ -141,12 +142,11 @@
         </div>
         <div class="stat-item">
             <div class="stat-label">DÍAS DISPONIBLES</div>
-            <div class="stat-value">{{ empleados_data|length }}</div>
+            <div class="stat-value">{{ total_dias_disponibles|floatformat:0 }}</div>
         </div>
         <div class="stat-item">
             <div class="stat-label">LICENCIAS</div>
-            <div class="stat-value">{% for e in empleados_data %}{{ e.total_licencias|add:0 }}{% empty %}0{% endfor %}
-            </div>
+            <div class="stat-value">{{ total_licencias }}</div>
         </div>
     </div>
 
@@ -185,7 +185,8 @@
     {% endif %}
 
     <div class="footer">
-        Documento generado automáticamente - {{ "now"|date:"d/m/Y H:i" }}
+        Documento generado automáticamente el {{ fecha_exportacion }}
+        {% if director %}<br>Director: {{ director.get_full_name }}{% endif %}
     </div>
 </body>
 
