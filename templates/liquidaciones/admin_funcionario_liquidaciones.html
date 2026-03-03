@@ -108,8 +108,6 @@
                                         Disponible
                                     </span>
                                 </div>
-                                <p class="text-sm text-gray-500">
-                                </p>
                             </div>
                         </div>
 
@@ -145,27 +143,25 @@
                         </div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-12 text-center">
+            <i class="fas fa-file-invoice-dollar text-gray-300 text-5xl mb-4"></i>
+            <p class="text-gray-500 text-lg font-medium">No hay liquidaciones para este funcionario</p>
+            <p class="text-gray-400 text-sm mt-2">Las liquidaciones aparecerán aquí una vez que sean cargadas</p>
+            <div class="mt-6">
+                <a href="{% url 'admin_liquidaciones_overview' %}"
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Volver a la vista general
+                </a>
+            </div>
         </div>
     </div>
-    {% endfor %}
-</div>
-{% else %}
-<div class="bg-white rounded-xl shadow-sm overflow-hidden">
-    <div class="px-6 py-12 text-center">
-        <i class="fas fa-file-invoice-dollar text-gray-300 text-5xl mb-4"></i>
-        <p class="text-gray-500 text-lg font-medium">No hay liquidaciones para este funcionario</p>
-        <p class="text-gray-400 text-sm mt-2">Las liquidaciones aparecerán aquí una vez que sean cargadas</p>
-        <div class="mt-6">
-            <a href="{% url 'admin_liquidaciones_overview' %}"
-                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Volver a la vista general
-            </a>
-        </div>
-    </div>
-</div>
-{% endif %}
-</div>
-{% endblock %}
+    {% endif %}
+    {% endblock %}
