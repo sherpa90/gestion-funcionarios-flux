@@ -17,6 +17,7 @@ class CustomUser(AbstractUser):
         ('ASISTENTE', 'Asistente de la Educación'),
     ]
 
+    email = models.EmailField(unique=True, null=True, blank=False, help_text="Correo electrónico de acceso")
     run = models.CharField(
         max_length=12, 
         unique=True, 

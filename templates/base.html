@@ -47,29 +47,131 @@
             height: 42px;
         }
 
-        input,
+        .form-input,
+        input:not([type="checkbox"]):not([type="radio"]),
         textarea,
         select {
             width: 100%;
             padding: 0.75rem 1rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
             background-color: #ffffff;
             color: #1f2937;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
 
+        .form-input:focus,
         input:focus,
         select:focus,
         textarea:focus {
             outline: none;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
 
-        /* Sidebar Link Active */
-        .sidebar-link.active {
+        /* Unified Component Classes */
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #f3f4f6;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        .data-table {
+            min-width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #6b7280;
+            background-color: #f9fafb;
+            letter-spacing: 0.05em;
+        }
+
+        .data-table td {
+            padding: 0.875rem 1rem;
+            font-size: 0.875rem;
+            color: #374151;
+            white-space: nowrap;
+        }
+
+        .data-table tbody tr {
+            transition: background-color 0.15s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #f3f4f6;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.625rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary {
             background-color: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar-link {
+            transition: all 0.2s ease-in-out;
+            color: #d1d5db;
+        }
+
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            transform: translateX(2px);
+        }
+
+        .sidebar-link.active {
+            background: linear-gradient(90deg, #2563eb 0%, #1e40af 100%);
             color: white;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+            border-left: 3px solid #60a5fa;
         }
 
         /* Scrollbar */
@@ -92,23 +194,27 @@
 
 <body class="h-full overflow-hidden">
     <div class="flex h-full">
-        <aside class="w-64 bg-gray-900 text-white flex-shrink-0 hidden md:flex flex-col">
-            <div class="h-16 flex items-center justify-center border-b border-gray-700">
+        <aside class="w-64 bg-slate-900 text-slate-300 flex-shrink-0 hidden md:flex flex-col shadow-xl z-10 relative">
+            <div class="h-16 flex items-center justify-center border-b border-slate-800 bg-slate-950">
                 <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-clipboard-check text-2xl text-blue-500 fa-fw mr-3"></i>
-                    <span class="text-xl font-bold">FLUX</span>
+                    <div
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                        <i class="fa-solid fa-clipboard-check text-white text-sm"></i>
+                    </div>
+                    <span class="text-xl font-bold tracking-wide text-white">FLUX</span>
                 </div>
             </div>
 
             {% if user.is_authenticated %}
-            <div class="p-4 border-b border-gray-700">
+            <div class="p-5 border-b border-slate-800 bg-slate-800/30">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-                        <span class="text-sm font-semibold">{{ user.first_name.0 }}{{ user.last_name.0 }}</span>
+                    <div
+                        class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center shadow-md border-2 border-slate-700">
+                        <span class="text-sm font-bold text-white">{{ user.first_name.0 }}{{ user.last_name.0 }}</span>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">{{ user.get_full_name }}</p>
-                        <p class="text-xs text-gray-400 truncate">{{ user.get_role_display }}</p>
+                        <p class="text-sm font-semibold text-white truncate">{{ user.get_full_name }}</p>
+                        <p class="text-xs text-blue-300 truncate font-medium">{{ user.get_role_display }}</p>
                     </div>
                 </div>
             </div>
@@ -279,9 +385,9 @@
             {% endif %}
         </aside>
 
-        <div class="flex-1 flex flex-col overflow-hidden">
+        <div class="flex-1 flex flex-col overflow-hidden bg-slate-50">
             <header
-                class="h-14 sm:h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6">
+                class="h-14 sm:h-16 bg-white border-b border-slate-200 shadow-sm flex items-center justify-between px-4 sm:px-6 relative z-0">
                 <div class="flex items-center min-w-0 flex-1">
                     <button id="mobile-menu-button" class="md:hidden text-gray-500 hover:text-gray-700 p-2 -ml-2">
                         <i class="fa-solid fa-bars text-lg fa-fw mr-3"></i>

@@ -10,8 +10,8 @@
     </div>
 
     <!-- Gráfico de Permisos -->
-    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Permisos (Últimos 7 días)</h3>
+    <div class="card p-6 mb-6">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">Permisos (Últimos 7 días)</h3>
         <div class="relative h-48">
             <canvas id="permisosChart"></canvas>
         </div>
@@ -21,37 +21,37 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         <!-- Panel de Días Administrativos (Permisos Actuales) -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <div class="card p-6">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
                 <i class="fas fa-calendar-day text-purple-600 mr-2"></i>
                 Permisos Actuales
             </h3>
 
             {% if dias_administrativos_activos %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
                         <tr>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Funcionario</th>
-                            <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Días</th>
-                            <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Período</th>
-                            <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Retorno</th>
+                            <th>Funcionario</th>
+                            <th class="text-center">Días</th>
+                            <th class="text-center">Período</th>
+                            <th class="text-center">Retorno</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
                         {% for dia in dias_administrativos_activos %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-3 py-2 text-sm text-gray-900">{{ dia.usuario.get_full_name }}</td>
-                            <td class="px-3 py-2 text-center text-sm">
-                                <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-medium">
+                        <tr>
+                            <td class="font-medium">{{ dia.usuario.get_full_name }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-purple-100 text-purple-800">
                                     {{ dia.dias_solicitados }}
                                 </span>
                             </td>
-                            <td class="px-3 py-2 text-center text-sm text-gray-600">
+                            <td class="text-center text-slate-500">
                                 {{ dia.fecha_inicio|date:"d/m" }} - {{ dia.fecha_termino|date:"d/m" }}
                             </td>
-                            <td class="px-3 py-2 text-center text-sm">
-                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">
+                            <td class="text-center">
+                                <span class="badge bg-emerald-100 text-emerald-800">
                                     {{ dia.fecha_termino|date:"d/m" }}
                                 </span>
                             </td>
@@ -69,35 +69,33 @@
         </div>
 
         <!-- Panel de Licencias Médicas (Licencias Activas) -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <i class="fas fa-user-md text-green-600 mr-2"></i>
+        <div class="card p-6">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                <i class="fas fa-user-md text-emerald-600 mr-2"></i>
                 Licencias Activas
             </h3>
 
             {% if licencias_activas_detalle %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
                         <tr>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Funcionario</th>
-                            <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Días</th>
-                            <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Inicio</th>
-                            <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Retorno</th>
+                            <th>Funcionario</th>
+                            <th class="text-center">Días</th>
+                            <th class="text-center">Inicio</th>
+                            <th class="text-center">Retorno</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
                         {% for lic in licencias_activas_detalle %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-3 py-2 text-sm text-gray-900">{{ lic.usuario.get_full_name}}</td>
-                            <td class="px-3 py-2 text-center">
-                                <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-medium">{{
-                                    lic.dias}}</span>
+                        <tr>
+                            <td class="font-medium">{{ lic.usuario.get_full_name}}</td>
+                            <td class="text-center">
+                                <span class="badge bg-red-100 text-red-800">{{ lic.dias}}</span>
                             </td>
-                            <td class="px-3 py-2 text-center text-sm text-gray-600">{{ lic.fecha_inicio|date:"d/m"}}
-                            </td>
-                            <td class="px-3 py-2 text-center">
-                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">
+                            <td class="text-center text-slate-500">{{ lic.fecha_inicio|date:"d/m"}}</td>
+                            <td class="text-center">
+                                <span class="badge bg-emerald-100 text-emerald-800">
                                     {{ lic.fecha_retorno|date:"d/m"}}
                                 </span>
                             </td>
