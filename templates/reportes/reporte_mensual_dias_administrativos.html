@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Cuadro Resumen Días Administrativos</title>
@@ -66,7 +67,8 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        th, td {
+        th,
+        td {
             border: 1px solid #e5e7eb;
             padding: 8px 6px;
             text-align: left;
@@ -154,6 +156,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Institution Header -->
     <div class="institution-header">
@@ -163,7 +166,7 @@
 
     <!-- Period Badge -->
     <div class="header">
-        <div class="period-badge">{{ mes }} {{ anio }}</div>
+        <div class="period-badge">{% if mes_nombre %}{{ mes_nombre }} {% endif %}{{ year }}</div>
     </div>
 
     <!-- Tabla de datos -->
@@ -182,17 +185,21 @@
         <tbody>
             {% for empleado in empleados_data %}
             <tr>
-                <td style="font-family: 'Courier New', monospace; font-size: 8pt; font-weight: 600;">{{ empleado.run }}</td>
+                <td style="font-family: 'Courier New', monospace; font-size: 8pt; font-weight: 600;">{{ empleado.run }}
+                </td>
                 <td style="font-weight: 600; color: #1f2937;">{{ empleado.nombre_completo }}</td>
                 <td style="font-size: 8pt; color: #6b7280;">{{ empleado.establecimiento }}</td>
                 <td class="text-center" style="font-weight: bold; color: #059669;">{{ empleado.dias_solicitados }}</td>
                 <td class="text-center" style="font-weight: 500;">{{ empleado.dias_disponibles }}</td>
-                <td class="text-center" style="font-family: 'Courier New', monospace; font-weight: 600;">{{ empleado.fecha_desde|date:"d/m" }}</td>
-                <td class="text-center" style="font-family: 'Courier New', monospace; font-weight: 600;">{{ empleado.fecha_hasta|date:"d/m" }}</td>
+                <td class="text-center" style="font-family: 'Courier New', monospace; font-weight: 600;">{{
+                    empleado.fecha_desde|date:"d/m" }}</td>
+                <td class="text-center" style="font-family: 'Courier New', monospace; font-weight: 600;">{{
+                    empleado.fecha_hasta|date:"d/m" }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" class="text-center" style="font-style: italic; color: #9ca3af; padding: 20px; font-size: 10pt;">
+                <td colspan="7" class="text-center"
+                    style="font-style: italic; color: #9ca3af; padding: 20px; font-size: 10pt;">
                     No hay solicitudes de días administrativos para este período
                 </td>
             </tr>
@@ -210,7 +217,9 @@
 
     <!-- Footer -->
     <div class="footer">
-        <p>Reporte generado el {{ fecha_generacion|date:"d/m/Y H:i" }}</p>
+        <p>Reporte generado el {{ fecha_exportacion }}</p>
+        {% if director %}<p>Director: {{ director.get_full_name }}</p>{% endif %}
     </div>
 </body>
+
 </html>
