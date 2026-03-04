@@ -1,42 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
+    <title>Reporte Individual - {{ functorio.get_full_name }}</title>
     <style>
         @page {
             size: A4;
             margin: 2cm;
+
+            @bottom-center {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 9pt;
+                font-family: Arial, sans-serif;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             font-size: 10pt;
+            line-height: 1.4;
             color: #333;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #2563eb;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #1e40af;
             padding-bottom: 15px;
         }
 
         .header h1 {
+            font-size: 16pt;
             color: #1e40af;
-            margin: 0 0 10px 0;
-            font-size: 20pt;
+            margin-bottom: 5px;
+            text-transform: uppercase;
         }
 
-        .header p {
-            margin: 5px 0;
-            color: #666;
+        .header h2 {
+            font-size: 14pt;
+            color: #374151;
+            font-weight: normal;
+        }
+
+        .periodo {
+            text-align: center;
+            font-size: 12pt;
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 20px;
+            padding: 8px;
+            background-color: #f3f4f6;
+            border-radius: 4px;
         }
 
         .info-box {
             background: #f3f4f6;
             padding: 15px;
-            border-radius: 5px;
+            border-radius: 4px;
             margin-bottom: 20px;
         }
 
@@ -47,7 +74,7 @@
 
         .info-label {
             font-weight: bold;
-            width: 150px;
+            width: 180px;
             color: #4b5563;
         }
 
@@ -55,125 +82,176 @@
             color: #111827;
         }
 
-        .section-title {
-            font-size: 14pt;
-            font-weight: bold;
-            color: #1e40af;
-            margin-top: 25px;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #e5e7eb;
-            padding-bottom: 5px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        th {
-            background: #2563eb;
-            color: white;
-            padding: 8px;
-            text-align: left;
-            font-size: 9pt;
-        }
-
-        td {
-            padding: 6px 8px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 9pt;
-        }
-
-        tr:hover {
-            background: #f9fafb;
-        }
-
-        .summary-box {
+        .resumen {
             background: #eff6ff;
-            border-left: 4px solid #2563eb;
+            border-left: 4px solid #1e40af;
             padding: 15px;
-            margin-top: 20px;
+            margin-bottom: 20px;
         }
 
-        .summary-box h3 {
-            margin-top: 0;
-            color: #1e40af;
-        }
-
-        .stat {
+        .resumen-item {
             display: inline-block;
-            margin-right: 20px;
+            margin-right: 30px;
         }
 
-        .stat-label {
+        .resumen-label {
             font-weight: bold;
             color: #4b5563;
         }
 
-        .stat-value {
+        .resumen-value {
             color: #1e40af;
             font-size: 12pt;
             font-weight: bold;
         }
 
-        .footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 8pt;
-            color: #9ca3af;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
         }
 
-        .empty-state {
+        th {
+            background-color: #1e40af;
+            color: white;
+            padding: 8px 6px;
             text-align: center;
-            padding: 40px;
-            color: #9ca3af;
+            font-size: 9pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        td {
+            border: 1px solid #d1d5db;
+            padding: 6px 8px;
+            font-size: 9pt;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+
+        tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .numero {
+            font-family: Arial, sans-serif;
+        }
+
+        .section-title {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #1e40af;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #d1d5db;
+            padding-bottom: 5px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #d1d5db;
+            font-size: 9pt;
+            color: #6b7280;
+        }
+
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .signature {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .signature-box {
+            text-align: center;
+            width: 250px;
+        }
+
+        .signature-line {
+            border-bottom: 1px solid #333;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+        }
+
+        .signature-title {
+            font-size: 10pt;
+            font-weight: bold;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-style: italic;
         }
     </style>
 </head>
 
 <body>
     <div class="header">
-        <h1>Reporte Individual</h1>
-        <p><strong>Funcionario:</strong> {{ funcionario.get_full_name }}</p>
-        <p><strong>RUN:</strong> {{ funcionario.run }}</p>
-        {% if year or fecha_inicio or fecha_fin %}
-        <p style="font-size: 9pt;">
-            {% if year %}Año: {{ year }} | {% endif %}
-            {% if fecha_inicio %}Desde: {{ fecha_inicio }} | {% endif %}
-            {% if fecha_fin %}Hasta: {{ fecha_fin }}{% endif %}
-        </p>
+        <h1>Reporte Individual de Funcionario</h1>
+        <h2>Dirección de Educación Municipal</h2>
+    </div>
+
+    <div class="periodo">
+        {% if mes_nombre %}
+        {{ mes_nombre }} de {{ year }}
+        {% elif year %}
+        Año {{ year }}
+        {% else %}
+        Todos los períodos
         {% endif %}
     </div>
 
     <div class="info-box">
         <div class="info-row">
-            <span class="info-label">Días Disponibles:</span>
-            <span class="info-value">{{ funcionario.dias_disponibles|floatformat:1 }} días</span>
+            <span class="info-label">Nombre:</span>
+            <span class="info-value">{{ functorio.get_full_name }}</span>
         </div>
         <div class="info-row">
-            <span class="info-label">Correo Electrónico:</span>
-            <span class="info-value">{{ funcionario.email }}</span>
+            <span class="info-label">RUT:</span>
+            <span class="info-value">{{ functorio.run }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Correo:</span>
+            <span class="info-value">{{ functorio.email }}</span>
         </div>
         <div class="info-row">
             <span class="info-label">Rol:</span>
-            <span class="info-value">{{ funcionario.get_role_display }}</span>
+            <span class="info-value">{{ functorio.get_role_display }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Días Disponibles:</span>
+            <span class="info-value">{{ functorio.dias_disponibles|floatformat:1 }} días</span>
         </div>
     </div>
 
-    <div class="summary-box">
-        <h3>Resumen del Período</h3>
-        <div class="stat">
-            <span class="stat-label">Total Días Usados:</span>
-            <span class="stat-value">{{ total_dias_usados|floatformat:1 }}</span>
+    <div class="resumen">
+        <div class="resumen-item">
+            <span class="resumen-label">Días Usados:</span>
+            <span class="resumen-value">{{ dias_usados|floatformat:1 }}</span>
         </div>
-        <div class="stat">
-            <span class="stat-label">Total Licencias:</span>
-            <span class="stat-value">{{ licencias.count }}</span>
+        <div class="resumen-item">
+            <span class="resumen-label">Licencias:</span>
+            <span class="resumen-value">{{ licencias.count }}</span>
         </div>
-        <div class="stat">
-            <span class="stat-label">Días en Licencia:</span>
-            <span class="stat-value">{{ total_dias_licencias }}</span>
+        <div class="resumen-item">
+            <span class="resumen-label">Días en Licencia:</span>
+            <span class="resumen-value">{{ total_dias_licencias }}</span>
         </div>
     </div>
 
@@ -182,25 +260,25 @@
     <table>
         <thead>
             <tr>
-                <th>Fecha Inicio</th>
-                <th>Fecha Fin</th>
-                <th>Días</th>
-                <th>Motivo</th>
+                <th style="width: 20%;">Fecha Inicio</th>
+                <th style="width: 20%;">Fecha Término</th>
+                <th style="width: 10%;" class="text-center">Días</th>
+                <th style="width: 50%;">Observación</th>
             </tr>
         </thead>
         <tbody>
             {% for permiso in permisos %}
             <tr>
-                <td>{{ permiso.fecha_inicio|date:"d/m/Y" }}</td>
-                <td>{{ permiso.fecha_fin|date:"d/m/Y" }}</td>
-                <td>{{ permiso.dias_solicitados|floatformat:1 }}</td>
-                <td>{{ permiso.motivo }}</td>
+                <td class="text-center numero">{{ permiso.fecha_inicio|date:"d/m/Y" }}</td>
+                <td class="text-center numero">{{ permiso.fecha_termino|date:"d/m/Y"|default:"-" }}</td>
+                <td class="text-center numero">{{ permiso.dias_solicitados|floatformat:1 }}</td>
+                <td>{{ permiso.observacion|default:"-" }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     {% else %}
-    <div class="empty-state">No hay permisos en el período seleccionado</div>
+    <div class="empty-message">No hay permisos en el período seleccionado</div>
     {% endif %}
 
     <div class="section-title">Licencias Médicas</div>
@@ -208,29 +286,47 @@
     <table>
         <thead>
             <tr>
-                <th>Fecha Inicio</th>
-                <th>Fecha Fin</th>
-                <th>Días</th>
-                <th>Tipo</th>
+                <th style="width: 20%;">Fecha Inicio</th>
+                <th style="width: 20%;">Fecha Término</th>
+                <th style="width: 10%;" class="text-center">Días</th>
+                <th style="width: 20%;">Registrado por</th>
+                <th style="width: 30%;">Fecha Registro</th>
             </tr>
         </thead>
         <tbody>
             {% for licencia in licencias %}
             <tr>
-                <td>{{ licencia.fecha_inicio|date:"d/m/Y" }}</td>
-                <td>{{ licencia.fecha_fin|date:"d/m/Y" }}</td>
-                <td>{{ licencia.dias }}</td>
-                <td>{{ licencia.tipo }}</td>
+                <td class="text-center numero">{{ licencia.fecha_inicio|date:"d/m/Y" }}</td>
+                <td class="text-center numero">{{ licencia.dias }}</td>
+                <td class="text-center">{{ licencia.created_by|default:"-" }}</td>
+                <td class="text-center numero">{{ licencia.created_at|date:"d/m/Y H:i" }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     {% else %}
-    <div class="empty-state">No hay licencias médicas en el período seleccionado</div>
+    <div class="empty-message">No hay licencias médicas en el período seleccionado</div>
     {% endif %}
 
     <div class="footer">
-        Documento generado automáticamente - {{ "now"|date:"d/m/Y H:i" }}
+        <div class="footer-info">
+            <span>Fecha de emisión: {{ fecha_exportacion }}</span>
+            <span>Generado por: FLUX - Sistema de Gestión</span>
+        </div>
+    </div>
+
+    <div class="signature">
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-title">
+                {% if director %}
+                {{ director.get_full_name|upper }}
+                {% else %}
+                [NOMBRE DEL DIRECTOR]
+                {% endif %}
+            </div>
+            <div>Director(a) de Educación Municipal</div>
+        </div>
     </div>
 </body>
 

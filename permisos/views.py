@@ -5,6 +5,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q, Sum
+from django.core.paginator import Paginator
 from .models import SolicitudPermiso
 from .forms import SolicitudForm, SolicitudBypassForm
 from users.models import CustomUser
@@ -150,7 +151,11 @@ class SolicitudDirectorDashboardView(LoginRequiredMixin, UserPassesTestMixin, Li
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['historial'] = SolicitudPermiso.objects.exclude(estado='PENDIENTE').order_by('-updated_at')[:10]
+        # Historial con paginación - mostrar 10 por página
+        historial_qs = SolicitudPermiso.objects.exclude(estado='PENDIENTE').order_by('-updated_at')
+        paginator = Paginator(historial_qs, 10)
+        page_number = self.request.GET.get('page')
+        context['historial_page'] = paginator.get_page(page_number)
         # Agregar información de días disponibles para directores
         context['dias_disponibles'] = self.request.user.dias_disponibles
         # Total de días administrativos por año (usar valor del usuario o valor por defecto)
@@ -171,7 +176,11 @@ class SolicitudAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['historial'] = SolicitudPermiso.objects.exclude(estado='PENDIENTE').order_by('-updated_at')[:10]
+        # Historial con paginación - mostrar 10 por página
+        historial_qs = SolicitudPermiso.objects.exclude(estado='PENDIENTE').order_by('-updated_at')
+        paginator = Paginator(historial_qs, 10)
+        page_number = self.request.GET.get('page')
+        context['historial_page'] = paginator.get_page(page_number)
         return context
 
 class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
