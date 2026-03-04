@@ -61,6 +61,8 @@ class SolicitudCreateView(LoginRequiredMixin, CreateView):
         # Auto-aprobar solo si el usuario es DIRECTOR (los demás perfiles requieren aprobación del director)
         if self.request.user.role == 'DIRECTOR':
             form.instance.estado = 'APROBADO'
+            form.instance.approved_by = self.request.user
+            form.instance.approved_at = timezone.now()
             # Descontar días inmediatamente
             self.request.user.dias_disponibles -= form.instance.dias_solicitados
             self.request.user.save()
@@ -207,6 +209,8 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
         if action == 'approve':
             if solicitud.usuario.dias_disponibles >= solicitud.dias_solicitados:
                 solicitud.estado = 'APROBADO'
+                solicitud.approved_by = request.user
+                solicitud.approved_at = timezone.now()
                 solicitud.usuario.dias_disponibles -= solicitud.dias_solicitados
                 solicitud.usuario.save()
                 solicitud.save()
@@ -354,6 +358,9 @@ class SolicitudAdminEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView
             if form.instance.usuario.dias_disponibles >= form.instance.dias_solicitados:
                 form.instance.usuario.dias_disponibles -= form.instance.dias_solicitados
                 form.instance.usuario.save()
+                # Registrar quién aprobó
+                form.instance.approved_by = self.request.user
+                form.instance.approved_at = timezone.now()
             else:
                 form.add_error(None, f"El usuario no tiene suficientes días disponibles ({form.instance.usuario.dias_disponibles} disponibles, {form.instance.dias_solicitados} solicitados).")
                 return self.form_invalid(form)

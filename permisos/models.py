@@ -27,6 +27,15 @@ class SolicitudPermiso(models.Model):
     motivo_cancelacion = models.TextField(blank=True, help_text="Razón de la cancelación (solo si es cancelado)")
     cancelled_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='solicitudes_canceladas')
     cancelled_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='solicitudes_aprobadas',
+        help_text="Usuario que aprobó la solicitud"
+    )
+    approved_at = models.DateTimeField(null=True, blank=True, help_text="Fecha de aprobación")
     archivo_justificacion = models.FileField(upload_to='solicitudes/', blank=True, null=True, help_text="Documento de respaldo (PDF o JPG)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
