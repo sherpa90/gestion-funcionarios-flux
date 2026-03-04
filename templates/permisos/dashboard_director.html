@@ -17,7 +17,7 @@
             <p class="text-sm text-amber-600">Pendientes</p>
         </div>
         <div class="bg-green-50 rounded-xl p-4 text-center">
-            <p class="text-2xl font-bold text-green-600">{{ historial.count }}</p>
+            <p class="text-2xl font-bold text-green-600">{{ historial_page.paginator.count }}</p>
             <p class="text-sm text-green-600">Procesadas</p>
         </div>
     </div>
@@ -139,7 +139,7 @@
             Historial
         </h3>
 
-        {% if historial %}
+        {% if historial_page %}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -154,7 +154,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        {% for solicitud in historial %}
+                        {% for solicitud in historial_page %}
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-3">
                                 <p class="font-medium text-gray-900">{{ solicitud.usuario.get_full_name }}</p>
@@ -205,6 +205,41 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Paginación -->
+            {% if historial_page.has_other_pages %}
+            <div class="px-4 py-3 bg-white border-t border-gray-200">
+                <nav class="flex items-center justify-between">
+                    <div class="text-sm text-gray-500">
+                        Página {{ historial_page.number }} de {{ historial_page.paginator.num_pages }}
+                    </div>
+                    <div class="flex gap-1">
+                        {% if historial_page.has_previous %}
+                        <a href="?page={{ historial_page.previous_page_number }}"
+                            class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                            Anterior
+                        </a>
+                        {% endif %}
+
+                        {% for num in historial_page.paginator.page_range %}
+                        {% if historial_page.number == num %}
+                        <span class="px-3 py-1 text-sm bg-blue-600 text-white rounded">{{ num }}</span>
+                        {% elif num > historial_page.number|add:'-3' and num < historial_page.number|add:'3' %} <a
+                            href="?page={{ num }}"
+                            class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200">{{ num }}</a>
+                            {% endif %}
+                            {% endfor %}
+
+                            {% if historial_page.has_next %}
+                            <a href="?page={{ historial_page.next_page_number }}"
+                                class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                                Siguiente
+                            </a>
+                            {% endif %}
+                    </div>
+                </nav>
+            </div>
+            {% endif %}
         </div>
         {% else %}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">

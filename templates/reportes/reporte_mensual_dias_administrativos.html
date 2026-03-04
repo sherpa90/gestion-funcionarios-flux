@@ -3,222 +3,235 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Cuadro Resumen Días Administrativos</title>
+    <title>Resumen Días Administrativos - {{ mes_nombre }} {{ year }}</title>
     <style>
         @page {
             size: A4;
-            margin: 1.5cm;
+            margin: 2cm;
+
+            @bottom-center {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 9pt;
+                font-family: Arial, sans-serif;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             font-size: 10pt;
-            line-height: 1.3;
-            color: #1f2937;
+            line-height: 1.4;
+            color: #333;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #1e40af;
+            padding-bottom: 15px;
         }
 
-        .institution-header {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .institution-name {
+        .header h1 {
             font-size: 16pt;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            color: #1e40af;
             margin-bottom: 5px;
+            text-transform: uppercase;
         }
 
-        .report-title {
+        .header h2 {
             font-size: 14pt;
-            font-weight: 600;
-            opacity: 0.95;
+            color: #374151;
+            font-weight: normal;
         }
 
-        .period-badge {
-            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
+        .periodo {
+            text-align: center;
             font-size: 12pt;
             font-weight: bold;
-            display: inline-block;
+            color: #1e40af;
             margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 8px;
+            background-color: #f3f4f6;
+            border-radius: 4px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 9pt;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        th,
-        td {
-            border: 1px solid #e5e7eb;
-            padding: 8px 6px;
-            text-align: left;
-            vertical-align: middle;
+            margin-bottom: 20px;
         }
 
         th {
-            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            background-color: #1e40af;
             color: white;
-            font-weight: 600;
+            padding: 8px 6px;
             text-align: center;
-            font-size: 8pt;
+            font-size: 9pt;
+            font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
-        tbody tr:nth-child(even) {
+        td {
+            border: 1px solid #d1d5db;
+            padding: 6px 8px;
+            font-size: 9pt;
+        }
+
+        tr:nth-child(even) {
             background-color: #f9fafb;
         }
 
-        tbody tr:nth-child(odd) {
+        tr:nth-child(odd) {
             background-color: #ffffff;
-        }
-
-        tbody tr:hover {
-            background-color: #f3f4f6;
         }
 
         .text-center {
             text-align: center;
         }
 
-        .signature-section {
-            margin-top: 40px;
-            text-align: center;
-            padding: 20px;
+        .text-right {
+            text-align: right;
         }
 
-        .signature-line {
-            border-bottom: 1px solid #6b7280;
-            width: 200px;
-            margin: 0 auto 10px auto;
-            position: relative;
+        .numero {
+            font-family: Arial, sans-serif;
         }
 
-        .signature-line::after {
-            content: "TIMBRE";
-            position: absolute;
-            top: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 0 10px;
-            font-size: 7pt;
-            color: #6b7280;
-            font-weight: 500;
-        }
-
-        .director-name {
-            font-size: 12pt;
+        .totales {
+            background-color: #e5e7eb !important;
             font-weight: bold;
-            margin-bottom: 5px;
-            color: #1f2937;
         }
 
-        .director-title {
-            font-size: 10pt;
-            color: #4b5563;
-            margin-bottom: 5px;
-        }
-
-        .institution-footer {
-            font-size: 10pt;
-            color: #374151;
-            font-weight: 600;
+        .totales td {
+            border: 2px solid #374151;
         }
 
         .footer {
             margin-top: 30px;
-            font-size: 8pt;
+            padding-top: 15px;
+            border-top: 1px solid #d1d5db;
+            font-size: 9pt;
+            color: #6b7280;
+        }
+
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .signature {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .signature-box {
             text-align: center;
-            color: #9ca3af;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 10px;
+            width: 250px;
+        }
+
+        .signature-line {
+            border-bottom: 1px solid #333;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+        }
+
+        .signature-title {
+            font-size: 10pt;
+            font-weight: bold;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 30px;
+            color: #6b7280;
+            font-style: italic;
         }
     </style>
 </head>
 
 <body>
-    <!-- Institution Header -->
-    <div class="institution-header">
-        <div class="institution-name">{{ establecimiento }}</div>
-        <div class="report-title">Cuadro Resumen Días Administrativos</div>
-    </div>
-
-    <!-- Period Badge -->
     <div class="header">
-        <div class="period-badge">{% if mes_nombre %}{{ mes_nombre }} {% endif %}{{ year }}</div>
+        <h1>Resumen Mensual de Días Administrativos</h1>
+        <h2>Dirección de Educación Municipal</h2>
     </div>
 
-    <!-- Tabla de datos -->
+    <div class="periodo">
+        Período: {% if mes_nombre %}{{ mes_nombre }}{% endif %} del {{ year }}
+    </div>
+
     <table>
         <thead>
             <tr>
-                <th style="width: 12%;">RUT/RUN</th>
-                <th style="width: 28%;">Nombre y Apellido</th>
+                <th style="width: 15%;">RUT/RUN</th>
+                <th style="width: 25%;">Nombre y Apellido</th>
                 <th style="width: 20%;">Establecimiento</th>
-                <th style="width: 8%;" class="text-center">Días<br>Solicitados</th>
-                <th style="width: 8%;" class="text-center">Días<br>Disponibles</th>
-                <th style="width: 8%;" class="text-center">Desde</th>
-                <th style="width: 8%;" class="text-center">Hasta</th>
+                <th style="width: 10%;" class="text-center">Días<br>Solicitados</th>
+                <th style="width: 10%;" class="text-center">Días<br>Disponibles</th>
+                <th style="width: 10%;" class="text-center">Desde</th>
+                <th style="width: 10%;" class="text-center">Hasta</th>
             </tr>
         </thead>
         <tbody>
+            {% if empleados_data %}
             {% for empleado in empleados_data %}
             <tr>
-                <td style="font-family: 'Courier New', monospace; font-size: 8pt; font-weight: 600;">{{ empleado.run }}
+                <td class="text-center numero">{{ empleado.run }}</td>
+                <td>{{ empleado.nombre_completo }}</td>
+                <td class="text-center">Colegio Los Alerces</td>
+                <td class="text-center numero">{{ empleado.dias_solicitados }}</td>
+                <td class="text-center numero">{{ empleado.dias_disponibles }}</td>
+                <td class="text-center numero">
+                    {% if empleado.fecha_desde %}
+                    {{ empleado.fecha_desde|date:"d/m/Y" }}
+                    {% endif %}
                 </td>
-                <td style="font-weight: 600; color: #1f2937;">{{ empleado.nombre_completo }}</td>
-                <td style="font-size: 8pt; color: #6b7280;">{{ empleado.establecimiento }}</td>
-                <td class="text-center" style="font-weight: bold; color: #059669;">{{ empleado.dias_solicitados }}</td>
-                <td class="text-center" style="font-weight: 500;">{{ empleado.dias_disponibles }}</td>
-                <td class="text-center" style="font-family: 'Courier New', monospace; font-weight: 600;">{{
-                    empleado.fecha_desde|date:"d/m" }}</td>
-                <td class="text-center" style="font-family: 'Courier New', monospace; font-weight: 600;">{{
-                    empleado.fecha_hasta|date:"d/m" }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="7" class="text-center"
-                    style="font-style: italic; color: #9ca3af; padding: 20px; font-size: 10pt;">
-                    No hay solicitudes de días administrativos para este período
+                <td class="text-center numero">
+                    {% if empleado.fecha_hasta %}
+                    {{ empleado.fecha_hasta|date:"d/m/Y" }}
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}
+            <tr class="totales">
+                <td colspan="3" class="text-right">TOTALES:</td>
+                <td class="text-center numero">{{ total_dias }}</td>
+                <td colspan="3"></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="empty-message">
+                    No existen registros de días administrativos para el período seleccionado.
+                </td>
+            </tr>
+            {% endif %}
         </tbody>
     </table>
 
-    <!-- Signature Section -->
-    <div class="signature-section">
-        <div class="signature-line"></div>
-        <div class="director-name">{{ director_nombre|default:"[Nombre del Director]" }}</div>
-        <div class="director-title">Director(a)</div>
-        <div class="institution-footer">{{ establecimiento }}</div>
+    <div class="footer">
+        <div class="footer-info">
+            <span>Fecha de emisión: {{ fecha_exportacion }}</span>
+            <span>Generado por: FLUX - Sistema de Gestión</span>
+        </div>
     </div>
 
-    <!-- Footer -->
-    <div class="footer">
-        <p>Reporte generado el {{ fecha_exportacion }}</p>
-        {% if director %}<p>Director: {{ director.get_full_name }}</p>{% endif %}
+    <div class="signature">
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-title">
+                {% if director %}
+                {{ director.get_full_name|upper }}
+                {% else %}
+                [NOMBRE DEL DIRECTOR]
+                {% endif %}
+            </div>
+            <div>Director(a) de Educación Municipal</div>
+        </div>
     </div>
 </body>
 

@@ -180,10 +180,14 @@ class PDFIndividualView(LoginRequiredMixin, UserPassesTestMixin, View):
             'permisos': permisos,
             'licencias': licencias,
             'dias_usados': dias_usados,
+            'total_dias_licencias': licencias.aggregate(Sum('dias'))['dias__sum'] or 0,
             'year': year,
             'mes': mes,
+            'mes_nombre': {1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'}.get(int(mes) if mes else 0, ''),
             'fecha_inicio': fecha_inicio,
             'fecha_fin': fecha_fin,
+            'fecha_exportacion': now().strftime('%d/%m/%Y %H:%M'),
+            'director': CustomUser.objects.filter(role='DIRECTOR').first(),
         })
 
         html = HTML(string=html_string)
@@ -375,23 +379,22 @@ class ReporteMensualDiasAdministrativosView(LoginRequiredMixin, UserPassesTestMi
             estado='APROBADO',
             fecha_inicio__year=year,
             fecha_inicio__month=mes
-        ).select_related('usuario').order_by('usuario__last_name', 'fecha_inicio')
+        ).select_related('usuario').order_by('created_at', 'fecha_inicio')
         
-        # Preparar datos para el reporte
+        # Preparar datos para el reporte - cada permiso es una fila
         empleados_data = []
         
-        # Agrupar por usuario
-        usuarios_unicos = set()
         for permiso in permisos:
-            if permiso.usuario_id not in usuarios_unicos:
-                usuarios_unicos.add(permiso.usuario_id)
-                dias_totales = sum(p.dias_solicitados for p in permisos.filter(usuario=permiso.usuario))
-                empleados_data.append({
-                    'funcionario': permiso.usuario,
-                    'cantidad_permisos': permisos.filter(usuario=permiso.usuario).count(),
-                    'dias_totales': dias_totales,
-                    'permisos': permisos.filter(usuario=permiso.usuario)
-                })
+            empleados_data.append({
+                'funcionario': permiso.usuario,
+                'run': permiso.usuario.run,
+                'nombre_completo': permiso.usuario.get_full_name() or permiso.usuario.username,
+                'dias_solicitados': permiso.dias_solicitados,
+                'dias_disponibles': permiso.usuario.dias_disponibles if permiso.usuario.dias_disponibles else 0,
+                'fecha_desde': permiso.fecha_inicio,
+                'fecha_hasta': permiso.fecha_termino,
+                'fecha_solicitud': permiso.created_at,
+            })
         
         # Generar Pdf
         html_string = render_to_string('reportes/reporte_mensual_dias_administrativos.html', {
@@ -400,9 +403,10 @@ class ReporteMensualDiasAdministrativosView(LoginRequiredMixin, UserPassesTestMi
             'mes': mes,
             'mes_nombre': {1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'}.get(mes, ''),
             'total_funcionarios': len(empleados_data),
-            'total_dias': sum(e['dias_totales'] for e in empleados_data),
+            'total_dias': sum(e['dias_solicitados'] for e in empleados_data),
             'fecha_exportacion': now().strftime('%d/%m/%Y %H:%M'),
             'director': CustomUser.objects.filter(role='DIRECTOR').first(),
+            'establecimiento': 'Dirección de Educación Municipal Los Lagos',
         })
 
         html = HTML(string=html_string)
