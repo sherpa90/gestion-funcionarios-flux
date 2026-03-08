@@ -21,7 +21,7 @@ class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = CustomUser
     template_name = 'users/user_list.html'
     context_object_name = 'users'
-    paginate_by = 20  # Paginación: 20 usuarios por página
+    paginate_by = None  # Sin paginación - mostrar todos los usuarios
     
     def test_func(self):
         return self.request.user.role in ['SECRETARIA', 'ADMIN']
