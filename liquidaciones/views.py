@@ -402,7 +402,7 @@ class AdminFuncionarioLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin,
     paginate_by = 12
 
     def test_func(self):
-        return self.request.user.role == 'ADMIN'
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
 
     def get_queryset(self):
         funcionario_id = self.kwargs['funcionario_id']
@@ -413,9 +413,12 @@ class AdminFuncionarioLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin,
         funcionario_id = self.kwargs['funcionario_id']
         context['funcionario'] = CustomUser.objects.get(id=funcionario_id)
 
-        # Agrupar liquidaciones por año
+        # Obtener todas las liquidaciones sin paginación para las estadísticas
+        todas_liquidaciones = Liquidacion.objects.filter(funcionario_id=funcionario_id).order_by('-anio', '-mes')
+        
+        # Agrupar liquidaciones por año (usando el queryset sin paginar)
         liquidaciones_por_anio = {}
-        for liquidacion in context['liquidaciones']:
+        for liquidacion in todas_liquidaciones:
             anio = liquidacion.anio
             if anio not in liquidaciones_por_anio:
                 liquidaciones_por_anio[anio] = []
@@ -423,8 +426,8 @@ class AdminFuncionarioLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin,
 
         context['liquidaciones_por_anio'] = dict(sorted(liquidaciones_por_anio.items(), reverse=True))
 
-        # Estadísticas del funcionario
-        total_liquidaciones = context['liquidaciones'].count()
+        # Estadísticas del funcionario (usando el queryset sin paginar)
+        total_liquidaciones = todas_liquidaciones.count()
         anios_con_liquidaciones = len(liquidaciones_por_anio)
 
         context['estadisticas_funcionario'] = {
@@ -440,7 +443,7 @@ class AdminEliminarLiquidacionView(LoginRequiredMixin, UserPassesTestMixin, View
     """Vista para que administradores eliminen liquidaciones específicas"""
 
     def test_func(self):
-        return self.request.user.role == 'ADMIN'
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
 
     def post(self, request, liquidacion_id):
         try:
@@ -464,3 +467,48 @@ class AdminEliminarLiquidacionView(LoginRequiredMixin, UserPassesTestMixin, View
 
         # Redirigir de vuelta a la vista del funcionario
         return redirect(request.META.get('HTTP_REFERER', 'admin_liquidaciones_overview'))
+
+
+class AdminDescargarLiquidacionesFuncionarioView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para que administradores descarguen las liquidaciones de un funcionário específico por año como ZIP"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+
+    def get(self, request, funcionario_id, anio):
+        try:
+            funcionario = CustomUser.objects.get(id=funcionario_id)
+        except CustomUser.DoesNotExist:
+            messages.error(request, 'El funcionário no existe.')
+            return redirect('admin_liquidaciones_overview')
+
+        liquidaciones = Liquidacion.objects.filter(
+            funcionario_id=funcionario_id,
+            anio=anio
+        ).order_by('-mes')
+
+        if not liquidaciones:
+            messages.warning(request, f'No hay liquidaciones disponibles para el año {anio}.')
+            return redirect('admin_funcionario_liquidaciones', funcionario_id=funcionario_id)
+
+        # Crear archivo ZIP en memoria
+        zip_buffer = io.BytesIO()
+
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for liquidacion in liquidaciones:
+                # Leer el archivo PDF
+                if liquidacion.archivo:
+                    with liquidacion.archivo.open('rb') as pdf_file:
+                        pdf_data = pdf_file.read()
+
+                    # Nombre del archivo en el ZIP
+                    filename = f"liquidacion_{liquidacion.anio}_{liquidacion.mes:02d}_{funcionario.run}.pdf"
+                    zip_file.writestr(filename, pdf_data)
+
+        zip_buffer.seek(0)
+
+        # Crear respuesta HTTP
+        response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename=liquidaciones_{funcionario.run}_{anio}.zip'
+
+        return response
