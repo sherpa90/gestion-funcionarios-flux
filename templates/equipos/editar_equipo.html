@@ -85,28 +85,25 @@
                     <!-- Modelo -->
                     <div class="space-y-3">
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Modelo
-                            Específico <span class="text-red-500">*</span></label>
-                        <input type="text" name="modelo" value="{{ equipo.modelo }}"
-                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5"
-                            required>
+                            Específico</label>
+                        <input type="text" name="modelo" value="{{ equipo.modelo|default:'' }}"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5">
                     </div>
 
                     <!-- N° Serie -->
                     <div class="space-y-3">
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Número de
-                            Serie (S/N) <span class="text-red-500">*</span></label>
-                        <input type="text" name="numero_serie" value="{{ equipo.numero_serie }}"
-                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-mono py-3.5 font-bold uppercase"
-                            required>
+                            Serie (S/N)</label>
+                        <input type="text" name="numero_serie" value="{{ equipo.numero_serie|default:'' }}"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-mono py-3.5 font-bold uppercase">
                     </div>
 
                     <!-- N° Inventario -->
                     <div class="space-y-3">
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">ID de
-                            Inventario Interno <span class="text-red-500">*</span></label>
-                        <input type="text" name="numero_inventario" value="{{ equipo.numero_inventario }}"
-                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-mono py-3.5 text-blue-700 font-bold uppercase"
-                            required>
+                            Inventario Interno</label>
+                        <input type="text" name="numero_inventario" value="{{ equipo.numero_inventario|default:'' }}"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-mono py-3.5 text-blue-700 font-bold uppercase">
                     </div>
 
                     <!-- Fecha -->

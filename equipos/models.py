@@ -38,15 +38,21 @@ class Equipo(models.Model):
     )
     modelo = models.CharField(
         max_length=100,
+        null=True,
+        blank=True,
         verbose_name='Modelo'
     )
     numero_serie = models.CharField(
         max_length=100,
+        null=True,
+        blank=True,
         unique=True,
         verbose_name='Número de Serie'
     )
     numero_inventario = models.CharField(
         max_length=100,
+        null=True,
+        blank=True,
         unique=True,
         verbose_name='Número de Inventario'
     )
@@ -80,7 +86,14 @@ class Equipo(models.Model):
         ordering = ['-fecha_creacion']
     
     def __str__(self):
-        return f"{self.marca} {self.modelo} - {self.numero_inventario}"
+        desc = f"{self.marca}"
+        if self.modelo:
+            desc += f" {self.modelo}"
+        if self.numero_inventario:
+            desc += f" - #{self.numero_inventario}"
+        elif self.numero_serie:
+            desc += f" - SN: {self.numero_serie}"
+        return desc
     
     def save(self, *args, **kwargs):
         # Ejecutar validación completa
