@@ -5,9 +5,9 @@
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
-    <div class="mb-8">
-        <h2 class="text-3xl font-bold text-gray-900">Gestión de Horarios de Funcionarios</h2>
-        <p class="text-gray-600 mt-2">Administra los horarios de entrada de todos los funcionarios</p>
+    <div class="mb-6 sm:mb-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Gestión de Horarios de Funcionarios</h2>
+        <p class="text-sm sm:text-base text-gray-600 mt-2">Administra los horarios de entrada de todos los funcionarios</p>
     </div>
 
     <!-- Estadísticas -->
@@ -50,17 +50,17 @@
     </div>
 
     <!-- Acciones -->
-    <div class="mb-6 flex justify-between items-center">
-        <div>
+    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="w-full sm:w-auto">
             <a href="{% url 'asistencia:carga_horarios' %}"
-               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+               class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-3 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                 <i class="fas fa-upload mr-2"></i> Cargar Horarios desde Excel
             </a>
         </div>
-        <div>
+        <div class="w-full sm:w-auto">
             <p class="text-sm text-gray-600">
-                <i class="fas fa-info-circle mr-1"></i>
-                También puedes gestionar horarios individualmente usando los botones de "Acciones"
+                <i class="fas fa-info-circle mr-1 text-blue-500"></i>
+                También puedes gestionar horarios individualmente usando "Acciones".
             </p>
         </div>
     </div>
@@ -78,13 +78,13 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Funcionario
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             RUT
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Horario de Entrada
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Tolerancia
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -120,7 +120,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td class="hidden md:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {{ data.funcionario.run }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -130,7 +130,7 @@
                                 <span class="text-gray-400">No asignado</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td class="hidden md:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {% if data.horario %}
                                 {{ data.horario.tolerancia_minutos }} min
                             {% else %}

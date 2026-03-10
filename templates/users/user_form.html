@@ -6,8 +6,8 @@
 <div class="min-h-screen bg-gray-50 py-6 px-4 sm:px-6 lg:px-8">
     <div class="max-w-3xl mx-auto">
         <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">
+        <div class="mb-6 sm:mb-8">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
                 {% if object %}Editar Usuario{% else %}Crear Nuevo Usuario{% endif %}
             </h1>
             <p class="mt-2 text-sm text-gray-600">
@@ -17,8 +17,8 @@
 
         <div class="bg-white shadow-lg rounded-xl overflow-hidden">
             <!-- Card Header -->
-            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
-                <h2 class="text-lg font-medium text-white flex items-center">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-4 sm:px-6 py-4">
+                <h2 class="text-base sm:text-lg font-medium text-white flex items-center">
                     <i class="fas fa-user-plus mr-2"></i>
                     {% if object %}Datos del Usuario{% else %}Nuevo Funcionario{% endif %}
                 </h2>
@@ -41,7 +41,7 @@
                 {% endif %}
 
                 <!-- Personal Information Section -->
-                <div class="px-6 py-6 space-y-6">
+                <div class="px-4 sm:px-6 py-5 sm:py-6 space-y-6">
                     <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider flex items-center">
                         <i class="fas fa-id-card mr-2 text-blue-600"></i>
                         Información Personal
@@ -107,7 +107,7 @@
                 </div>
 
                 <!-- Role and Type Section -->
-                <div class="px-6 py-6 space-y-6">
+                <div class="px-4 sm:px-6 py-5 sm:py-6 space-y-6">
                     <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider flex items-center">
                         <i class="fas fa-user-tag mr-2 text-blue-600"></i>
                         Rol y Funciones
@@ -159,7 +159,7 @@
                 </div>
 
                 <!-- Schedule Section -->
-                <div class="px-6 py-6 space-y-6 bg-blue-50">
+                <div class="px-4 sm:px-6 py-5 sm:py-6 space-y-6 bg-blue-50">
                     <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider flex items-center">
                         <i class="fas fa-clock mr-2 text-blue-600"></i>
                         Horario de Trabajo
@@ -200,7 +200,7 @@
 
                 <!-- Password Section (only for create) -->
                 {% if not object %}
-                <div class="px-6 py-6 space-y-6">
+                <div class="px-4 sm:px-6 py-5 sm:py-6 space-y-6">
                     <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider flex items-center">
                         <i class="fas fa-lock mr-2 text-blue-600"></i>
                         Seguridad
@@ -228,7 +228,7 @@
                 </div>
 
                 <!-- Info Box -->
-                <div class="px-6 py-4 bg-blue-50 border-t border-blue-100">
+                <div class="px-4 sm:px-6 py-4 bg-blue-50 border-t border-blue-100">
                     <div class="flex items-start">
                         <div class="flex-shrink-0">
                             <i class="fas fa-info-circle text-blue-600"></i>
@@ -245,14 +245,14 @@
 
                 <!-- Action Buttons -->
                 <div
-                    class="px-6 py-4 bg-gray-50 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                    class="px-4 sm:px-6 py-4 bg-gray-50 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3">
                     <a href="{% url 'user_list' %}"
-                        class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-3 sm:py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                         <i class="fas fa-times mr-2"></i>
                         Cancelar
                     </a>
                     <button type="submit"
-                        class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-3 sm:py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                         {% if object %}
                         <i class="fas fa-save mr-2"></i>
                         Guardar Cambios
@@ -267,7 +267,7 @@
     </div>
 </div>
 
-<style>
+<style type="text/tailwindcss">
     /* Custom form input styles */
     .form-input,
     select,

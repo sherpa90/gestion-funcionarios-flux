@@ -41,17 +41,17 @@
 {% block content %}
 <div class="p-4 sm:p-6 space-y-8 max-w-4xl mx-auto">
     <!-- Header Section -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6">
         <div>
-            <h2 class="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+            <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2 sm:gap-3">
                 <i class="fas fa-file-medical text-blue-600"></i>
                 Registro de Licencia
             </h2>
-            <p class="text-gray-500 mt-1 font-medium">Ingresa los datos para registrar una ausencia por motivos de
+            <p class="text-sm sm:text-base text-gray-500 mt-1 font-medium">Ingresa los datos para registrar una ausencia por motivos de
                 salud.</p>
         </div>
         <a href="{% url 'licencia_list' %}"
-            class="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-400 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-gray-50 border border-gray-100 shadow-sm transition-all text-center">
+            class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 sm:py-3 bg-white text-gray-400 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-gray-50 border border-gray-100 shadow-sm transition-all text-center">
             <i class="fas fa-arrow-left mr-2"></i> Volver al Listado
         </a>
     </div>
@@ -78,7 +78,7 @@
             <div class="space-y-6">
                 <!-- User Selection (Visible for Admins/Secretaries) -->
                 {% if user.role == 'SECRETARIA' or user.role == 'ADMIN' %}
-                <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 space-y-4">
+                <div class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 space-y-4">
                     <label class="block text-[10px] font-black text-blue-600 uppercase tracking-widest">
                         Funcionario Responsable
                     </label>
@@ -100,7 +100,7 @@
 
                 <!-- Date and Duration -->
                 <div
-                    class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div class="space-y-3">
                         <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
                             Fecha de Inicio
@@ -125,13 +125,13 @@
             </div>
 
             <!-- Right Side: File Upload -->
-            <div class="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 flex flex-col">
-                <label class="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-6">
+            <div class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 flex flex-col">
+                <label class="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-4 sm:mb-6">
                     Documento de Respaldo <span class="text-gray-300 ml-2">(Opcional)</span>
                 </label>
 
                 <div id="drop-zone"
-                    class="relative flex-grow border-4 border-dashed border-gray-50 rounded-[2rem] p-12 flex flex-col items-center justify-center text-center transition-all hover:bg-blue-50/30 group cursor-pointer"
+                    class="relative flex-grow border-4 border-dashed border-gray-50 rounded-[2rem] p-6 sm:p-12 flex flex-col items-center justify-center text-center transition-all hover:bg-blue-50/30 group cursor-pointer"
                     onclick="document.getElementById('licencia-file-input').click()">
 
                     {{ form.archivo }}
