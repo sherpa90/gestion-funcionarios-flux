@@ -14,6 +14,9 @@ class Equipo(models.Model):
         ('MONITOR', 'Monitor'),
         ('PROYECTOR', 'Proyector'),
         ('CELULAR', 'Celular'),
+        ('CONTROL_REMOTO', 'Control Remoto'),
+        ('PARLANTE', 'Parlante'),
+        ('LAPIZ_INTERACTIVO', 'Lápiz Interactivo'),
         ('OTRO', 'Otro'),
     ]
     
