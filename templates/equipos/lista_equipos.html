@@ -147,10 +147,10 @@
                             <div
                                 class="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:text-blue-600 group-hover:shadow-md transition-all flex-shrink-0">
                                 <i
-                                    class="fa-solid {% if equipo.tipo == 'LAPTOP' %}fa-laptop fa-2x{% elif equipo.tipo == 'CELULAR' %}fa-mobile-screen-button fa-2x{% elif equipo.tipo == 'IMPRESORA' %}fa-print fa-2x{% else %}fa-desktop fa-2x{% endif %}"></i>
+                                    class="fa-solid {% if equipo.tipo == 'LAPTOP' %}fa-laptop fa-2x{% elif equipo.tipo == 'CELULAR' %}fa-mobile-screen-button fa-2x{% elif equipo.tipo == 'IMPRESORA' %}fa-print fa-2x{% elif equipo.tipo == 'CONTROL_REMOTO' %}fa-mobile fa-2x{% elif equipo.tipo == 'PARLANTE' %}fa-volume-up fa-2x{% elif equipo.tipo == 'LAPIZ_INTERACTIVO' %}fa-pen-nib fa-2x{% elif equipo.tipo == 'PROYECTOR' %}fa-projector fa-2x{% elif equipo.tipo == 'MONITOR' %}fa-tv fa-2x{% elif equipo.tipo == 'TABLET' %}fa-tablet-alt fa-2x{% else %}fa-desktop fa-2x{% endif %}"></i>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <div class="text-base font-black text-gray-900 break-words">{{ equipo.marca|striptags }} {{ equipo.modelo|striptags }}
+                                <div class="text-base font-black text-gray-900 break-words">{{ equipo.get_tipo_display }}: {{ equipo.marca|striptags }} {{ equipo.modelo|striptags|default:"" }}
                                 </div>
                                 <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 sm:mt-1">
                                     <span
@@ -265,11 +265,12 @@
                                     <div
                                         class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100 group-hover:border-blue-100 group-hover:text-blue-500 transition-colors">
                                         <i
-                                            class="fas {% if equipo.tipo == 'LAPTOP' %}fa-laptop{% elif equipo.tipo == 'CELULAR' %}fa-mobile-alt{% else %}fa-desktop{% endif %}"></i>
+                                            class="fas {% if equipo.tipo == 'LAPTOP' %}fa-laptop{% elif equipo.tipo == 'CELULAR' %}fa-mobile-alt{% elif equipo.tipo == 'IMPRESORA' %}fa-print{% elif equipo.tipo == 'CONTROL_REMOTO' %}fa-mobile{% elif equipo.tipo == 'PARLANTE' %}fa-volume-up{% elif equipo.tipo == 'LAPIZ_INTERACTIVO' %}fa-pen-nib{% elif equipo.tipo == 'PROYECTOR' %}fa-projector{% elif equipo.tipo == 'MONITOR' %}fa-tv{% elif equipo.tipo == 'TABLET' %}fa-tablet-alt{% else %}fa-desktop{% endif %}"></i>
                                     </div>
                                     <div>
+                                        <div class="text-[10px] font-black text-blue-600 uppercase tracking-widest">{{ equipo.get_tipo_display }}</div>
                                         <div class="text-sm font-bold text-gray-900">{{ equipo.marca|striptags }}</div>
-                                        <div class="text-[10px] text-gray-400 font-bold uppercase">{{ equipo.modelo|striptags }}
+                                        <div class="text-[10px] text-gray-400 font-bold uppercase">{{ equipo.modelo|striptags|default:"" }}
                                         </div>
                                     </div>
                                 </div>
