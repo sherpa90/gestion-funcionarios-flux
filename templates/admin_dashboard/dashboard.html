@@ -6,15 +6,15 @@
 <div class="p-6">
     <!-- Header -->
     <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-900">Panel de Administración</h2>
-        <div class="flex gap-2 mt-4">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Panel de Administración</h2>
+        <div class="flex flex-col sm:flex-row gap-3 mt-4">
             <a href="{% url 'export_inventario_excel' %}" target="_blank"
-                class="inline-flex items-center px-4 py-2 border border-green-200 text-sm font-bold rounded-xl text-green-700 bg-green-50 hover:bg-green-100 shadow-sm transition-all">
+                class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-3 sm:py-2 border border-green-200 text-sm font-bold rounded-xl text-green-700 bg-green-50 hover:bg-green-100 shadow-sm transition-all">
                 <i class="fas fa-file-excel mr-2 text-green-600"></i>
                 Exportar Equipos Excel
             </a>
             <a href="{% url 'export_inventario_pdf' %}" target="_blank"
-                class="inline-flex items-center px-4 py-2 border border-red-200 text-sm font-bold rounded-xl text-red-700 bg-red-50 hover:bg-red-100 shadow-sm transition-all">
+                class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-3 sm:py-2 border border-red-200 text-sm font-bold rounded-xl text-red-700 bg-red-50 hover:bg-red-100 shadow-sm transition-all">
                 <i class="fas fa-file-pdf mr-2 text-red-600"></i>
                 Exportar Equipos PDF
             </a>
@@ -45,8 +45,8 @@
                     <thead>
                         <tr>
                             <th>Funcionario</th>
-                            <th class="text-center">Días</th>
-                            <th class="text-center">Período</th>
+                            <th class="hidden sm:table-cell text-center">Días</th>
+                            <th class="hidden md:table-cell text-center">Período</th>
                             <th class="text-center">Retorno</th>
                         </tr>
                     </thead>
@@ -54,12 +54,12 @@
                         {% for dia in dias_administrativos_activos %}
                         <tr>
                             <td class="font-medium">{{ dia.usuario.get_full_name }}</td>
-                            <td class="text-center">
+                            <td class="hidden sm:table-cell text-center">
                                 <span class="badge bg-purple-100 text-purple-800">
                                     {{ dia.dias_solicitados }}
                                 </span>
                             </td>
-                            <td class="text-center text-slate-500">
+                            <td class="hidden md:table-cell text-center text-slate-500">
                                 {{ dia.fecha_inicio|date:"d/m" }} - {{ dia.fecha_termino|date:"d/m" }}
                             </td>
                             <td class="text-center">
@@ -94,7 +94,7 @@
                         <tr>
                             <th>Funcionario</th>
                             <th class="text-center">Días</th>
-                            <th class="text-center">Inicio</th>
+                            <th class="hidden md:table-cell text-center">Inicio</th>
                             <th class="text-center">Retorno</th>
                         </tr>
                     </thead>
@@ -105,7 +105,7 @@
                             <td class="text-center">
                                 <span class="badge bg-red-100 text-red-800">{{ lic.dias}}</span>
                             </td>
-                            <td class="text-center text-slate-500">{{ lic.fecha_inicio|date:"d/m"}}</td>
+                            <td class="hidden md:table-cell text-center text-slate-500">{{ lic.fecha_inicio|date:"d/m"}}</td>
                             <td class="text-center">
                                 <span class="badge bg-emerald-100 text-emerald-800">
                                     {{ lic.fecha_retorno|date:"d/m"}}
