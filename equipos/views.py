@@ -13,7 +13,6 @@ from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 
 
 @login_required
-@login_required
 def lista_equipos(request):
     """Lista todos los equipos (solo administradores)"""
     if request.user.role not in ('ADMIN', 'SECRETARIA'):

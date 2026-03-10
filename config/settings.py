@@ -75,7 +75,7 @@ INSTALLED_APPS = [
     'catalogos',  # Catálogos normalizados del sistema
 
     # Security
-    # 'axes',
+    'axes',
 
     # Health checks and monitoring
     'health_check',
@@ -83,6 +83,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'core.security.SecurityHeadersMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -90,7 +91,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'axes.middleware.AxesMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
 
 # Content Security Policy - OWASP A01:2021 Broken Access Control
@@ -189,6 +190,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
     'core.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -202,6 +204,7 @@ LOGOUT_REDIRECT_URL = 'login'
 # Security settings
 SESSION_COOKIE_AGE = 28800  # 8 hours (workday) - increased from 1 hour for usability
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() in ('true', '1', 'yes', 'on')
 CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'False').lower() in ('true', '1', 'yes', 'on')
 SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False').lower() in ('true', '1', 'yes', 'on')
@@ -295,6 +298,11 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console', 'file'] if not DEBUG else ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'audit': {
+            'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': False,
         },

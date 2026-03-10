@@ -1,6 +1,7 @@
 from django import forms
 from .models import LicenciaMedica
 from users.models import CustomUser
+from core.validators import validate_file_upload
 
 class LicenciaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -35,3 +36,9 @@ class LicenciaForm(forms.ModelForm):
                 'onchange': 'handleFileSelect(this)'
             })
         }
+
+    def clean_archivo(self):
+        archivo = self.cleaned_data.get('archivo')
+        if archivo:
+            validate_file_upload(archivo)
+        return archivo

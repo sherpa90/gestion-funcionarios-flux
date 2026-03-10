@@ -7,14 +7,19 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
+from django.core.management import call_command
+from django.core.management import call_command
 from django import forms
 from .models import CustomUser
 from .forms import UserCreateForm, UserEditForm, BulkUserImportForm
 import openpyxl
 from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 import random
 import string
 from io import BytesIO
+
+from core.security import audit_log
 
 from django.db.models import Q
 
@@ -88,11 +93,9 @@ class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     
     def form_valid(self, form):
         response = super().form_valid(form)
-        password = self.object.generated_password
-        messages.success(
-            self.request, 
-            f'Usuario creado exitosamente. Contraseña temporal: {password}'
-        )
+        user = self.object
+        messages.success(self.request, 'Usuario creado exitosamente.')
+        audit_log(self.request, 'USER_CREATED', f'New user: {user.run} - {user.email}')
         return response
 
 class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -112,6 +115,7 @@ class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     
     def form_valid(self, form):
         messages.success(self.request, 'Usuario actualizado exitosamente')
+        audit_log(self.request, 'USER_UPDATED', f'User updated: {self.object.run} - {self.object.email}')
         return super().form_valid(form)
 
 
@@ -124,6 +128,8 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return self.request.user.role == 'ADMIN'
     
     def delete(self, request, *args, **kwargs):
+        user_to_delete = self.get_object()
+        audit_log(self.request, 'USER_DELETED', f'User deleted: {user_to_delete.run} - {user_to_delete.email}')
         messages.success(self.request, 'Usuario eliminado exitosamente')
         return super().delete(request, *args, **kwargs)
 
@@ -212,6 +218,7 @@ class BulkUserImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
                     
                     created_users.append(user)
                     passwords[run] = password
+                    audit_log(self.request, 'BULK_USER_CREATED', f'Bulk created user: {user.run} - {user.email}')
                     
                 except Exception as e:
                     errors.append(f"Fila {row_num}: Error - {str(e)}")
@@ -345,8 +352,8 @@ class ResetUserPasswordView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
             messages.error(request, 'No tienes permisos para realizar esta acción.')
             return redirect('user_list')
         
-        # Generar nueva contraseña temporal
-        new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+        # Generar nueva contraseña temporal basada en RUN (sin puntos ni guión)
+        new_password = target_user.run.replace('.', '').replace('-', '')
         target_user.set_password(new_password)
         target_user.save()
         
@@ -354,9 +361,11 @@ class ResetUserPasswordView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
         if target_user == request.user:
             update_session_auth_hash(request, target_user)
         
+        audit_log(self.request, 'PASSWORD_RESET', f'Admin hard-reset password for: {target_user.run}')
+        
         messages.success(
             request,
-            f'Contraseña de {target_user.get_full_name()} ha sido restablecida. '
+            f'Contraseña de {target_user.get_full_name()} ha sido restablecida a su RUN (sin puntos ni guión). '
             f'Nueva contraseña temporal: {new_password}'
         )
         return redirect('user_list')
@@ -380,6 +389,9 @@ class ChangeOwnPasswordView(LoginRequiredMixin, TemplateView):
             user = form.save()
             # Mantener la sesión activa después de cambiar la contraseña
             update_session_auth_hash(request, user)
+            
+            audit_log(request, 'PASSWORD_CHANGED', f'User changed own password')
+            
             messages.success(request, 'Tu contraseña ha sido cambiada exitosamente.')
             return redirect('dashboard')
         else:
@@ -571,12 +583,10 @@ class EmailDirectoryView(LoginRequiredMixin, ListView):
 
 
 
-class CrearGrupoCorreoView(View):
+class CrearGrupoCorreoView(LoginRequiredMixin, View):
     """Vista para que ADMIN cree grupos de correo desde el directorio"""
     
     def post(self, request):
-        if not request.user.is_authenticated:
-            return redirect('login')
         
         # Only ADMIN can create groups
         if request.user.role != 'ADMIN':
@@ -617,12 +627,10 @@ class CrearGrupoCorreoView(View):
         return redirect(reverse('email_directory') + '?tab=grupos')
 
 
-class CrearDirectorioTelefonicoView(View):
+class CrearDirectorioTelefonicoView(LoginRequiredMixin, View):
     """Vista para que ADMIN cree entradas del directorio telefónico desde el directorio"""
     
     def post(self, request):
-        if not request.user.is_authenticated:
-            return redirect('login')
         
         if request.user.role != 'ADMIN':
             messages.error(request, 'No tienes permisos para agregar números telefónicos.')

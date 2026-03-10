@@ -364,7 +364,7 @@ class SolicitudAdminEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView
         # Registrar quién editó
         form.instance.updated_at = timezone.now()
 
-        messages.success(self.request, f'Solicitud de {form.instance.usuario.get_full_name} actualizada exitosamente.')
+        messages.success(self.request, f'Solicitud de {form.instance.usuario.get_full_name()} actualizada exitosamente.')
         return super().form_valid(form)
 
 
@@ -400,7 +400,7 @@ class SolicitudAdminDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         messages.success(
             request,
-            f'Solicitud de {solicitud.usuario.get_full_name} cancelada. '
+            f'Solicitud de {solicitud.usuario.get_full_name()} cancelada. '
             f'{"Días devueltos al usuario." if estado_original == "APROBADO" else ""}'
         )
 

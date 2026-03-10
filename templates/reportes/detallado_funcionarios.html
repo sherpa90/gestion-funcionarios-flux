@@ -22,13 +22,13 @@
                 <!-- Búsqueda por nombre/RUN -->
                 <div class="md:col-span-5">
                     <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar Funcionario</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-search text-gray-400"></i>
+                    <div class="flex items-center border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 overflow-hidden bg-white">
+                        <div class="pl-3 pr-2 flex items-center text-gray-400 flex-shrink-0 pointer-events-none">
+                            <i class="fas fa-search text-sm"></i>
                         </div>
                         <input type="text" name="search" id="search" value="{{ filtros.search }}"
                             placeholder="Nombre o RUN..."
-                            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            class="flex-1 pr-3 py-2.5 outline-none bg-transparent sm:text-sm text-gray-700">
                     </div>
                 </div>
 
