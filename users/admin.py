@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from .models import CustomUser
+from .models import CustomUser, GrupoCorreo
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -68,14 +68,14 @@ class CustomUserAdmin(BaseUserAdmin):
     add_form = CustomUserCreationForm
     change_password_form = PasswordChangeForm
     
-    list_display = ('email', 'run', 'first_name', 'last_name', 'role', 'is_active', 'is_staff')
+    list_display = ('email', 'run', 'first_name', 'last_name', 'telefono', 'role', 'is_active', 'is_staff')
     list_filter = ('role', 'is_active', 'is_staff', 'tipo_funcionario')
-    search_fields = ('email', 'run', 'first_name', 'last_name')
+    search_fields = ('email', 'run', 'first_name', 'last_name', 'telefono')
     ordering = ('last_name', 'first_name')
     
     fieldsets = (
         ('Información Personal', {
-            'fields': ('email', 'run', 'first_name', 'last_name')
+            'fields': ('email', 'run', 'first_name', 'last_name', 'telefono')
         }),
         ('Rol y Permisos', {
             'fields': ('role', 'tipo_funcionario', 'dias_disponibles', 
@@ -94,7 +94,7 @@ class CustomUserAdmin(BaseUserAdmin):
     add_fieldsets = (
         ('Crear Nuevo Usuario', {
             'classes': ('wide',),
-            'fields': ('email', 'run', 'first_name', 'last_name', 
+            'fields': ('email', 'run', 'first_name', 'last_name', 'telefono',
                       'role', 'tipo_funcionario', 'dias_disponibles')
         }),
     )
@@ -154,3 +154,49 @@ class CustomUserAdmin(BaseUserAdmin):
     def get_urls(self):
         urls = super().get_urls()
         return urls
+
+
+@admin.register(GrupoCorreo)
+class GrupoCorreoAdmin(admin.ModelAdmin):
+    """Admin para grupos de correo"""
+    list_display = ('nombre', 'correo', 'cantidad_miembros', 'creado_por', 'activo', 'fecha_creacion')
+    list_filter = ('activo', 'fecha_creacion')
+    search_fields = ('nombre', 'correo', 'descripcion')
+    ordering = ('nombre',)
+    filter_horizontal = ('miembros',)
+    date_hierarchy = 'fecha_creacion'
+    
+    fieldsets = (
+        ('Información del Grupo', {
+            'fields': ('nombre', 'correo', 'descripcion', 'activo')
+        }),
+        ('Miembros', {
+            'fields': ('miembros',)
+        }),
+        ('Metadatos', {
+            'fields': ('creado_por', 'fecha_creacion', 'fecha_actualizacion'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    readonly_fields = ('fecha_creacion', 'fecha_actualizacion')
+    
+    def has_add_permission(self, request):
+        if request.user.role in ['ADMIN', 'SECRETARIA']:
+            return True
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        if request.user.role in ['ADMIN', 'SECRETARIA']:
+            return True
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        if request.user.role == 'ADMIN':
+            return True
+        return False
+    
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.creado_por = request.user
+        super().save_model(request, obj, form, change)

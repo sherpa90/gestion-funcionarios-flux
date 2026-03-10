@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Inventario de Equipos</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 1cm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 8px;
+            color: #333;
+            line-height: 1.2;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #2563eb;
+        }
+
+        .header h1 {
+            font-size: 16px;
+            color: #2563eb;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header .subtitle {
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .header .date {
+            font-size: 8px;
+            color: #888;
+        }
+
+        .summary {
+            background-color: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e9ecef;
+        }
+
+        .summary .total {
+            font-size: 12px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .summary .label {
+            font-size: 8px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+            font-size: 7px;
+        }
+
+        th {
+            background-color: #2563eb;
+            color: white;
+            padding: 5px 3px;
+            text-align: center;
+            text-transform: uppercase;
+            font-size: 6px;
+            letter-spacing: 0.3px;
+            border: 1px solid #1d4ed8;
+        }
+
+        td {
+            border: 1px solid #dee2e6;
+            padding: 4px 3px;
+            text-align: center;
+            font-size: 7px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .estado-badge {
+            display: inline-block;
+            padding: 2px 5px;
+            border-radius: 8px;
+            font-size: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .estado-disponible {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .estado-asignado {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .estado-reparacion {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .estado-baja {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .funcionario-cell {
+            text-align: left;
+            font-size: 6px;
+        }
+
+        .rut-cell {
+            font-family: monospace;
+            font-size: 6px;
+        }
+
+        .footer {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 7px;
+            color: #888;
+            padding-top: 5px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .watermark {
+            position: fixed;
+            bottom: 5px;
+            right: 5px;
+            font-size: 6px;
+            color: #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Inventario de Equipos</h1>
+        <div class="subtitle">FLUX - Sistema de Gestión de Personal y Asistencia Laboral</div>
+        <div class="date">Fecha de generación: {{ fecha|date:"d/m/Y H:i" }}</div>
+    </div>
+
+    <div class="summary">
+        <div>
+            <span class="label">Total de Equipos Registrados</span>
+        </div>
+        <div class="total">{{ total }}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 7%;">Tipo</th>
+                <th style="width: 8%;">Marca</th>
+                <th style="width: 10%;">Modelo</th>
+                <th style="width: 12%;">N° Serie</th>
+                <th style="width: 10%;">N° Inventario</th>
+                <th style="width: 8%;">Estado</th>
+                <th style="width: 20%;">Funcionario</th>
+                <th style="width: 8%;">RUT</th>
+                <th style="width: 7%;">F. Asign.</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in equipos_data %}
+            <tr>
+                <td>{{ item.equipo.get_tipo_display }}</td>
+                <td class="text-left">{{ item.equipo.marca }}</td>
+                <td class="text-left">{{ item.equipo.modelo }}</td>
+                <td>{{ item.equipo.numero_serie }}</td>
+                <td>{{ item.equipo.numero_inventario }}</td>
+                <td>
+                    {% if item.equipo.estado == 'ASIGNADO' %}
+                    <span class="estado-badge estado-asignado">{{ item.equipo.get_estado_display }}</span>
+                    {% elif item.equipo.estado == 'DISPONIBLE' %}
+                    <span class="estado-badge estado-disponible">{{ item.equipo.get_estado_display }}</span>
+                    {% elif item.equipo.estado == 'EN_REPARACION' %}
+                    <span class="estado-badge estado-reparacion">{{ item.equipo.get_estado_display }}</span>
+                    {% elif item.equipo.estado == 'BAJA' %}
+                    <span class="estado-badge estado-baja">{{ item.equipo.get_estado_display }}</span>
+                    {% else %}
+                    {{ item.equipo.get_estado_display }}
+                    {% endif %}
+                </td>
+                {% if item.prestamo %}
+                <td class="funcionario-cell">
+                    {{ item.prestamo.funcionario.first_name }} {{ item.prestamo.funcionario.last_name }}
+                </td>
+                <td class="rut-cell">{{ item.prestamo.funcionario.run }}</td>
+                <td>{{ item.prestamo.fecha_asignacion|date:"d/m/Y" }}</td>
+                {% else %}
+                <td class="funcionario-cell">-</td>
+                <td class="rut-cell">-</td>
+                <td>-</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Documento generado automáticamente por FLUX
+    </div>
+
+    <div class="watermark">Página 1</div>
+</body>
+
+</html>

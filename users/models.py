@@ -3,6 +3,42 @@ from django.db import models
 from core.validators import validate_run
 from core.utils import clean_rut_for_matching
 
+
+class GrupoCorreo(models.Model):
+    """Modelo para grupos de correo institucionales"""
+    
+    nombre = models.CharField(max_length=100, unique=True, help_text="Nombre del grupo de correo")
+    correo = models.EmailField(unique=True, help_text="Correo del grupo (ej: grupo@dominio.cl)")
+    descripcion = models.TextField(blank=True, help_text="Descripción del propósito del grupo")
+    miembros = models.ManyToManyField(
+        'CustomUser', 
+        related_name='grupos_correo',
+        blank=True,
+        help_text="Miembros del grupo"
+    )
+    creado_por = models.ForeignKey(
+        'CustomUser', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='grupos_creados'
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Grupo de Correo"
+        verbose_name_plural = "Grupos de Correo"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return f"{self.nombre} ({self.correo})"
+
+    @property
+    def cantidad_miembros(self):
+        return self.miembros.count()
+
+
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
         ('FUNCIONARIO', 'Funcionario'),
@@ -33,6 +69,7 @@ class CustomUser(AbstractUser):
         help_text="Aplica solo para rol Funcionario"
     )
     dias_disponibles = models.FloatField(default=6.0)
+    telefono = models.CharField(max_length=20, blank=True, help_text="Teléfono de contacto")
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['run', 'first_name', 'last_name']
@@ -75,3 +112,28 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.run})"
+
+
+class DirectorioTelefonico(models.Model):
+    """Modelo para el directorio telefónico institucional"""
+    
+    lugar = models.CharField(max_length=100, help_text="Nombre del lugar (ej: Dirección, Secretarias, Biblioteca)")
+    anexo = models.CharField(max_length=20, unique=True, help_text="Número de anexo (ej: 101, 202)")
+    descripcion = models.TextField(blank=True, help_text="Descripción adicional")
+    activo = models.BooleanField(default=True)
+    creado_por = models.ForeignKey(
+        'CustomUser', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='directorio_creado'
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Directorio Telefónico"
+        verbose_name_plural = "Directorio Telefónico"
+        ordering = ['lugar']
+
+    def __str__(self):
+        return f"{self.lugar} - {self.anexo}"

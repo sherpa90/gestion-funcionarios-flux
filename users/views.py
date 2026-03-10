@@ -1,6 +1,7 @@
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, FormView, TemplateView
+from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
@@ -497,22 +498,160 @@ class EmailDirectoryView(LoginRequiredMixin, ListView):
     model = CustomUser
     template_name = 'users/email_directory.html'
     context_object_name = 'users'
-    
+
+    def get_template_names(self):
+        return ['users/email_directory.html']
+
     def get_queryset(self):
         queryset = CustomUser.objects.filter(is_active=True).order_by('first_name', 'last_name')
-        
+
         # Búsqueda
         search_query = self.request.GET.get('search', '')
         if search_query:
             queryset = queryset.filter(
-                Q(first_name__icontains=search_query) | 
-                Q(last_name__icontains=search_query) | 
+                Q(first_name__icontains=search_query) |
+                Q(last_name__icontains=search_query) |
                 Q(email__icontains=search_query)
             )
-            
+
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search_query'] = self.request.GET.get('search', '')
+        context['active_tab'] = self.request.GET.get('tab', 'usuarios')
+
+        # Obtener grupos de correo
+        from users.models import GrupoCorreo
+        grupos = GrupoCorreo.objects.filter(activo=True).order_by('nombre')
+
+        grupo_search = self.request.GET.get('grupo_search', '')
+        if grupo_search:
+            grupos = grupos.filter(
+                Q(nombre__icontains=grupo_search) |
+                Q(correo__icontains=grupo_search) |
+                Q(descripcion__icontains=grupo_search)
+            )
+
+        context['grupos'] = grupos
+        context['grupo_search'] = grupo_search
+
+        # Teléfonos: usuarios con teléfono registrado
+        phone_search = self.request.GET.get('phone_search', '')
+        telefonos = CustomUser.objects.filter(
+            is_active=True,
+            telefono__gt=''
+        ).order_by('first_name', 'last_name')
+        
+        if phone_search:
+            telefonos = telefonos.filter(
+                Q(first_name__icontains=phone_search) |
+                Q(last_name__icontains=phone_search) |
+                Q(telefono__icontains=phone_search)
+            )
+        
+        context['telefonos'] = telefonos
+        context['phone_search'] = phone_search
+
+        # Directorio Telefónico (lugar y anexo)
+        from users.models import DirectorioTelefonico
+        directorio = DirectorioTelefonico.objects.filter(activo=True).order_by('lugar')
+        
+        directorio_search = self.request.GET.get('directorio_search', '')
+        if directorio_search:
+            directorio = directorio.filter(
+                Q(lugar__icontains=directorio_search) |
+                Q(anexo__icontains=directorio_search)
+            )
+        
+        context['directorio'] = directorio
+        context['directorio_search'] = directorio_search
+
         return context
+
+
+
+class CrearGrupoCorreoView(View):
+    """Vista para que ADMIN cree grupos de correo desde el directorio"""
+    
+    def post(self, request):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        
+        # Only ADMIN can create groups
+        if request.user.role != 'ADMIN':
+            messages.error(request, 'No tienes permisos para crear grupos de correo.')
+            return redirect(reverse('email_directory') + '?tab=grupos')
+        
+        nombre = request.POST.get('nombre', '').strip()
+        correo = request.POST.get('correo', '').strip()
+        descripcion = request.POST.get('descripcion', '').strip()
+        
+        if not nombre or not correo:
+            messages.error(request, 'El nombre y correo son requeridos.')
+            return redirect(reverse('email_directory') + '?tab=grupos')
+        
+        from users.models import GrupoCorreo
+        
+        # Check if already exists
+        if GrupoCorreo.objects.filter(correo__iexact=correo).exists():
+            messages.error(request, 'Ya existe un grupo con ese correo.')
+            return redirect(reverse('email_directory') + '?tab=grupos')
+        
+        if GrupoCorreo.objects.filter(nombre__iexact=nombre).exists():
+            messages.error(request, 'Ya existe un grupo con ese nombre.')
+            return redirect(reverse('email_directory') + '?tab=grupos')
+        
+        try:
+            grupo = GrupoCorreo.objects.create(
+                nombre=nombre,
+                correo=correo,
+                descripcion=descripcion,
+                creado_por=request.user,
+                activo=True
+            )
+            messages.success(request, f'Grupo "{grupo.nombre}" creado exitosamente.')
+        except Exception as e:
+            messages.error(request, f'Error al crear el grupo: {str(e)}')
+        
+        return redirect(reverse('email_directory') + '?tab=grupos')
+
+
+class CrearDirectorioTelefonicoView(View):
+    """Vista para que ADMIN cree entradas del directorio telefónico desde el directorio"""
+    
+    def post(self, request):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        
+        if request.user.role != 'ADMIN':
+            messages.error(request, 'No tienes permisos para agregar números telefónicos.')
+            return redirect('email_directory')
+        
+        lugar = request.POST.get('lugar', '').strip()
+        anexo = request.POST.get('anexo', '').strip()
+        descripcion = request.POST.get('descripcion', '').strip()
+        
+        if not lugar or not anexo:
+            messages.error(request, 'El lugar y anexo son requeridos.')
+            return redirect(reverse('email_directory') + '?tab=telefonos')
+        
+        from users.models import DirectorioTelefonico
+        
+        if DirectorioTelefonico.objects.filter(anexo__iexact=anexo).exists():
+            messages.error(request, 'Ya existe un anexo con ese número.')
+            return redirect(reverse('email_directory') + '?tab=telefonos')
+        
+        try:
+            telefono = DirectorioTelefonico.objects.create(
+                lugar=lugar,
+                anexo=anexo,
+                descripcion=descripcion,
+                creado_por=request.user,
+                activo=True
+            )
+            messages.success(request, f'Teléfono "{telefono.lugar}" ({telefono.anexo}) creado exitosamente.')
+        except Exception as e:
+            messages.error(request, f'Error al crear el teléfono: {str(e)}')
+        
+        return redirect(reverse('email_directory') + '?tab=telefonos')

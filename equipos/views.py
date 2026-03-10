@@ -8,6 +8,8 @@ from weasyprint import HTML
 from .models import Equipo, PrestamoEquipo, FallaEquipo
 from users.models import CustomUser
 from datetime import datetime
+import openpyxl
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 
 
 @login_required
@@ -430,3 +432,114 @@ def actualizar_estado_falla(request, falla_id):
             messages.error(request, 'Estado no válido.')
             
     return redirect('gestion_fallas')
+
+
+@login_required
+def export_inventario_excel(request):
+    """Exportar inventario de equipos a Excel con asignaciones"""
+    if request.user.role not in ('ADMIN', 'SECRETARIA'):
+        messages.error(request, 'No tienes permisos para acceder a esta sección.')
+        return redirect('dashboard')
+    
+    # Obtener todos los equipos con sus prestamos activos
+    equipos = Equipo.objects.all().order_by('tipo', 'marca', 'modelo')
+    
+    # Crear libro de Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Inventario Equipos"
+    
+    # Estilos
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="2563eb", end_color="2563eb", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center")
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # Encabezados
+    headers = [
+        'Tipo', 'Marca', 'Modelo', 'N° Serie', 'N° Inventario',
+        'Estado', 'Funcionario Asignado', 'RUT Funcionario',
+        'Fecha Asignación', 'Fecha Adquisición', 'Observaciones'
+    ]
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = thin_border
+    
+    # Agregar datos
+    for row, equipo in enumerate(equipos, 2):
+        # Obtener préstamo activo si existe
+        prestamo_activo = equipo.prestamos.filter(activo=True).select_related('funcionario').first()
+        
+        ws.cell(row=row, column=1, value=equipo.get_tipo_display()).border = thin_border
+        ws.cell(row=row, column=2, value=equipo.marca).border = thin_border
+        ws.cell(row=row, column=3, value=equipo.modelo).border = thin_border
+        ws.cell(row=row, column=4, value=equipo.numero_serie).border = thin_border
+        ws.cell(row=row, column=5, value=equipo.numero_inventario).border = thin_border
+        ws.cell(row=row, column=6, value=equipo.get_estado_display()).border = thin_border
+        
+        if prestamo_activo:
+            ws.cell(row=row, column=7, value=prestamo_activo.funcionario.get_full_name()).border = thin_border
+            ws.cell(row=row, column=8, value=prestamo_activo.funcionario.run).border = thin_border
+            ws.cell(row=row, column=9, value=prestamo_activo.fecha_asignacion.strftime('%d/%m/%Y') if prestamo_activo.fecha_asignacion else '').border = thin_border
+        else:
+            ws.cell(row=row, column=7, value='-').border = thin_border
+            ws.cell(row=row, column=8, value='-').border = thin_border
+            ws.cell(row=row, column=9, value='-').border = thin_border
+        
+        ws.cell(row=row, column=10, value=equipo.fecha_adquisicion.strftime('%d/%m/%Y') if equipo.fecha_adquisicion else '').border = thin_border
+        ws.cell(row=row, column=11, value=equipo.observaciones or '').border = thin_border
+    
+    # Ajustar anchos de columna
+    column_widths = [15, 15, 20, 20, 18, 15, 25, 15, 15, 15, 30]
+    for col, width in enumerate(column_widths, 1):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = width
+    
+    # Generar respuesta
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename=inventario_equipos_{datetime.now().strftime("%Y%m%d")}.xlsx'
+    wb.save(response)
+    
+    return response
+
+
+@login_required
+def export_inventario_pdf(request):
+    """Exportar inventario de equipos a PDF con asignaciones"""
+    if request.user.role not in ('ADMIN', 'SECRETARIA'):
+        messages.error(request, 'No tienes permisos para acceder a esta sección.')
+        return redirect('dashboard')
+    
+    # Obtener todos los equipos
+    equipos = Equipo.objects.all().order_by('tipo', 'marca', 'modelo')
+    
+    # Preparar datos para el template
+    equipos_data = []
+    for equipo in equipos:
+        prestamo_activo = equipo.prestamos.filter(activo=True).select_related('funcionario').first()
+        equipos_data.append({
+            'equipo': equipo,
+            'prestamo': prestamo_activo
+        })
+    
+    # Generar PDF
+    html_string = render(request, 'equipos/inventario_pdf.html', {
+        'equipos_data': equipos_data,
+        'fecha': timezone.now(),
+        'total': equipos.count()
+    }).content.decode('utf-8')
+    
+    pdf = HTML(string=html_string).write_pdf()
+    
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename=inventario_equipos_{datetime.now().strftime("%Y%m%d")}.pdf'
+    return response

@@ -12,6 +12,9 @@ urlpatterns = [
     path('reporte/pdf/', views.reporte_prestamos_pdf, name='reporte_prestamos_pdf'),
     path('reporte/pdf/<int:usuario_id>/', views.reporte_prestamos_pdf, name='reporte_prestamos_pdf'),
     
+    # Exportar Inventario
+    path('exportar/excel/', views.export_inventario_excel, name='export_inventario_excel'),
+    path('exportar/pdf/', views.export_inventario_pdf, name='export_inventario_pdf'),
     
     # Gestión de Fallas
     path('gestion-fallas/', views.gestion_fallas, name='gestion_fallas'),

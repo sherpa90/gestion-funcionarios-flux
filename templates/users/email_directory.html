@@ -1,140 +1,454 @@
 {% extends 'base.html' %}
 
-{% block title %}Directorio de Correos - FLUX{% endblock %}
+{% block title %}Directorio Institucional - FLUX{% endblock %}
 {% block page_title %}Directorio Institucional{% endblock %}
 
 {% block content %}
-<div class="p-4 sm:p-6 space-y-8">
-    <!-- Header Section -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-        <div>
-            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Directorio de Correos</h2>
-            <p class="text-gray-500 mt-1 font-medium">Buscador oficial de contactos y correos institucionales.</p>
+<div class="p-4 sm:p-6 space-y-6">
+
+    <!-- ===================== TABS ===================== -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="flex border-b border-gray-100 overflow-x-auto">
+            <a href="?tab=usuarios"
+               class="flex-1 min-w-max py-4 px-5 text-center font-semibold text-sm transition-all flex items-center justify-center gap-2
+                      {% if active_tab == 'usuarios' or not active_tab %}text-blue-600 border-b-2 border-blue-600 bg-blue-50/60{% else %}text-gray-500 hover:bg-gray-50 border-b-2 border-transparent{% endif %}">
+                <i class="fa-solid fa-users"></i>
+                <span>Directorio de Correos</span>
+            </a>
+            <a href="?tab=grupos"
+               class="flex-1 min-w-max py-4 px-5 text-center font-semibold text-sm transition-all flex items-center justify-center gap-2
+                      {% if active_tab == 'grupos' %}text-blue-600 border-b-2 border-blue-600 bg-blue-50/60{% else %}text-gray-500 hover:bg-gray-50 border-b-2 border-transparent{% endif %}">
+                <i class="fa-solid fa-envelope-circle-check"></i>
+                <span>Grupos de Correo</span>
+            </a>
+            <a href="?tab=telefonos"
+               class="flex-1 min-w-max py-4 px-5 text-center font-semibold text-sm transition-all flex items-center justify-center gap-2
+                      {% if active_tab == 'telefonos' %}text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/60{% else %}text-gray-500 hover:bg-gray-50 border-b-2 border-transparent{% endif %}">
+                <i class="fa-solid fa-phone"></i>
+                <span>Directorio Telefónico</span>
+            </a>
         </div>
     </div>
 
-    <!-- Search Section -->
-    <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50">
-        <form method="GET" action="{% url 'email_directory' %}" class="flex flex-col md:flex-row gap-4">
-            <div class="flex-1 relative">
+    <!-- ===================== TAB 1: USUARIOS ===================== -->
+    {% if active_tab == 'usuarios' or not active_tab %}
+    <div class="space-y-5">
+        <!-- Buscador -->
+        <form method="GET" action="{% url 'email_directory' %}" class="flex flex-col sm:flex-row gap-3">
+            <input type="hidden" name="tab" value="usuarios">
+            <div class="relative flex-1">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <i class="fa-solid fa-magnifying-glass text-sm"></i>
                 </div>
                 <input type="text" name="search" value="{{ search_query }}"
-                    placeholder="Buscar por nombre, apellido o correo..."
-                    class="w-full pl-11 pr-4 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 focus:ring-4 focus:ring-blue-50 transition-all outline-none">
+                       placeholder="Buscar por nombre, apellido o correo..."
+                       class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all">
             </div>
             <button type="submit"
-                class="px-8 py-4 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center justify-center">
-                <i class="fa-solid fa-filter mr-2"></i> Buscar
+                    class="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 shadow-sm transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-filter"></i> Buscar
             </button>
             {% if search_query %}
             <a href="{% url 'email_directory' %}"
-                class="px-6 py-4 bg-gray-100 text-gray-500 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-gray-200 transition-all flex items-center justify-center">
-                Limpiar
+               class="px-5 py-3 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-xmark"></i> Limpiar
             </a>
             {% endif %}
         </form>
-    </div>
 
-    <!-- Directory List (Vertical Grouped) -->
-    <div class="space-y-6 max-w-4xl mx-auto pb-20">
-        {% for user in users %}
-        {% ifchanged user.first_name.0 %}
-        <div class="pt-8 pb-3 sticky top-0 bg-gray-50/95 backdrop-blur-sm z-30 transition-all">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center">
-                    <span class="text-sm font-black text-gray-600 uppercase">{{ user.first_name.0 }}</span>
+        <!-- Lista de usuarios -->
+        <div class="space-y-3">
+            {% for u in users %}
+            {% ifchanged u.first_name.0 %}
+            <div class="flex items-center gap-3 pt-2 pb-1">
+                <div class="w-7 h-7 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+                    <span class="text-xs font-black text-gray-600 uppercase">{{ u.first_name.0 }}</span>
                 </div>
                 <div class="h-px bg-gradient-to-r from-gray-200 to-transparent flex-1"></div>
             </div>
-        </div>
-        {% endifchanged %}
+            {% endifchanged %}
 
-        <div
-            class="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm hover:shadow-xl hover:shadow-blue-50/50 hover:border-blue-100 transition-all group flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div class="flex items-center gap-4">
-                <div
-                    class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex-shrink-0 flex items-center justify-center font-black text-lg shadow-lg shadow-blue-100">
-                    {{ user.first_name.0 }}{{ user.last_name.0 }}
-                </div>
-                <div>
-                    <h3
-                        class="text-base font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
-                        {{ user.get_full_name }}</h3>
-                    <div class="flex items-center gap-2 mt-1">
-                        <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{{user.get_role_display }}</p>
-                        {% if user.tipo_funcionario %}
-                        <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
-                        <p class="text-[9px] text-blue-500 font-bold uppercase tracking-widest">{{ user.get_tipo_funcionario_display}}</p>
-                        {% endif %}
+            <div class="bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md hover:border-blue-100 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <!-- Info usuario -->
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex-shrink-0 flex items-center justify-center font-black text-base shadow-md shadow-blue-100">
+                        {{ u.first_name.0 }}{{ u.last_name.0 }}
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition-colors truncate">
+                            {{ u.get_full_name }}
+                        </h3>
+                        <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            <span class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{{ u.get_role_display }}</span>
+                            {% if u.tipo_funcionario %}
+                            <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span class="text-[10px] text-blue-500 font-semibold uppercase tracking-wider">{{ u.get_tipo_funcionario_display }}</span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="flex items-center gap-2 w-full md:w-auto">
-                <div
-                    class="flex-1 md:flex-initial flex items-center bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 group/mail hover:bg-white hover:border-blue-200 transition-all">
-                    <i class="fa-solid fa-envelope text-gray-400 mr-3 text-sm"></i>
-                    <span class="text-xs font-bold text-gray-700 truncate select-all">{{ user.email }}</span>
-                </div>
-
-                <div class="flex gap-2">
-                    <button onclick="copyToClipboard('{{ user.email }}', this)"
-                        class="w-11 h-11 flex items-center justify-center bg-gray-50 text-gray-400 rounded-2xl hover:bg-blue-600 hover:text-white transition-all shadow-sm group/copy"
-                        title="Copiar correo">
-                        <i class="fa-solid fa-copy text-sm"></i>
+                <!-- Correo + acciones -->
+                <div class="flex items-center gap-2 sm:flex-shrink-0">
+                    <div class="flex-1 sm:flex-initial flex items-center bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 min-w-0 sm:min-w-[220px]">
+                        <i class="fa-solid fa-envelope text-gray-300 mr-2 text-xs flex-shrink-0"></i>
+                        <span class="text-xs font-semibold text-gray-600 truncate select-all">{{ u.email }}</span>
+                    </div>
+                    <button onclick="copyToClipboard('{{ u.email }}', this)"
+                            class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
+                            title="Copiar correo">
+                        <i class="fa-regular fa-copy text-sm"></i>
                     </button>
-                    <a href="mailto:{{ user.email }}"
-                        class="w-11 h-11 flex items-center justify-center bg-gray-50 text-gray-400 rounded-2xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
-                        title="Enviar correo">
+                    <a href="mailto:{{ u.email }}"
+                       class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
+                       title="Enviar correo">
                         <i class="fa-solid fa-paper-plane text-sm"></i>
                     </a>
                 </div>
             </div>
-        </div>
-        {% empty %}
-        <div class="py-24 text-center">
-            <div class="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-gray-200">
-                <i class="fa-solid fa-users-slash fa-3x"></i>
+            {% empty %}
+            <div class="py-20 text-center">
+                <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-gray-200">
+                    <i class="fa-solid fa-users-slash fa-2x"></i>
+                </div>
+                <h3 class="text-base font-bold text-gray-700">No se encontraron resultados</h3>
+                <p class="text-sm text-gray-400 mt-1">Prueba con otros términos de búsqueda.</p>
             </div>
-            <h3 class="text-xl font-black text-gray-900 tracking-tight">No se encontraron resultados</h3>
-            <p class="text-gray-500 mt-2 font-medium">Prueba con otros términos de búsqueda.</p>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
+    {% endif %}
+
+    <!-- ===================== TAB 2: GRUPOS DE CORREO ===================== -->
+    {% if active_tab == 'grupos' %}
+    <div class="space-y-5">
+        <!-- Barra superior: búsqueda + botón crear (solo admin) -->
+        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <form method="GET" action="{% url 'email_directory' %}" class="flex flex-1 gap-3">
+                <input type="hidden" name="tab" value="grupos">
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    </div>
+                    <input type="text" name="grupo_search" value="{{ grupo_search }}"
+                           placeholder="Buscar grupos de correo..."
+                           class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all">
+                </div>
+                <button type="submit"
+                        class="px-5 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-all flex items-center gap-2 flex-shrink-0">
+                    <i class="fa-solid fa-filter"></i>
+                    <span class="hidden sm:inline">Buscar</span>
+                </button>
+                {% if grupo_search %}
+                <a href="?tab=grupos"
+                   class="px-4 py-3 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-all flex items-center gap-1 flex-shrink-0">
+                    <i class="fa-solid fa-xmark"></i>
+                </a>
+                {% endif %}
+            </form>
+            {% if user.role == 'ADMIN' %}
+            <button onclick="document.getElementById('modal-grupo').classList.remove('hidden')"
+                    class="px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-md shadow-blue-100 transition-all flex items-center gap-2 flex-shrink-0">
+                <i class="fa-solid fa-plus"></i>
+                Nuevo Grupo
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- Lista de grupos -->
+        <div class="space-y-3">
+            {% for grupo in grupos %}
+            <div class="bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md hover:border-blue-100 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex-shrink-0 flex items-center justify-center shadow-md shadow-blue-100">
+                        <i class="fa-solid fa-envelope-circle-check text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                            {{ grupo.nombre }}
+                        </h3>
+                        {% if grupo.descripcion %}
+                        <p class="text-xs text-gray-400 truncate mt-0.5">{{ grupo.descripcion }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <div class="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 min-w-0">
+                        <i class="fa-solid fa-envelope text-gray-300 mr-2 text-xs flex-shrink-0"></i>
+                        <span class="text-xs font-semibold text-gray-600 truncate select-all max-w-[200px]">{{ grupo.correo }}</span>
+                    </div>
+                    <button onclick="copyToClipboard('{{ grupo.correo }}', this)"
+                            class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
+                            title="Copiar correo">
+                        <i class="fa-regular fa-copy text-sm"></i>
+                    </button>
+                    <a href="mailto:{{ grupo.correo }}"
+                       class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
+                       title="Enviar correo">
+                        <i class="fa-solid fa-paper-plane text-sm"></i>
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="py-20 text-center">
+                <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-blue-200">
+                    <i class="fa-solid fa-envelope-circle-check fa-2x"></i>
+                </div>
+                <h3 class="text-base font-bold text-gray-700">Sin grupos de correo</h3>
+                <p class="text-sm text-gray-400 mt-1">
+                    {% if user.role == 'ADMIN' %}Haz clic en "Nuevo Grupo" para crear uno.{% else %}Contacta al administrador para crear grupos.{% endif %}
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Modal: Crear Grupo de Correo (solo admin) -->
+    {% if user.role == 'ADMIN' %}
+    <div id="modal-grupo" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" onclick="document.getElementById('modal-grupo').classList.add('hidden')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center">
+                        <i class="fa-solid fa-envelope-circle-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-base">Nuevo Grupo de Correo</h3>
+                        <p class="text-xs text-gray-400">Solo visible para administradores</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('modal-grupo').classList.add('hidden')"
+                        class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form method="POST" action="{% url 'crear_grupo_correo' %}" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="?tab=grupos">
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Nombre del grupo <span class="text-red-400">*</span></label>
+                    <input type="text" name="nombre" placeholder="ej: Docentes, Directiva..." required
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Correo electrónico <span class="text-red-400">*</span></label>
+                    <input type="email" name="correo" placeholder="grupo@institucion.cl" required
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Descripción <span class="text-gray-400 font-normal normal-case">(opcional)</span></label>
+                    <textarea name="descripcion" placeholder="Descripción del grupo..." rows="2"
+                              class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all resize-none"></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="document.getElementById('modal-grupo').classList.add('hidden')"
+                            class="flex-1 px-4 py-3 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-all">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-md shadow-blue-100 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Crear grupo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <!-- ===================== TAB 3: DIRECTORIO TELEFÓNICO ===================== -->
+    {% if active_tab == 'telefonos' %}
+    <div class="space-y-5">
+        <!-- Barra superior: búsqueda + botón crear (solo admin) -->
+        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <form method="GET" action="{% url 'email_directory' %}" class="flex flex-1 gap-3">
+                <input type="hidden" name="tab" value="telefonos">
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    </div>
+                    <input type="text" name="directorio_search" value="{{ directorio_search }}"
+                           placeholder="Buscar por lugar o anexo..."
+                           class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all">
+                </div>
+                <button type="submit"
+                        class="px-5 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-all flex items-center gap-2 flex-shrink-0">
+                    <i class="fa-solid fa-filter"></i>
+                    <span class="hidden sm:inline">Buscar</span>
+                </button>
+                {% if directorio_search %}
+                <a href="?tab=telefonos"
+                   class="px-4 py-3 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-all flex items-center gap-1 flex-shrink-0">
+                    <i class="fa-solid fa-xmark"></i>
+                </a>
+                {% endif %}
+            </form>
+            {% if user.role == 'ADMIN' %}
+            <button onclick="document.getElementById('modal-telefono').classList.remove('hidden')"
+                    class="px-5 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white text-sm font-semibold rounded-xl hover:from-indigo-700 hover:to-indigo-800 shadow-md shadow-indigo-100 transition-all flex items-center gap-2 flex-shrink-0">
+                <i class="fa-solid fa-plus"></i>
+                Nuevo Anexo
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- Lista del directorio telefónico -->
+        <div class="space-y-3">
+            {% for entrada in directorio %}
+            <div class="bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md hover:border-indigo-100 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex-shrink-0 flex items-center justify-center shadow-md shadow-indigo-100">
+                        <i class="fa-solid fa-phone text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
+                            {{ entrada.lugar }}
+                        </h3>
+                        {% if entrada.descripcion %}
+                        <p class="text-xs text-gray-400 truncate mt-0.5">{{ entrada.descripcion }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <div class="flex items-center bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-2.5">
+                        <i class="fa-solid fa-phone text-indigo-300 mr-2 text-xs flex-shrink-0"></i>
+                        <span class="text-sm font-black text-indigo-700 tracking-wider">Anexo {{ entrada.anexo }}</span>
+                    </div>
+                    <button onclick="copyToClipboard('{{ entrada.anexo }}', this)"
+                            class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all"
+                            title="Copiar anexo">
+                        <i class="fa-regular fa-copy text-sm"></i>
+                    </button>
+                </div>
+            </div>
+            {% empty %}
+            <div class="py-20 text-center">
+                <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-200">
+                    <i class="fa-solid fa-phone fa-2x"></i>
+                </div>
+                <h3 class="text-base font-bold text-gray-700">Sin entradas telefónicas</h3>
+                <p class="text-sm text-gray-400 mt-1">
+                    {% if user.role == 'ADMIN' %}Haz clic en "Nuevo Anexo" para agregar uno.{% else %}Contacta al administrador para agregar anexos.{% endif %}
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Modal: Agregar Anexo Telefónico (solo admin) -->
+    {% if user.role == 'ADMIN' %}
+    <div id="modal-telefono" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" onclick="document.getElementById('modal-telefono').classList.add('hidden')"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center">
+                        <i class="fa-solid fa-phone"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-base">Nuevo Anexo Telefónico</h3>
+                        <p class="text-xs text-gray-400">Solo visible para administradores</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('modal-telefono').classList.add('hidden')"
+                        class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form method="POST" action="{% url 'crear_directorio_telefonico' %}" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="?tab=telefonos">
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Lugar / Dependencia <span class="text-red-400">*</span></label>
+                    <input type="text" name="lugar" placeholder="ej: Dirección, Biblioteca, UTP..." required
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Número de Anexo <span class="text-red-400">*</span></label>
+                    <input type="text" name="anexo" placeholder="ej: 101, 202..." required
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Descripción <span class="text-gray-400 font-normal normal-case">(opcional)</span></label>
+                    <textarea name="descripcion" placeholder="Información adicional..." rows="2"
+                              class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all resize-none"></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="document.getElementById('modal-telefono').classList.add('hidden')"
+                            class="flex-1 px-4 py-3 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-all">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            class="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white text-sm font-semibold rounded-xl hover:from-indigo-700 hover:to-indigo-800 shadow-md shadow-indigo-100 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Agregar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
 </div>
 
-<!-- Notification Toast -->
+<!-- ===================== TOAST DE COPIADO ===================== -->
 <div id="copy-toast"
-    class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-2xl text-sm font-black tracking-wide shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 z-[60]">
-    <div class="flex items-center gap-3">
+     class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-2xl text-sm font-semibold shadow-2xl transition-all duration-300 translate-y-20 opacity-0 z-[60] pointer-events-none">
+    <div class="flex items-center gap-2">
         <i class="fa-solid fa-check-circle text-green-400"></i>
-        <span>¡Correo copiado al portapapeles!</span>
+        <span id="copy-toast-text">¡Copiado al portapapeles!</span>
     </div>
 </div>
 
 <script>
-    function copyToClipboard(text, btn) {
-        navigator.clipboard.writeText(text).then(() => {
-            // Visual feedback on button
-            const icon = btn.querySelector('i');
-            const originalClass = icon.className;
-            icon.className = 'fa-solid fa-check';
-            btn.classList.add('bg-green-500', 'text-white');
-            btn.classList.remove('bg-gray-50', 'text-gray-400');
+function copyToClipboard(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Feedback en el botón
+        const icon = btn.querySelector('i');
+        const originalClass = icon.className;
+        icon.className = 'fa-solid fa-check text-sm';
+        btn.classList.add('bg-green-500', 'text-white', 'border-green-500');
+        btn.classList.remove('bg-gray-50', 'text-gray-400');
 
-            // Toast notification
-            const toast = document.getElementById('copy-toast');
-            toast.classList.remove('translate-y-20', 'opacity-0');
+        // Toast
+        const toast = document.getElementById('copy-toast');
+        const toastText = document.getElementById('copy-toast-text');
+        toastText.textContent = '¡"' + text + '" copiado!';
+        toast.classList.remove('translate-y-20', 'opacity-0');
 
-            setTimeout(() => {
-                icon.className = originalClass;
-                btn.classList.remove('bg-green-500', 'text-white');
-                btn.classList.add('bg-gray-50', 'text-gray-400');
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 2000);
-        });
+        setTimeout(() => {
+            icon.className = originalClass;
+            btn.classList.remove('bg-green-500', 'text-white', 'border-green-500');
+            btn.classList.add('bg-gray-50', 'text-gray-400');
+            toast.classList.add('translate-y-20', 'opacity-0');
+        }, 2500);
+    }).catch(() => {
+        // Fallback para navegadores sin soporte
+        const tmp = document.createElement('textarea');
+        tmp.value = text;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand('copy');
+        document.body.removeChild(tmp);
+    });
+}
+
+// Cerrar modal con tecla Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('[id^="modal-"]').forEach(m => m.classList.add('hidden'));
     }
+});
 </script>
 {% endblock %}
