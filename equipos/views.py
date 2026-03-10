@@ -142,7 +142,7 @@ def crear_equipo(request):
         except Exception as e:
             messages.error(request, f'Error al crear equipo: {str(e)}')
 
-    funcionarios = CustomUser.objects.filter(is_active=True).order_by('last_name')
+    funcionarios = CustomUser.objects.filter(is_active=True).order_by('first_name', 'last_name')
 
     context = {
         'tipos': Equipo.TIPO_CHOICES,
@@ -217,7 +217,7 @@ def editar_equipo(request, equipo_id):
         return redirect('lista_equipos')
 
     prestamo_actual = equipo.prestamos.filter(activo=True).first()
-    funcionarios = CustomUser.objects.filter(is_active=True).order_by('last_name')
+    funcionarios = CustomUser.objects.filter(is_active=True).order_by('first_name', 'last_name')
 
     context = {
         'equipo': equipo,
@@ -282,7 +282,7 @@ def asignar_equipo(request, equipo_id):
     # Obtener TODOS los usuarios activos (no solo FUNCIONARIO)
     funcionarios = CustomUser.objects.filter(
         is_active=True
-    ).order_by('last_name', 'first_name')
+    ).order_by('first_name', 'last_name')
 
     context = {
         'equipo': equipo,
@@ -561,3 +561,102 @@ def export_inventario_pdf(request):
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename=inventario_equipos_{datetime.now().strftime("%Y%m%d")}.pdf'
     return response
+
+
+@login_required
+def detalle_equipo(request, equipo_id):
+    """Ver el detalle de un equipo, su historial de préstamos, fallas y mantenimiento"""
+    equipo = get_object_or_404(Equipo, id=equipo_id)
+    
+    # Validar permisos: ADMIN/SECRETARIA o el funcionario que lo tiene asignado
+    es_admin = request.user.role in ('ADMIN', 'SECRETARIA')
+    tiene_prestamo = PrestamoEquipo.objects.filter(equipo=equipo, funcionario=request.user, activo=True).exists()
+    
+    if not (es_admin or tiene_prestamo):
+        messages.error(request, 'No tienes permisos para ver el historial de este equipo.')
+        return redirect('dashboard')
+    
+    # Historial de Mantenimientos
+    from .models import HitoMantenimiento
+    hitos = HitoMantenimiento.objects.filter(equipo=equipo).select_related('creado_por')
+    
+    # Historial de Fallas
+    fallas = equipo.fallas.all().select_related('funcionario', 'resuelto_por')
+    
+    # Historial de Préstamos
+    prestamos = equipo.prestamos.all().select_related('funcionario', 'asignado_por').order_by('-fecha_asignacion')
+    
+    # Combinar hitos y fallas en una línea de tiempo para la vista
+    from itertools import chain
+    from operator import attrgetter
+    
+    # Anotar el origen para el template
+    for h in hitos:
+        h.tipo_evento = 'HITO'
+        h.fecha_orden = h.fecha
+    
+    for f in fallas:
+        f.tipo_evento = 'FALLA'
+        f.fecha_orden = f.fecha_reporte.date()
+        
+    for p in prestamos:
+        p.tipo_evento = 'PRESTAMO'
+        p.fecha_orden = p.fecha_asignacion.date()
+
+    linea_tiempo = sorted(
+        chain(hitos, fallas, prestamos),
+        key=attrgetter('fecha_orden'),
+        reverse=True
+    )
+    
+    context = {
+        'equipo': equipo,
+        'linea_tiempo': linea_tiempo,
+        'prestamo_actual': prestamos.filter(activo=True).first(),
+        'es_admin': es_admin,
+    }
+    return render(request, 'equipos/detalle_equipo.html', context)
+
+
+@login_required
+def agregar_hito(request, equipo_id):
+    """Agregar un hito o mantenimiento a un equipo (solo administradores)"""
+    if request.user.role not in ('ADMIN', 'SECRETARIA'):
+        messages.error(request, 'No tienes permisos para acceder a esta sección.')
+        return redirect('dashboard')
+        
+    equipo = get_object_or_404(Equipo, id=equipo_id)
+    from .models import HitoMantenimiento
+    
+    if request.method == 'POST':
+        tipo = request.POST.get('tipo')
+        fecha = request.POST.get('fecha')
+        descripcion = request.POST.get('descripcion')
+        costo_str = request.POST.get('costo')
+        
+        costo = None
+        if costo_str and costo_str.strip():
+            try:
+                costo = float(costo_str.replace(',', '.'))
+            except ValueError:
+                messages.error(request, 'El costo ingresado no es válido.')
+                return redirect('agregar_hito', equipo_id=equipo.id)
+                
+        HitoMantenimiento.objects.create(
+            equipo=equipo,
+            tipo=tipo,
+            fecha=fecha,
+            descripcion=descripcion,
+            costo=costo,
+            creado_por=request.user
+        )
+        
+        messages.success(request, 'Hito de mantenimiento registrado exitosamente.')
+        return redirect('detalle_equipo', equipo_id=equipo.id)
+        
+    context = {
+        'equipo': equipo,
+        'tipos_hito': HitoMantenimiento.TIPO_HITO_CHOICES,
+        'fecha_hoy': timezone.now().date().strftime('%Y-%m-%d')
+    }
+    return render(request, 'equipos/agregar_hito.html', context)

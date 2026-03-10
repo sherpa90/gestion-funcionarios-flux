@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Añadir Hito Mantenimiento - FLUX{% endblock %}
+{% block page_title %}Registrar Mantenimiento{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 lg:p-10">
+    <div class="max-w-3xl mx-auto">
+        <!-- Back Link -->
+        <a href="{% url 'detalle_equipo' equipo.id %}"
+            class="inline-flex items-center text-sm font-bold text-gray-400 hover:text-blue-600 mb-8 transition-colors group">
+            <i class="fas fa-arrow-left mr-2 transition-transform group-hover:-translate-x-1"></i>
+            Regresar al Detalle del Equipo
+        </a>
+
+        <div class="bg-white rounded-[2rem] shadow-2xl shadow-blue-50/50 border border-gray-100 overflow-hidden">
+            <!-- Header -->
+            <div class="px-6 py-6 border-b border-gray-50 bg-gradient-to-r from-blue-600 to-indigo-700 flex flex-col sm:flex-row items-center sm:justify-between text-white gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-inner flex-shrink-0">
+                        <i class="fas fa-tools fa-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black leading-tight">Registrar Hito / Mantenimiento</h3>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-blue-100 mt-1 opacity-90">{{ equipo.marca|striptags }} {{ equipo.modelo|striptags }} - #{{ equipo.numero_inventario|striptags }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form method="post" class="p-6 sm:p-8 space-y-8">
+                {% csrf_token %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Tipo -->
+                    <div class="space-y-3">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tipo de Evento <span class="text-red-500">*</span></label>
+                        <select name="tipo" class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all text-sm font-bold py-3.5" required>
+                            <option value="">Seleccionar Tipo...</option>
+                            {% for value, label in tipos_hito %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Fecha -->
+                    <div class="space-y-3">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha del Evento <span class="text-red-500">*</span></label>
+                        <input type="date" name="fecha" value="{{ fecha_hoy }}" class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5 text-sm" required>
+                    </div>
+                </div>
+
+                <!-- Descripción -->
+                <div class="space-y-3">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Descripción / Observaciones <span class="text-red-500">*</span></label>
+                    <textarea name="descripcion" rows="4" class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all text-sm font-medium py-3.5 placeholder-gray-300" placeholder="Describe los detalles del mantenimiento, reparación o actualización realizada..." required></textarea>
+                </div>
+
+                <!-- Costo -->
+                <div class="space-y-3 md:w-1/2">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Costo Asociado (CLP)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 font-bold">$</div>
+                        <input type="number" step="0.01" name="costo" class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5 pl-8 text-sm placeholder-gray-300" placeholder="Ej: 50000">
+                    </div>
+                    <p class="text-[10px] text-gray-400 font-medium italic ml-1 mt-1">Opcional. Si la reparación o mejora tuvo un costo direct.</p>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-6 mt-6 border-t border-gray-50">
+                    <a href="{% url 'detalle_equipo' equipo.id %}" class="w-full sm:w-auto text-center px-6 py-3 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-all">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="w-full sm:w-auto px-8 py-3 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg hover:bg-black hover:-translate-y-0.5 transition-all">
+                        <i class="fas fa-save mr-2"></i> Guardar Hito
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

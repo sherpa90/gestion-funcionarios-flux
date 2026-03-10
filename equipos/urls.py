@@ -11,6 +11,8 @@ urlpatterns = [
     path('devolver/<int:prestamo_id>/', views.devolver_equipo, name='devolver_equipo'),
     path('reporte/pdf/', views.reporte_prestamos_pdf, name='reporte_prestamos_pdf'),
     path('reporte/pdf/<int:usuario_id>/', views.reporte_prestamos_pdf, name='reporte_prestamos_pdf'),
+    path('detalle/<int:equipo_id>/', views.detalle_equipo, name='detalle_equipo'),
+    path('detalle/<int:equipo_id>/hito/agregar/', views.agregar_hito, name='agregar_hito'),
     
     # Exportar Inventario
     path('exportar/excel/', views.export_inventario_excel, name='export_inventario_excel'),

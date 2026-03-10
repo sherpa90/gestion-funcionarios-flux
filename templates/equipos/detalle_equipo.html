@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle del Equipo - FLUX{% endblock %}
+{% block page_title %}Detalle de Equipo{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 lg:p-10">
+    <div class="max-w-6xl mx-auto space-y-8">
+        <!-- Back Link -->
+        <a href="{% if es_admin %}{% url 'lista_equipos' %}{% else %}{% url 'mis_equipos' %}{% endif %}"
+            class="inline-flex items-center text-sm font-bold text-gray-400 hover:text-blue-600 transition-colors group">
+            <i class="fas fa-arrow-left mr-2 transition-transform group-hover:-translate-x-1"></i>
+            Regresar a la lista
+        </a>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Equipment Details -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Status Card -->
+                <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-xl shadow-blue-50/20 text-center relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider
+                            {% if equipo.estado == 'DISPONIBLE' %}bg-green-50 text-green-700
+                            {% elif equipo.estado == 'EN_REPARACION' %}bg-yellow-50 text-yellow-700
+                            {% else %}bg-red-50 text-red-700{% endif %}">
+                            <span class="w-1.5 h-1.5 rounded-full mr-2 
+                                {% if equipo.estado == 'DISPONIBLE' %}bg-green-500
+                                {% elif equipo.estado == 'EN_REPARACION' %}bg-yellow-500
+                                {% else %}bg-red-500{% endif %}"></span>
+                            {{ equipo.get_estado_display }}
+                        </span>
+                    </div>
+
+                    <div class="w-20 h-20 rounded-[2rem] bg-gray-50 flex items-center justify-center text-gray-400 mx-auto mt-4 mb-5 border-2 border-white shadow-sm">
+                        <i class="fas {% if equipo.tipo == 'LAPTOP' %}fa-laptop{% elif equipo.tipo == 'CELULAR' %}fa-mobile-alt{% else %}fa-desktop{% endif %} fa-3x"></i>
+                    </div>
+
+                    <h2 class="text-xl font-black text-gray-900 leading-tight break-words">{{ equipo.marca|striptags }} {{ equipo.modelo|striptags }}</h2>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">{{ equipo.get_tipo_display }}</p>
+
+                    <div class="mt-6 pt-6 border-t border-gray-50 space-y-4 text-left">
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">N° Inventario</p>
+                            <p class="text-sm font-black text-blue-900 bg-blue-50/50 px-3 py-1.5 rounded-lg inline-block mt-1">#{{ equipo.numero_inventario|striptags }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Número de Serie</p>
+                            <p class="text-sm font-mono text-gray-700 break-all">{{ equipo.numero_serie|default:"N/A"|striptags }}</p>
+                        </div>
+                        {% if equipo.fecha_adquisicion %}
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Adquisición</p>
+                            <p class="text-sm font-medium text-gray-700">{{ equipo.fecha_adquisicion|date:"d M Y" }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if prestamo_actual %}
+                    <div class="mt-6 p-4 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl text-white text-left">
+                        <p class="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-2">Asignado actualmente a</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black">
+                                {{ prestamo_actual.funcionario.first_name.0 }}{{ prestamo_actual.funcionario.last_name.0 }}
+                            </div>
+                            <div>
+                                <p class="text-sm font-black">{{ prestamo_actual.funcionario.get_full_name }}</p>
+                                <p class="text-[10px] text-blue-200 uppercase">{{ prestamo_actual.fecha_asignacion|date:"d M Y" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Column: Timeline -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-50 pb-5 mb-6 gap-4">
+                        <div>
+                            <h3 class="text-lg font-black text-gray-900">Historial del Equipo</h3>
+                            <p class="text-xs text-gray-400 font-medium mt-1">Línea de tiempo de eventos y mantenimientos</p>
+                        </div>
+                        {% if es_admin %}
+                        <a href="{% url 'agregar_hito' equipo.id %}" class="inline-flex items-center px-4 py-2 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-black transition-all shadow-md">
+                            <i class="fas fa-plus mr-2"></i> Añadir Hito
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    {% if linea_tiempo %}
+                    <div class="relative border-l-2 border-gray-100 ml-3 sm:ml-4 space-y-8 pb-4">
+                        {% for evento in linea_tiempo %}
+                        <div class="relative pl-6 sm:pl-8">
+                            <!-- Event Marker -->
+                            {% if evento.tipo_evento == 'HITO' %}
+                            <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-blue-500 ring-4 ring-white shadow-sm"></div>
+                            {% elif evento.tipo_evento == 'FALLA' %}
+                            <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-red-500 ring-4 ring-white shadow-sm"></div>
+                            {% else %}
+                            <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-green-500 ring-4 ring-white shadow-sm"></div>
+                            {% endif %}
+                            
+                            <!-- Card Content -->
+                            <div class="bg-gray-50/50 rounded-2xl p-4 sm:p-5 border border-gray-100 hover:bg-white hover:shadow-md transition-all group">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md
+                                            {% if evento.tipo_evento == 'HITO' %}bg-blue-100 text-blue-700
+                                            {% elif evento.tipo_evento == 'FALLA' %}bg-red-100 text-red-700
+                                            {% else %}bg-green-100 text-green-700{% endif %}">
+                                            {% if evento.tipo_evento == 'HITO' %}Mantenimiento
+                                            {% elif evento.tipo_evento == 'FALLA' %}Falla
+                                            {% else %}Asignación{% endif %}
+                                        </span>
+                                        <span class="text-xs font-bold text-gray-400">{{ evento.fecha_orden|date:"d M Y" }}</span>
+                                    </div>
+                                    {% if evento.tipo_evento == 'HITO' and evento.costo %}
+                                    <span class="text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-100 shadow-sm">
+                                        CLP ${{ evento.costo|floatformat:0 }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                
+                                <h4 class="text-sm font-black text-gray-900 mb-1">
+                                    {% if evento.tipo_evento == 'HITO' %}{{ evento.get_tipo_display }}
+                                    {% elif evento.tipo_evento == 'FALLA' %}Reporte de Problema
+                                    {% else %}Préstamo a Funcionario{% endif %}
+                                </h4>
+                                
+                                <p class="text-sm text-gray-600 leading-relaxed mb-3">
+                                    {% if evento.tipo_evento == 'HITO' %}{{ evento.descripcion }}
+                                    {% elif evento.tipo_evento == 'FALLA' %}{{ evento.descripcion }}
+                                    {% else %}Asignado a {{ evento.funcionario.get_full_name }}. {% if evento.observaciones %}{{ evento.observaciones }}{% endif %}{% endif %}
+                                </p>
+                                
+                                <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100/50 text-[10px] text-gray-400 font-medium">
+                                    <i class="fas fa-user-circle"></i>
+                                    {% if evento.tipo_evento == 'HITO' %}
+                                    Registrado por: {{ evento.creado_por.get_full_name|default:"Sistema" }}
+                                    {% elif evento.tipo_evento == 'FALLA' %}
+                                    Reportado por: {{ evento.funcionario.get_full_name|default:"Sistema" }} - Estado: <span class="font-bold text-gray-600">{{ evento.get_estado_display }}</span>
+                                    {% else %}
+                                    Asignado por: {{ evento.asignado_por.get_full_name|default:"Sistema" }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
+                            <i class="fas fa-history fa-2x"></i>
+                        </div>
+                        <h4 class="text-sm font-black text-gray-900">Sin historial registrado</h4>
+                        <p class="text-xs text-gray-400 mt-1">Este equipo no tiene eventos, asignaciones ni mantenimientos en su línea de tiempo.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -234,3 +234,54 @@ class FallaEquipo(models.Model):
             self.equipo.save()
             
         super().save(*args, **kwargs)
+
+
+class HitoMantenimiento(models.Model):
+    """Modelo para registrar hitos o mantenimientos a los equipos"""
+    
+    TIPO_HITO_CHOICES = [
+        ('MANTENIMIENTO_PREVENTIVO', 'Mantenimiento Preventivo'),
+        ('REPARACION', 'Reparación / Mantenimiento Correctivo'),
+        ('ACTUALIZACION', 'Actualización de Hardware/Software'),
+        ('INSPECCION', 'Inspección Rutinaria'),
+        ('OTRO', 'Otro / Observación'),
+    ]
+
+    equipo = models.ForeignKey(
+        Equipo,
+        on_delete=models.CASCADE,
+        related_name='hitos'
+    )
+    tipo = models.CharField(
+        max_length=50,
+        choices=TIPO_HITO_CHOICES,
+        verbose_name='Tipo de Mantenimiento / Hito'
+    )
+    fecha = models.DateField(
+        verbose_name='Fecha del Hito'
+    )
+    descripcion = models.TextField(
+        verbose_name='Descripción / Observaciones'
+    )
+    costo = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        null=True, 
+        blank=True, 
+        verbose_name='Costo Asociado (Opcional)'
+    )
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='hitos_creados'
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha', '-fecha_creacion']
+        verbose_name = 'Hito de Mantenimiento'
+        verbose_name_plural = 'Hitos de Mantenimiento'
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.equipo} ({self.fecha})"
