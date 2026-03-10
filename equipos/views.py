@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.conf import settings
 from weasyprint import HTML
+from django.db.models import Prefetch
 from .models import Equipo, PrestamoEquipo, FallaEquipo
 from users.models import CustomUser
 from datetime import datetime
@@ -19,7 +20,13 @@ def lista_equipos(request):
         messages.error(request, 'No tienes permisos para acceder a esta sección.')
         return redirect('dashboard')
 
-    equipos_base = Equipo.objects.all()
+    equipos_base = Equipo.objects.all().prefetch_related(
+        Prefetch(
+            'prestamos',
+            queryset=PrestamoEquipo.objects.filter(activo=True).select_related('funcionario'),
+            to_attr='prestamo_activo_list'
+        )
+    )
     
     # Resumen para el dashboard
     stats = {
@@ -59,8 +66,8 @@ def lista_equipos(request):
                 valor_limpio = valor.replace('{{', '').replace('}}', '').replace('{%', '').replace('%}', '').strip()
                 setattr(equipo, campo, valor_limpio)
         
-        # Obtener préstamo activo
-        equipo.prestamo_activo = equipo.prestamos.filter(activo=True).select_related('funcionario').first()
+        # Obtener préstamo activo desde la pre-carga
+        equipo.prestamo_activo = equipo.prestamo_activo_list[0] if equipo.prestamo_activo_list else None
 
     # Si hay un funcionario seleccionado, solo mostramos sus equipos en la sección de asignados
     asignados_por_funcionario = []
@@ -441,7 +448,13 @@ def export_inventario_excel(request):
         return redirect('dashboard')
     
     # Obtener todos los equipos con sus prestamos activos
-    equipos = Equipo.objects.all().order_by('tipo', 'marca', 'modelo')
+    equipos = Equipo.objects.all().prefetch_related(
+        Prefetch(
+            'prestamos',
+            queryset=PrestamoEquipo.objects.filter(activo=True).select_related('funcionario'),
+            to_attr='prestamo_activo_list'
+        )
+    ).order_by('tipo', 'marca', 'modelo')
     
     # Crear libro de Excel
     wb = openpyxl.Workbook()
@@ -474,8 +487,8 @@ def export_inventario_excel(request):
     
     # Agregar datos
     for row, equipo in enumerate(equipos, 2):
-        # Obtener préstamo activo si existe
-        prestamo_activo = equipo.prestamos.filter(activo=True).select_related('funcionario').first()
+        # Obtener préstamo activo desde la pre-carga si existe
+        prestamo_activo = equipo.prestamo_activo_list[0] if equipo.prestamo_activo_list else None
         
         ws.cell(row=row, column=1, value=equipo.get_tipo_display()).border = thin_border
         ws.cell(row=row, column=2, value=equipo.marca).border = thin_border
@@ -519,12 +532,18 @@ def export_inventario_pdf(request):
         return redirect('dashboard')
     
     # Obtener todos los equipos
-    equipos = Equipo.objects.all().order_by('tipo', 'marca', 'modelo')
+    equipos = Equipo.objects.all().prefetch_related(
+        Prefetch(
+            'prestamos',
+            queryset=PrestamoEquipo.objects.filter(activo=True).select_related('funcionario'),
+            to_attr='prestamo_activo_list'
+        )
+    ).order_by('tipo', 'marca', 'modelo')
     
     # Preparar datos para el template
     equipos_data = []
     for equipo in equipos:
-        prestamo_activo = equipo.prestamos.filter(activo=True).select_related('funcionario').first()
+        prestamo_activo = equipo.prestamo_activo_list[0] if equipo.prestamo_activo_list else None
         equipos_data.append({
             'equipo': equipo,
             'prestamo': prestamo_activo

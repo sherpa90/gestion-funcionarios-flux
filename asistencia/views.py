@@ -297,13 +297,19 @@ class GestionHorariosView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
             role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
         ).order_by('last_name', 'first_name')
 
+        # Agrupar todos los horarios activos en un diccionario (O(1) lookup)
+        horarios_dict = {
+            h.funcionario_id: h 
+            for h in HorarioFuncionario.objects.filter(activo=True)
+        }
+
         # Preparar datos con horarios
         funcionarios_data = []
         con_horario = 0
         sin_horario = 0
 
         for func in funcionarios:
-            horario = HorarioFuncionario.objects.filter(funcionario=func, activo=True).first()
+            horario = horarios_dict.get(func.id)
             tiene_horario = horario is not None
             funcionarios_data.append({
                 'funcionario': func,
@@ -645,16 +651,33 @@ class GestionAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             'porcentaje_puntualidad': round((registros_puntuales / total_registros * 100) if total_registros > 0 else 0, 1)
         }
 
-        # Para cada usuario, agregar estadísticas
+        # Obtener registros de una sola consulta (bulk mapping) en lugar de N queries
+        usuario_ids = [u.id for u in context['usuarios']]
+        registros_totales = RegistroAsistencia.objects.filter(funcionario_id__in=usuario_ids)
+        
+        # Mapear estadísticas por usuario
+        stats_por_usuario = {}
+        for r in registros_totales:
+            uid = r.funcionario_id
+            if uid not in stats_por_usuario:
+                stats_por_usuario[uid] = {'total': 0, 'puntuales': 0, 'ultimo_registro': None}
+            
+            stats_por_usuario[uid]['total'] += 1
+            if r.estado == 'PUNTUAL':
+                stats_por_usuario[uid]['puntuales'] += 1
+            
+            if not stats_por_usuario[uid]['ultimo_registro'] or r.fecha > stats_por_usuario[uid]['ultimo_registro'].fecha:
+                stats_por_usuario[uid]['ultimo_registro'] = r
+        
+
+        # Para cada usuario, agregar estadísticas pre-calculadas
         usuarios_con_stats = []
         for usuario in context['usuarios']:
-            # Estadísticas del usuario
-            registros_usuario = RegistroAsistencia.objects.filter(funcionario=usuario)
-            total_registros_usuario = registros_usuario.count()
-            registros_puntuales_usuario = registros_usuario.filter(estado='PUNTUAL').count()
-
-            # Último registro
-            ultimo_registro = registros_usuario.order_by('-fecha').first()
+            user_stats = stats_por_usuario.get(usuario.id, {'total': 0, 'puntuales': 0, 'ultimo_registro': None})
+            
+            total_registros_usuario = user_stats['total']
+            registros_puntuales_usuario = user_stats['puntuales']
+            ultimo_registro = user_stats['ultimo_registro']
 
             usuarios_con_stats.append({
                 'usuario': usuario,
