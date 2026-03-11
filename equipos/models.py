@@ -46,14 +46,12 @@ class Equipo(models.Model):
         max_length=100,
         null=True,
         blank=True,
-        unique=True,
         verbose_name='Número de Serie'
     )
     numero_inventario = models.CharField(
         max_length=100,
         null=True,
         blank=True,
-        unique=True,
         verbose_name='Número de Inventario'
     )
     observaciones = models.TextField(
