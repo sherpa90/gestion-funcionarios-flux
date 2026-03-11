@@ -264,7 +264,7 @@ class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             is_blocked=False
         ).exclude(
             role='ADMIN'
-        ).order_by('last_name', 'first_name')
+        ).order_by('first_name', 'last_name')
         
         return context
     
