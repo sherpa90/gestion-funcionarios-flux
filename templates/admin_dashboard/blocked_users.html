@@ -101,6 +101,77 @@
         {% endif %}
     </div>
 
+    <!-- Panel de Usuarios Bloqueados por Axes (Intentos Fallidos) -->
+    {% if axes_blocked_users %}
+    <div class="card p-6 mb-6 border-l-4 border-orange-500">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+            <i class="fas fa-shield-alt text-orange-600 mr-2"></i>
+            Usuarios Bloqueados por Intentos Fallidos (Axes)
+            <span class="ml-2 bg-orange-100 text-orange-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                {{ axes_blocked_users|length }}
+            </span>
+        </h3>
+        <p class="text-sm text-gray-600 mb-4">
+            Estos usuarios fueron bloqueados automáticamente por el sistema tras 8 intentos fallidos de inicio de
+            sesión. El bloqueo dura 1 hora, pero puede ser desbloqueado manualmente por el administrador.
+        </p>
+
+        <div class="table-container overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>RUT</th>
+                        <th>Rol</th>
+                        <th class="hidden md:table-cell">Intentos</th>
+                        <th class="hidden md:table-cell">IP</th>
+                        <th class="hidden lg:table-cell">Fecha de Bloqueo</th>
+                        <th class="text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for item in axes_blocked_users %}
+                    <tr>
+                        <td class="font-medium">{{ item.user.get_full_name }}</td>
+                        <td>
+                            <span class="text-slate-600">{{ item.user.run }}</span>
+                        </td>
+                        <td>
+                            <span
+                                class="badge {% if item.user.role == 'ADMIN' %}bg-purple-100 text-purple-800{% elif item.user.role == 'DIRECTOR' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ item.user.get_role_display }}
+                            </span>
+                        </td>
+                        <td class="hidden md:table-cell">
+                            <span class="text-orange-600 font-medium">{{ item.attempts }}</span>
+                        </td>
+                        <td class="hidden md:table-cell text-slate-600">
+                            {{ item.ip_address|default:'-' }}
+                        </td>
+                        <td class="hidden lg:table-cell text-slate-600">
+                            {{ item.blocked_at|date:"d/m/Y H:i" }}
+                        </td>
+                        <td class="text-center">
+                            <form method="post" class="inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="unblock_axes">
+                                <input type="hidden" name="user_id" value="{{ item.user.id }}">
+                                <button type="submit"
+                                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors"
+                                    onclick="return confirm('¿Está seguro que desea desbloquear a {{ item.user.get_full_name }} de Axes? Esto permitirá que intente iniciar sesión nuevamente.')">
+                                    <i class="fas fa-unlock mr-2"></i>
+                                    Desbloquear
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Panel de Bloquear Usuario -->
     <div class="card p-6">
         <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
@@ -156,10 +227,13 @@
             Información
         </h4>
         <ul class="mt-2 text-sm text-blue-700 space-y-1">
-            <li>• Los usuarios bloqueados no podrán iniciar sesión en el sistema</li>
-            <li>• Solo los roles ADMIN y DIRECTOR pueden gestionar usuarios bloqueados</li>
-            <li>• Se registra la fecha y el usuario que realizó el bloqueo/desbloqueo</li>
-            <li>• Los usuarios bloqueados aparecerán marcados con un ícono de candado</li>
+            <li>• Los usuarios bloqueados manualmente no podrán iniciar sesión en el sistema</li>
+            <li>• Los usuarios bloqueados por Axes fueron bloqueados automáticamente tras 8 intentos fallidos de
+                contraseña</li>
+            <li>• Solo el rol ADMIN puede gestionar usuarios bloqueados</li>
+            <li>• Se registra la fecha y el usuario que realizó el bloqueo/desbloqueo manual</li>
+            <li>• Los bloqueos de Axes se liberan automáticamente después de 1 hora, o el admin puede desbloquearlos
+                manualmente</li>
         </ul>
     </div>
 </div>

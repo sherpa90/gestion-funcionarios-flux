@@ -221,27 +221,50 @@ class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Obtener todos los usuarios bloqueados
-        context['blocked_users'] = CustomUser.objects.filter(
+        # Obtener todos los usuarios bloqueados manualmente
+        manually_blocked = CustomUser.objects.filter(
             is_blocked=True
         ).select_related('blocked_by').order_by('-blocked_at')
         
+        # Obtener usuarios bloqueados por Axes (intentos fallidos)
+        axes_blocked_users = []
+        try:
+            from axes.models import AccessAttempt
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            
+            # Obtener intentos de acceso bloqueados
+            blocked_attempts = AccessAttempt.objects.filter(
+                blocked=True
+            ).order_by('-attempt_time')[:50]
+            
+            for attempt in blocked_attempts:
+                username = attempt.username
+                if username:
+                    try:
+                        user = User.objects.get(email__iexact=username)
+                        axes_blocked_users.append({
+                            'user': user,
+                            'is_axes_blocked': True,
+                            'blocked_at': attempt.attempt_time,
+                            'ip_address': attempt.ip_address,
+                            'attempts': attempt.failures_since_start
+                        })
+                    except User.DoesNotExist:
+                        pass
+        except Exception as e:
+            # Si axes no está configurado correctamente, ignoramos
+            pass
+        
+        context['blocked_users'] = manually_blocked
+        context['axes_blocked_users'] = axes_blocked_users
+        
         # Obtener usuarios no bloqueados para poder bloquear (todos los roles excepto ADMIN)
         context['active_users'] = CustomUser.objects.filter(
-            is_blocked=True
-        ).exclude(
-            role='ADMIN'
-        ).order_by('last_name', 'first_name')
-        
-        # Primero obtener usuarios no bloqueados
-        active_not_blocked = CustomUser.objects.filter(
             is_blocked=False
         ).exclude(
             role='ADMIN'
         ).order_by('last_name', 'first_name')
-        
-        # Combinar con los usuarios bloqueados
-        context['active_users'] = active_not_blocked
         
         return context
     
@@ -283,6 +306,39 @@ class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 descripcion=f'Usuario {user.get_full_name()} (ID: {user.id}) fue desbloqueado',
                 ip_address=get_client_ip(request)
             )
+        
+        elif action == 'unblock_axes':
+            # Desbloquear usuario de Axes
+            try:
+                from axes.helpers import clear_lockouts
+                from axes.models import AccessAttempt
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                
+                user = get_object_or_404(CustomUser, pk=user_id)
+                
+                # Buscar y eliminar los intentos de acceso bloqueados para este usuario
+                AccessAttempt.objects.filter(
+                    username__iexact=user.email
+                ).delete()
+                
+                # También intentar desbloquear por IP si hay alguna
+                try:
+                    clear_lockouts(request)
+                except:
+                    pass
+                
+                messages.success(request, f'Usuario {user.get_full_name()} ha sido desbloqueado de Axes.')
+                
+                registrar_log(
+                    usuario=request.user,
+                    tipo='USER',
+                    accion='Desbloqueo Axes',
+                    descripcion=f'Usuario {user.get_full_name()} (ID: {user.id}) fue desbloqueado de Axes',
+                    ip_address=get_client_ip(request)
+                )
+            except Exception as e:
+                messages.error(request, f'Error al desbloquear de Axes: {str(e)}')
         
         return redirect('admin_dashboard:blocked_users')
 

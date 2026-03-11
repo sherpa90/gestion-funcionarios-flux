@@ -238,9 +238,9 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 PASSWORD_RESET_TIMEOUT = 86400
 
 # Axes settings for brute force protection
-AXES_FAILURE_LIMIT = 15
+AXES_FAILURE_LIMIT = 8  # Lock after 8 failed attempts
 from datetime import timedelta
-AXES_COOLOFF_TIME = timedelta(minutes=15)  # 15 minutes lock instead of 1 hour
+AXES_COOLOFF_TIME = timedelta(hours=1)  # 1 hour lockout
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_TEMPLATE = 'account/locked.html'  # Optional custom template
 
