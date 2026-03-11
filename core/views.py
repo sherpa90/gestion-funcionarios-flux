@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.db import connection
 from django.core.files.storage import default_storage
 from django.conf import settings
+from django.contrib import messages
 import psutil
 import os
 from datetime import datetime
@@ -17,6 +18,20 @@ class CustomLoginView(LoginView):
     
     def get_success_url(self):
         return reverse_lazy('dashboard')
+    
+    def form_invalid(self, form):
+        # Verificar si el usuario está bloqueado
+        username = form.cleaned_data.get('username')
+        if username:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                user = User.objects.get(email=username)
+                if user.is_blocked:
+                    messages.error(self.request, 'Su cuenta ha sido bloqueada. Por favor, contacte al administrador.')
+            except User.DoesNotExist:
+                pass
+        return super().form_invalid(form)
 
 class DashboardView(LoginRequiredMixin, View):
     def get(self, request):

@@ -183,10 +183,8 @@
                             </td>
                             <td class="px-4 py-3 text-gray-500 text-xs">
                                 {% if solicitud.observacion %}{{ solicitud.observacion|truncatechars:30 }}{% endif %}
-                                {% if solicitud.motivo_rechazo %}<br><span class="text-red-600">{{
-                                    solicitud.motivo_rechazo|truncatechars:30 }}</span>{% endif %}
-                                {% if solicitud.motivo_cancelacion %}<br><span class="text-gray-600">{{
-                                    solicitud.motivo_cancelacion|truncatechars:30 }}</span>{% endif %}
+                                {% if solicitud.motivo_rechazo %}<br><span class="text-red-600">{{ solicitud.motivo_rechazo|truncatechars:30 }}</span>{% endif %}
+                                {% if solicitud.motivo_cancelacion %}<br><span class="text-gray-600">{{ solicitud.motivo_cancelacion|truncatechars:30 }}</span>{% endif %}
                             </td>
                             <td class="px-4 py-3">
                                 {% if solicitud.estado == 'APROBADO' and user.role != 'FUNCIONARIO' %}

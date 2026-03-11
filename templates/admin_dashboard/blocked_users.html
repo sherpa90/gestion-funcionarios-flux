@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Usuarios Bloqueados{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Gestión de Usuarios Bloqueados</h2>
+        <p class="mt-2 text-gray-600">Administrar el acceso de usuarios al sistema</p>
+    </div>
+
+    <!-- Mensajes -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div
+            class="p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-100 text-red-800 border border-red-200{% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Panel de Usuarios Bloqueados -->
+    <div class="card p-6 mb-6">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+            <i class="fas fa-user-lock text-red-600 mr-2"></i>
+            Usuarios Bloqueados
+            {% if blocked_users %}
+            <span class="ml-2 bg-red-100 text-red-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                {{ blocked_users|length }}
+            </span>
+            {% endif %}
+        </h3>
+
+        {% if blocked_users %}
+        <div class="table-container overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>RUT</th>
+                        <th>Rol</th>
+                        <th class="hidden md:table-cell">Bloqueado por</th>
+                        <th class="hidden md:table-cell">Fecha de Bloqueo</th>
+                        <th class="text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for user in blocked_users %}
+                    <tr>
+                        <td class="font-medium">{{ user.get_full_name }}</td>
+                        <td>
+                            <span class="text-slate-600">{{ user.run }}</span>
+                        </td>
+                        <td>
+                            <span
+                                class="badge {% if user.role == 'ADMIN' %}bg-purple-100 text-purple-800{% elif user.role == 'DIRECTOR' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ user.get_role_display }}
+                            </span>
+                        </td>
+                        <td class="hidden md:table-cell">
+                            {% if user.blocked_by %}
+                            <span class="text-slate-600">{{ user.blocked_by.get_full_name }}</span>
+                            {% else %}
+                            <span class="text-gray-400">Sistema</span>
+                            {% endif %}
+                        </td>
+                        <td class="hidden md:table-cell text-slate-600">
+                            {% if user.blocked_at %}
+                            {{ user.blocked_at|date:"d/m/Y H:i" }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <form method="post" class="inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="unblock">
+                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                <button type="submit"
+                                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                                    onclick="return confirm('¿Está seguro que desea desbloquear a {{ user.get_full_name }}?')">
+                                    <i class="fas fa-unlock mr-2"></i>
+                                    Desbloquear
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-500">
+            <i class="fas fa-check-circle text-5xl text-green-500 mb-4"></i>
+            <p class="text-lg">No hay usuarios bloqueados</p>
+            <p class="text-sm mt-1">Todos los usuarios pueden acceder al sistema normalmente</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Panel de Bloquear Usuario -->
+    <div class="card p-6">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+            <i class="fas fa-user-plus text-blue-600 mr-2"></i>
+            Bloquear Usuario
+        </h3>
+
+        <p class="text-gray-600 mb-4">Seleccione un usuario para bloquear su acceso al sistema</p>
+
+        {% if active_users %}
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="block">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="user_id" class="block text-sm font-medium text-gray-700 mb-1">
+                        Seleccionar Usuario
+                    </label>
+                    <select name="user_id" id="user_id" required
+                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border">
+                        <option value="">-- Seleccionar --</option>
+                        {% for user in active_users %}
+                        <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.run }}) - {{
+                            user.get_role_display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="flex items-end">
+                    <button type="submit"
+                        class="w-full md:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                        onclick="return confirm('¿Está seguro que desea bloquear este usuario? No podrá acceder al sistema.')">
+                        <i class="fas fa-lock mr-2"></i>
+                        Bloquear Usuario
+                    </button>
+                </div>
+            </div>
+        </form>
+        {% else %}
+        <div class="text-center py-8 text-gray-500">
+            <i class="fas fa-users text-3xl text-gray-400 mb-2"></i>
+            <p>No hay usuarios disponibles para bloquear</p>
+            <p class="text-sm mt-1">Todos los funcionarios ya están bloqueados o no existen funcionarios activos</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Información adicional -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 class="text-sm font-semibold text-blue-800 flex items-center">
+            <i class="fas fa-info-circle mr-2"></i>
+            Información
+        </h4>
+        <ul class="mt-2 text-sm text-blue-700 space-y-1">
+            <li>• Los usuarios bloqueados no podrán iniciar sesión en el sistema</li>
+            <li>• Solo los roles ADMIN y DIRECTOR pueden gestionar usuarios bloqueados</li>
+            <li>• Se registra la fecha y el usuario que realizó el bloqueo/desbloqueo</li>
+            <li>• Los usuarios bloqueados aparecerán marcados con un ícono de candado</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

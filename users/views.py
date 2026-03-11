@@ -663,3 +663,135 @@ class CrearDirectorioTelefonicoView(LoginRequiredMixin, View):
             messages.error(request, f'Error al crear el teléfono: {str(e)}')
         
         return redirect(reverse('email_directory') + '?tab=telefonos')
+
+
+class EditarGrupoCorreoView(LoginRequiredMixin, View):
+    """Vista para que ADMIN edite grupos de correo"""
+    
+    def post(self, request, grupo_id):
+        if request.user.role != 'ADMIN':
+            messages.error(request, 'No tienes permisos para editar grupos de correo.')
+            return redirect(reverse('email_directory') + '?tab=grupos')
+        
+        from users.models import GrupoCorreo
+        
+        try:
+            grupo = GrupoCorreo.objects.get(pk=grupo_id)
+        except GrupoCorreo.DoesNotExist:
+            messages.error(request, 'Grupo no encontrado.')
+            return redirect(reverse('email_directory') + '?tab=grupos')
+        
+        nombre = request.POST.get('nombre', '').strip()
+        correo = request.POST.get('correo', '').strip()
+        descripcion = request.POST.get('descripcion', '').strip()
+        
+        if not nombre or not correo:
+            messages.error(request, 'El nombre y correo son requeridos.')
+            return redirect(reverse('email_directory') + '?tab=grupos')
+        
+        # Check if email exists in another group
+        if GrupoCorreo.objects.exclude(pk=grupo_id).filter(correo__iexact=correo).exists():
+            messages.error(request, 'Ya existe otro grupo con ese correo.')
+            return redirect(reverse('email_directory') + '?tab=grupos')
+        
+        if GrupoCorreo.objects.exclude(pk=grupo_id).filter(nombre__iexact=nombre).exists():
+            messages.error(request, 'Ya existe otro grupo con ese nombre.')
+            return redirect(reverse('email_directory') + '?tab=grupos')
+        
+        try:
+            grupo.nombre = nombre
+            grupo.correo = correo
+            grupo.descripcion = descripcion
+            grupo.save()
+            messages.success(request, f'Grupo "{grupo.nombre}" actualizado exitosamente.')
+        except Exception as e:
+            messages.error(request, f'Error al actualizar el grupo: {str(e)}')
+        
+        return redirect(reverse('email_directory') + '?tab=grupos')
+
+
+class EliminarGrupoCorreoView(LoginRequiredMixin, View):
+    """Vista para que ADMIN elimine (desactive) grupos de correo"""
+    
+    def post(self, request, grupo_id):
+        if request.user.role != 'ADMIN':
+            messages.error(request, 'No tienes permisos para eliminar grupos de correo.')
+            return redirect(reverse('email_directory') + '?tab=grupos')
+        
+        from users.models import GrupoCorreo
+        
+        try:
+            grupo = GrupoCorreo.objects.get(pk=grupo_id)
+            grupo.activo = False
+            grupo.save()
+            messages.success(request, f'Grupo "{grupo.nombre}" eliminado exitosamente.')
+        except GrupoCorreo.DoesNotExist:
+            messages.error(request, 'Grupo no encontrado.')
+        except Exception as e:
+            messages.error(request, f'Error al eliminar el grupo: {str(e)}')
+        
+        return redirect(reverse('email_directory') + '?tab=grupos')
+
+
+class EditarDirectorioTelefonicoView(LoginRequiredMixin, View):
+    """Vista para que ADMIN edite entradas del directorio telefónico"""
+    
+    def post(self, request, telefono_id):
+        if request.user.role != 'ADMIN':
+            messages.error(request, 'No tienes permisos para editar números telefónicos.')
+            return redirect(reverse('email_directory') + '?tab=telefonos')
+        
+        from users.models import DirectorioTelefonico
+        
+        try:
+            telefono = DirectorioTelefonico.objects.get(pk=telefono_id)
+        except DirectorioTelefonico.DoesNotExist:
+            messages.error(request, 'Teléfono no encontrado.')
+            return redirect(reverse('email_directory') + '?tab=telefonos')
+        
+        lugar = request.POST.get('lugar', '').strip()
+        anexo = request.POST.get('anexo', '').strip()
+        descripcion = request.POST.get('descripcion', '').strip()
+        
+        if not lugar or not anexo:
+            messages.error(request, 'El lugar y anexo son requeridos.')
+            return redirect(reverse('email_directory') + '?tab=telefonos')
+        
+        # Check if anexo exists in another entry
+        if DirectorioTelefonico.objects.exclude(pk=telefono_id).filter(anexo__iexact=anexo).exists():
+            messages.error(request, 'Ya existe otro teléfono con ese anexo.')
+            return redirect(reverse('email_directory') + '?tab=telefonos')
+        
+        try:
+            telefono.lugar = lugar
+            telefono.anexo = anexo
+            telefono.descripcion = descripcion
+            telefono.save()
+            messages.success(request, f'Teléfono "{telefono.lugar}" actualizado exitosamente.')
+        except Exception as e:
+            messages.error(request, f'Error al actualizar el teléfono: {str(e)}')
+        
+        return redirect(reverse('email_directory') + '?tab=telefonos')
+
+
+class EliminarDirectorioTelefonicoView(LoginRequiredMixin, View):
+    """Vista para que ADMIN elimine (desactive) entradas del directorio telefónico"""
+    
+    def post(self, request, telefono_id):
+        if request.user.role != 'ADMIN':
+            messages.error(request, 'No tienes permisos para eliminar números telefónicos.')
+            return redirect(reverse('email_directory') + '?tab=telefonos')
+        
+        from users.models import DirectorioTelefonico
+        
+        try:
+            telefono = DirectorioTelefonico.objects.get(pk=telefono_id)
+            telefono.activo = False
+            telefono.save()
+            messages.success(request, f'Teléfono "{telefono.lugar}" eliminado exitosamente.')
+        except DirectorioTelefonico.DoesNotExist:
+            messages.error(request, 'Teléfono no encontrado.')
+        except Exception as e:
+            messages.error(request, f'Error al eliminar el teléfono: {str(e)}')
+        
+        return redirect(reverse('email_directory') + '?tab=telefonos')

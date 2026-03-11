@@ -18,6 +18,9 @@ class EmailBackend(ModelBackend):
         except User.DoesNotExist:
             return None
         else:
+            # Verificar si el usuario está bloqueado
+            if user.is_blocked:
+                return None
             if user.check_password(password) and self.user_can_authenticate(user):
                 return user
         return None

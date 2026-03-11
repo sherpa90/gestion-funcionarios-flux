@@ -1,8 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import TemplateView
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
+from django.contrib import messages
 from datetime import timedelta
 
 from users.models import CustomUser
@@ -207,6 +208,83 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             data.append(count)
         
         return labels, data
+
+
+class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """Vista para gestionar usuarios bloqueados"""
+    template_name = 'admin_dashboard/blocked_users.html'
+    
+    def test_func(self):
+        # Solo ADMIN puede gestionar usuarios bloqueados
+        return self.request.user.role == 'ADMIN'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Obtener todos los usuarios bloqueados
+        context['blocked_users'] = CustomUser.objects.filter(
+            is_blocked=True
+        ).select_related('blocked_by').order_by('-blocked_at')
+        
+        # Obtener usuarios no bloqueados para poder bloquear (todos los roles excepto ADMIN)
+        context['active_users'] = CustomUser.objects.filter(
+            is_blocked=True
+        ).exclude(
+            role='ADMIN'
+        ).order_by('last_name', 'first_name')
+        
+        # Primero obtener usuarios no bloqueados
+        active_not_blocked = CustomUser.objects.filter(
+            is_blocked=False
+        ).exclude(
+            role='ADMIN'
+        ).order_by('last_name', 'first_name')
+        
+        # Combinar con los usuarios bloqueados
+        context['active_users'] = active_not_blocked
+        
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        """Manejar acciones de bloquear/desbloquear"""
+        action = request.POST.get('action')
+        user_id = request.POST.get('user_id')
+        
+        if action == 'block':
+            user = get_object_or_404(CustomUser, pk=user_id)
+            user.is_blocked = True
+            user.blocked_at = timezone.now()
+            user.blocked_by = request.user
+            user.save()
+            
+            messages.success(request, f'Usuario {user.get_full_name()} ha sido bloqueado.')
+            
+            registrar_log(
+                usuario=request.user,
+                tipo='USER',
+                accion='Bloqueo de usuario',
+                descripcion=f'Usuario {user.get_full_name()} (ID: {user.id}) fue bloqueado',
+                ip_address=get_client_ip(request)
+            )
+            
+        elif action == 'unblock':
+            user = get_object_or_404(CustomUser, pk=user_id, is_blocked=True)
+            user.is_blocked = False
+            user.blocked_at = None
+            user.blocked_by = None
+            user.save()
+            
+            messages.success(request, f'Usuario {user.get_full_name()} ha sido desbloqueado.')
+            
+            registrar_log(
+                usuario=request.user,
+                tipo='USER',
+                accion='Desbloqueo de usuario',
+                descripcion=f'Usuario {user.get_full_name()} (ID: {user.id}) fue desbloqueado',
+                ip_address=get_client_ip(request)
+            )
+        
+        return redirect('admin_dashboard:blocked_users')
 
 
 class SystemLogsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):

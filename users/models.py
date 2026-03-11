@@ -70,6 +70,16 @@ class CustomUser(AbstractUser):
     )
     dias_disponibles = models.FloatField(default=6.0)
     telefono = models.CharField(max_length=20, blank=True, help_text="Teléfono de contacto")
+    is_blocked = models.BooleanField(default=False, help_text="Si está marcado, el usuario no podrá iniciar sesión")
+    blocked_at = models.DateTimeField(null=True, blank=True, help_text="Fecha en que fue bloqueado el usuario")
+    blocked_by = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='blocked_users',
+        help_text="Usuario que realizó el bloqueo"
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['run', 'first_name', 'last_name']
