@@ -81,11 +81,16 @@
                             <h3 class="text-lg font-black text-gray-900">Historial del Equipo</h3>
                             <p class="text-xs text-gray-400 font-medium mt-1">Línea de tiempo de eventos y mantenimientos</p>
                         </div>
-                        {% if es_admin %}
-                        <a href="{% url 'agregar_hito' equipo.id %}" class="inline-flex items-center px-4 py-2 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-black transition-all shadow-md">
-                            <i class="fas fa-plus mr-2"></i> Añadir Hito
-                        </a>
-                        {% endif %}
+                        <div class="flex flex-wrap gap-2">
+                            {% if es_admin %}
+                            <a href="{% url 'eliminar_equipo' equipo.id %}" class="inline-flex items-center px-4 py-2 bg-red-50 text-red-600 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-red-100 transition-all border border-red-100 px-4 py-2">
+                                <i class="fas fa-trash-alt mr-2"></i> Eliminar Equipo
+                            </a>
+                            <a href="{% url 'agregar_hito' equipo.id %}" class="inline-flex items-center px-4 py-2 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-black transition-all shadow-md">
+                                <i class="fas fa-plus mr-2"></i> Añadir Hito
+                            </a>
+                            {% endif %}
+                        </div>
                     </div>
 
                     {% if linea_tiempo %}

@@ -1,10 +1,18 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from django.contrib import messages
 from datetime import timedelta
+import os
+import zipfile
+import tempfile
+import io
+import shutil
+from django.conf import settings
+from django.core.management import call_command
+from django.http import FileResponse
 
 from users.models import CustomUser
 from permisos.models import SolicitudPermiso
@@ -358,3 +366,187 @@ class SystemLogsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         context['logs'] = SystemLog.objects.select_related('usuario').order_by('-timestamp')[:50]
         
         return context
+
+
+class SystemBackupView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """Interfaz gráfica para gestionar el respaldo nacional del sistema"""
+    template_name = 'admin_dashboard/system_backup.html'
+    
+    def test_func(self):
+        return self.request.user.role == 'ADMIN'
+
+
+class SystemBackupExportView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Genera y descarga en vivo el archivo ZIP (Restauración Ante Desastres)"""
+    
+    def test_func(self):
+        return self.request.user.role == 'ADMIN'
+        
+    def get(self, request):
+        registrar_log(
+            usuario=request.user,
+            tipo='SYSTEM',
+            accion='Exportar Respaldo Nacional',
+            descripcion='Admin descargó una copia completa del sistema',
+            ip_address=get_client_ip(request)
+        )
+        
+        # 1. Volcar Base de Datos y excluir cosas problemáticas
+        db_out = io.StringIO()
+        call_command(
+            'dumpdata', 
+            format='json', 
+            natural_foreign=True, 
+            natural_primary=True,
+            exclude=['contenttypes', 'auth.permission', 'admin.logentry', 'sessions.session', 'asistencia'],
+            stdout=db_out
+        )
+        
+        # 2. Generar archivo comprimido ZIP
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            # Adjuntar Base Cruda
+            zip_file.writestr('database.json', db_out.getvalue())
+            
+            # Recopilar todo el repositorio de la carpeta "media/"
+            media_root = settings.MEDIA_ROOT
+            if os.path.exists(media_root):
+                for root, dirs, files in os.walk(media_root):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.join('media', os.path.relpath(file_path, media_root))
+                        zip_file.write(file_path, arcname)
+                        
+        zip_buffer.seek(0)
+        
+        from datetime import datetime
+        fecha_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        response = FileResponse(zip_buffer, as_attachment=True, filename=f'sgpal_disaster_recovery_{fecha_str}.zip')
+        return response
+class SystemBackupRestoreView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Instala a la fuerza un archivo ZIP y rescata el sistema SIN borrar datos actuales primero"""
+    
+    def test_func(self):
+        return self.request.user.role == 'ADMIN'
+        
+    def post(self, request):
+        if 'backup_zip' not in request.FILES:
+            messages.error(request, 'No se ha subido ningún archivo ZIP.')
+            return redirect('admin_dashboard:system_backup')
+            
+        zip_file = request.FILES['backup_zip']
+        # 🛡️ BLINDAJE QUIRÚRGICO (v5): Capturar datos del admin actual para protección total
+        current_admin = request.user
+        admin_id = current_admin.id
+        admin_run = getattr(current_admin, 'run', '')
+        admin_email = current_admin.email
+        admin_username = current_admin.username
+        
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                # 1. Extraer ZIP
+                zip_path = os.path.join(temp_dir, 'backup.zip')
+                with open(zip_path, 'wb+') as f:
+                    for chunk in zip_file.chunks():
+                        f.write(chunk)
+                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    zip_ref.extractall(temp_dir)
+                    
+                json_path = os.path.join(temp_dir, 'database.json')
+                if not os.path.exists(json_path):
+                    messages.error(request, 'Archivo inválido: falta database.json')
+                    return redirect('admin_dashboard:system_backup')
+
+                from django.db import connection, transaction
+                from django.contrib.auth import get_user_model
+                import json as json_lib
+                
+                # 🛡️ VALIDACIÓN DE SEGURIDAD (No proceder si no detectamos al admin)
+                if not admin_id or not admin_run:
+                    raise Exception("No se pudo identificar de forma única al administrador logueado.")
+
+                # 2. SANEAMIENTO QUIRÚRGICO DEL JSON: Eliminar al admin y asistencia del backup
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    backup_data = json_lib.load(f)
+                
+                clean_data = []
+                for obj in backup_data:
+                    model_label = str(obj.get('model', '')).lower()
+                    
+                    # Ignorar registros de asistencia por completo
+                    if model_label.startswith('asistencia.'):
+                        continue
+                    
+                    # Ignorar al administrador actual en el backup
+                    if model_label == 'users.customuser':
+                        fields = obj.get('fields', {})
+                        bk_email = str(fields.get('email', '')).strip().lower()
+                        bk_run = str(fields.get('run', '')).strip().lower()
+                        bk_username = str(obj.get('username', '')).strip().lower()
+                        
+                        if obj.get('pk') == admin_id or \
+                           bk_email == admin_email.strip().lower() or \
+                           bk_run == admin_run.strip().lower() or \
+                           bk_username == admin_username.strip().lower():
+                            continue
+                            
+                    clean_data.append(obj)
+                
+                with open(json_path, 'w', encoding='utf-8') as f:
+                    json_lib.dump(clean_data, f)
+
+                # 3. RESTAURACIÓN CONTROLADA
+                with transaction.atomic():
+                    with connection.cursor() as cursor:
+                        # Truncar tablas aplicación EXCEPTO usuarios y sesiones
+                        # Esta vez INCLUIMOS asistencia para que queden vacías si el usuario no las quiere
+                        cursor.execute("""
+                            SELECT tablename FROM pg_tables 
+                            WHERE schemaname = 'public' 
+                            AND tablename NOT IN (
+                                'django_migrations', 'django_content_type', 'auth_permission', 
+                                'django_session', 'axes_accessattempt', 'axes_accesslog',
+                                'users_customuser', 'users_customuser_groups', 'users_customuser_user_permissions'
+                            )
+                        """)
+                        tables = [row[0] for row in cursor.fetchall()]
+                        if tables:
+                            tables_sql = ', '.join([f'"{t}"' for t in tables])
+                            cursor.execute(f'TRUNCATE TABLE {tables_sql} RESTART IDENTITY CASCADE;')
+                    
+                    # 4. LIMPIEZA QUIRÚRGICA DE USUARIOS: Borrar todos menos al admin actual
+                    User = get_user_model()
+                    User.objects.exclude(id=admin_id).delete()
+                    
+                    # 5. CARGA DE DATOS SANEADOS
+                    call_command('loaddata', json_path)
+                    
+                # 4. Restauración de archivos físicos (Media)
+                extracted_media = os.path.join(temp_dir, 'media')
+                if os.path.exists(extracted_media):
+                    media_root = settings.MEDIA_ROOT
+                    for root, dirs, files in os.walk(extracted_media):
+                        rel_path = os.path.relpath(root, extracted_media)
+                        dest_dir = os.path.join(media_root, rel_path) if rel_path != '.' else media_root
+                        os.makedirs(dest_dir, exist_ok=True)
+                        for file in files:
+                            src_file = os.path.join(root, file)
+                            dst_file = os.path.join(dest_dir, file)
+                            shutil.copy2(src_file, dst_file)
+                            
+            registrar_log(
+                usuario=request.user,
+                tipo='SYSTEM',
+                accion='Restauración Nacional Crítica',
+                descripcion='Admin restauró el sistema completo (Base de Datos + Media)',
+                ip_address=get_client_ip(request)
+            )
+            
+            messages.success(request, '✅ SISTEMA RECUPERADO EXITOSAMENTE. Se han restaurado todos los registros y archivos media.')
+            return redirect('admin_dashboard:dashboard')
+            
+        except Exception as e:
+            messages.error(request, f'💥 Fallo en el despliegue del Respaldo Nacional: {str(e)}')
+            return redirect('admin_dashboard:system_backup')
+

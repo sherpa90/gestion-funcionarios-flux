@@ -7,6 +7,8 @@ from datetime import time
 @receiver(post_save, sender=get_user_model())
 def create_default_horario(sender, instance, created, **kwargs):
     """Crea un horario por defecto (07:45 AM) cuando se crea un nuevo usuario"""
+    if kwargs.get('raw'):
+        return
     if created:
         try:
             HorarioFuncionario.objects.create(

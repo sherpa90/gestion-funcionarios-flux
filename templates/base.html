@@ -300,6 +300,12 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-coins fa-fw mr-3"></i><span class="ml-3">Liquidaciones</span>
                     </a>
+                    {% if user.role == 'ADMIN' %}
+                    <a href="{% url 'admin_dashboard:system_backup' %}"
+                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-red-900/40 text-red-300 transition-colors mt-2">
+                        <i class="fa-solid fa-server fa-fw mr-3"></i><span class="ml-3">Respaldo y Recuperación</span>
+                    </a>
+                    {% endif %}
                     {% if user.role != 'SECRETARIA' %}
                     <a href="{% url 'lista_equipos' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
