@@ -216,8 +216,9 @@ SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 
 # File upload limits (security)
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB max for any single file
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB max for file uploads
+# Aumentado a 1GB para soportar Grandes Respaldos Nacionales (Requerimiento de Desastre)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024  # 1GB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB (luego va a disco temporal)
 
 # Allowed hosts - strict in production
 # ALLOWED_HOSTS already defined above (line 50)
