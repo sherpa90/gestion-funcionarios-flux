@@ -39,24 +39,23 @@ class CargaLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, FormView):
         try:
             logger.info(f"Starting PDF processing for user {self.request.user.get_full_name()}, file: {archivo.name}, month: {mes}, year: {anio}")
 
+            import fitz
             try:
-                pdf_reader = pypdf.PdfReader(archivo)
-                logger.info(f"PDF loaded successfully. Pages: {len(pdf_reader.pages)}")
-            except pypdf.errors.PdfReadError as e:
+                pdf_bytes = archivo.read()
+                pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
+                logger.info(f"PDF loaded successfully. Pages: {len(pdf_document)}")
+            except Exception as e:
                 logger.error(f"PDF read error: {e}")
                 messages.error(self.request, "El archivo PDF está corrupto o no es un archivo PDF válido.")
-                return self.form_invalid(form)
-            except Exception as e:
-                logger.error(f"Unexpected error loading PDF: {e}")
-                messages.error(self.request, "Error al cargar el archivo PDF.")
                 return self.form_invalid(form)
 
             processed_count = 0
             errors = []
 
-            for page_num, page in enumerate(pdf_reader.pages):
+            for page_num in range(len(pdf_document)):
                 try:
-                    text = page.extract_text()
+                    page = pdf_document[page_num]
+                    text = page.get_text()
                     if not text.strip():
                         logger.warning(f"Page {page_num + 1}: Empty or no text extracted")
                         continue
@@ -103,9 +102,8 @@ class CargaLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, FormView):
                                     continue
 
                                 # Usar servicio para crear liquidación
-                                # Necesitamos el contenido completo del PDF para extraer la página
-                                archivo.seek(0)  # Reset file pointer
-                                pdf_content = archivo.read()
+                                # Ya tenemos pdf_bytes
+                                pdf_content = pdf_bytes
 
                                 liquidacion = PayrollService.create_payroll_from_pdf(
                                     pdf_content=pdf_content,
@@ -150,7 +148,9 @@ class CargaLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, FormView):
 
         except Exception as e:
             logger.exception(f"Critical error in PDF processing: {e}")
-            messages.error(self.request, "Error interno del servidor al procesar el archivo. Contacte al administrador.")
+            import traceback
+            tb = traceback.format_exc()
+            messages.error(self.request, f"Error interno del servidor al procesar el archivo: {e} | {tb}")
             return self.form_invalid(form)
 
         return super().form_valid(form)
@@ -467,6 +467,29 @@ class AdminEliminarLiquidacionView(LoginRequiredMixin, UserPassesTestMixin, View
 
         # Redirigir de vuelta a la vista del funcionario
         return redirect(request.META.get('HTTP_REFERER', 'admin_liquidaciones_overview'))
+
+class AdminEliminarTodasLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para que administradores eliminen TODAS las liquidaciones del sistema"""
+
+    def test_func(self):
+        return self.request.user.role == 'ADMIN'
+
+    def post(self, request):
+        confirmacion = request.POST.get('confirmacion', '')
+        if confirmacion != 'ELIMINAR TODO':
+            messages.error(request, 'Frase de confirmación de seguridad incorrecta. No se eliminaron las liquidaciones.')
+            return redirect('admin_liquidaciones_overview')
+
+        liquidaciones = Liquidacion.objects.all()
+        count = 0
+        for liq in liquidaciones:
+            if liq.archivo:
+                liq.archivo.delete(save=False)
+            liq.delete()
+            count += 1
+            
+        messages.success(request, f'Se eliminaron totalmente {count} liquidaciones del sistema.')
+        return redirect('admin_liquidaciones_overview')
 
 
 class AdminDescargarLiquidacionesFuncionarioView(LoginRequiredMixin, UserPassesTestMixin, View):

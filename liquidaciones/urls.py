@@ -8,7 +8,8 @@ from .views import (
     AdminLiquidacionesOverviewView,
     AdminFuncionarioLiquidacionesView,
     AdminEliminarLiquidacionView,
-    AdminDescargarLiquidacionesFuncionarioView
+    AdminDescargarLiquidacionesFuncionarioView,
+    AdminEliminarTodasLiquidacionesView
 )
 
 urlpatterns = [
@@ -21,5 +22,6 @@ urlpatterns = [
     path('admin/overview/', AdminLiquidacionesOverviewView.as_view(), name='admin_liquidaciones_overview'),
     path('admin/funcionario/<int:funcionario_id>/', AdminFuncionarioLiquidacionesView.as_view(), name='admin_funcionario_liquidaciones'),
     path('admin/eliminar-liquidacion/<int:liquidacion_id>/', AdminEliminarLiquidacionView.as_view(), name='admin_eliminar_liquidacion'),
+    path('admin/eliminar-todas/', AdminEliminarTodasLiquidacionesView.as_view(), name='admin_eliminar_todas_liquidaciones'),
     path('admin/descargar/<int:funcionario_id>/<int:anio>/', AdminDescargarLiquidacionesFuncionarioView.as_view(), name='admin_descargar_liquidaciones_funcionario'),
 ]

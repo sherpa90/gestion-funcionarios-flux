@@ -11,11 +11,23 @@
             <p class="text-gray-600 mt-2 text-sm sm:text-base">Administra y visualiza todas las liquidaciones de sueldo
                 del sistema</p>
         </div>
-        <a href="{% url 'carga_liquidaciones' %}"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 touch-manipulation">
-            <i class="fas fa-file-upload mr-2"></i>
-            Cargar Liquidaciones
-        </a>
+        <div class="flex gap-2">
+            {% if request.user.role == 'ADMIN' %}
+            <form method="post" action="{% url 'admin_eliminar_todas_liquidaciones' %}" onsubmit="const phrase = prompt('⚠️ ALERTA: Estás a punto de borrar TODAS las liquidaciones del sistema de forma irreversible. Escribe la frase ELIMINAR TODO para confirmar:'); if (phrase === 'ELIMINAR TODO') { document.getElementById('confirmPhraseInput').value = phrase; return true; } else { if(phrase !== null) alert('Frase incorrecta. Operación cancelada.'); return false; }">
+                {% csrf_token %}
+                <input type="hidden" name="confirmacion" id="confirmPhraseInput" value="">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 touch-manipulation">
+                    <i class="fas fa-trash-alt mr-2"></i>
+                    Eliminar Todas
+                </button>
+            </form>
+            {% endif %}
+            <a href="{% url 'carga_liquidaciones' %}"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 touch-manipulation">
+                <i class="fas fa-file-upload mr-2"></i>
+                Cargar Liquidaciones
+            </a>
+        </div>
     </div>
 
     <!-- Buscador -->
