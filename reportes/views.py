@@ -88,9 +88,9 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         
         # Aplicar ordenamiento
         if sort_by == 'name':
-            empleados_data.sort(key=lambda x: (x['funcionario'].last_name, x['funcionario'].first_name))
+            empleados_data.sort(key=lambda x: (x['funcionario'].first_name, x['funcionario'].last_name))
         elif sort_by == 'name_desc':
-            empleados_data.sort(key=lambda x: (x['funcionario'].last_name, x['funcionario'].first_name), reverse=True)
+            empleados_data.sort(key=lambda x: (x['funcionario'].first_name, x['funcionario'].last_name), reverse=True)
         elif sort_by == 'dias':
             empleados_data.sort(key=lambda x: x['dias_disponibles'], reverse=True)
         elif sort_by == 'dias_asc':
@@ -227,7 +227,7 @@ class PDFColectivoView(LoginRequiredMixin, UserPassesTestMixin, View):
         total_dias_disponibles = 0
         total_licencias = 0
         
-        for functorio in funcionarios.order_by('last_name', 'first_name'):
+        for functorio in funcionarios.order_by('first_name', 'last_name'):
             permisos = SolicitudPermiso.objects.filter(usuario=functorio, estado='APROBADO')
             if year:
                 permisos = permisos.filter(fecha_inicio__year=year)
@@ -317,7 +317,7 @@ class ExportarExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         ws.append(['Nombre', 'RUN', 'Rol', 'Días Disponibles', 'Días Usados', 'Días Licencia', 'Total Licencias'])
         
         # Preparar datos
-        for functorio in funcionarios.order_by('last_name', 'first_name'):
+        for functorio in funcionarios.order_by('first_name', 'last_name'):
             permisos = SolicitudPermiso.objects.filter(usuario=functorio, estado='APROBADO')
             if year:
                 permisos = permisos.filter(fecha_inicio__year=year)
