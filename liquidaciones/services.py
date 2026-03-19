@@ -68,15 +68,16 @@ class PayrollService:
         """
         try:
             import io
-            import pypdf
+            import fitz
 
-            # Crear PDF con una sola página
-            pdf_reader = pypdf.PdfReader(io.BytesIO(pdf_content))
-            pdf_writer = pypdf.PdfWriter()
-            pdf_writer.add_page(pdf_reader.pages[page_num])
+            # Crear PDF con una sola página original usando fitz
+            doc = fitz.open(stream=pdf_content, filetype="pdf")
+            new_doc = fitz.open()
+            new_doc.insert_pdf(doc, from_page=page_num, to_page=page_num)
 
-            output_buffer = io.BytesIO()
-            pdf_writer.write(output_buffer)
+            # Aplicar compresión máxima (nivel 4 de limpieza y compresión de flujo)
+            pdf_bytes = new_doc.write(garbage=4, deflate=True)
+            output_buffer = io.BytesIO(pdf_bytes)
 
             # Crear nombre de archivo
             filename = f"liquidacion_{year}_{month}_{user.run}.pdf"
