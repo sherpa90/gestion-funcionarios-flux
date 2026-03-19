@@ -58,17 +58,9 @@ class SolicitudCreateView(LoginRequiredMixin, CreateView):
             form.add_error(None, f"Saldo insuficiente. Tienes {self.request.user.dias_disponibles} días disponibles, pero {solicitudes_pendientes} día(s) están en solicitudes pendientes de aprobación.")
             return self.form_invalid(form)
 
-        # Auto-aprobar solo si el usuario es DIRECTOR (los demás perfiles requieren aprobación del director)
-        if self.request.user.role == 'DIRECTOR':
-            form.instance.estado = 'APROBADO'
-            # Descontar días inmediatamente
-            self.request.user.dias_disponibles -= form.instance.dias_solicitados
-            self.request.user.save()
-            messages.success(self.request, f'Solicitud aprobada automáticamente. Has utilizado {form.instance.dias_solicitados} días administrativos.')
-        else:
-            # Para otros roles, queda pendiente de aprobación
-            form.instance.estado = 'PENDIENTE'
-            messages.success(self.request, 'Solicitud enviada para aprobación del director.')
+        # Todas las solicitudes quedan pendientes para llevar un mejor orden (incluyendo las del Director)
+        form.instance.estado = 'PENDIENTE'
+        messages.success(self.request, 'Solicitud enviada para aprobación.')
 
         return super().form_valid(form)
 
@@ -83,32 +75,37 @@ class SolicitudBypassView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         return self.request.user.role in ['SECRETARIA', 'ADMIN']
 
     def form_valid(self, form):
-        # Calcular fecha termino
-        form.instance.fecha_termino = BusinessDayCalculator.calculate_end_date(
-            form.instance.fecha_inicio, 
-            form.instance.dias_solicitados
-        )
-        
-        # Validar saldo considerando solicitudes pendientes
-        usuario = form.instance.usuario
-        solicitudes_pendientes = SolicitudPermiso.objects.filter(
-            usuario=usuario,
-            estado='PENDIENTE'
-        ).aggregate(total=Sum('dias_solicitados'))['total'] or 0.0
-        
-        saldo_real = usuario.dias_disponibles - solicitudes_pendientes
-
-        if saldo_real < form.instance.dias_solicitados:
-            form.add_error(None, f"El usuario {usuario.get_full_name()} no tiene saldo suficiente. Saldo: {usuario.dias_disponibles} días, Pendiente: {solicitudes_pendientes} días.")
-            return self.form_invalid(form)
-        
-        # Marcar como PENDIENTE (requiere aprobación del Director)
-        form.instance.estado = 'PENDIENTE'
-        form.instance.created_by = self.request.user  # Registrar quién creó la solicitud
-        # No descontamos días aquí, se descuentan al aprobar
-        
-        messages.success(self.request, f'Solicitud registrada exitosamente para {usuario.get_full_name()}. Pendiente de aprobación por Director.')
-        return super().form_valid(form)
+        try:
+            # Calcular fecha termino
+            form.instance.fecha_termino = BusinessDayCalculator.calculate_end_date(
+                form.instance.fecha_inicio, 
+                form.instance.dias_solicitados
+            )
+            
+            # Validar saldo considerando solicitudes pendientes
+            usuario = form.instance.usuario
+            solicitudes_pendientes = SolicitudPermiso.objects.filter(
+                usuario=usuario,
+                estado='PENDIENTE'
+            ).aggregate(total=Sum('dias_solicitados'))['total'] or 0.0
+            
+            saldo_real = usuario.dias_disponibles - solicitudes_pendientes
+    
+            if saldo_real < form.instance.dias_solicitados:
+                form.add_error(None, f"El usuario {usuario.get_full_name()} no tiene saldo suficiente. Saldo: {usuario.dias_disponibles} días, Pendiente: {solicitudes_pendientes} días.")
+                return self.form_invalid(form)
+            
+            # Marcar como PENDIENTE (requiere aprobación del Director)
+            form.instance.estado = 'PENDIENTE'
+            form.instance.created_by = self.request.user  # Registrar quién creó la solicitud
+            # No descontamos días aquí, se descuentan al aprobar
+            
+            messages.success(self.request, f'Solicitud registrada exitosamente para {usuario.get_full_name()}. Pendiente de aprobación por Director.')
+            return super().form_valid(form)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise e
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -128,7 +125,7 @@ class SolicitudListView(LoginRequiredMixin, ListView):
     context_object_name = 'solicitudes'
 
     def get_queryset(self):
-        return SolicitudPermiso.objects.filter(usuario=self.request.user).order_by('-created_at')[:20]
+        return SolicitudPermiso.objects.filter(usuario=self.request.user).order_by('-fecha_inicio', '-created_at')[:20]
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

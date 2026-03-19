@@ -21,16 +21,8 @@
         </div>
     </div>
 
-    <!-- Gráfico de Permisos -->
-    <div class="card p-6 mb-6">
-        <h3 class="text-lg font-semibold text-slate-800 mb-4">Permisos (Últimos 7 días)</h3>
-        <div class="relative h-48">
-            <canvas id="permisosChart"></canvas>
-        </div>
-    </div>
-
-    <!-- Solo Permisos Actuales y Licencias Activas -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Listas de Permisos y Licencias (Ancho Completo) -->
+    <div class="flex flex-col gap-6 mb-6">
 
         <!-- Panel de Días Administrativos (Permisos Actuales) -->
         <div class="card p-6">
@@ -56,7 +48,8 @@
                             <td class="font-medium">{{ dia.usuario.get_full_name }}</td>
                             <td class="hidden sm:table-cell text-center">
                                 <span class="badge bg-purple-100 text-purple-800">
-                                    {{ dia.dias_solicitados }}
+                                    {{ dia.dias_solicitados }} 
+                                    {% if dia.jornada and dia.jornada != 'FD' %}({{ dia.jornada }}){% endif %}
                                 </span>
                             </td>
                             <td class="hidden md:table-cell text-center text-slate-500">
@@ -122,6 +115,14 @@
                 <p>No hay licencias activas actualmente</p>
             </div>
             {% endif %}
+        </div>
+    </div>
+
+    <!-- Gráfico de Permisos al final -->
+    <div class="card p-6 mb-6">
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">Permisos (Últimos 7 días)</h3>
+        <div class="relative h-48">
+            <canvas id="permisosChart"></canvas>
         </div>
     </div>
 </div>

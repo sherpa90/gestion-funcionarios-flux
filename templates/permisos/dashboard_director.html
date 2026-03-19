@@ -55,6 +55,11 @@
                         {% if solicitud.observacion %}
                         <p class="text-sm text-gray-500 mt-1">{{ solicitud.observacion|truncatechars:50 }}</p>
                         {% endif %}
+                        {% if solicitud.es_fuera_de_plazo %}
+                        <p id="warning-{{ solicitud.pk }}" class="text-xs text-amber-600 mt-1 font-semibold flex items-center">
+                            <i class="fas fa-exclamation-triangle mr-1"></i> ¡Fuera de plazo! Solicitado con menos de 2 días de anticipación.
+                        </p>
+                        {% endif %}
                     </div>
 
                     <!-- Saldo -->
@@ -72,12 +77,19 @@
                     <!-- Acciones -->
                     <div class="flex gap-2 sm:flex-shrink-0">
                         {% if solicitud.estado == 'PENDIENTE' and user.role == 'DIRECTOR' %}
-                        <form action="{% url 'solicitud_action' solicitud.pk 'approve' %}" method="post">
+                        <form action="{% url 'solicitud_action' solicitud.pk 'approve' %}" method="post" class="flex gap-2">
                             {% csrf_token %}
-                            <button type="submit" onclick="return confirm('¿Aprobar?')"
-                                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg">
+                            <button type="submit" onclick="return confirm('¿Aprobar?')" id="btn-aprobar-{{ solicitud.pk }}"
+                                class="px-4 py-2 {% if solicitud.es_fuera_de_plazo %}bg-gray-400 cursor-not-allowed{% else %}bg-green-600 hover:bg-green-700{% endif %} text-white text-sm font-medium rounded-lg transition-colors"
+                                {% if solicitud.es_fuera_de_plazo %}disabled{% endif %}>
                                 <i class="fas fa-check mr-1"></i> Aprobar
                             </button>
+                            {% if solicitud.es_fuera_de_plazo %}
+                            <button type="button" onclick="document.getElementById('btn-aprobar-{{ solicitud.pk }}').disabled=false; document.getElementById('btn-aprobar-{{ solicitud.pk }}').classList.remove('bg-gray-400', 'cursor-not-allowed'); document.getElementById('btn-aprobar-{{ solicitud.pk }}').classList.add('bg-green-600', 'hover:bg-green-700'); this.style.display='none'; document.getElementById('warning-{{ solicitud.pk }}').style.display='none';"
+                                class="px-3 py-2 bg-amber-100 hover:bg-amber-200 text-amber-700 text-sm font-medium rounded-lg transition-colors flex items-center" title="Desbloquear Aprobación">
+                                <i class="fas fa-unlock"></i>
+                            </button>
+                            {% endif %}
                         </form>
                         <button type="button"
                             onclick="document.getElementById('reject-{{ solicitud.pk }}').classList.toggle('hidden')"

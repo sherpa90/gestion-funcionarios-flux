@@ -33,3 +33,14 @@ class SolicitudPermiso(models.Model):
 
     def __str__(self):
         return f"{self.usuario} - {self.fecha_inicio} ({self.dias_solicitados} días)"
+
+    @property
+    def es_fuera_de_plazo(self):
+        """Devuelve True si la solicitud se hizo con menos de 2 días de anticipación."""
+        if not self.fecha_inicio:
+            return False
+        
+        from django.utils import timezone
+        base_date = self.created_at.date() if self.created_at else timezone.now().date()
+        dias_diferencia = (self.fecha_inicio - base_date).days
+        return dias_diferencia < 2

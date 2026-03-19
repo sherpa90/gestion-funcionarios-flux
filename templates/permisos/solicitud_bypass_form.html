@@ -279,6 +279,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Verificar estado inicial
     toggleJornada();
+
+    // Warning de 2 días de anticipación
+    const fechaInicioInput = document.getElementById('{{ form.fecha_inicio.id_for_label }}');
+    function checkAnticipacion() {
+        if(!fechaInicioInput.value) return;
+        const parts = fechaInicioInput.value.split('-');
+        if (parts.length !== 3) return;
+        const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        
+        const diffTime = selectedDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        let warningDiv = document.getElementById('fecha-warning');
+        if (diffDays < 2) {
+            if (!warningDiv) {
+                warningDiv = document.createElement('div');
+                warningDiv.id = 'fecha-warning';
+                warningDiv.className = 'mt-3 p-3 bg-amber-50 rounded-lg text-sm text-amber-800 font-medium shadow-sm flex items-start';
+                warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-2 mt-0.5 text-amber-500"></i><span><strong>Fuera de plazo:</strong> Se está solicitando este permiso con menos de 2 días de anticipación.</span>';
+                fechaInicioInput.parentNode.appendChild(warningDiv);
+            }
+        } else {
+            if (warningDiv) {
+                warningDiv.remove();
+            }
+        }
+    }
+    
+    if (fechaInicioInput) {
+        fechaInicioInput.addEventListener('change', checkAnticipacion);
+        checkAnticipacion(); // check on load
+    }
 });
 </script>
 {% endblock %}

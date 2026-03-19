@@ -95,14 +95,14 @@ class SolicitudBypassForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Personalizar el queryset para mostrar RUN y nombre
-        self.fields['usuario'].queryset = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']).order_by('last_name', 'first_name')
-        self.fields['usuario'].label_from_instance = lambda obj: f"{obj.run} - {obj.get_full_name()}"
+        self.fields['usuario'].queryset = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']).order_by('first_name', 'last_name')
+        self.fields['usuario'].label_from_instance = lambda obj: f"{obj.get_full_name()} - {obj.run}"
 
         # La jornada se controla con JavaScript en el template
         # No ocultamos el campo aquí, lo manejamos con CSS/JS
 
     usuario = forms.ModelChoiceField(
-        queryset=CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']).order_by('last_name', 'first_name'),
+        queryset=CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']).order_by('first_name', 'last_name'),
         widget=forms.Select(attrs={
             'class': 'w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all uppercase tracking-widest'
         }),

@@ -39,8 +39,6 @@ class DashboardView(LoginRequiredMixin, View):
         if user.role == 'ADMIN':
             # Administradores van al dashboard de funcionarios para ver días y solicitar permisos
             return redirect('dashboard_funcionario')
-        elif user.role == 'DIRECTOR':
-            return redirect('dashboard_director')
         else:
             return redirect('dashboard_funcionario')
 
