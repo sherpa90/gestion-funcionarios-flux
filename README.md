@@ -252,4 +252,4 @@ Para soporte técnico o reportes de bugs:
 
 ---
 
-**Desarrollado con ❤️ para la gestión eficiente de recursos humanos en educación**
+**Desarrollado con ❤️ para la gestión eficiente de recursos humanos en educación**# gestion-funcionarios-flux
