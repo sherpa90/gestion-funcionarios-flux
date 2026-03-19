@@ -3,7 +3,8 @@ from .views import (
     UserListView, UserCreateView, UserUpdateView, UserDeleteView,
     BulkUserImportView, download_template, ResetUserPasswordView, ChangeOwnPasswordView,
     AdminChangePasswordView, EmailDirectoryView, CrearGrupoCorreoView, CrearDirectorioTelefonicoView,
-    EditarGrupoCorreoView, EliminarGrupoCorreoView, EditarDirectorioTelefonicoView, EliminarDirectorioTelefonicoView
+    EditarGrupoCorreoView, EliminarGrupoCorreoView, EditarDirectorioTelefonicoView, EliminarDirectorioTelefonicoView,
+    BackupExportUsersView, BackupRestoreUsersView
 )
 
 urlpatterns = [
@@ -23,4 +24,6 @@ urlpatterns = [
     path('eliminar-grupo-correo/<int:grupo_id>/', EliminarGrupoCorreoView.as_view(), name='eliminar_grupo_correo'),
     path('editar-directorio-telefonico/<int:telefono_id>/', EditarDirectorioTelefonicoView.as_view(), name='editar_directorio_telefonico'),
     path('eliminar-directorio-telefonico/<int:telefono_id>/', EliminarDirectorioTelefonicoView.as_view(), name='eliminar_directorio_telefonico'),
+    path('respaldo/exportar/', BackupExportUsersView.as_view(), name='backup_export_users'),
+    path('respaldo/restaurar/', BackupRestoreUsersView.as_view(), name='backup_restore_users'),
 ]

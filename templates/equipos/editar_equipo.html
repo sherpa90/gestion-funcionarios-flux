@@ -159,15 +159,25 @@
                 </div>
 
                 <!-- Footer / Buttons -->
-                <div class="flex items-center justify-end gap-4 pt-6 mt-6 border-t border-gray-50">
-                    <a href="{% url 'lista_equipos' %}"
-                        class="px-8 py-3 text-sm font-black text-gray-400 hover:text-gray-700 transition-all">
-                        Cancelar
-                    </a>
-                    <button type="submit"
-                        class="px-10 py-3.5 bg-gray-900 text-white text-sm font-black rounded-2xl shadow-xl shadow-gray-200 hover:bg-black hover:scale-[1.02] active:scale-95 transition-all">
-                        <i class="fas fa-sync-alt mr-2"></i> Actualizar Registro
-                    </button>
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 mt-6 border-t border-gray-50">
+                    <div class="w-full sm:w-auto">
+                        {% if user.role == 'ADMIN' %}
+                        <a href="{% url 'eliminar_equipo' equipo.id %}" 
+                            class="w-full sm:w-auto px-6 py-3 text-sm font-black text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all flex items-center justify-center">
+                            <i class="fas fa-trash-alt mr-2"></i> Eliminar Equipo
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                        <a href="{% url 'lista_equipos' %}"
+                            class="flex-1 sm:flex-none px-8 py-3 text-sm font-black text-gray-400 hover:text-gray-700 transition-all text-center">
+                            Cancelar
+                        </a>
+                        <button type="submit"
+                            class="flex-1 sm:flex-none px-10 py-3.5 bg-gray-900 text-white text-sm font-black rounded-2xl shadow-xl shadow-gray-200 hover:bg-black hover:scale-[1.02] active:scale-95 transition-all">
+                            <i class="fas fa-sync-alt mr-2"></i> Actualizar Registro
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>

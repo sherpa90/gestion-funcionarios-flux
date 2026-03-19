@@ -795,3 +795,120 @@ class EliminarDirectorioTelefonicoView(LoginRequiredMixin, View):
             messages.error(request, f'Error al eliminar el teléfono: {str(e)}')
         
         return redirect(reverse('email_directory') + '?tab=telefonos')
+
+
+class BackupExportUsersView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para exportar un respaldo exacto de todos los usuarios (incluyendo contraseñas)"""
+
+    def test_func(self):
+        return self.request.user.role == 'ADMIN'
+
+    def get(self, request):
+        audit_log(request, 'BACKUP_EXPORT', f'Admin {request.user.run} exported user backup')
+        
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Respaldo_Usuarios"
+        
+        headers = [
+            'run', 'username', 'first_name', 'last_name', 'email', 
+            'password_hash', 'role', 'tipo_funcionario', 
+            'dias_disponibles', 'telefono', 'is_active', 'is_blocked'
+        ]
+        ws.append(headers)
+        
+        for user in CustomUser.objects.all().order_by('run'):
+            ws.append([
+                user.run,
+                user.username,
+                user.first_name,
+                user.last_name,
+                user.email,
+                user.password,
+                user.role,
+                user.tipo_funcionario,
+                user.dias_disponibles,
+                user.telefono,
+                str(user.is_active),
+                str(user.is_blocked)
+            ])
+            
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        from datetime import datetime
+        fecha_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        response = HttpResponse(
+            output.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename=respaldo_usuarios_{fecha_str}.xlsx'
+        return response
+
+
+class BackupRestoreUsersView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para importar un respaldo y restaurar la base de usuarios"""
+
+    def test_func(self):
+        return self.request.user.role == 'ADMIN'
+
+    def get(self, request):
+        return render(request, 'users/restore_backup.html')
+
+    def post(self, request):
+        if 'backup_file' not in request.FILES:
+            messages.error(request, "No se seleccionó ningún archivo de respaldo.")
+            return redirect('backup_restore_users')
+            
+        excel_file = request.FILES['backup_file']
+        
+        try:
+            wb = openpyxl.load_workbook(excel_file)
+            ws = wb.active
+            
+            created_count = 0
+            updated_count = 0
+            
+            for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                if not any(row): continue
+                
+                row_list = list(row) + [None] * (12 - len(row))
+                run = row_list[0]
+                if not run: continue
+                
+                is_active = str(row_list[10]).lower() == 'true' if row_list[10] is not None else True
+                is_blocked = str(row_list[11]).lower() == 'true' if row_list[11] is not None else False
+                
+                defaults = {
+                    'username': row_list[1] or run,
+                    'first_name': row_list[2] or '',
+                    'last_name': row_list[3] or '',
+                    'email': row_list[4] or f"{run}@losalercespuertomontt.cl",
+                    'password': row_list[5] or '',
+                    'role': row_list[6] or 'FUNCIONARIO',
+                    'tipo_funcionario': row_list[7] or 'PLANTA',
+                    'dias_disponibles': float(row_list[8]) if row_list[8] is not None else 6.0,
+                    'telefono': row_list[9] or '',
+                    'is_active': is_active,
+                    'is_blocked': is_blocked
+                }
+                
+                user, created = CustomUser.objects.update_or_create(
+                    run=run,
+                    defaults=defaults
+                )
+                
+                if created:
+                    created_count += 1
+                else:
+                    updated_count += 1
+                    
+            audit_log(request, 'BACKUP_RESTORED', f'Admin {request.user.run} restored user backup')
+            messages.success(request, f"Respaldo restaurado: {created_count} creados, {updated_count} actualizados.")
+            return redirect('user_list')
+            
+        except Exception as e:
+            messages.error(request, f"Error al procesar archivo de respaldo: {str(e)}")
+            return redirect('backup_restore_users')
