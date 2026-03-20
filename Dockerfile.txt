@@ -16,6 +16,7 @@ ENV SQL_PORT=5432
 WORKDIR /app
 
 # Install system dependencies for WeasyPrint and Postgres
+# Install system dependencies for WeasyPrint and Postgres
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
@@ -23,6 +24,14 @@ RUN apt-get update && apt-get install -y \
     python3-brotli \
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
+    # --- Agrega estas de abajo ---
+    libglib2.0-0 \
+    libgstrtspserver-1.0-0 \
+    libharfbuzz0b \
+    libgdk-pixbuf2.0-0 \
+    shared-mime-info \
+    fonts-freefont-ttf \
+    # ----------------------------
     libharfbuzz-subset0 \
     libjpeg-dev \
     libopenjp2-7-dev \
@@ -30,7 +39,6 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
-
 # Create a non-root user
 RUN addgroup --system appgroup && adduser --system --group appuser
 
