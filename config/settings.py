@@ -218,12 +218,6 @@ AXES_LOCKOUT_TEMPLATE = 'account/locked.html'
 # MONITORING AND OBSERVABILITY
 # =============================================================================
 
-# 1. Crear directorio de logs ANTES de configurar el logging
-try:
-    os.makedirs(BASE_DIR / 'logs', exist_ok=True)
-except PermissionError:
-    pass
-
 # Sentry Configuration
 SENTRY_DSN = os.environ.get('SENTRY_DSN')
 if SENTRY_DSN:
@@ -262,7 +256,7 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
+            'filename': '/tmp/django.log',  # <-- Modificado para usar /tmp
             'formatter': 'verbose',
         },
     },
