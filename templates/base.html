@@ -264,15 +264,23 @@
                         <i class="fa-solid fa-laptop fa-fw mr-3"></i><span class="ml-3">Mis Equipos</span>
                     </a>
                     {% endif %}
-                    <!-- Aprobaciones (Director, Directivo, Secretaria) -->
-                    {% if user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' or user.role == 'SECRETARIA' %}
+                    <!-- Gestión de Permisos -->
+                    {% if user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' or user.role == 'SECRETARIA' or user.role == 'ADMIN' %}
                     <div class="pt-4 pb-2">
-                        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Aprobaciones</p>
+                        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Gestión de Permisos</p>
                     </div>
+                    {% if user.role != 'ADMIN' %}
                     <a href="{% url 'solicitudes_admin' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-check-circle fa-fw mr-3"></i><span class="ml-3">Aprobar Solicitudes</span>
                     </a>
+                    {% endif %}
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                    <a href="{% url 'solicitud_bypass' %}"
+                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
+                        <i class="fa-solid fa-user-plus fa-fw mr-3"></i><span class="ml-3">Día Adm. para Funcionario</span>
+                    </a>
+                    {% endif %}
                     {% endif %}
 
                     <!-- Administración -->
@@ -287,10 +295,6 @@
                     <a href="{% url 'admin_management' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-calendar-check fa-fw mr-3"></i><span class="ml-3">Permisos</span>
-                    </a>
-                    <a href="{% url 'solicitud_bypass' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-user-plus fa-fw mr-3"></i><span class="ml-3">Día Adm. para Funcionario</span>
                     </a>
                     <a href="{% url 'subir_licencia' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
@@ -511,15 +515,23 @@
                         <i class="fa-solid fa-laptop fa-fw mr-3"></i><span class="ml-3">Mis Equipos</span>
                     </a>
                     {% endif %}
-                    <!-- Aprobaciones (Director, Directivo, Secretaria) -->
-                    {% if user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' or user.role == 'SECRETARIA' %}
+                    <!-- Gestión de Permisos -->
+                    {% if user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' or user.role == 'SECRETARIA' or user.role == 'ADMIN' %}
                     <div class="pt-4 pb-2">
-                        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Aprobaciones</p>
+                        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Gestión de Permisos</p>
                     </div>
+                    {% if user.role != 'ADMIN' %}
                     <a href="{% url 'solicitudes_admin' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-check-circle fa-fw mr-3"></i><span class="ml-3">Aprobar Solicitudes</span>
                     </a>
+                    {% endif %}
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                    <a href="{% url 'solicitud_bypass' %}"
+                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
+                        <i class="fa-solid fa-user-plus fa-fw mr-3"></i><span class="ml-3">Día Adm. para Funcionario</span>
+                    </a>
+                    {% endif %}
                     {% endif %}
 
                     <!-- Administración -->
@@ -534,10 +546,6 @@
                     <a href="{% url 'admin_management' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-calendar-check fa-fw mr-3"></i><span class="ml-3">Permisos</span>
-                    </a>
-                    <a href="{% url 'solicitud_bypass' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-user-plus fa-fw mr-3"></i><span class="ml-3">Día Adm. para Funcionario</span>
                     </a>
                     <a href="{% url 'subir_licencia' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
