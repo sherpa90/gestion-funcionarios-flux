@@ -50,7 +50,7 @@ COPY --chown=appuser:appgroup . /app/
 # Make entrypoint executable
 RUN chmod +x /app/entrypoint.sh
 
-# Create logs directory and ensure permissions (TU SOLUCIÓN)
+# Create logs directory and ensure permissions
 RUN mkdir -p /app/logs /app/media /app/staticfiles && \
     chown -R appuser:appgroup /app
 
@@ -60,6 +60,5 @@ USER appuser
 # Run collectstatic with dummy secret key if needed, or rely on settings default
 RUN python manage.py collectstatic --noinput
 
-# Make entrypoint executable (already handled by COPY but ensuring)
-# ENTRYPOINT is executed relative to WORKDIR
+# Make entrypoint executable
 ENTRYPOINT ["/app/entrypoint.sh"]
