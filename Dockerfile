@@ -2,48 +2,64 @@ FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+
+# Set default environment variables for build
 ENV DEBUG=True
-ENV SECRET_KEY=build-key-only
+ENV SECRET_KEY=dev-secret-key-for-docker-build-only
 ENV DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+ENV SQL_DATABASE=sgpal_db
+ENV SQL_USER=sgpal_user
+ENV SQL_PASSWORD=sgpal_password
+ENV SQL_HOST=tramites-flux-sgpaldb-vg4heb
+ENV SQL_PORT=5432
 
-# 1. Dependencias del sistema
-RUN apt-get update && apt-get install -y \
-    build-essential libpq-dev python3-cffi python3-brotli \
-    libpango1.0-dev libglib2.0-0 libgstrtspserver-1.0-0 \
-    libharfbuzz-dev libgdk-pixbuf-2.0-0 shared-mime-info \
-    fonts-freefont-ttf libharfbuzz-subset0 libjpeg-dev \
-    libopenjp2-7-dev libmemcached-dev zlib1g-dev netcat-openbsd \
-    && rm -rf /var/lib/apt/lists/*
-
-# 2. Crear usuario y grupo (ID 1000 es el estándar)
-RUN addgroup --system --gid 1000 appgroup && \
-    adduser --system --uid 1000 --ingroup appgroup appuser
-
-# 3. Preparar el directorio de trabajo ANTES de copiar nada
 WORKDIR /app
 
-# 4. Crear carpetas críticas como ROOT y darles permisos totales (777)
-# Esto asegura que CUALQUIER usuario pueda escribir en ellas
+# Install system dependencies for WeasyPrint and Postgres
+# (Incluye tu lista original + las requeridas por la versión actual de Debian)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    python3-cffi \
+    python3-brotli \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libharfbuzz-subset0 \
+    libjpeg-dev \
+    libopenjp2-7-dev \
+    libmemcached-dev \
+    zlib1g-dev \
+    netcat-openbsd \
+    libglib2.0-0 \
+    libgstrtspserver-1.0-0 \
+    libharfbuzz-dev \
+    libgdk-pixbuf-2.0-0 \
+    shared-mime-info \
+    fonts-freefont-ttf \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user
+RUN addgroup --system appgroup && adduser --system --group appuser
+
+COPY requirements.txt /app/
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+
+# Copy project files
+COPY --chown=appuser:appgroup . /app/
+
+# Make entrypoint executable
+RUN chmod +x /app/entrypoint.sh
+
+# Create logs directory and ensure permissions (TU SOLUCIÓN)
 RUN mkdir -p /app/logs /app/media /app/staticfiles && \
-    chmod -R 777 /app/logs /app/media /app/staticfiles && \
     chown -R appuser:appgroup /app
 
-# 5. Instalar requerimientos
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# 6. Copiar el código fuente forzando el dueño
-COPY --chown=appuser:appgroup . .
-
-# 7. Asegurar permisos finales
-RUN chmod +x /app/entrypoint.sh && \
-    chown appuser:appgroup /app/entrypoint.sh
-
-# CAMBIO AL USUARIO NO-ROOT
+# Switch to non-root user
 USER appuser
 
-# 8. Tareas de Django
+# Run collectstatic with dummy secret key if needed, or rely on settings default
 RUN python manage.py collectstatic --noinput
 
+# Make entrypoint executable (already handled by COPY but ensuring)
+# ENTRYPOINT is executed relative to WORKDIR
 ENTRYPOINT ["/app/entrypoint.sh"]
