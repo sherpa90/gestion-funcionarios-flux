@@ -208,11 +208,30 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 PASSWORD_RESET_TIMEOUT = 86400
 
 # Axes settings
-AXES_FAILURE_LIMIT = 8
+AXES_FAILURE_LIMIT = int(os.environ.get('AXES_FAILURE_LIMIT', 8))
 from datetime import timedelta
-AXES_COOLOFF_TIME = timedelta(hours=1)
+AXES_COOLOFF_TIME = timedelta(hours=int(os.environ.get('AXES_COOLOFF_HOURS', 1)))
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_TEMPLATE = 'account/locked.html'
+
+# IPs whitelist (no serán bloqueadas nunca)
+AXES_WHITELIST = [
+    '127.0.0.1',
+    '::1',
+] + [ip.strip() for ip in os.environ.get('AXES_WHITELIST_IPS', '').split(',') if ip.strip()]
+
+# === BLOQUEO POR USUARIO (NO POR IP) ===
+# Esto evita que un usuario bloquee a otros por compartir IP
+AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = False  # Por usuario
+AXES_USE_IP_WHITELIST = True  # Ignorar IP para usuarios conocidos
+
+# Handler personalizado que excluye administradores del bloqueo
+AXES_HANDLER = 'core.axes_handlers.AdminExcludedAxesHandler'
+
+# Configuración de exclusión para administradores
+AXES_ENABLE_ACCESS_FAILURE = True
+AXES_ENABLE_ACCESS_SUCCESS = True
+AXES_LOCK_OUT_PERIOD = timedelta(hours=1)
 
 # =============================================================================
 # MONITORING AND OBSERVABILITY
