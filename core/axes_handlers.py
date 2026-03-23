@@ -4,71 +4,109 @@ Handler personalizado de Axes para:
 2. Bloqueo por usuario (no por IP)
 """
 from axes.handlers.database import AxesDatabaseHandler
-from axes.helpers import get_client_username
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
-
-
-def _is_admin_user(username):
-    """Retorna True si el username corresponde a un usuario staff/superuser."""
-    if not username:
-        return False
-    try:
-        # Buscamos por email ya que es el USERNAME_FIELD
-        user = User.objects.filter(email=username).first()
-        return bool(user and (user.is_staff or user.is_superuser))
-    except Exception:
-        return False
 
 
 class AdminExcludedAxesHandler(AxesDatabaseHandler):
     """
     Handler de Axes que:
     - Excluye a los usuarios staff/admin del bloqueo
-    - Delega el resto al handler base (AxesDatabaseHandler)
+    - Usa solo username para el bloqueo (no IP)
     """
-
-    def user_login_failed(self, sender, request, credentials, **kwargs):
+    
+    def _get_username_from_request(self, request):
         """
-        Registra un intento fallido. Si el usuario es admin, no registra nada.
+        Extrae el username/email del request de manera segura.
         """
-        username = get_client_username(request) or (credentials.get('username') if credentials else None)
+        # Intentar obtener el email del formulario POST
+        try:
+            if hasattr(request, 'POST') and request.POST:
+                return request.POST.get('username') or request.POST.get('email')
+            elif hasattr(request, 'data') and request.data:
+                # Para requests de API
+                if isinstance(request.data, dict):
+                    return request.data.get('username') or request.data.get('email')
+        except Exception:
+            pass
         
-        if _is_admin_user(username):
-            return  # No registrar fallos para administradores
-            
-        return super().user_login_failed(sender, request, credentials, **kwargs)
-
+        # Intentar obtener de axes
+        try:
+            from axes.helpers import get_client_username
+            return get_client_username(request)
+        except Exception:
+            pass
+        
+        return None
+    
+    def _is_admin_user(self, username):
+        """
+        Verifica si el usuario es administrador.
+        """
+        if not username:
+            return False
+        try:
+            user = User.objects.filter(email=username).first()
+            if user and (user.is_staff or user.is_superuser):
+                return True
+        except Exception:
+            pass
+        return False
+    
+    def get_failures(self, request, credentials=None):
+        """
+        Obtiene los intentos fallidos SOLO por username, no por IP.
+        """
+        username = self._get_username_from_request(request)
+        if credentials:
+            username = username or credentials.get('username') or credentials.get('email')
+        
+        # Si es un administrador, no contar fallos
+        if username and self._is_admin_user(username):
+            return []
+        
+        # Usar el método original del padre
+        return super().get_failures(request, credentials)
+    
     def is_locked(self, request, credentials=None):
         """
-        Verifica si el usuario está bloqueado. Los administradores nunca se bloquean.
+        Verifica si el usuario está bloqueado (solo por username).
         """
-        username = get_client_username(request) or (credentials.get('username') if credentials else None)
+        username = self._get_username_from_request(request)
+        if credentials:
+            username = username or credentials.get('username') or credentials.get('email')
         
-        if _is_admin_user(username):
-            return False  # Los admins nunca se bloquean
-            
+        # Los administradores nunca se bloquean
+        if username and self._is_admin_user(username):
+            return False
+        
+        # Usar el método original del padre
         return super().is_locked(request, credentials)
-
-    def handle_already_locked(self, request, credentials):
+    
+    def user_login_failed(self, sender, credentials, **kwargs):
         """
-        Manejo cuando ya está bloqueado. Permitir si es administrador.
+        Maneja el evento de login fallido.
         """
-        username = get_client_username(request) or (credentials.get('username') if credentials else None)
+        request = kwargs.get('request')
+        username = self._get_username_from_request(request) if request else None
+        if credentials:
+            username = username or credentials.get('username') or credentials.get('email')
         
-        if _is_admin_user(username):
-            return None  # Permitir acceso
-            
-        return super().handle_already_locked(request, credentials)
-
-    def handle_lockout(self, request, credentials):
-        """
-        Manejo del bloqueo. No aplicar a administradores.
-        """
-        username = get_client_username(request) or (credentials.get('username') if credentials else None)
+        # Si es administrador, no registrar el fallo
+        if username and self._is_admin_user(username):
+            return
         
-        if _is_admin_user(username):
-            return None  # No aplicar bloqueo
-            
-        return super().handle_lockout(request, credentials)
+        # Usar el método original
+        super().user_login_failed(sender, credentials, **kwargs)
+    
+    def user_login_success(self, user, request, **kwargs):
+        """
+        Maneja el evento de login exitoso.
+        """
+        # Si es administrador, no registrar el éxito (para no resetear contadores)
+        if hasattr(user, 'is_staff') and user.is_staff:
+            return
+        
+        # Usar el método original
+        super().user_login_success(user, request, **kwargs)
