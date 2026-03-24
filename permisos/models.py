@@ -28,6 +28,7 @@ class SolicitudPermiso(models.Model):
     cancelled_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='solicitudes_canceladas')
     cancelled_at = models.DateTimeField(null=True, blank=True)
     archivo_justificacion = models.FileField(upload_to='solicitudes/', blank=True, null=True, help_text="Documento de respaldo (PDF o JPG)")
+    is_unlocked = models.BooleanField(default=False, help_text="Indica si un permiso fuera de plazo ha sido desbloqueado por un directivo")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

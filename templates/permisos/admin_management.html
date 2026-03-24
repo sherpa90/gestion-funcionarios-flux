@@ -261,16 +261,19 @@
                 <div class="flex justify-between items-center bg-gray-50 rounded-xl p-3 mb-3 border border-gray-100">
                     <div class="space-y-1">
                         <div class="text-xs text-gray-500 font-medium">Periodo del Permiso</div>
-                        <div class="text-sm font-bold text-gray-700">
-                            {{ solicitud.fecha_inicio|date:"d/m/y" }} <span class="text-gray-300 px-1">→</span> {{ solicitud.fecha_termino|date:"d/m/y" }}
+                        <div class="text-[11px] font-bold text-gray-700 uppercase">
+                            {{ solicitud.fecha_inicio|date:"l d/m" }}
+                            {% if solicitud.fecha_termino != solicitud.fecha_inicio %}
+                            <span class="text-gray-300 px-1">→</span> {{ solicitud.fecha_termino|date:"l d/m" }}
+                            {% endif %}
                         </div>
                     </div>
                     <div class="text-center">
                         <div class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Días</div>
                         <div class="text-lg font-black text-blue-600">
-                            {{ solicitud.dias_solicitados }}
+                            {{ solicitud.dias_solicitados|floatformat:1 }}
                             {% if solicitud.dias_solicitados == 0.5 %}
-                            <span class="text-xs">{% if solicitud.jornada == 'AM' %}AM{% elif solicitud.jornada == 'PM' %}PM{% endif %}</span>
+                            <span class="text-[10px] text-purple-600">({{ solicitud.jornada }})</span>
                             {% endif %}
                         </div>
                     </div>

@@ -29,8 +29,9 @@
     </div>
 
     <!-- Filtros Rápidos / Stats -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-sm p-6 text-white relative overflow-hidden group">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <a href="?status=pending" 
+           class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-sm p-6 text-white relative overflow-hidden group hover:scale-[1.02] transition-all {% if current_filter == 'pending' %}ring-4 ring-amber-200{% endif %}">
             <div class="relative z-10 flex items-center justify-between">
                 <div>
                     <p class="text-amber-100 text-xs font-semibold uppercase tracking-wider">Pendientes de Revisión</p>
@@ -43,9 +44,10 @@
             <div class="absolute -right-6 -bottom-6 text-white/5 text-8xl transform -rotate-12">
                 <i class="fas fa-file-signature"></i>
             </div>
-        </div>
+        </a>
 
-        <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-sm p-6 text-white relative overflow-hidden group">
+        <a href="?status=processed" 
+           class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-sm p-6 text-white relative overflow-hidden group hover:scale-[1.02] transition-all {% if current_filter == 'processed' %}ring-4 ring-emerald-200{% endif %}">
             <div class="relative z-10 flex items-center justify-between">
                 <div>
                     <p class="text-emerald-100 text-xs font-semibold uppercase tracking-wider">Historial Procesado</p>
@@ -58,10 +60,27 @@
             <div class="absolute -right-6 -bottom-6 text-white/5 text-8xl transform -rotate-12">
                 <i class="fas fa-check-double"></i>
             </div>
-        </div>
+        </a>
+
+        <a href="?status=all" 
+           class="bg-gradient-to-br from-gray-700 to-gray-900 rounded-2xl shadow-sm p-6 text-white relative overflow-hidden group hover:scale-[1.02] transition-all {% if current_filter == 'all' %}ring-4 ring-gray-300{% endif %}">
+            <div class="relative z-10 flex items-center justify-between">
+                <div>
+                    <p class="text-gray-300 text-xs font-semibold uppercase tracking-wider">Vista General</p>
+                    <p class="text-4xl font-black mt-2">{{ paginator.count|add:historial_page.paginator.count }}</p>
+                </div>
+                <div class="bg-white/10 rounded-2xl p-4 backdrop-blur-md group-hover:scale-110 transition-transform">
+                    <i class="fas fa-layer-group text-2xl"></i>
+                </div>
+            </div>
+            <div class="absolute -right-6 -bottom-6 text-white/5 text-8xl transform -rotate-12">
+                <i class="fas fa-th-large"></i>
+            </div>
+        </a>
     </div>
 
     <!-- Sección de Pendientes -->
+    {% if current_filter == 'all' or current_filter == 'pending' %}
     <div class="mb-10">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest flex items-center">
@@ -112,9 +131,9 @@
 
                     <div class="flex items-center gap-3 text-sm text-gray-600 px-1">
                         <i class="far fa-calendar-alt text-gray-400"></i>
-                        <span class="font-bold">{{ solicitud.fecha_inicio|date:"d M" }}</span>
+                        <span class="font-bold">{{ solicitud.fecha_inicio|date:"l d M" }}</span>
                         <span class="text-gray-300">→</span>
-                        <span class="font-bold">{{ solicitud.fecha_termino|date:"d M, Y" }}</span>
+                        <span class="font-bold">{{ solicitud.fecha_termino|date:"l d M, Y" }}</span>
                     </div>
 
                     {% if solicitud.observacion %}
@@ -205,8 +224,10 @@
         </div>
         {% endif %}
     </div>
+    {% endif %}
 
     <!-- Historial Procesado -->
+    {% if current_filter == 'all' or current_filter == 'processed' %}
     <div>
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest flex items-center">
@@ -236,8 +257,12 @@
                                 <p class="text-sm font-black text-gray-900">{{ solicitud.usuario.get_full_name }}</p>
                                 <p class="text-[10px] text-gray-400 font-bold uppercase">{{ solicitud.usuario.run }}</p>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-600">
-                                {{ solicitud.fecha_inicio|date:"d/m/Y" }} <span class="text-gray-300 mx-1">→</span> {{ solicitud.fecha_termino|date:"d/m/Y" }}
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-xs font-bold text-gray-700 uppercase">
+                                    {{ solicitud.fecha_inicio|date:"l d/m" }}
+                                    <span class="text-gray-300 mx-1">→</span>
+                                    {{ solicitud.fecha_termino|date:"l d/m/Y" }}
+                                </div>
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <span class="bg-gray-100 px-2 py-1 rounded text-xs font-black">
@@ -303,5 +328,6 @@
         </div>
         {% endif %}
     </div>
+    {% endif %}
 </div>
 {% endblock %}

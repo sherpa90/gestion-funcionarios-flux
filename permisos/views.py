@@ -225,6 +225,7 @@ class SolicitudAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
                 'es_hoy': fecha_dia == hoy
             })
         context['resumen_semanal'] = dias_semana
+        context['current_filter'] = self.request.GET.get('status', 'all')
         
         return context
 
