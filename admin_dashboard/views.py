@@ -239,18 +239,27 @@ class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         try:
             from axes.models import AccessAttempt
             from django.contrib.auth import get_user_model
+            from django.conf import settings
             User = get_user_model()
+            failure_limit = getattr(settings, 'AXES_FAILURE_LIMIT', 8)
             
-            # Obtener intentos de acceso bloqueados
+            # Obtener intentos bloqueados o que superan el límite de fallos
             blocked_attempts = AccessAttempt.objects.filter(
-                blocked=True
-            ).order_by('-attempt_time')[:50]
+                Q(blocked=True) | Q(failures_since_start__gte=failure_limit)
+            ).order_by('-attempt_time')[:100]
             
+            seen_usernames = set()
             for attempt in blocked_attempts:
                 username = attempt.username
-                if username:
-                    try:
-                        user = User.objects.get(email__iexact=username)
+                if username and username not in seen_usernames:
+                    seen_usernames.add(username)
+                    user = User.objects.filter(
+                        Q(email__iexact=username) | Q(username__iexact=username)
+                    ).first()
+                    
+                    if user:
+                        # Solo mostrar si realmente está bloqueado según el handler de axes
+                        # o si tiene más fallos que el límite
                         axes_blocked_users.append({
                             'user': user,
                             'is_axes_blocked': True,
@@ -258,10 +267,7 @@ class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                             'ip_address': attempt.ip_address,
                             'attempts': attempt.failures_since_start
                         })
-                    except User.DoesNotExist:
-                        pass
-        except Exception as e:
-            # Si axes no está configurado correctamente, ignoramos
+        except Exception:
             pass
         
         context['blocked_users'] = manually_blocked
