@@ -20,18 +20,22 @@ class AdminExcludedAxesHandler(AxesDatabaseHandler):
         """
         Extrae el username/email del request de manera segura.
         """
+        # Verificar si request es válido y tiene los atributos necesarios
+        if not request or not hasattr(request, 'POST'):
+            return None
+
         # Intentar obtener el email del formulario POST
         try:
-            if hasattr(request, 'POST') and request.POST:
+            if request.POST:
                 return request.POST.get('username') or request.POST.get('email')
-            elif hasattr(request, 'data') and request.data:
-                # Para requests de API
-                if isinstance(request.data, dict):
-                    return request.data.get('username') or request.data.get('email')
+            
+            # Para requests de API o si se usa django-rest-framework
+            if hasattr(request, 'data') and isinstance(request.data, dict):
+                return request.data.get('username') or request.data.get('email')
         except Exception:
             pass
         
-        # Intentar obtener de axes
+        # Intentar obtener de axes como último recurso
         try:
             from axes.helpers import get_client_username
             return get_client_username(request)
