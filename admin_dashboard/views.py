@@ -46,53 +46,61 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         ).count()
         
         # Licencias activas: cálculo eficiente (compatible con todas las DB)
+        # --- Lógica de Planificación Semanal ---
         hoy = timezone.now().date()
-        
-        # Obtener licencias activas (fecha inicio <= hoy <= fecha retorno)
-        licencias_activas_list = []
-        for lic in LicenciaMedica.objects.select_related('usuario').filter(fecha_inicio__lte=hoy):
+        # Lunes de la semana actual
+        lunes_actual = hoy - timedelta(days=hoy.weekday())
+        domingo_actual = lunes_actual + timedelta(days=6)
+        # Próxima semana
+        lunes_proximo = lunes_actual + timedelta(days=7)
+        domingo_proximo = lunes_proximo + timedelta(days=6)
+
+        # 1. Permisos Semana Actual (incluye cualquier solapamiento con la semana)
+        context['permisos_semana_actual'] = SolicitudPermiso.objects.select_related('usuario').filter(
+            estado='APROBADO',
+            fecha_inicio__lte=domingo_actual,
+            fecha_termino__gte=lunes_actual
+        ).order_by('usuario__first_name', 'usuario__last_name')
+
+        # 2. Permisos Semana Próxima
+        context['permisos_semana_proxima'] = SolicitudPermiso.objects.select_related('usuario').filter(
+            estado='APROBADO',
+            fecha_inicio__lte=domingo_proximo,
+            fecha_termino__gte=lunes_proximo
+        ).order_by('usuario__first_name', 'usuario__last_name')
+
+        # 3. Licencias Semana Actual
+        licencias_semana_actual = []
+        for lic in LicenciaMedica.objects.select_related('usuario').filter(
+            fecha_inicio__lte=domingo_actual
+        ):
             fecha_retorno = lic.fecha_inicio + timedelta(days=lic.dias)
-            if fecha_retorno >= hoy:
-                licencias_activas_list.append({
+            if fecha_retorno >= lunes_actual:
+                licencias_semana_actual.append({
                     'usuario': lic.usuario,
                     'fecha_inicio': lic.fecha_inicio,
                     'dias': lic.dias,
                     'fecha_retorno': fecha_retorno,
-                    'dias_restantes': fecha_retorno - hoy,
+                    'es_activa': lic.fecha_inicio <= hoy <= fecha_retorno
                 })
-        
-        # Licencias que aún no comienzan (próximas)
-        licencias_proximas_list = []
-        for lic in LicenciaMedica.objects.select_related('usuario').filter(fecha_inicio__gt=hoy).order_by('fecha_inicio')[:5]:
+        context['licencias_semana_actual'] = sorted(licencias_semana_actual, key=lambda x: x['usuario'].get_full_name())
+
+        # 4. Licencias Semana Próxima
+        licencias_semana_proxima = []
+        for lic in LicenciaMedica.objects.select_related('usuario').filter(
+            fecha_inicio__lte=domingo_proximo
+        ):
             fecha_retorno = lic.fecha_inicio + timedelta(days=lic.dias)
-            licencias_proximas_list.append({
-                'usuario': lic.usuario,
-                'fecha_inicio': lic.fecha_inicio,
-                'dias': lic.dias,
-                'fecha_retorno': fecha_retorno,
-                'dias_para_iniciar': lic.fecha_inicio - hoy,
-            })
-        
-        context['licencias_activas'] = len(licencias_activas_list)
-        context['licencias_mes'] = LicenciaMedica.objects.filter(
-            created_at__gte=timezone.now() - timedelta(days=30)
-        ).count()
-        
-        # Agregar licencias al contexto
-        context['licencias_activas_detalle'] = licencias_activas_list
-        context['licencias_proximas_detalle'] = licencias_proximas_list
-        
-        # Licencias por usuario para el año actual
-        context['licencias_por_funcionario'] = self.get_licencias_por_funcionario()
-        
-        # Días administrativos activos y próximos
-        context['dias_administrativos_activos'] = self.get_dias_administrativos_activos()
-        context['proximos_dias_administrativos'] = self.get_proximos_dias_administrativos()
-        
-        context['logs_recientes'] = SystemLog.objects.select_related(
-            'usuario'
-        ).order_by('-timestamp')[:10]
-        
+            if fecha_retorno >= lunes_proximo:
+                licencias_semana_proxima.append({
+                    'usuario': lic.usuario,
+                    'fecha_inicio': lic.fecha_inicio,
+                    'dias': lic.dias,
+                    'fecha_retorno': fecha_retorno,
+                })
+        context['licencias_semana_proxima'] = sorted(licencias_semana_proxima, key=lambda x: x['usuario'].get_full_name())
+
+        # Metas generales
         usuarios_stats = CustomUser.objects.filter(role='FUNCIONARIO').aggregate(
             total_disponibles=Sum('dias_disponibles'),
             total_usuarios=Count('id')
@@ -108,114 +116,14 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             dias_disponibles__lt=2.0
         ).count()
         
-        context['chart_labels'], context['chart_data'] = self.get_weekly_chart_data()
-        
         registrar_log(
             usuario=self.request.user,
             tipo='AUTH',
             accion='Acceso al Dashboard Admin',
-            descripcion='Usuario accedió al panel de administración',
+            descripcion='Usuario accedió al panel de planificación semanal',
             ip_address=get_client_ip(self.request)
         )
-        
         return context
-    
-    def get_licencias_por_funcionario(self):
-        """Obtiene resumen de licencias por funcionario para el año actual"""
-        hoy = timezone.now().date()
-        año_actual = hoy.year
-        
-        # Obtener todas las licencias del año actual
-        licencias = LicenciaMedica.objects.filter(
-            fecha_inicio__year=año_actual
-        ).select_related('usuario').order_by('usuario__last_name')
-        
-        # Agrupar por usuario
-        licencias_por_usuario = {}
-        for lic in licencias:
-            usuario_id = lic.usuario.id
-            if usuario_id not in licencias_por_usuario:
-                licencias_por_usuario[usuario_id] = {
-                    'usuario': lic.usuario,
-                    'total_dias': 0,
-                    'licencias': []
-                }
-            licencias_por_usuario[usuario_id]['total_dias'] += lic.dias
-            licencias_por_usuario[usuario_id]['licencias'].append({
-                'fecha_inicio': lic.fecha_inicio,
-                'dias': lic.dias,
-                'fecha_retorno': lic.fecha_inicio + timedelta(days=lic.dias),
-            })
-        
-        return sorted(licencias_por_usuario.values(), key=lambda x: x['usuario'].get_full_name())
-    
-    def get_dias_administrativos_activos(self):
-        """Obtiene los funcionarios que actualmente están en día administrativo"""
-        from permisos.models import SolicitudPermiso
-        
-        hoy = timezone.now().date()
-        
-        # Obtener permisos aprobados donde hoy está dentro del rango de fechas
-        permisos_activos = SolicitudPermiso.objects.select_related('usuario').filter(
-            estado='APROBADO',
-            fecha_inicio__lte=hoy,
-            fecha_termino__gte=hoy
-        ).order_by('usuario__last_name')
-        
-        resultado = []
-        for perm in permisos_activos:
-            dias_restantes = (perm.fecha_termino - hoy).days + 1
-            resultado.append({
-                'usuario': perm.usuario,
-                'fecha_inicio': perm.fecha_inicio,
-                'fecha_termino': perm.fecha_termino,
-                'dias_solicitados': perm.dias_solicitados,
-                'jornada': perm.get_jornada_display(),
-                'dias_restantes': dias_restantes,
-            })
-        
-        return resultado
-    
-    def get_proximos_dias_administrativos(self):
-        """Obtiene los permisos administrativos próximos (que aún no comienzan)"""
-        from permisos.models import SolicitudPermiso
-        
-        hoy = timezone.now().date()
-        
-        # Obtener permisos aprobados que aún no comienzan
-        permisos_proximos = SolicitudPermiso.objects.select_related('usuario').filter(
-            estado='APROBADO',
-            fecha_inicio__gt=hoy
-        ).order_by('fecha_inicio')[:5]
-        
-        resultado = []
-        for perm in permisos_proximos:
-            dias_para_iniciar = (perm.fecha_inicio - hoy).days
-            resultado.append({
-                'usuario': perm.usuario,
-                'fecha_inicio': perm.fecha_inicio,
-                'fecha_termino': perm.fecha_termino,
-                'dias_solicitados': perm.dias_solicitados,
-                'jornada': perm.get_jornada_display(),
-                'dias_para_iniciar': dias_para_iniciar,
-            })
-        
-        return resultado
-    
-    def get_weekly_chart_data(self):
-        labels = []
-        data = []
-        
-        for i in range(6, -1, -1):
-            fecha = timezone.now().date() - timedelta(days=i)
-            labels.append(fecha.strftime('%d/%m'))
-            
-            count = SolicitudPermiso.objects.filter(
-                created_at__date=fecha
-            ).count()
-            data.append(count)
-        
-        return labels, data
 
 
 class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):

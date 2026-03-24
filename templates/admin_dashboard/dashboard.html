@@ -20,147 +20,194 @@
             </a>
         </div>
     </div>
-
-    <!-- Listas de Permisos y Licencias (Ancho Completo) -->
-    <div class="flex flex-col gap-6 mb-6">
-
-        <!-- Panel de Días Administrativos (Permisos Actuales) -->
-        <div class="card p-6">
-            <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-                <i class="fas fa-calendar-day text-purple-600 mr-2"></i>
-                Permisos Actuales
-            </h3>
-
-            {% if dias_administrativos_activos %}
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Funcionario</th>
-                            <th class="hidden sm:table-cell text-center">Días</th>
-                            <th class="hidden md:table-cell text-center">Período</th>
-                            <th class="text-center">Retorno</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        {% for dia in dias_administrativos_activos %}
-                        <tr>
-                            <td class="font-medium">{{ dia.usuario.get_full_name }}</td>
-                            <td class="hidden sm:table-cell text-center">
-                                <span class="badge bg-purple-100 text-purple-800">
-                                    {{ dia.dias_solicitados }} 
-                                    {% if dia.jornada and dia.jornada != 'FD' %}({{ dia.jornada }}){% endif %}
-                                </span>
-                            </td>
-                            <td class="hidden md:table-cell text-center text-slate-500">
-                                {{ dia.fecha_inicio|date:"d/m" }} - {{ dia.fecha_termino|date:"d/m" }}
-                            </td>
-                            <td class="text-center">
-                                <span class="badge bg-emerald-100 text-emerald-800">
-                                    {{ dia.fecha_termino|date:"d/m" }}
-                                </span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <!-- Planificación Semanal -->
+    <div class="space-y-8 mb-8">
+        <!-- SECCIÓN: ESTA SEMANA -->
+        <div>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="h-8 w-1 bg-blue-600 rounded-full"></div>
+                <h2 class="text-xl font-black text-gray-900 uppercase tracking-tight">Esta Semana</h2>
+                <span class="text-[10px] font-bold text-gray-400 border border-gray-200 px-2 py-0.5 rounded-lg uppercase tracking-widest">Planificación Actual</span>
             </div>
-            {% else %}
-            <div class="text-center py-8 text-gray-500">
-                <i class="fas fa-check-circle text-3xl text-green-500 mb-2"></i>
-                <p>No hay permisos activos actualmente</p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Permisos Actuales de la Semana -->
+                <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                    <div class="px-6 py-4 border-b border-gray-50 flex items-center justify-between bg-purple-50/30">
+                        <h3 class="text-sm font-black text-gray-900 flex items-center gap-2">
+                            <i class="fas fa-calendar-day text-purple-600"></i>
+                            Permisos de la Semana
+                        </h3>
+                        {% if permisos_semana_actual %}
+                        <span class="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">{{ permisos_semana_actual|length }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        {% if permisos_semana_actual %}
+                        <div class="divide-y divide-gray-50">
+                            {% for perm in permisos_semana_actual %}
+                            <div class="px-6 py-3 hover:bg-gray-50 transition-colors flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-black text-[10px]">
+                                        {{ perm.usuario.first_name.0 }}{{ perm.usuario.last_name.0 }}
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-bold text-gray-900 leading-tight">{{ perm.usuario.get_full_name }}</span>
+                                        <span class="text-[10px] text-gray-400 font-medium">{{ perm.fecha_inicio|date:"d M" }} - {{ perm.fecha_termino|date:"d M" }}</span>
+                                    </div>
+                                </div>
+                                <div class="text-right flex flex-col items-end">
+                                    <span class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-100/30">{{ perm.dias_solicitados|floatformat:1 }} d</span>
+                                    <span class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">{{ perm.get_jornada_display }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="p-8 text-center">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sin solicitudes para esta semana</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Licencias Actuales de la Semana -->
+                <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                    <div class="px-6 py-4 border-b border-gray-50 flex items-center justify-between bg-rose-50/30">
+                        <h3 class="text-sm font-black text-gray-900 flex items-center gap-2">
+                            <i class="fas fa-briefcase-medical text-rose-600"></i>
+                            Licencias de la Semana
+                        </h3>
+                        {% if licencias_semana_actual %}
+                        <span class="bg-rose-100 text-rose-700 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">{{ licencias_semana_actual|length }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        {% if licencias_semana_actual %}
+                        <div class="divide-y divide-gray-50">
+                            {% for lic in licencias_semana_actual %}
+                            <div class="px-6 py-3 hover:bg-gray-50 transition-colors flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-black text-[10px]">
+                                        {{ lic.usuario.first_name.0 }}{{ lic.usuario.last_name.0 }}
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-xs font-bold text-gray-900 leading-tight">{{ lic.usuario.get_full_name }}</span>
+                                            {% if lic.es_activa %}
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                            {% endif %}
+                                        </div>
+                                        <span class="text-[10px] text-gray-400 font-medium">{{ lic.fecha_inicio|date:"d M" }} - {{ lic.fecha_retorno|date:"d M" }}</span>
+                                    </div>
+                                </div>
+                                <div class="text-right flex flex-col items-end">
+                                    <span class="text-[10px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-100/30">{{ lic.dias }} Días</span>
+                                    {% if lic.es_activa %}
+                                    <span class="text-[8px] font-black text-rose-500 uppercase tracking-tighter">Activa hoy</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="p-8 text-center text-gray-300">
+                             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sin licencias esta semana</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            {% endif %}
         </div>
 
-        <!-- Panel de Licencias Médicas (Licencias Activas) -->
-        <div class="card p-6">
-            <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
-                <i class="fas fa-user-md text-emerald-600 mr-2"></i>
-                Licencias Activas
-            </h3>
-
-            {% if licencias_activas_detalle %}
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Funcionario</th>
-                            <th class="text-center">Días</th>
-                            <th class="hidden md:table-cell text-center">Inicio</th>
-                            <th class="text-center">Retorno</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        {% for lic in licencias_activas_detalle %}
-                        <tr>
-                            <td class="font-medium">{{ lic.usuario.get_full_name}}</td>
-                            <td class="text-center">
-                                <span class="badge bg-red-100 text-red-800">{{ lic.dias}}</span>
-                            </td>
-                            <td class="hidden md:table-cell text-center text-slate-500">{{ lic.fecha_inicio|date:"d/m"}}</td>
-                            <td class="text-center">
-                                <span class="badge bg-emerald-100 text-emerald-800">
-                                    {{ lic.fecha_retorno|date:"d/m"}}
-                                </span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- SECCIÓN: PRÓXIMA SEMANA -->
+        <div class="opacity-90">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="h-8 w-1 bg-gray-400 rounded-full"></div>
+                <h2 class="text-lg font-black text-gray-700 uppercase tracking-tight">Próxima Semana</h2>
+                <span class="text-[10px] font-bold text-gray-400 border border-gray-200 px-2 py-0.5 rounded-lg uppercase tracking-widest">Planificación Futura</span>
             </div>
-            {% else %}
-            <div class="text-center py-8 text-gray-500">
-                <i class="fas fa-check-circle text-3xl text-green-500 mb-2"></i>
-                <p>No hay licencias activas actualmente</p>
-            </div>
-            {% endif %}
-        </div>
-    </div>
 
-    <!-- Gráfico de Permisos al final -->
-    <div class="card p-6 mb-6">
-        <h3 class="text-lg font-semibold text-slate-800 mb-4">Permisos (Últimos 7 días)</h3>
-        <div class="relative h-48">
-            <canvas id="permisosChart"></canvas>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Permisos Próxima Semana -->
+                <div class="bg-gray-50/50 rounded-3xl border border-gray-100 overflow-hidden flex flex-col border-dashed">
+                    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                        <h3 class="text-sm font-black text-gray-600 flex items-center gap-2">
+                            <i class="fas fa-calendar-plus opacity-60"></i>
+                            Permisos Solicitados
+                        </h3>
+                        {% if permisos_semana_proxima %}
+                        <span class="bg-gray-200 text-gray-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">{{ permisos_semana_proxima|length }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        {% if permisos_semana_proxima %}
+                        <div class="divide-y divide-gray-100/50">
+                            {% for perm in permisos_semana_proxima %}
+                            <div class="px-6 py-3 flex items-center justify-between gap-4 grayscale-[0.5]">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-white border border-gray-100 text-gray-500 flex items-center justify-center font-black text-[10px]">
+                                        {{ perm.usuario.first_name.0 }}{{ perm.usuario.last_name.0 }}
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-bold text-gray-700 leading-tight">{{ perm.usuario.get_full_name }}</span>
+                                        <span class="text-[10px] text-gray-400">{{ perm.fecha_inicio|date:"d M" }} - {{ perm.fecha_termino|date:"d M" }}</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] font-black text-gray-500 bg-white px-2 py-0.5 rounded-lg border border-gray-100">{{ perm.dias_solicitados|floatformat:1 }} d</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="p-8 text-center">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sin solicitudes próximas</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Licencias Próxima Semana -->
+                <div class="bg-gray-50/50 rounded-3xl border border-gray-100 overflow-hidden flex flex-col border-dashed">
+                    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                        <h3 class="text-sm font-black text-gray-600 flex items-center gap-2">
+                            <i class="fas fa-clock-rotate-left opacity-60"></i>
+                            Licencias Proyectadas
+                        </h3>
+                        {% if licencias_semana_proxima %}
+                        <span class="bg-gray-200 text-gray-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">{{ licencias_semana_proxima|length }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        {% if licencias_semana_proxima %}
+                        <div class="divide-y divide-gray-100/50">
+                            {% for lic in licencias_semana_proxima %}
+                            <div class="px-6 py-3 flex items-center justify-between gap-4 grayscale-[0.5]">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-white border border-gray-100 text-gray-500 flex items-center justify-center font-black text-[10px]">
+                                        {{ lic.usuario.first_name.0 }}{{ lic.usuario.last_name.0 }}
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-bold text-gray-700 leading-tight">{{ lic.usuario.get_full_name }}</span>
+                                        <span class="text-[10px] text-gray-400">{{ lic.fecha_inicio|date:"d M" }} - {{ lic.fecha_retorno|date:"d M" }}</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] font-black text-gray-500 bg-white px-2 py-0.5 rounded-lg border border-gray-100">{{ lic.dias }} Días</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="p-8 text-center text-gray-300">
+                             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sin licencias próximas</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const ctx = document.getElementById('permisosChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: {{ chart_labels| safe}},
-        datasets: [{
-            label: 'Permisos',
-            data: {{ chart_data| safe}},
-        backgroundColor: 'rgba(147, 51, 234, 0.5)',
-        borderColor: 'rgb(147, 51, 234)',
-        borderWidth: 1
-                }]
-            },
-        options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    stepSize: 1
-                }
-            }
-        },
-        plugins: {
-            legend: {
-                display: false
-            }
-        }
-    }
-        });
-    });
-</script>
 {% endblock %}
