@@ -257,16 +257,16 @@ class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                         Q(email__iexact=username) | Q(username__iexact=username)
                     ).first()
                     
-                    if user:
-                        # Solo mostrar si realmente está bloqueado según el handler de axes
-                        # o si tiene más fallos que el límite
-                        axes_blocked_users.append({
-                            'user': user,
-                            'is_axes_blocked': True,
-                            'blocked_at': attempt.attempt_time,
-                            'ip_address': attempt.ip_address,
-                            'attempts': attempt.failures_since_start
-                        })
+                    # Siempre agregamos a la lista para visibilidad, 
+                    # incluso si no encontramos un perfil de usuario (ej: alguien intentando correos inexistentes)
+                    axes_blocked_users.append({
+                        'user': user,
+                        'username_attempted': username,
+                        'is_axes_blocked': True,
+                        'blocked_at': attempt.attempt_time,
+                        'ip_address': attempt.ip_address,
+                        'attempts': attempt.failures_since_start
+                    })
         except Exception:
             pass
         
@@ -329,30 +329,42 @@ class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 from django.contrib.auth import get_user_model
                 User = get_user_model()
                 
-                user = get_object_or_404(CustomUser, pk=user_id)
+                user_id = request.POST.get('user_id')
+                username = request.POST.get('username')
                 
-                # Buscar y eliminar los intentos de acceso bloqueados para este usuario
-                AccessAttempt.objects.filter(
-                    username__iexact=user.email
-                ).delete()
+                description = ""
+                if user_id:
+                    user = get_object_or_404(CustomUser, pk=user_id)
+                    username = user.email
+                    description = f'Usuario {user.get_full_name()} (ID: {user.id}) ha sido desbloqueado de Axes.'
+                elif username:
+                    description = f'Usuario con correo {username} ha sido desbloqueado de Axes.'
                 
-                # También intentar desbloquear por IP si hay alguna
-                try:
-                    clear_lockouts(request)
-                except:
-                    pass
-                
-                messages.success(request, f'Usuario {user.get_full_name()} ha sido desbloqueado de Axes.')
-                
-                registrar_log(
-                    usuario=request.user,
-                    tipo='USER',
-                    accion='Desbloqueo Axes',
-                    descripcion=f'Usuario {user.get_full_name()} (ID: {user.id}) fue desbloqueado de Axes',
-                    ip_address=get_client_ip(request)
-                )
+                if username:
+                    # Buscar y eliminar los intentos de acceso bloqueados para este usuario
+                    AccessAttempt.objects.filter(
+                        username__iexact=username
+                    ).delete()
+                    
+                    # También intentar desbloquear por IP si hay alguna
+                    try:
+                        clear_lockouts(request)
+                    except:
+                        pass
+                    
+                    messages.success(request, description)
+                    
+                    registrar_log(
+                        usuario=request.user,
+                        tipo='USER',
+                        accion='Desbloqueo Axes',
+                        descripcion=description,
+                        ip_address=get_client_ip(request)
+                    )
+                else:
+                    messages.error(request, 'No se pudo identificar el usuario para desbloquear.')
             except Exception as e:
-                messages.error(request, f'Error al desbloquear de Axes: {str(e)}')
+                messages.error(request, f'Error al desbloquear: {str(e)}')
         
         return redirect('admin_dashboard:blocked_users')
 

@@ -132,14 +132,20 @@
                 <tbody class="divide-y divide-gray-200">
                     {% for item in axes_blocked_users %}
                     <tr>
-                        <td class="font-medium">{{ item.user.get_full_name }}</td>
-                        <td>
-                            <span class="text-slate-600">{{ item.user.run }}</span>
+                        <td class="font-medium">
+                            {% if item.user %}
+                                {{ item.user.get_full_name }}
+                            {% else %}
+                                <span class="text-orange-600 italic">Usuario desconocido</span>
+                                <div class="text-xs text-gray-400">{{ item.username_attempted }}</div>
+                            {% endif %}
                         </td>
                         <td>
-                            <span
-                                class="badge {% if item.user.role == 'ADMIN' %}bg-purple-100 text-purple-800{% elif item.user.role == 'DIRECTOR' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-                                {{ item.user.get_role_display }}
+                            <span class="text-slate-600">{{ item.user.run|default:'-' }}</span>
+                        </td>
+                        <td>
+                            <span class="badge {% if item.user.role == 'ADMIN' %}bg-purple-100 text-purple-800{% elif item.user.role == 'DIRECTOR' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ item.user.get_role_display|default:'N/A' }}
                             </span>
                         </td>
                         <td class="hidden md:table-cell">
@@ -155,10 +161,11 @@
                             <form method="post" class="inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="unblock_axes">
-                                <input type="hidden" name="user_id" value="{{ item.user.id }}">
+                                <input type="hidden" name="user_id" value="{{ item.user.id|default:'' }}">
+                                <input type="hidden" name="username" value="{{ item.username_attempted }}">
                                 <button type="submit"
                                     class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors"
-                                    onclick="return confirm('¿Está seguro que desea desbloquear a {{ item.user.get_full_name }} de Axes? Esto permitirá que intente iniciar sesión nuevamente.')">
+                                    onclick="return confirm('¿Está seguro que desea desbloquear a {% if item.user %}{{ item.user.get_full_name }}{% else %}{{ item.username_attempted }}{% endif %} de Axes?')">
                                     <i class="fas fa-unlock mr-2"></i>
                                     Desbloquear
                                 </button>
