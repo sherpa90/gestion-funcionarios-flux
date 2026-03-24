@@ -46,7 +46,7 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         ).count()
         
         # Licencias activas: cálculo eficiente (compatible con todas las DB)
-        # --- Lógica de Planificación Semanal ---
+        # --- Lógica de Planificación Semanal y Diaria ---
         hoy = timezone.now().date()
         # Lunes de la semana actual
         lunes_actual = hoy - timedelta(days=hoy.weekday())
@@ -55,25 +55,28 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         lunes_proximo = lunes_actual + timedelta(days=7)
         domingo_proximo = lunes_proximo + timedelta(days=6)
 
-        # 1. Permisos Semana Actual (incluye cualquier solapamiento con la semana)
-        context['permisos_semana_actual'] = SolicitudPermiso.objects.select_related('usuario').filter(
+        # 1. Permisos Semana Actual
+        permisos_actual = SolicitudPermiso.objects.select_related('usuario').filter(
             estado='APROBADO',
             fecha_inicio__lte=domingo_actual,
             fecha_termino__gte=lunes_actual
         ).order_by('usuario__first_name', 'usuario__last_name')
+        context['permisos_semana_actual'] = permisos_actual
 
         # 2. Permisos Semana Próxima
-        context['permisos_semana_proxima'] = SolicitudPermiso.objects.select_related('usuario').filter(
+        permisos_proxima = SolicitudPermiso.objects.select_related('usuario').filter(
             estado='APROBADO',
             fecha_inicio__lte=domingo_proximo,
             fecha_termino__gte=lunes_proximo
         ).order_by('usuario__first_name', 'usuario__last_name')
+        context['permisos_semana_proxima'] = permisos_proxima
 
         # 3. Licencias Semana Actual
-        licencias_semana_actual = []
-        for lic in LicenciaMedica.objects.select_related('usuario').filter(
+        licencias_actual_raw = LicenciaMedica.objects.select_related('usuario').filter(
             fecha_inicio__lte=domingo_actual
-        ):
+        )
+        licencias_semana_actual = []
+        for lic in licencias_actual_raw:
             fecha_retorno = lic.fecha_inicio + timedelta(days=lic.dias)
             if fecha_retorno >= lunes_actual:
                 licencias_semana_actual.append({
@@ -86,10 +89,11 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         context['licencias_semana_actual'] = sorted(licencias_semana_actual, key=lambda x: x['usuario'].get_full_name())
 
         # 4. Licencias Semana Próxima
-        licencias_semana_proxima = []
-        for lic in LicenciaMedica.objects.select_related('usuario').filter(
+        licencias_proxima_raw = LicenciaMedica.objects.select_related('usuario').filter(
             fecha_inicio__lte=domingo_proximo
-        ):
+        )
+        licencias_semana_proxima = []
+        for lic in licencias_proxima_raw:
             fecha_retorno = lic.fecha_inicio + timedelta(days=lic.dias)
             if fecha_retorno >= lunes_proximo:
                 licencias_semana_proxima.append({
@@ -99,6 +103,35 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                     'fecha_retorno': fecha_retorno,
                 })
         context['licencias_semana_proxima'] = sorted(licencias_semana_proxima, key=lambda x: x['usuario'].get_full_name())
+
+        # --- Cálculo de Impacto Diario (Conteo de Personas Fuera) ---
+        def get_diario_stats(inicio_semana, permisos_qs, licencias_list):
+            stats = []
+            dias_nombre = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+            for i in range(7):
+                dia = inicio_semana + timedelta(days=i)
+                # Contar permisos en este día
+                count_permisos = 0
+                for p in permisos_qs:
+                    if p.fecha_inicio <= dia <= p.fecha_termino:
+                        count_permisos += 1
+                
+                # Contar licencias en este día
+                count_licencias = 0
+                for l in licencias_list:
+                    if l['fecha_inicio'] <= dia <= l['fecha_retorno']:
+                        count_licencias += 1
+                
+                stats.append({
+                    'dia': dia,
+                    'nombre': dias_nombre[i],
+                    'total': count_permisos + count_licencias,
+                    'is_today': dia == hoy
+                })
+            return stats
+
+        context['daily_stats_actual'] = get_diario_stats(lunes_actual, permisos_actual, licencias_semana_actual)
+        context['daily_stats_proxima'] = get_diario_stats(lunes_proximo, permisos_proxima, licencias_semana_proxima)
 
         # Metas generales
         usuarios_stats = CustomUser.objects.filter(role='FUNCIONARIO').aggregate(
