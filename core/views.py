@@ -24,7 +24,12 @@ class CustomLoginView(LoginView):
         username = form.cleaned_data.get('username')
         if username:
             from django.contrib.auth import get_user_model
-            from axes.helpers import get_failures, get_max_failures
+            try:
+                from axes.helpers import get_request_attempt_count, get_max_login_attempts
+            except ImportError:
+                # Para axes < 8.x
+                from axes.helpers import get_failures, get_max_failures as get_max_login_attempts
+                get_request_attempt_count = lambda request: len(get_failures(request))
             
             User = get_user_model()
             try:
@@ -37,11 +42,15 @@ class CustomLoginView(LoginView):
                 
                 # Caso 2: El usuario está bloqueado por Axes (esto suele ser gestionado por el middleware, 
                 # pero agregamos una advertencia si estamos cerca del límite)
-                failures = get_failures(self.request)
-                max_failures = get_max_failures(self.request)
+                try:
+                    failures_count = get_request_attempt_count(self.request)
+                except Exception:
+                    failures_count = 0
+                    
+                max_failures = get_max_login_attempts(self.request)
                 
-                if len(failures) > 0:
-                    remaining = max_failures - len(failures)
+                if failures_count > 0:
+                    remaining = max_failures - failures_count
                     if remaining > 0 and remaining <= 2:
                         messages.warning(
                             self.request, 
