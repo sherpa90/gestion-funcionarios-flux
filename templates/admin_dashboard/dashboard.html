@@ -8,27 +8,27 @@
     <!-- Header -->
     <div class="mb-12">
         <h2 class="text-3xl font-black text-gray-900 tracking-tight">Panel de Planificación</h2>
-        <p class="text-sm font-bold text-gray-400 mt-1 uppercase tracking-wider">Gestión de ausencias y dotación del establecimiento</p>
+        <p class="text-sm font-bold text-gray-400 mt-1 uppercase tracking-wider">Gestión de ausencias y dotación del establecimiento (Lun - Vie)</p>
     </div>
 
     <!-- Planificación Semanal -->
-    <div class="flex flex-col gap-16 mb-16">
+    <div class="flex flex-col gap-20 mb-16">
         
         <!-- SECCIÓN: ESTA SEMANA -->
-        <div class="space-y-8">
+        <div class="space-y-10">
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 px-2">
                 <div class="flex items-center gap-4">
                     <div class="h-10 w-1.5 bg-blue-600 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.3)]"></div>
                     <div>
                         <h2 class="text-2xl font-black text-gray-900 uppercase tracking-tight leading-none">Esta Semana</h2>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Disponibilidad del personal por día</p>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Disponibilidad del personal por día laboral</p>
                     </div>
                 </div>
                 
-                <!-- Resumen Diario Actual -->
+                <!-- Resumen Diario Actual (L-V) -->
                 <div class="flex gap-2">
                     {% for day in daily_stats_actual %}
-                    <div class="flex flex-col items-center min-w-[45px] p-2 rounded-2xl border {% if day.is_today %}bg-blue-600 border-blue-600 shadow-lg shadow-blue-100{% else %}bg-white border-gray-100 shadow-sm{% endif %} transition-all">
+                    <div class="flex flex-col items-center min-w-[55px] p-2.5 rounded-2xl border {% if day.is_today %}bg-blue-600 border-blue-600 shadow-lg shadow-blue-100{% else %}bg-white border-gray-100 shadow-sm{% endif %} transition-all">
                         <span class="text-[9px] font-black {% if day.is_today %}text-white/80{% else %}text-gray-400{% endif %} uppercase tracking-tighter">{{ day.nombre }}</span>
                         <span class="text-sm font-black {% if day.is_today %}text-white{% else %}text-gray-900{% endif %}">{{ day.total }}</span>
                     </div>
@@ -36,113 +36,122 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <!-- Permisos Actuales -->
+            <!-- Layout Vertical Apilado: Permisos arriba, Licencias abajo -->
+            <div class="space-y-10">
+                <!-- Permisos Administrativos -->
                 <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-500 group">
                     <div class="px-10 py-7 border-b border-gray-50 flex items-center justify-between bg-purple-50/40">
-                        <h3 class="text-sm font-black text-gray-900 flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-purple-100/50 flex items-center justify-center">
-                                <i class="fas fa-calendar-day text-purple-600"></i>
+                        <h3 class="text-base font-black text-gray-900 flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-purple-100/50 flex items-center justify-center">
+                                <i class="fas fa-calendar-day text-purple-600 text-lg"></i>
                             </div>
                             Permisos Administrativos
                         </h3>
                         {% if permisos_semana_actual %}
-                        <span class="bg-purple-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase shadow-lg shadow-purple-200">{{ permisos_semana_actual|length }}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest mr-2">Personal Ausente</span>
+                            <span class="bg-purple-600 text-white text-[12px] font-black px-4 py-1 rounded-full uppercase shadow-lg shadow-purple-200">{{ permisos_semana_actual|length }}</span>
+                        </div>
                         {% endif %}
                     </div>
                     <div class="flex-1">
                         {% if permisos_semana_actual %}
                         <div class="divide-y divide-gray-50">
                             {% for perm in permisos_semana_actual %}
-                            <div class="px-10 py-5 hover:bg-gray-50/50 transition-colors flex items-center justify-between gap-6">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-50 to-white border border-purple-100 text-purple-600 flex items-center justify-center font-black text-sm shadow-sm group-hover:scale-110 transition-transform">
+                            <div class="px-10 py-6 hover:bg-gray-50/50 transition-colors flex items-center justify-between gap-6">
+                                <div class="flex items-center gap-6">
+                                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-50 to-white border border-purple-100 text-purple-600 flex items-center justify-center font-black text-base shadow-sm group-hover:scale-105 transition-transform duration-300">
                                         {{ perm.usuario.first_name.0 }}{{ perm.usuario.last_name.0 }}
                                     </div>
                                     <div class="flex flex-col">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-sm font-black text-gray-900 leading-tight">{{ perm.usuario.get_full_name }}</span>
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-base font-black text-gray-900 leading-tight">{{ perm.usuario.get_full_name }}</span>
                                             {% if perm.usuario.tipo_funcionario %}
-                                            <span class="text-[8px] font-black px-1.5 py-0.5 rounded {% if perm.usuario.tipo_funcionario == 'DOCENTE' %}bg-indigo-50 text-indigo-600 border border-indigo-100{% else %}bg-emerald-50 text-emerald-600 border border-emerald-100{% endif %} uppercase tracking-tighter">
+                                            <span class="text-[9px] font-black px-2 py-1 rounded-lg {% if perm.usuario.tipo_funcionario == 'DOCENTE' %}bg-indigo-50 text-indigo-700 border border-indigo-100{% else %}bg-emerald-50 text-emerald-700 border border-emerald-100{% endif %} uppercase tracking-tighter">
                                                 {{ perm.usuario.get_tipo_funcionario_display }}
                                             </span>
                                             {% endif %}
                                         </div>
-                                        <div class="flex items-center gap-2 mt-1">
-                                            <span class="text-[10px] font-bold text-purple-600 border border-purple-100 px-2 py-0.5 rounded-lg bg-white">{{ perm.fecha_inicio|date:"d M" }} - {{ perm.fecha_termino|date:"d M" }}</span>
+                                        <div class="flex items-center gap-2 mt-2">
+                                            <i class="fas fa-clock text-[10px] text-purple-400"></i>
+                                            <span class="text-[11px] font-bold text-purple-600 uppercase tracking-wide">{{ perm.fecha_inicio|date:"d M" }} al {{ perm.fecha_termino|date:"d M" }}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="text-right flex flex-col items-end">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-xs font-black text-gray-900">{{ perm.dias_solicitados|floatformat:1 }}</span>
-                                        <span class="text-[9px] font-bold text-gray-400 uppercase">Días</span>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-lg font-black text-gray-900">{{ perm.dias_solicitados|floatformat:1 }}</span>
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase">Días</span>
                                     </div>
-                                    <span class="text-[9px] font-black text-purple-500 uppercase tracking-tighter mt-1 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100/20">{{ perm.get_jornada_display }}</span>
+                                    <span class="text-[10px] font-black text-purple-500 uppercase tracking-widest bg-purple-50 px-3 py-1 rounded-lg border border-purple-100/20">{{ perm.get_jornada_display }}</span>
                                 </div>
                             </div>
                             {% endfor %}
                         </div>
                         {% else %}
                         <div class="p-16 text-center opacity-40">
-                            <i class="fas fa-calendar-check text-gray-200 text-5xl mb-4 block"></i>
-                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sin solicitudes activas</p>
+                            <i class="fas fa-calendar-check text-gray-200 text-6xl mb-4 block"></i>
+                            <p class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Sin solicitudes administrativas para esta semana</p>
                         </div>
                         {% endif %}
                     </div>
                 </div>
 
-                <!-- Licencias Actuales -->
+                <!-- Licencias Médicas -->
                 <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-rose-500/5 transition-all duration-500 group">
                     <div class="px-10 py-7 border-b border-gray-50 flex items-center justify-between bg-rose-50/40">
-                        <h3 class="text-sm font-black text-gray-900 flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-rose-100/50 flex items-center justify-center">
-                                <i class="fas fa-user-md text-rose-600"></i>
+                        <h3 class="text-base font-black text-gray-900 flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-rose-100/50 flex items-center justify-center">
+                                <i class="fas fa-user-md text-rose-600 text-lg"></i>
                             </div>
                             Licencias Médicas
                         </h3>
                         {% if licencias_semana_actual %}
-                        <span class="bg-rose-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase shadow-lg shadow-rose-200">{{ licencias_semana_actual|length }}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold text-rose-400 uppercase tracking-widest mr-2">Personal con Licencia</span>
+                            <span class="bg-rose-600 text-white text-[12px] font-black px-4 py-1 rounded-full uppercase shadow-lg shadow-rose-200">{{ licencias_semana_actual|length }}</span>
+                        </div>
                         {% endif %}
                     </div>
                     <div class="flex-1">
                         {% if licencias_semana_actual %}
                         <div class="divide-y divide-gray-50">
                             {% for lic in licencias_semana_actual %}
-                            <div class="px-10 py-5 hover:bg-gray-50/50 transition-colors flex items-center justify-between gap-6">
-                                <div class="flex items-center gap-4">
+                            <div class="px-10 py-6 hover:bg-gray-50/50 transition-colors flex items-center justify-between gap-6">
+                                <div class="flex items-center gap-6">
                                     <div class="relative">
-                                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-50 to-white border border-rose-100 text-rose-600 flex items-center justify-center font-black text-sm shadow-sm group-hover:scale-110 transition-transform">
+                                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-50 to-white border border-rose-100 text-rose-600 flex items-center justify-center font-black text-base shadow-sm group-hover:scale-105 transition-transform duration-300">
                                             {{ lic.usuario.first_name.0 }}{{ lic.usuario.last_name.0 }}
                                         </div>
                                         {% if lic.es_activa %}
-                                        <span class="absolute -top-1 -right-1 flex h-4 w-4">
+                                        <span class="absolute -top-1 -right-1 flex h-5 w-5">
                                           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                          <span class="relative inline-flex rounded-full h-4 w-4 bg-rose-600 border-2 border-white"></span>
+                                          <span class="relative inline-flex rounded-full h-5 w-5 bg-rose-600 border-4 border-white"></span>
                                         </span>
                                         {% endif %}
                                     </div>
                                     <div class="flex flex-col">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-sm font-black text-gray-900 leading-tight">{{ lic.usuario.get_full_name }}</span>
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-base font-black text-gray-900 leading-tight">{{ lic.usuario.get_full_name }}</span>
                                             {% if lic.usuario.tipo_funcionario %}
-                                            <span class="text-[8px] font-black px-1.5 py-0.5 rounded {% if lic.usuario.tipo_funcionario == 'DOCENTE' %}bg-indigo-50 text-indigo-600 border border-indigo-100{% else %}bg-emerald-50 text-emerald-600 border border-emerald-100{% endif %} uppercase tracking-tighter">
+                                            <span class="text-[9px] font-black px-2 py-1 rounded-lg {% if lic.usuario.tipo_funcionario == 'DOCENTE' %}bg-indigo-50 text-indigo-700 border border-indigo-100{% else %}bg-emerald-50 text-emerald-700 border border-emerald-100{% endif %} uppercase tracking-tighter">
                                                 {{ lic.usuario.get_tipo_funcionario_display }}
                                             </span>
                                             {% endif %}
                                         </div>
-                                        <div class="flex items-center gap-2 mt-1">
-                                            <span class="text-[10px] font-bold text-rose-600 border border-rose-100 px-2 py-0.5 rounded-lg bg-white">{{ lic.fecha_inicio|date:"d M" }} - {{ lic.fecha_retorno|date:"d M" }}</span>
+                                        <div class="flex items-center gap-2 mt-2">
+                                            <i class="fas fa-calendar-alt text-[10px] text-rose-400"></i>
+                                            <span class="text-[11px] font-bold text-rose-600 uppercase tracking-wide">{{ lic.fecha_inicio|date:"d M" }} al {{ lic.fecha_retorno|date:"d M" }}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="text-right flex flex-col items-end">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-xs font-black text-rose-700">{{ lic.dias }}</span>
-                                        <span class="text-[9px] font-bold text-gray-400 uppercase">Días</span>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-lg font-black text-rose-700">{{ lic.dias }}</span>
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase">Días</span>
                                     </div>
                                     {% if lic.es_activa %}
-                                    <span class="text-[9px] font-black text-rose-500 uppercase tracking-tighter mt-1 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100/20">Ausencia Activa</span>
+                                    <span class="text-[9px] font-black text-white uppercase tracking-widest mt-1 bg-rose-500 px-3 py-1 rounded-lg border border-rose-600/20 shadow-sm">Ausencia Activa</span>
                                     {% endif %}
                                 </div>
                             </div>
@@ -150,8 +159,8 @@
                         </div>
                         {% else %}
                         <div class="p-16 text-center opacity-40">
-                            <i class="fas fa-heart-pulse text-gray-200 text-5xl mb-4 block"></i>
-                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sin licencias activas</p>
+                            <i class="fas fa-heart-pulse text-gray-200 text-6xl mb-4 block"></i>
+                            <p class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Sin licencias médicas reportadas esta semana</p>
                         </div>
                         {% endif %}
                     </div>
@@ -160,20 +169,20 @@
         </div>
 
         <!-- SECCIÓN: PRÓXIMA SEMANA -->
-        <div class="space-y-8">
+        <div class="space-y-10">
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 px-2">
                 <div class="flex items-center gap-4">
                     <div class="h-10 w-1.5 bg-gray-400 rounded-full shadow-[0_0_15px_rgba(156,163,175,0.2)]"></div>
                     <div>
                         <h2 class="text-2xl font-black text-gray-700 uppercase tracking-tight leading-none">Próxima Semana</h2>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Planificación proactiva y cobertura</p>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Planificación proactiva y cobertura para días hábiles</p>
                     </div>
                 </div>
                 
-                <!-- Resumen Diario Próxima -->
+                <!-- Resumen Diario Próxima (L-V) -->
                 <div class="flex gap-2 opacity-80">
                     {% for day in daily_stats_proxima %}
-                    <div class="flex flex-col items-center min-w-[45px] p-2 rounded-2xl border bg-white border-gray-100 shadow-sm">
+                    <div class="flex flex-col items-center min-w-[55px] p-2.5 rounded-2xl border bg-white border-gray-100 shadow-sm">
                         <span class="text-[9px] font-black text-gray-400 uppercase tracking-tighter">{{ day.nombre }}</span>
                         <span class="text-sm font-black text-gray-700">{{ day.total }}</span>
                     </div>
@@ -181,94 +190,94 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div class="space-y-10">
                 <!-- Permisos Próximos -->
-                <div class="bg-gray-50/30 rounded-[2.5rem] border border-gray-200 border-dashed overflow-hidden flex flex-col group/next">
+                <div class="bg-gray-50/20 rounded-[2.5rem] border border-gray-200 border-dashed overflow-hidden flex flex-col hover:border-solid hover:bg-white transition-all duration-500 group/next">
                     <div class="px-10 py-7 border-b border-gray-100 flex items-center justify-between">
-                        <h3 class="text-sm font-black text-gray-600 flex items-center gap-3">
-                            <i class="fas fa-calendar-plus opacity-40"></i>
-                            Permisos Solicitados
+                        <h3 class="text-base font-black text-gray-600 flex items-center gap-3">
+                            <i class="fas fa-calendar-plus opacity-40 text-lg"></i>
+                            Permisos Administrativos Solicitados
                         </h3>
                         {% if permisos_semana_proxima %}
-                        <span class="bg-gray-200 text-gray-600 text-[10px] font-black px-3 py-1 rounded-full uppercase">{{ permisos_semana_proxima|length }}</span>
+                        <span class="bg-gray-200 text-gray-600 text-[12px] font-black px-4 py-1 rounded-full uppercase">{{ permisos_semana_proxima|length }}</span>
                         {% endif %}
                     </div>
                     <div class="flex-1">
                         {% if permisos_semana_proxima %}
                         <div class="divide-y divide-gray-100">
                             {% for perm in permisos_semana_proxima %}
-                            <div class="px-10 py-5 flex items-center justify-between gap-6 grayscale-[0.3] opacity-80 hover:grayscale-0 hover:opacity-100 transition-all">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-2xl bg-white border border-gray-100 text-gray-400 flex items-center justify-center font-black text-xs">
+                            <div class="px-10 py-6 flex items-center justify-between gap-6 grayscale-[0.4] opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+                                <div class="flex items-center gap-6">
+                                    <div class="w-14 h-14 rounded-2xl bg-white border border-gray-100 text-gray-400 flex items-center justify-center font-black text-base shadow-sm">
                                         {{ perm.usuario.first_name.0 }}{{ perm.usuario.last_name.0 }}
                                     </div>
                                     <div class="flex flex-col">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-sm font-black text-gray-700 leading-tight">{{ perm.usuario.get_full_name }}</span>
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-base font-black text-gray-700 leading-tight">{{ perm.usuario.get_full_name }}</span>
                                             {% if perm.usuario.tipo_funcionario %}
-                                            <span class="text-[7px] font-black px-1 py-0.5 rounded bg-white border border-gray-200 text-gray-400 uppercase tracking-tighter">
+                                            <span class="text-[8px] font-black px-2 py-1 rounded-lg bg-white border border-gray-200 text-gray-400 uppercase tracking-tighter">
                                                 {{ perm.usuario.get_tipo_funcionario_display }}
                                             </span>
                                             {% endif %}
                                         </div>
-                                        <span class="text-[10px] font-bold text-gray-400 uppercase mt-1">{{ perm.fecha_inicio|date:"d M" }} - {{ perm.fecha_termino|date:"d M" }}</span>
+                                        <span class="text-[11px] font-bold text-gray-400 uppercase mt-2 tracking-wide">{{ perm.fecha_inicio|date:"d M" }} al {{ perm.fecha_termino|date:"d M" }}</span>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <span class="text-xs font-black text-gray-600 bg-white px-2.5 py-1 rounded-xl border border-gray-200">{{ perm.dias_solicitados|floatformat:1 }} d</span>
+                                    <span class="text-sm font-black text-gray-600 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm">{{ perm.dias_solicitados|floatformat:1 }} d</span>
                                 </div>
                             </div>
                             {% endfor %}
                         </div>
                         {% else %}
                         <div class="p-16 text-center opacity-30">
-                            <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Sin solicitudes para la próxima semana</p>
+                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Sin solicitudes para la próxima semana laboral</p>
                         </div>
                         {% endif %}
                     </div>
                 </div>
 
                 <!-- Licencias Próximas -->
-                <div class="bg-gray-50/30 rounded-[2.5rem] border border-gray-200 border-dashed overflow-hidden flex flex-col group/next">
+                <div class="bg-gray-50/20 rounded-[2.5rem] border border-gray-200 border-dashed overflow-hidden flex flex-col hover:border-solid hover:bg-white transition-all duration-500 group/next">
                     <div class="px-10 py-7 border-b border-gray-100 flex items-center justify-between">
-                        <h3 class="text-sm font-black text-gray-600 flex items-center gap-3">
-                            <i class="fas fa-clock-rotate-left opacity-40"></i>
-                            Licencias Proyectadas
+                        <h3 class="text-base font-black text-gray-600 flex items-center gap-3">
+                            <i class="fas fa-clock-rotate-left opacity-40 text-lg"></i>
+                            Licencias Médicas Proyectadas
                         </h3>
                         {% if licencias_semana_proxima %}
-                        <span class="bg-gray-200 text-gray-600 text-[10px] font-black px-3 py-1 rounded-full uppercase">{{ licencias_semana_proxima|length }}</span>
+                        <span class="bg-gray-200 text-gray-600 text-[12px] font-black px-4 py-1 rounded-full uppercase">{{ licencias_semana_proxima|length }}</span>
                         {% endif %}
                     </div>
                     <div class="flex-1">
                         {% if licencias_semana_proxima %}
                         <div class="divide-y divide-gray-100">
                             {% for lic in licencias_semana_proxima %}
-                            <div class="px-10 py-5 flex items-center justify-between gap-6 grayscale-[0.3] opacity-80 hover:grayscale-0 hover:opacity-100 transition-all">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-2xl bg-white border border-gray-100 text-gray-400 flex items-center justify-center font-black text-xs">
+                            <div class="px-10 py-6 flex items-center justify-between gap-6 grayscale-[0.4] opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+                                <div class="flex items-center gap-6">
+                                    <div class="w-14 h-14 rounded-2xl bg-white border border-gray-100 text-gray-400 flex items-center justify-center font-black text-base shadow-sm">
                                         {{ lic.usuario.first_name.0 }}{{ lic.usuario.last_name.0 }}
                                     </div>
                                     <div class="flex flex-col">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-sm font-black text-gray-700 leading-tight">{{ lic.usuario.get_full_name }}</span>
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-base font-black text-gray-700 leading-tight">{{ lic.usuario.get_full_name }}</span>
                                             {% if lic.usuario.tipo_funcionario %}
-                                            <span class="text-[7px] font-black px-1 py-0.5 rounded bg-white border border-gray-200 text-gray-400 uppercase tracking-tighter">
+                                            <span class="text-[8px] font-black px-2 py-1 rounded-lg bg-white border border-gray-200 text-gray-400 uppercase tracking-tighter">
                                                 {{ lic.usuario.get_tipo_funcionario_display }}
                                             </span>
                                             {% endif %}
                                         </div>
-                                        <span class="text-[10px] font-bold text-gray-400 uppercase mt-1">{{ lic.fecha_inicio|date:"d M" }} - {{ lic.fecha_retorno|date:"d M" }}</span>
+                                        <span class="text-[11px] font-bold text-gray-400 uppercase mt-2 tracking-wide">{{ lic.fecha_inicio|date:"d M" }} al {{ lic.fecha_retorno|date:"d M" }}</span>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <span class="text-xs font-black text-gray-600 bg-white px-2.5 py-1 rounded-xl border border-gray-200">{{ lic.dias }} Días</span>
+                                    <span class="text-sm font-black text-gray-600 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm">{{ lic.dias }} Días</span>
                                 </div>
                             </div>
                             {% endfor %}
                         </div>
                         {% else %}
                         <div class="p-16 text-center opacity-30">
-                             <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Sin licencias proyectadas</p>
+                             <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Sin licencias proyectadas para la próxima semana laboral</p>
                         </div>
                         {% endif %}
                     </div>

@@ -104,11 +104,11 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 })
         context['licencias_semana_proxima'] = sorted(licencias_semana_proxima, key=lambda x: x['usuario'].get_full_name())
 
-        # --- Cálculo de Impacto Diario (Conteo de Personas Fuera) ---
+        # --- Cálculo de Impacto Diario (Conteo de Personas Fuera - Solo Diás Hábiles) ---
         def get_diario_stats(inicio_semana, permisos_qs, licencias_list):
             stats = []
-            dias_nombre = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
-            for i in range(7):
+            dias_nombre = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
+            for i in range(5):
                 dia = inicio_semana + timedelta(days=i)
                 # Contar permisos en este día
                 count_permisos = 0
