@@ -189,7 +189,12 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 text-center">
-                            <span class="text-sm font-bold text-gray-900 bg-gray-100 px-2 py-1 rounded-md">{{ solicitud.dias_solicitados }}</span>
+                            <span class="text-sm font-bold text-gray-900 bg-gray-100 px-2 py-1 rounded-md">
+                                {{ solicitud.dias_solicitados }}
+                                {% if solicitud.dias_solicitados == 0.5 %}
+                                <span class="text-[10px] text-blue-600 ml-1 font-black">{% if solicitud.jornada == 'AM' %}AM{% elif solicitud.jornada == 'PM' %}PM{% endif %}</span>
+                                {% endif %}
+                            </span>
                         </td>
                         <td class="px-6 py-4">
                             {% if solicitud.estado == 'APROBADO' %}
@@ -262,7 +267,12 @@
                     </div>
                     <div class="text-center">
                         <div class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Días</div>
-                        <div class="text-lg font-black text-blue-600">{{ solicitud.dias_solicitados }}</div>
+                        <div class="text-lg font-black text-blue-600">
+                            {{ solicitud.dias_solicitados }}
+                            {% if solicitud.dias_solicitados == 0.5 %}
+                            <span class="text-xs">{% if solicitud.jornada == 'AM' %}AM{% elif solicitud.jornada == 'PM' %}PM{% endif %}</span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 
@@ -287,19 +297,47 @@
         <div class="bg-gray-50/50 px-5 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 gap-4">
             <div class="text-xs font-bold text-gray-400 uppercase tracking-widest text-center sm:text-left">
                 Página <span class="text-gray-900">{{ page_obj.number }}</span> de {{ page_obj.paginator.num_pages }}
+                <span class="mx-2 text-gray-200">|</span>
+                <span class="text-gray-500 font-medium lowercase italic">{{ page_obj.paginator.count }} registros totales</span>
             </div>
-            <div class="flex items-center space-x-2 w-full sm:w-auto">
+            <div class="flex items-center space-x-1.5 w-full sm:w-auto justify-center">
                 {% if page_obj.has_previous %}
+                <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="inline-flex items-center justify-center w-9 h-9 bg-white border border-gray-200 text-gray-400 rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Primera página">
+                    <i class="fas fa-step-backward text-[10px]"></i>
+                </a>
                 <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                   class="flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-2 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-50 shadow-xs transition">
-                    <i class="fas fa-chevron-left mr-2"></i> Anterior
+                   class="inline-flex items-center justify-center w-9 h-9 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">
+                    <i class="fas fa-chevron-left text-[10px]"></i>
                 </a>
                 {% endif %}
                 
+                <div class="flex items-center space-x-1 hidden md:flex">
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span class="inline-flex items-center justify-center w-9 h-9 bg-blue-600 text-white text-xs font-black rounded-xl shadow-md shadow-blue-200">{{ num }}</span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                               class="inline-flex items-center justify-center w-9 h-9 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">{{ num }}</a>
+                        {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                            <span class="text-gray-300 px-1">...</span>
+                            <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                               class="inline-flex items-center justify-center w-9 h-9 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <!-- Indicador simplificado para móvil -->
+                <span class="md:hidden px-3 py-1.5 bg-gray-100 text-gray-500 text-[10px] font-bold rounded-lg">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
                 {% if page_obj.has_next %}
                 <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                   class="flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-2 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-50 shadow-xs transition">
-                    Siguiente <i class="fas fa-chevron-right ml-2"></i>
+                   class="inline-flex items-center justify-center w-9 h-9 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">
+                    <i class="fas fa-chevron-right text-[10px]"></i>
+                </a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="inline-flex items-center justify-center w-9 h-9 bg-white border border-gray-200 text-gray-400 rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Última página">
+                    <i class="fas fa-step-forward text-[10px]"></i>
                 </a>
                 {% endif %}
             </div>

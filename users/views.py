@@ -20,6 +20,7 @@ import string
 from io import BytesIO
 
 from core.security import audit_log
+from admin_dashboard.utils import registrar_log, get_client_ip
 
 from django.db.models import Q
 
@@ -94,8 +95,13 @@ class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         user = self.object
-        messages.success(self.request, 'Usuario creado exitosamente.')
-        audit_log(self.request, 'USER_CREATED', f'New user: {user.run} - {user.email}')
+        registrar_log(
+            usuario=self.request.user,
+            tipo='CREATE',
+            accion='Creación de Usuario',
+            descripcion=f'Se creó usuario: {user.run} - {user.email}',
+            ip_address=get_client_ip(self.request)
+        )
         return response
 
 class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -114,8 +120,13 @@ class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return kwargs
     
     def form_valid(self, form):
-        messages.success(self.request, 'Usuario actualizado exitosamente')
-        audit_log(self.request, 'USER_UPDATED', f'User updated: {self.object.run} - {self.object.email}')
+        registrar_log(
+            usuario=self.request.user,
+            tipo='UPDATE',
+            accion='Actualización de Usuario',
+            descripcion=f'Se actualizó usuario: {self.object.run} - {self.object.email}',
+            ip_address=get_client_ip(self.request)
+        )
         return super().form_valid(form)
 
 
@@ -129,7 +140,13 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     
     def delete(self, request, *args, **kwargs):
         user_to_delete = self.get_object()
-        audit_log(self.request, 'USER_DELETED', f'User deleted: {user_to_delete.run} - {user_to_delete.email}')
+        registrar_log(
+            usuario=self.request.user,
+            tipo='DELETE',
+            accion='Eliminación de Usuario',
+            descripcion=f'Se eliminó usuario: {user_to_delete.run} - {user_to_delete.email}',
+            ip_address=get_client_ip(self.request)
+        )
         messages.success(self.request, 'Usuario eliminado exitosamente')
         return super().delete(request, *args, **kwargs)
 
@@ -218,7 +235,6 @@ class BulkUserImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
                     
                     created_users.append(user)
                     passwords[run] = password
-                    audit_log(self.request, 'BULK_USER_CREATED', f'Bulk created user: {user.run} - {user.email}')
                     
                 except Exception as e:
                     errors.append(f"Fila {row_num}: Error - {str(e)}")
@@ -232,6 +248,14 @@ class BulkUserImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
                 
                 # Guardar contraseñas para mostrar
                 self.request.session['bulk_passwords'] = passwords
+                
+                registrar_log(
+                    usuario=self.request.user,
+                    tipo='IMPORT',
+                    accion='Importación Masiva de Usuarios',
+                    descripcion=f'Se importaron exitosamente {len(created_users)} usuarios desde Excel',
+                    ip_address=get_client_ip(self.request)
+                )
                 
             if errors:
                 for error in errors:
@@ -361,7 +385,13 @@ class ResetUserPasswordView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
         if target_user == request.user:
             update_session_auth_hash(request, target_user)
         
-        audit_log(self.request, 'PASSWORD_RESET', f'Admin hard-reset password for: {target_user.run}')
+        registrar_log(
+            usuario=self.request.user,
+            tipo='UPDATE',
+            accion='Reset Password Admin',
+            descripcion=f'Admin reseteó contraseña para: {target_user.run}',
+            ip_address=get_client_ip(self.request)
+        )
         
         messages.success(
             request,
@@ -390,7 +420,13 @@ class ChangeOwnPasswordView(LoginRequiredMixin, TemplateView):
             # Mantener la sesión activa después de cambiar la contraseña
             update_session_auth_hash(request, user)
             
-            audit_log(request, 'PASSWORD_CHANGED', f'User changed own password')
+            registrar_log(
+                usuario=request.user,
+                tipo='UPDATE',
+                accion='Cambio Propia Contraseña',
+                descripcion='Usuario cambió su propia contraseña',
+                ip_address=get_client_ip(request)
+            )
             
             messages.success(request, 'Tu contraseña ha sido cambiada exitosamente.')
             return redirect('dashboard')

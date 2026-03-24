@@ -11,6 +11,7 @@ from users.models import CustomUser
 from datetime import datetime
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from admin_dashboard.utils import registrar_log, get_client_ip
 
 
 @login_required
@@ -137,6 +138,13 @@ def crear_equipo(request):
                     activo=True
                 )
 
+            registrar_log(
+                usuario=request.user,
+                tipo='CREATE',
+                accion='Creación de Equipo',
+                descripcion=f'Se creó equipo {equipo.get_tipo_display()} {equipo.marca} {equipo.modelo} (Inv: {equipo.numero_inventario})',
+                ip_address=get_client_ip(request)
+            )
             messages.success(request, f'Equipo {equipo} creado exitosamente.')
             return redirect('lista_equipos')
         except Exception as e:
@@ -213,6 +221,13 @@ def editar_equipo(request, equipo_id):
                     equipo.estado = 'DISPONIBLE'
                     equipo.save()
 
+        registrar_log(
+            usuario=request.user,
+            tipo='UPDATE',
+            accion='Actualización de Equipo',
+            descripcion=f'Se actualizó equipo {equipo.get_tipo_display()} {equipo.marca} {equipo.modelo} (Inv: {equipo.numero_inventario})',
+            ip_address=get_client_ip(request)
+        )
         messages.success(request, 'Equipo actualizado exitosamente.')
         return redirect('lista_equipos')
 
@@ -239,6 +254,13 @@ def eliminar_equipo(request, equipo_id):
     equipo = get_object_or_404(Equipo, id=equipo_id)
 
     if request.method == 'POST':
+        registrar_log(
+            usuario=request.user,
+            tipo='DELETE',
+            accion='Eliminación de Equipo',
+            descripcion=f'Se eliminó equipo {equipo.get_tipo_display()} {equipo.marca} {equipo.modelo} (Inv: {equipo.numero_inventario})',
+            ip_address=get_client_ip(request)
+        )
         equipo.delete()
         messages.success(request, 'Equipo eliminado exitosamente.')
         return redirect('lista_equipos')
@@ -274,6 +296,13 @@ def asignar_equipo(request, equipo_id):
                 activo=True
             )
 
+            registrar_log(
+                usuario=request.user,
+                tipo='UPDATE',
+                accion='Asignación de Equipo',
+                descripcion=f'Se asignó {equipo} a {funcionario.get_full_name()}',
+                ip_address=get_client_ip(request)
+            )
             messages.success(request, f'Equipo asignado a {funcionario.get_full_name()}')
             return redirect('lista_equipos')
         except CustomUser.DoesNotExist:
@@ -322,6 +351,13 @@ def devolver_equipo(request, prestamo_id):
         prestamo.activo = False
         prestamo.fecha_devolucion = timezone.now().date()
         prestamo.save()
+        registrar_log(
+            usuario=request.user,
+            tipo='UPDATE',
+            accion='Devolución de Equipo',
+            descripcion=f'Se devolvió equipo {prestamo.equipo} por {prestamo.funcionario.get_full_name()}',
+            ip_address=get_client_ip(request)
+        )
         messages.success(request, f'Equipo {prestamo.equipo} devuelto exitosamente.')
         return redirect('lista_equipos')
 
@@ -437,6 +473,13 @@ def actualizar_estado_falla(request, falla_id):
         else:
             messages.error(request, 'Estado no válido.')
             
+    registrar_log(
+        usuario=request.user,
+        tipo='UPDATE',
+        accion='Actualización Estado Falla',
+        descripcion=f'Se actualizó falla de equipo {falla.equipo} a estado {falla.get_estado_display()}',
+        ip_address=get_client_ip(request)
+    )
     return redirect('gestion_fallas')
 
 

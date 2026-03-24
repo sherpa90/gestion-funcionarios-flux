@@ -10,6 +10,7 @@ from .models import SolicitudPermiso
 from .forms import SolicitudForm, SolicitudBypassForm
 from users.models import CustomUser
 from core.services import BusinessDayCalculator
+from admin_dashboard.utils import registrar_log, get_client_ip
 
 class SolicitudCancelView(LoginRequiredMixin, View):
     """Vista para que el usuario pueda cancelar su propia solicitud pendiente"""
@@ -60,6 +61,13 @@ class SolicitudCreateView(LoginRequiredMixin, CreateView):
 
         # Todas las solicitudes quedan pendientes para llevar un mejor orden (incluyendo las del Director)
         form.instance.estado = 'PENDIENTE'
+        registrar_log(
+            usuario=self.request.user,
+            tipo='CREATE',
+            accion='Solicitud de Permiso',
+            descripcion=f'Usuario {self.request.user.get_full_name()} solicitó {form.instance.dias_solicitados} días de permiso.',
+            ip_address=get_client_ip(self.request)
+        )
         messages.success(self.request, 'Solicitud enviada para aprobación.')
 
         return super().form_valid(form)
@@ -148,14 +156,32 @@ class SolicitudDirectorDashboardView(LoginRequiredMixin, UserPassesTestMixin, Li
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Historial con paginación - mostrar 10 por página
+        # Historial con paginación - mostrar 10 por página (usar h_page)
         historial_qs = SolicitudPermiso.objects.exclude(estado='PENDIENTE').order_by('-updated_at')
         paginator = Paginator(historial_qs, 10)
-        page_number = self.request.GET.get('page')
+        page_number = self.request.GET.get('h_page')
         context['historial_page'] = paginator.get_page(page_number)
-        # Agregar información de días disponibles para directores
+        # --- Lógica de Resumen Semanal de Aceptados ---
+        hoy = timezone.now().date()
+        lunes = hoy - timedelta(days=hoy.weekday())
+        
+        dias_semana = []
+        for i in range(5): # Lunes a Viernes
+            fecha_dia = lunes + timedelta(days=i)
+            # Contar permisos aprobados que cubren este día
+            count = SolicitudPermiso.objects.filter(
+                estado='APROBADO',
+                fecha_inicio__lte=fecha_dia,
+                fecha_termino__gte=fecha_dia
+            ).count()
+            dias_semana.append({
+                'nombre': ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'][i],
+                'count': count,
+                'es_hoy': fecha_dia == hoy
+            })
+        context['resumen_semanal'] = dias_semana
+        
         context['dias_disponibles'] = self.request.user.dias_disponibles
-        # Total de días administrativos por año (usar valor del usuario o valor por defecto)
         context['dias_totales'] = getattr(self.request.user, 'dias_totales', 6.0)
         return context
 
@@ -163,6 +189,7 @@ class SolicitudAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = SolicitudPermiso
     template_name = 'permisos/dashboard_director.html'
     context_object_name = 'solicitudes'
+    paginate_by = 15
 
     def test_func(self):
         # DIRECTOR, DIRECTIVO y SECRETARIA pueden acceder
@@ -173,11 +200,31 @@ class SolicitudAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Historial con paginación - mostrar 10 por página
+        # Historial con paginación - mostrar 10 por página (usar h_page)
         historial_qs = SolicitudPermiso.objects.exclude(estado='PENDIENTE').order_by('-updated_at')
         paginator = Paginator(historial_qs, 10)
-        page_number = self.request.GET.get('page')
+        page_number = self.request.GET.get('h_page')
         context['historial_page'] = paginator.get_page(page_number)
+
+        # --- Lógica de Resumen Semanal de Aceptados ---
+        hoy = timezone.now().date()
+        lunes = hoy - timedelta(days=hoy.weekday())
+        
+        dias_semana = []
+        for i in range(5):
+            fecha_dia = lunes + timedelta(days=i)
+            count = SolicitudPermiso.objects.filter(
+                estado='APROBADO',
+                fecha_inicio__lte=fecha_dia,
+                fecha_termino__gte=fecha_dia
+            ).count()
+            dias_semana.append({
+                'nombre': ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'][i],
+                'count': count,
+                'es_hoy': fecha_dia == hoy
+            })
+        context['resumen_semanal'] = dias_semana
+        
         return context
 
 class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -207,6 +254,13 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
                 solicitud.usuario.dias_disponibles -= solicitud.dias_solicitados
                 solicitud.usuario.save()
                 solicitud.save()
+                registrar_log(
+                    usuario=request.user,
+                    tipo='APPROVE',
+                    accion='Aprobación de Permiso',
+                    descripcion=f'Se aprobó permiso de {solicitud.usuario.get_full_name()} ({solicitud.dias_solicitados} días)',
+                    ip_address=get_client_ip(request)
+                )
                 messages.success(request, 'Solicitud aprobada.')
             else:
                 messages.error(request, 'El usuario no tiene saldo suficiente.')
@@ -214,6 +268,13 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
             solicitud.estado = 'RECHAZADO'
             solicitud.motivo_rechazo = request.POST.get('motivo_rechazo', '')
             solicitud.save()
+            registrar_log(
+                usuario=request.user,
+                tipo='REJECT',
+                accion='Rechazo de Permiso',
+                descripcion=f'Se rechazó permiso de {solicitud.usuario.get_full_name()}',
+                ip_address=get_client_ip(request)
+            )
             messages.success(request, 'Solicitud rechazada.')
         elif action == 'cancel':
             # Solo admins, secretarias y directores pueden cancelar solicitudes aprobadas
@@ -226,6 +287,13 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
                 solicitud.usuario.dias_disponibles += solicitud.dias_solicitados
                 solicitud.usuario.save()
                 solicitud.save()
+                registrar_log(
+                    usuario=request.user,
+                    tipo='DELETE',
+                    accion='Cancelación Admin de Permiso',
+                    descripcion=f'Admin canceló permiso aprobado de {solicitud.usuario.get_full_name()}',
+                    ip_address=get_client_ip(request)
+                )
                 messages.success(request, f'Solicitud cancelada. Se devolvieron {solicitud.dias_solicitados} días a {solicitud.usuario.get_full_name()}.')
             else:
                 messages.error(request, 'No tienes permisos para cancelar esta solicitud.')
@@ -238,7 +306,7 @@ class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, List
     model = SolicitudPermiso
     template_name = 'permisos/admin_management.html'
     context_object_name = 'solicitudes'
-    paginate_by = 25
+    paginate_by = 15
 
     def test_func(self):
         return self.request.user.role in ['ADMIN', 'SECRETARIA']
@@ -361,6 +429,13 @@ class SolicitudAdminEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView
         # Registrar quién editó
         form.instance.updated_at = timezone.now()
 
+        registrar_log(
+            usuario=self.request.user,
+            tipo='UPDATE',
+            accion='Edición Admin de Permiso',
+            descripcion=f'Se editó permiso de {form.instance.usuario.get_full_name()}',
+            ip_address=get_client_ip(self.request)
+        )
         messages.success(self.request, f'Solicitud de {form.instance.usuario.get_full_name()} actualizada exitosamente.')
         return super().form_valid(form)
 

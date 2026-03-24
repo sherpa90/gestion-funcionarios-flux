@@ -1,88 +1,113 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block page_title %}Logs del Sistema{% endblock %}
+{% block title %}Logs del Sistema | Gestión Administrativa{% endblock %}
 
 {% block content %}
-<div class="p-6">
+<div class="p-8">
     <!-- Header -->
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-            <h2 class="text-3xl font-bold text-gray-900">Logs del Sistema</h2>
-            <p class="text-gray-600 mt-2">Actividad registrada en el sistema</p>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white">
+                    <i class="fas fa-terminal text-lg"></i>
+                </div>
+                Logs de Actividad
+            </h2>
+            <p class="text-[11px] font-bold text-gray-400 mt-2 uppercase tracking-widest">Auditoría y trazabilidad de eventos críticos</p>
         </div>
-        <a href="{% url 'admin_dashboard:dashboard' %}"
-            class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition">
-            <i class="fas fa-arrow-left mr-2"></i>
-            Volver al Dashboard
-        </a>
+        <div class="flex items-center gap-4">
+            <span class="text-[10px] font-black text-slate-400 uppercase bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">Últimos 50 Registros</span>
+            <a href="{% url 'admin_dashboard:dashboard' %}"
+                class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-black rounded-xl hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2">
+                <i class="fas fa-arrow-left text-xs opacity-40"></i>
+                Dashboard
+            </a>
+        </div>
     </div>
 
-    <!-- Tabla de Logs Simplificada -->
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
-                        Fecha/Hora
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
-                        Usuario
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Acción
-                    </th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                {% for log in logs %}
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {{ log.timestamp|date:"d/m/Y H:i" }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div
-                                class="flex-shrink-0 h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-user text-blue-600 text-xs"></i>
+    <!-- Tabla de Logs Premium -->
+    <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-slate-500/5 transition-all duration-500">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-50">
+                <thead class="bg-gray-50/50">
+                    <tr>
+                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest w-48">
+                            Fecha y Hora
+                        </th>
+                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest w-64">
+                            Autor del Evento
+                        </th>
+                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                            Acción y Detalles
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-50">
+                    {% for log in logs %}
+                    <tr class="hover:bg-slate-50/50 transition-colors group">
+                        <td class="px-10 py-6 whitespace-nowrap">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-black text-gray-900 tabular-nums">{{ log.timestamp|date:"d M, Y" }}</span>
+                                <span class="text-[10px] font-bold text-slate-400 mt-1">{{ log.timestamp|date:"H:i:s" }}</span>
                             </div>
-                            <div class="ml-3">
-                                <p class="text-sm font-medium text-gray-900">
-                                    {{ log.usuario.get_full_name|default:"Sistema" }}
+                        </td>
+                        <td class="px-10 py-6 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-white flex items-center justify-center font-black text-xs shadow-sm group-hover:scale-105 transition-transform">
+                                    {{ log.usuario.first_name.0|default:'S' }}{{ log.usuario.last_name.0|default:'S' }}
+                                </div>
+                                <div class="ml-4 flex flex-col">
+                                    <p class="text-sm font-black text-gray-900 leading-tight">
+                                        {{ log.usuario.get_full_name|default:"Sistema Automático" }}
+                                    </p>
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">{{ log.ip_address }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-10 py-6">
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center gap-3">
+                                    <span class="px-2.5 py-1 text-[9px] font-black rounded-lg border uppercase tracking-tighter
+                                        {% if log.tipo == 'AUTH' %}bg-blue-50 text-blue-700 border-blue-100
+                                        {% elif log.tipo == 'CREATE' %}bg-emerald-50 text-emerald-700 border-emerald-100
+                                        {% elif log.tipo == 'UPDATE' %}bg-amber-50 text-amber-700 border-amber-100
+                                        {% elif log.tipo == 'DELETE' %}bg-rose-50 text-rose-700 border-rose-100
+                                        {% elif log.tipo == 'APPROVE' %}bg-indigo-50 text-indigo-700 border-indigo-100
+                                        {% elif log.tipo == 'REJECT' %}bg-orange-50 text-orange-700 border-orange-100
+                                        {% elif log.tipo == 'ERROR' %}bg-red-50 text-red-700 border-red-100
+                                        {% else %}bg-slate-50 text-slate-700 border-slate-100{% endif %}">
+                                        {{ log.get_tipo_display }}
+                                    </span>
+                                    <span class="text-sm font-black text-slate-800">{{ log.accion }}</span>
+                                </div>
+                                <p class="text-xs text-slate-500 font-medium leading-relaxed max-w-2xl">
+                                    {{ log.descripcion }}
                                 </p>
                             </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-900">
-                        <div class="flex items-center">
-                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full mr-3
-                                {% if log.tipo == 'AUTH' %}bg-blue-100 text-blue-800
-                                {% elif log.tipo == 'CREATE' %}bg-green-100 text-green-800
-                                {% elif log.tipo == 'UPDATE' %}bg-yellow-100 text-yellow-800
-                                {% elif log.tipo == 'DELETE' %}bg-red-100 text-red-800
-                                {% elif log.tipo == 'APPROVE' %}bg-emerald-100 text-emerald-800
-                                {% elif log.tipo == 'REJECT' %}bg-orange-100 text-orange-800
-                                {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                {{ log.get_tipo_display }}
-                            </span>
-                            <span>{{ log.accion }}</span>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="3" class="px-6 py-12 text-center text-gray-500">
-                        <i class="fas fa-inbox text-gray-300 text-4xl mb-3"></i>
-                        <p>No hay logs registrados</p>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="px-10 py-24 text-center">
+                            <div class="flex flex-col items-center opacity-30">
+                                <i class="fas fa-inbox text-5xl mb-4"></i>
+                                <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Sin actividad registrada</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- Info Footer -->
-    <div class="mt-4 text-sm text-gray-500 text-center">
-        Mostrando los últimos 50 registros de actividad del sistema
+    <!-- Optimization Notice -->
+    <div class="mt-8 flex items-center justify-center gap-3 py-4 px-6 bg-amber-50 border border-amber-100 rounded-2xl max-w-2xl mx-auto shadow-sm shadow-amber-500/5">
+        <i class="fas fa-bolt text-amber-500 text-sm"></i>
+        <p class="text-[10px] font-black text-amber-700 uppercase tracking-widest">
+            Sistema optimizado: Solo se registran eventos críticos para garantizar el máximo rendimiento
+        </p>
     </div>
 </div>
 {% endblock %}

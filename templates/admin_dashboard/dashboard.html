@@ -81,7 +81,11 @@
                                 <div class="text-right flex flex-col items-end">
                                     <div class="flex items-center gap-2 mb-1">
                                         <span class="text-lg font-black text-gray-900">{{ perm.dias_solicitados|floatformat:1 }}</span>
+                                        {% if perm.dias_solicitados == 0.5 %}
+                                        <span class="text-[10px] font-bold text-purple-600 uppercase">({{ perm.jornada }})</span>
+                                        {% else %}
                                         <span class="text-[10px] font-bold text-gray-400 uppercase">Días</span>
+                                        {% endif %}
                                     </div>
                                     <span class="text-[10px] font-black text-purple-500 uppercase tracking-widest bg-purple-50 px-3 py-1 rounded-lg border border-purple-100/20">{{ perm.get_jornada_display }}</span>
                                 </div>
@@ -224,7 +228,12 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <span class="text-sm font-black text-gray-600 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm">{{ perm.dias_solicitados|floatformat:1 }} d</span>
+                                    <span class="text-sm font-black text-gray-600 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm">
+                                        {{ perm.dias_solicitados|floatformat:1 }}
+                                        {% if perm.dias_solicitados == 0.5 %}
+                                        <span class="text-[10px] text-blue-500 ml-1">({{ perm.jornada }})</span>
+                                        {% else %}d{% endif %}
+                                    </span>
                                 </div>
                             </div>
                             {% endfor %}
