@@ -3,6 +3,7 @@ from django.views.generic import CreateView, ListView, View, UpdateView, DeleteV
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
+from datetime import timedelta
 from django.utils import timezone
 from django.db.models import Q, Sum
 from django.core.paginator import Paginator
@@ -224,6 +225,7 @@ class SolicitudAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
                 'es_hoy': fecha_dia == hoy
             })
         context['resumen_semanal'] = dias_semana
+        context['current_filter'] = self.request.GET.get('status', 'all')
         
         return context
 
