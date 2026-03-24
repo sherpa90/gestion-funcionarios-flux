@@ -256,7 +256,7 @@ class GestionLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, ListView
         return self.request.user.role in ['ADMIN', 'SECRETARIA']
 
     def get_queryset(self):
-        queryset = Liquidacion.objects.select_related('funcionario').order_by('funcionario__last_name', 'funcionario__first_name', '-anio', '-mes')
+        queryset = Liquidacion.objects.select_related('funcionario').order_by('funcionario__first_name', 'funcionario__last_name', '-anio', '-mes')
 
         # Filtros
         usuario_id = self.request.GET.get('usuario')
@@ -283,7 +283,7 @@ class GestionLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, ListView
         context = super().get_context_data(**kwargs)
 
         # Usuarios para filtro
-        context['usuarios'] = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']).order_by('last_name', 'first_name')
+        context['usuarios'] = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']).order_by('first_name', 'last_name')
 
         # Años disponibles
         context['anios_disponibles'] = Liquidacion.objects.values_list('anio', flat=True).distinct().order_by('-anio')
@@ -346,16 +346,16 @@ class AdminLiquidacionesOverviewView(LoginRequiredMixin, UserPassesTestMixin, Li
         # Aplicar ordenamiento
         sort_by = self.request.GET.get('sort') or 'name'
         if sort_by == 'name':
-            queryset = queryset.order_by('last_name', 'first_name')
+            queryset = queryset.order_by('first_name', 'last_name')
         elif sort_by == 'name_desc':
-            queryset = queryset.order_by('-last_name', '-first_name')
+            queryset = queryset.order_by('-first_name', '-last_name')
         elif sort_by == 'role':
-            queryset = queryset.order_by('role', 'last_name', 'first_name')
+            queryset = queryset.order_by('role', 'first_name', 'last_name')
         elif sort_by == 'role_desc':
-            queryset = queryset.order_by('-role', 'last_name', 'first_name')
+            queryset = queryset.order_by('-role', 'first_name', 'last_name')
         else:
             # Ordenamiento por defecto si el parámetro no coincide
-            queryset = queryset.order_by('last_name', 'first_name')
+            queryset = queryset.order_by('first_name', 'last_name')
 
         return queryset
 
