@@ -39,6 +39,7 @@ from .forms import CargaHorariosForm, HorarioFuncionarioForm, CargaRegistrosAsis
 from django.shortcuts import get_object_or_404, redirect
 from users.models import CustomUser
 from core.utils import normalize_rut
+from admin_dashboard.utils import registrar_log, get_client_ip
 
 logger = logging.getLogger(__name__)
 
@@ -495,6 +496,13 @@ class CargaHorariosView(LoginRequiredMixin, UserPassesTestMixin, FormView):
                     self.request,
                     f"Se procesaron correctamente {horarios_creados} horarios de funcionarios."
                 )
+                registrar_log(
+                    usuario=self.request.user,
+                    tipo='IMPORT',
+                    accion='Carga Masiva de Horarios',
+                    descripcion=f'Se cargaron {horarios_creados} horarios desde Excel',
+                    ip_address=get_client_ip(self.request)
+                )
             else:
                 messages.warning(self.request, "No se encontraron horarios válidos para procesar.")
 
@@ -720,6 +728,13 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
                 messages.success(
                     self.request,
                     f"Se procesaron correctamente {registros_creados} registros de asistencia."
+                )
+                registrar_log(
+                    usuario=self.request.user,
+                    tipo='IMPORT',
+                    accion='Carga Masiva de Asistencia',
+                    descripcion=f'Se cargaron {registros_creados} registros de asistencia desde reloj control',
+                    ip_address=get_client_ip(self.request)
                 )
             else:
                 messages.warning(self.request, "No se encontraron registros válidos para procesar.")
@@ -1359,6 +1374,14 @@ class RevisarAlegacionView(LoginRequiredMixin, UserPassesTestMixin, View):
         alegacion.revisado_por = request.user
         alegacion.fecha_revision = timezone.now()
         alegacion.save()
+        
+        registrar_log(
+            usuario=request.user,
+            tipo='APPROVE' if accion == 'aprobar' else 'RECHAZADA',
+            accion='Revisión de Alegación',
+            descripcion=f'Se {alegacion.get_estado_display()} la alegación de {alegacion.funcionario.get_full_name()}',
+            ip_address=get_client_ip(request)
+        )
 
         # Si se aprueba, cambiar el estado del registro a JUSTIFICADO
         if accion == 'aprobar':

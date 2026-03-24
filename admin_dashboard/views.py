@@ -149,13 +149,6 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             dias_disponibles__lt=2.0
         ).count()
         
-        registrar_log(
-            usuario=self.request.user,
-            tipo='AUTH',
-            accion='Acceso al Dashboard Admin',
-            descripcion='Usuario accedió al panel de planificación semanal',
-            ip_address=get_client_ip(self.request)
-        )
         return context
 
 
