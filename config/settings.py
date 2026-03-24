@@ -213,7 +213,7 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 PASSWORD_RESET_TIMEOUT = 86400
 
 # Axes settings
-AXES_ENABLED = False  # Deshabilitado temporalmente por error
+AXES_ENABLED = True  # Re-habilitado tras corregir el error de AttributeError
 AXES_FAILURE_LIMIT = int(os.environ.get('AXES_FAILURE_LIMIT', 8))
 from datetime import timedelta
 AXES_COOLOFF_TIME = timedelta(hours=int(os.environ.get('AXES_COOLOFF_HOURS', 1)))
