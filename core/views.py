@@ -20,47 +20,17 @@ class CustomLoginView(LoginView):
         return reverse_lazy('dashboard')
     
     def form_invalid(self, form):
-        # Verificar si el usuario está bloqueado o cerca del límite de intentos
+        # Verificar si el usuario está bloqueado manualmente
         username = form.cleaned_data.get('username')
         if username:
             from django.contrib.auth import get_user_model
-            try:
-                from axes.helpers import get_request_attempt_count, get_max_login_attempts
-            except ImportError:
-                # Para axes < 8.x
-                from axes.helpers import get_failures, get_max_failures as get_max_login_attempts
-                get_request_attempt_count = lambda request: len(get_failures(request))
-            
             User = get_user_model()
             try:
                 user = User.objects.get(email=username)
                 
-                # Caso 1: El usuario ya está bloqueado manualmente
+                # El usuario ya está bloqueado manualmente
                 if user.is_blocked:
                     messages.error(self.request, 'Su cuenta ha sido bloqueada permanentemente. Por favor, contacte al administrador.')
-                    return super().form_invalid(form)
-                
-                # Caso 2: El usuario está bloqueado por Axes (esto suele ser gestionado por el middleware, 
-                # pero agregamos una advertencia si estamos cerca del límite)
-                try:
-                    failures_count = get_request_attempt_count(self.request)
-                except Exception:
-                    failures_count = 0
-                    
-                max_failures = get_max_login_attempts(self.request)
-                
-                if failures_count > 0:
-                    remaining = max_failures - failures_count
-                    if remaining > 0 and remaining <= 2:
-                        messages.warning(
-                            self.request, 
-                            f'¡Cuidado! Te quedan solo {remaining} {"intento" if remaining == 1 else "intentos"} antes de que tu cuenta sea bloqueada temporalmente.'
-                        )
-                    elif remaining == 0:
-                        messages.error(
-                            self.request,
-                            'Demasiados intentos fallidos. Su cuenta ha sido bloqueada temporalmente por seguridad.'
-                        )
             except User.DoesNotExist:
                 pass
                 
