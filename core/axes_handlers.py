@@ -88,29 +88,60 @@ class AdminExcludedAxesHandler(AxesDatabaseHandler):
         # Usar el método original del padre
         return super().is_locked(request, credentials)
     
-    def user_login_failed(self, sender, credentials, **kwargs):
+    def user_login_failed(self, *args, **kwargs):
         """
-        Maneja el evento de login fallido.
+        Maneja el evento de login fallido de forma flexible para evitar TypeErrors.
         """
+        # Extraer request y credentials de args o kwargs
+        # En señales de Django: (sender, credentials, **kwargs)
+        # Axes puede pasar: (request, credentials) o (sender, credentials, request)
+        
         request = kwargs.get('request')
+        credentials = kwargs.get('credentials')
+        
+        # Si vienen posicionales (típico en proxies de Axes)
+        if not request and len(args) >= 1:
+            # Podría ser (request, credentials) o (sender, credentials, request)
+            # Intentamos detectar si el primer arg es un request
+            if hasattr(args[0], 'META') or hasattr(args[0], 'POST'):
+                request = args[0]
+            
+        if not credentials:
+            if len(args) >= 2:
+                # Si (request, credentials) -> args[1]
+                # Si (sender, credentials) -> args[1]
+                credentials = args[1]
+            elif isinstance(args[0], dict) and not request:
+                # Si solo se pasó un dict y no detectamos request -> probablemente credentials
+                credentials = args[0]
+        
+        # Intentar obtener username/email
         username = self._get_username_from_request(request) if request else None
         if credentials:
             username = username or credentials.get('username') or credentials.get('email')
         
-        # Si es administrador, no registrar el fallo
+        # Si es administrador, no registrar el fallo en Axes (evitar bloqueo)
         if username and self._is_admin_user(username):
             return
         
         # Usar el método original
-        super().user_login_failed(sender, credentials, **kwargs)
+        super().user_login_failed(*args, **kwargs)
     
-    def user_login_success(self, user, request, **kwargs):
+    def user_login_success(self, *args, **kwargs):
         """
-        Maneja el evento de login exitoso.
+        Maneja el evento de login exitoso de forma flexible.
         """
-        # Si es administrador, no registrar el éxito (para no resetear contadores)
+        # En Django exitoso: (sender, user, **kwargs) donde request está en kwargs
+        # En Axes: (request, user)
+        
+        user = kwargs.get('user')
+        if not user and len(args) >= 2:
+            # Podría ser (sender, user) o (request, user)
+            user = args[1]
+            
+        # Si es administrador, no registrar el éxito (para no resetear contadores de fallos fallidos)
         if hasattr(user, 'is_staff') and user.is_staff:
             return
         
         # Usar el método original
-        super().user_login_success(user, request, **kwargs)
+        super().user_login_success(*args, **kwargs)
