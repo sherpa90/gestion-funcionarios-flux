@@ -20,17 +20,41 @@ class CustomLoginView(LoginView):
         return reverse_lazy('dashboard')
     
     def form_invalid(self, form):
-        # Verificar si el usuario está bloqueado
+        # Verificar si el usuario está bloqueado o cerca del límite de intentos
         username = form.cleaned_data.get('username')
         if username:
             from django.contrib.auth import get_user_model
+            from axes.helpers import get_failures, get_max_failures
+            
             User = get_user_model()
             try:
                 user = User.objects.get(email=username)
+                
+                # Caso 1: El usuario ya está bloqueado manualmente
                 if user.is_blocked:
-                    messages.error(self.request, 'Su cuenta ha sido bloqueada. Por favor, contacte al administrador.')
+                    messages.error(self.request, 'Su cuenta ha sido bloqueada permanentemente. Por favor, contacte al administrador.')
+                    return super().form_invalid(form)
+                
+                # Caso 2: El usuario está bloqueado por Axes (esto suele ser gestionado por el middleware, 
+                # pero agregamos una advertencia si estamos cerca del límite)
+                failures = get_failures(self.request)
+                max_failures = get_max_failures(self.request)
+                
+                if len(failures) > 0:
+                    remaining = max_failures - len(failures)
+                    if remaining > 0 and remaining <= 2:
+                        messages.warning(
+                            self.request, 
+                            f'¡Cuidado! Te quedan solo {remaining} {"intento" if remaining == 1 else "intentos"} antes de que tu cuenta sea bloqueada temporalmente.'
+                        )
+                    elif remaining == 0:
+                        messages.error(
+                            self.request,
+                            'Demasiados intentos fallidos. Su cuenta ha sido bloqueada temporalmente por seguridad.'
+                        )
             except User.DoesNotExist:
                 pass
+                
         return super().form_invalid(form)
 
 class DashboardView(LoginRequiredMixin, View):

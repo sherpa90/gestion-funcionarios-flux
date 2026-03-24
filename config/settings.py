@@ -215,7 +215,7 @@ PASSWORD_RESET_TIMEOUT = 86400
 # Axes settings
 AXES_ENABLED = True  # Re-habilitado tras corregir el error de AttributeError
 AXES_HANDLER = 'core.axes_handlers.AdminExcludedAxesHandler'
-AXES_FAILURE_LIMIT = int(os.environ.get('AXES_FAILURE_LIMIT', 8))
+AXES_FAILURE_LIMIT = int(os.environ.get('AXES_FAILURE_LIMIT', 6))
 AXES_ONLY_USER_FAILURES = True  # Bloquear por usuario, no por IP (mejor para el panel admin)
 from datetime import timedelta
 AXES_COOLOFF_TIME = timedelta(hours=int(os.environ.get('AXES_COOLOFF_HOURS', 1)))
