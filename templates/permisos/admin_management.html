@@ -75,26 +75,32 @@
 
     <!-- Filtros -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 lg:p-6 mb-8">
-        <div class="flex items-center mb-4">
-            <i class="fas fa-filter text-blue-600 mr-2"></i>
-            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide">Filtros de Búsqueda</h3>
+        <div class="flex items-center mb-5">
+            <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mr-3">
+                <i class="fas fa-filter text-sm"></i>
+            </div>
+            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">Filtros de Búsqueda</h3>
         </div>
-        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
-            <div class="sm:col-span-2 lg:col-span-1">
-                <label for="usuario" class="block text-xs font-bold text-gray-500 uppercase mb-1">Funcionario</label>
-                <select name="usuario" id="usuario" class="block w-full text-sm border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 transition-shadow">
-                    <option value="">Todos los Funcionarios</option>
-                    {% for usuario in usuarios %}
-                    <option value="{{ usuario.id }}" {% if filtros_aplicados.usuario == usuario.id|stringformat:"s" %}selected{% endif %}>
-                        {{ usuario.get_full_name }}
-                    </option>
-                    {% endfor %}
-                </select>
+        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-5 items-end">
+            <!-- Funcionario -->
+            <div class="sm:col-span-2 lg:col-span-1 min-w-0">
+                <label for="usuario" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Funcionario</label>
+                <div class="relative">
+                    <select name="usuario" id="usuario" class="filter-input block w-full text-sm border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 h-[44px] transition-all">
+                        <option value="">Todos los Funcionarios</option>
+                        {% for usuario in usuarios %}
+                        <option value="{{ usuario.id }}" {% if filtros_aplicados.usuario == usuario.id|stringformat:"s" %}selected{% endif %}>
+                            {{ usuario.get_full_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
 
+            <!-- Estado -->
             <div>
-                <label for="estado" class="block text-xs font-bold text-gray-500 uppercase mb-1">Estado</label>
-                <select name="estado" id="estado" class="block w-full text-sm border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 transition-shadow">
+                <label for="estado" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Estado</label>
+                <select name="estado" id="estado" class="filter-input block w-full text-sm border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 h-[44px] transition-all">
                     <option value="">Todos los Estados</option>
                     {% for estado_valor, estado_label in estados %}
                     <option value="{{ estado_valor }}" {% if filtros_aplicados.estado == estado_valor %}selected{% endif %}>
@@ -104,31 +110,35 @@
                 </select>
             </div>
 
+            <!-- Desde -->
             <div>
-                <label for="fecha_desde" class="block text-xs font-bold text-gray-500 uppercase mb-1">Desde</label>
+                <label for="fecha_desde" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Desde</label>
                 <input type="date" name="fecha_desde" id="fecha_desde" value="{{ filtros_aplicados.fecha_desde }}"
-                       class="block w-full text-sm border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 transition-shadow">
+                       class="filter-input block w-full text-sm border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 h-[44px] transition-all">
             </div>
 
+            <!-- Hasta -->
             <div>
-                <label for="fecha_hasta" class="block text-xs font-bold text-gray-500 uppercase mb-1">Hasta</label>
+                <label for="fecha_hasta" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Hasta</label>
                 <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ filtros_aplicados.fecha_hasta }}"
-                       class="block w-full text-sm border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 transition-shadow">
+                       class="filter-input block w-full text-sm border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 h-[44px] transition-all">
             </div>
 
-            <div class="sm:col-span-2 lg:col-span-1">
-                <label for="search" class="block text-xs font-bold text-gray-500 uppercase mb-1">Buscar texto</label>
+            <!-- Buscar -->
+            <div class="sm:col-span-2 lg:col-span-1 min-w-0">
+                <label for="search" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Buscar texto</label>
                 <input type="text" name="search" id="search" value="{{ filtros_aplicados.search }}"
                        placeholder="Motivo o detalle..."
-                       class="block w-full text-sm border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 transition-shadow">
+                       class="filter-input block w-full text-sm border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 h-[44px] transition-all">
             </div>
 
-            <div class="flex space-x-2 sm:col-span-2 lg:col-span-1">
-                <button type="submit" class="flex-1 inline-flex justify-center items-center px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 focus:ring-4 focus:ring-blue-100 transition shadow-sm">
-                    <i class="fas fa-search"></i>
+            <!-- Botones -->
+            <div class="flex space-x-3 sm:col-span-2 lg:col-span-1">
+                <button type="submit" class="flex-1 inline-flex justify-center items-center h-[44px] bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-200 focus:ring-4 focus:ring-blue-100 transition-all">
+                    <i class="fas fa-search mr-2"></i>Filtrar
                 </button>
-                <a href="{% url 'admin_management' %}" class="inline-flex justify-center items-center px-4 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-200 transition">
-                    <i class="fas fa-redo-alt"></i>
+                <a href="{% url 'admin_management' %}" class="inline-flex justify-center items-center w-[44px] h-[44px] bg-gray-100 text-gray-500 text-sm font-medium rounded-xl hover:bg-gray-200 hover:text-gray-700 transition-all">
+                    <i class="fas fa-undo-alt"></i>
                 </a>
             </div>
         </form>
@@ -391,17 +401,32 @@ document.addEventListener('keydown', function(event) {
 .select2-container--default .select2-selection--single {
     border-radius: 0.75rem !important;
     border: 1px solid #e5e7eb !important;
-    height: 42px !important;
-    padding: 6px 12px !important;
+    height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 12px !important;
+    background-color: #fff !important;
+    transition: all 0.2s ease !important;
+}
+.select2-container--default.select2-container--focus .select2-selection--single {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #374151 !important;
+    font-size: 0.875rem !important;
+    padding-left: 0 !important;
 }
 .select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 40px !important;
+    height: 44px !important;
+    right: 8px !important;
 }
 .select2-responsive-dropdown {
     border-radius: 1rem !important;
     border: 1px solid #f3f4f6 !important;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
-    padding-top: 5px;
+    margin-top: 4px !important;
+    overflow: hidden !important;
 }
 </style>
 {% endblock %}

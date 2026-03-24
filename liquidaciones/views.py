@@ -256,7 +256,7 @@ class GestionLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, ListView
         return self.request.user.role in ['ADMIN', 'SECRETARIA']
 
     def get_queryset(self):
-        queryset = Liquidacion.objects.select_related('funcionario').order_by('-anio', '-mes', 'funcionario__last_name')
+        queryset = Liquidacion.objects.select_related('funcionario').order_by('funcionario__last_name', 'funcionario__first_name', '-anio', '-mes')
 
         # Filtros
         usuario_id = self.request.GET.get('usuario')
@@ -344,7 +344,7 @@ class AdminLiquidacionesOverviewView(LoginRequiredMixin, UserPassesTestMixin, Li
             )
 
         # Aplicar ordenamiento
-        sort_by = self.request.GET.get('sort', 'name')
+        sort_by = self.request.GET.get('sort') or 'name'
         if sort_by == 'name':
             queryset = queryset.order_by('last_name', 'first_name')
         elif sort_by == 'name_desc':
@@ -353,6 +353,9 @@ class AdminLiquidacionesOverviewView(LoginRequiredMixin, UserPassesTestMixin, Li
             queryset = queryset.order_by('role', 'last_name', 'first_name')
         elif sort_by == 'role_desc':
             queryset = queryset.order_by('-role', 'last_name', 'first_name')
+        else:
+            # Ordenamiento por defecto si el parámetro no coincide
+            queryset = queryset.order_by('last_name', 'first_name')
 
         return queryset
 
