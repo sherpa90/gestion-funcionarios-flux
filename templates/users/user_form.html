@@ -141,6 +141,20 @@
                             {% endif %}
                         </div>
 
+                        <!-- Función -->
+                        <div class="sm:col-span-3">
+                            <label for="{{ form.funcion.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700">
+                                Función / Cargo
+                            </label>
+                            <div class="mt-1">
+                                {{ form.funcion }}
+                            </div>
+                            {% if form.funcion.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.funcion.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
                         <!-- Días Disponibles -->
                         <div class="sm:col-span-3">
                             <label for="{{ form.dias_disponibles.id_for_label }}"
