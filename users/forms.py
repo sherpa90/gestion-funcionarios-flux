@@ -28,7 +28,7 @@ class UserCreateForm(forms.ModelForm):
     
     class Meta:
         model = CustomUser
-        fields = ['run', 'email', 'first_name', 'last_name', 'role', 'tipo_funcionario', 'hora_entrada', 'tolerancia_minutos']
+        fields = ['run', 'email', 'first_name', 'last_name', 'role', 'tipo_funcionario', 'funcion', 'hora_entrada', 'tolerancia_minutos']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -39,6 +39,7 @@ class UserCreateForm(forms.ModelForm):
             'last_name': forms.TextInput(attrs={'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'}),
             'role': forms.Select(attrs={'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'}),
             'tipo_funcionario': forms.Select(attrs={'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'}),
+            'funcion': forms.Select(attrs={'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'}),
         }
         for field_name, widget in widgets.items():
             self.fields[field_name].widget.attrs.update({'class': widget.attrs.get('class', '')})
@@ -139,7 +140,7 @@ class UserEditForm(forms.ModelForm):
     
     class Meta:
         model = CustomUser
-        fields = ['run', 'email', 'first_name', 'last_name', 'role', 'tipo_funcionario', 'dias_disponibles', 'hora_entrada', 'tolerancia_minutos']
+        fields = ['run', 'email', 'first_name', 'last_name', 'role', 'tipo_funcionario', 'funcion', 'dias_disponibles', 'hora_entrada', 'tolerancia_minutos']
     
     def __init__(self, *args, **kwargs):
         # Extract editing user to check permissions
@@ -161,6 +162,7 @@ class UserEditForm(forms.ModelForm):
             'last_name': forms.TextInput(attrs={'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'}),
             'role': forms.Select(attrs={'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'}),
             'tipo_funcionario': forms.Select(attrs={'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'}),
+            'funcion': forms.Select(attrs={'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'}),
             'dias_disponibles': forms.NumberInput(attrs={'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm', 'step': '0.5', 'min': '0', 'max': '6'}),
         }
         

@@ -10,7 +10,7 @@ class CustomUserCreationForm(UserCreationForm):
     """
     class Meta:
         model = CustomUser
-        fields = ('email', 'run', 'first_name', 'last_name', 'role', 'tipo_funcionario')
+        fields = ('email', 'run', 'first_name', 'last_name', 'role', 'tipo_funcionario', 'funcion')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,7 +41,7 @@ class CustomUserChangeForm(UserChangeForm):
     class Meta:
         model = CustomUser
         fields = ('email', 'run', 'first_name', 'last_name', 'role', 
-                  'tipo_funcionario', 'dias_disponibles', 'is_active', 
+                  'tipo_funcionario', 'funcion', 'dias_disponibles', 'is_active', 
                   'is_staff', 'groups', 'user_permissions')
 
 
@@ -68,8 +68,8 @@ class CustomUserAdmin(BaseUserAdmin):
     add_form = CustomUserCreationForm
     change_password_form = PasswordChangeForm
     
-    list_display = ('email', 'run', 'first_name', 'last_name', 'telefono', 'role', 'is_active', 'is_staff')
-    list_filter = ('role', 'is_active', 'is_staff', 'tipo_funcionario')
+    list_display = ('email', 'run', 'first_name', 'last_name', 'telefono', 'role', 'funcion', 'is_active', 'is_staff')
+    list_filter = ('role', 'is_active', 'is_staff', 'tipo_funcionario', 'funcion')
     search_fields = ('email', 'run', 'first_name', 'last_name', 'telefono')
     ordering = ('last_name', 'first_name')
     
@@ -78,7 +78,7 @@ class CustomUserAdmin(BaseUserAdmin):
             'fields': ('email', 'run', 'first_name', 'last_name', 'telefono')
         }),
         ('Rol y Permisos', {
-            'fields': ('role', 'tipo_funcionario', 'dias_disponibles', 
+            'fields': ('role', 'tipo_funcionario', 'funcion', 'dias_disponibles', 
                       'is_active', 'is_staff', 'is_superuser',
                       'groups', 'user_permissions')
         }),
@@ -95,7 +95,7 @@ class CustomUserAdmin(BaseUserAdmin):
         ('Crear Nuevo Usuario', {
             'classes': ('wide',),
             'fields': ('email', 'run', 'first_name', 'last_name', 'telefono',
-                      'role', 'tipo_funcionario', 'dias_disponibles')
+                      'role', 'tipo_funcionario', 'funcion', 'dias_disponibles')
         }),
     )
     

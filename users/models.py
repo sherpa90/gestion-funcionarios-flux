@@ -53,6 +53,30 @@ class CustomUser(AbstractUser):
         ('ASISTENTE', 'Asistente de la Educación'),
     ]
 
+    FUNCION_CHOICES = [
+        ('ASISTENTE_AULA', 'Asistente de Aula'),
+        ('ASISTENTE_REEMPLAZO', 'Asistente Reemplazo'),
+        ('ASISTENTE_SOCIAL', 'Asistente Social'),
+        ('AUXILIAR', 'Auxiliar'),
+        ('DIRECTOR', 'Director (a)'),
+        ('DOCENTE_AULA', 'Docente de Aula'),
+        ('DOCENTE_DIFERENCIAL', 'Docente Diferencial'),
+        ('DOCENTE_REEMPLAZO', 'Docente Reemplazo'),
+        ('ENCARGADO_FOTOCOPIA', 'Encargado de Fotocopia'),
+        ('ENFERMERO', 'Enfermero (a)'),
+        ('FONOAUDIOLOGO', 'Fonoaudiólogo (a)'),
+        ('INFORMATICO', 'Informático'),
+        ('INSPECTOR', 'Inspector (a)'),
+        ('INSPECTOR_GENERAL', 'Inspector General'),
+        ('JEFE_UTP', 'Jefe (a) de UTP'),
+        ('PSICOLOGO', 'Psicólogo (a)'),
+        ('SERENO', 'Sereno'),
+        ('TECNICO_DEPORTIVO', 'Técnico Deportivo'),
+        ('TECNICO_DIFERENCIAL', 'Técnico Diferencial'),
+        ('TECNICO_PARSULO', 'Técnico en Párvulo'),
+        ('TERAPEUTA_OCUPACIONAL', 'Terapeuta Ocupacional'),
+    ]
+
     email = models.EmailField(unique=True, null=True, blank=False, help_text="Correo electrónico de acceso")
     run = models.CharField(
         max_length=12, 
@@ -67,6 +91,13 @@ class CustomUser(AbstractUser):
         blank=True, 
         null=True,
         help_text="Aplica solo para rol Funcionario"
+    )
+    funcion = models.CharField(
+        max_length=30,
+        choices=FUNCION_CHOICES,
+        blank=True,
+        null=True,
+        help_text="Función o cargo específico del usuario"
     )
     dias_disponibles = models.FloatField(default=6.0)
     telefono = models.CharField(max_length=20, blank=True, help_text="Teléfono de contacto")
