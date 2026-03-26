@@ -4,7 +4,7 @@ from .views import (
     BulkUserImportView, download_template, ResetUserPasswordView, ChangeOwnPasswordView,
     AdminChangePasswordView, EmailDirectoryView, CrearGrupoCorreoView, CrearDirectorioTelefonicoView,
     EditarGrupoCorreoView, EliminarGrupoCorreoView, EditarDirectorioTelefonicoView, EliminarDirectorioTelefonicoView,
-    BackupExportUsersView, BackupRestoreUsersView
+    BackupExportUsersView, BackupRestoreUsersView, UserRecalculateBalancesView
 )
 
 urlpatterns = [
