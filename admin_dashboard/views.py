@@ -12,7 +12,8 @@ import io
 import shutil
 from django.conf import settings
 from django.core.management import call_command
-from django.http import FileResponse
+from django.core.paginator import Paginator
+from django.http import FileResponse, HttpResponse
 
 from users.models import CustomUser
 from permisos.models import SolicitudPermiso
@@ -304,20 +305,118 @@ class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
 
 class SystemLogsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    """Vista simple de logs del sistema - quién hizo qué"""
+    """Vista avanzada de logs del sistema con filtros y paginación"""
     template_name = 'admin_dashboard/logs.html'
     
     def test_func(self):
-        # ADMIN, DIRECTOR, DIRECTIVO y SECRETARIA pueden ver los logs
+        # Solo ADMIN puede ver logs completos. Director/Secretaria ven sus propios o filtros limitados?
+        # El user pidió mejorar para que ADMIN vea lo que hacen otros. 
+        # Mantendremos el acceso actual pero orientado al Administrador.
         return self.request.user.role in ['ADMIN', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']
     
+    def get(self, request, *args, **kwargs):
+        if request.resolver_match.url_name == 'logs_export':
+            return self.export_logs(request)
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Obtener logs recientes (últimos 50)
-        context['logs'] = SystemLog.objects.select_related('usuario').order_by('-timestamp')[:50]
+        # Parámetros de filtro
+        role = self.request.GET.get('role')
+        tipo = self.request.GET.get('tipo')
+        search = self.request.GET.get('search')
+        
+        queryset = SystemLog.objects.select_related('usuario').order_by('-timestamp')
+        
+        # Aplicar filtros
+        if role:
+            queryset = queryset.filter(usuario__role=role)
+        if tipo:
+            queryset = queryset.filter(tipo=tipo)
+        if search:
+            queryset = queryset.filter(
+                Q(accion__icontains=search) |
+                Q(descripcion__icontains=search) |
+                Q(usuario__first_name__icontains=search) |
+                Q(usuario__last_name__icontains=search)
+            )
+        
+        # Paginación
+        paginator = Paginator(queryset, 25)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        context['page_obj'] = page_obj
+        context['role_choices'] = CustomUser.ROLE_CHOICES
+        context['tipo_choices'] = SystemLog.TIPO_CHOICES
+        context['filtros'] = {
+            'role': role,
+            'tipo': tipo,
+            'search': search,
+        }
         
         return context
+
+    def export_logs(self, request):
+        """Exporta los logs actuales (filtrados) a Excel"""
+        import openpyxl
+        
+        # Aplicar mismos filtros
+        role = request.GET.get('role')
+        tipo = request.GET.get('tipo')
+        search = request.GET.get('search')
+        
+        queryset = SystemLog.objects.select_related('usuario').order_by('-timestamp')
+        if role:
+            queryset = queryset.filter(usuario__role=role)
+        if tipo:
+            queryset = queryset.filter(tipo=tipo)
+        if search:
+            queryset = queryset.filter(
+                Q(accion__icontains=search) |
+                Q(descripcion__icontains=search) |
+                Q(usuario__first_name__icontains=search) |
+                Q(usuario__last_name__icontains=search)
+            )
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Logs Sistema"
+        
+        # Encabezados
+        ws.append(['Fecha', 'Hora', 'Usuario', 'Rol', 'Tipo', 'Acción', 'Descripción', 'IP'])
+        
+        # Estilo de encabezado
+        from openpyxl.styles import Font, PatternFill
+        header_font = Font(bold=True, color="FFFFFF")
+        fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = fill
+        
+        # Datos
+        for log in queryset[:2000]: # Límite de seguridad
+            ws.append([
+                log.timestamp.strftime('%d/%m/%Y'),
+                log.timestamp.strftime('%H:%M:%S'),
+                log.usuario.get_full_name() if log.usuario else 'Sistema',
+                log.usuario.get_role_display() if log.usuario else '-',
+                log.get_tipo_display(),
+                log.accion,
+                log.descripcion,
+                log.ip_address
+            ])
+            
+        # Ajustar anchos
+        for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
+            ws.column_dimensions[col].width = 20
+        ws.column_dimensions['G'].width = 60 # Descripción más ancha
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename=logs_sistema_{timezone.now().strftime("%Y%m%d")}.xlsx'
+        wb.save(response)
+        return response
 
 
 class SystemBackupView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
