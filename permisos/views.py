@@ -12,6 +12,7 @@ from .forms import SolicitudForm, SolicitudBypassForm, SolicitudAdminForm
 from users.models import CustomUser
 from core.services import BusinessDayCalculator
 from admin_dashboard.utils import registrar_log, get_client_ip
+from django.db import transaction
 
 class SolicitudCancelView(LoginRequiredMixin, View):
     """Vista para que el usuario pueda cancelar su propia solicitud pendiente"""
@@ -414,37 +415,48 @@ class SolicitudAdminEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView
             )
 
         # Manejar cambios de estado que afectan el saldo de días
-        nuevo_estado = form.cleaned_data.get('estado')
+        nuevo_estado = form.cleaned_data.get('estado') or self.request.POST.get('estado')
 
-        # Si cambió de aprobado a otro estado, devolver días
-        if estado_anterior == 'APROBADO' and nuevo_estado != 'APROBADO':
-            form.instance.usuario.dias_disponibles += dias_anteriores
-            form.instance.usuario.save()
+        if not nuevo_estado:
+            form.add_error(None, "El estado no puede estar vacío.")
+            return self.form_invalid(form)
 
-        # Si cambió a aprobado desde otro estado, descontar días
-        elif estado_anterior != 'APROBADO' and nuevo_estado == 'APROBADO':
-            if form.instance.usuario.dias_disponibles >= form.instance.dias_solicitados:
-                form.instance.usuario.dias_disponibles -= form.instance.dias_solicitados
-                form.instance.usuario.save()
-            else:
-                form.add_error(None, f"El usuario no tiene suficientes días disponibles ({form.instance.usuario.dias_disponibles} disponibles, {form.instance.dias_solicitados} solicitados).")
-                return self.form_invalid(form)
+        with transaction.atomic():
+            # Volver a cargar el usuario desde la BD con bloqueo para evitar race conditions
+            usuario = CustomUser.objects.select_for_update().get(pk=form.instance.usuario.pk)
 
-        # Actualizar el estado
-        form.instance.estado = nuevo_estado
+            # Si cambió de aprobado a otro estado, devolver días (máximo 6.0)
+            if estado_anterior == 'APROBADO' and nuevo_estado != 'APROBADO':
+                usuario.dias_disponibles = min(6.0, usuario.dias_disponibles + dias_anteriores)
+                usuario.save()
 
-        # Registrar quién editó
-        form.instance.updated_at = timezone.now()
+            # Si cambió a aprobado desde otro estado, descontar días
+            elif estado_anterior != 'APROBADO' and nuevo_estado == 'APROBADO':
+                if usuario.dias_disponibles >= form.instance.dias_solicitados:
+                    usuario.dias_disponibles -= form.instance.dias_solicitados
+                    usuario.save()
+                else:
+                    form.add_error(None, f"El usuario no tiene suficientes días disponibles ({usuario.dias_disponibles} disponibles, {form.instance.dias_solicitados} solicitados).")
+                    return self.form_invalid(form)
 
-        registrar_log(
-            usuario=self.request.user,
-            tipo='UPDATE',
-            accion='Edición Admin de Permiso',
-            descripcion=f'Se editó permiso de {form.instance.usuario.get_full_name()}',
-            ip_address=get_client_ip(self.request)
-        )
-        messages.success(self.request, f'Solicitud de {form.instance.usuario.get_full_name()} actualizada exitosamente.')
-        return super().form_valid(form)
+            # Actualizar el estado (y usuario en objeto actual por consistencia)
+            form.instance.usuario = usuario
+            form.instance.estado = nuevo_estado
+            form.instance.updated_at = timezone.now()
+
+            # Guardar form invoca form.save() dentro de la transacción atómica
+            respuesta = super().form_valid(form)
+
+            registrar_log(
+                usuario=self.request.user,
+                tipo='UPDATE',
+                accion='Edición Admin de Permiso',
+                descripcion=f'Se editó permiso de {form.instance.usuario.get_full_name()} (Estado: {nuevo_estado})',
+                ip_address=get_client_ip(self.request)
+            )
+            messages.success(self.request, f'Solicitud de {form.instance.usuario.get_full_name()} actualizada a {nuevo_estado} exitosamente.')
+            
+            return respuesta
 
 
 class SolicitudAdminDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
