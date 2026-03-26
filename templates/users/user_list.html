@@ -36,6 +36,13 @@
                 class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-green-700 shadow-lg shadow-green-100 transition-all">
                 <i class="fas fa-file-excel mr-2"></i> Importar Excel
             </a>
+            <form action="{% url 'recalculate_all_balances' %}" method="post" class="w-full sm:w-auto">
+                {% csrf_token %}
+                <button type="submit" onclick="return confirm('¿Estás seguro de que deseas recalcular todos los saldos? Esto sincronizará los días de todos los funcionarios basándose en sus permisos aceptados.')"
+                    class="w-full inline-flex items-center justify-center px-6 py-3 bg-amber-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-amber-600 shadow-lg shadow-amber-100 transition-all">
+                    <i class="fas fa-sync-alt mr-2"></i> Recalcular Saldos
+                </button>
+            </form>
             <a href="{% url 'user_create' %}"
                 class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all">
                 <i class="fas fa-user-plus mr-2"></i> Crear Usuario
