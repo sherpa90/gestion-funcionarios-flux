@@ -150,3 +150,16 @@ class SolicitudBypassForm(forms.ModelForm):
                 raise forms.ValidationError("La jornada debe ser AM o PM para permisos de medio día.")
 
         return cleaned_data
+
+class SolicitudAdminForm(SolicitudForm):
+    """Formulario para edición administrativa - incluye el campo de estado"""
+    estado = forms.ChoiceField(
+        choices=SolicitudPermiso.ESTADO_CHOICES,
+        widget=forms.Select(attrs={
+            'class': 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+        }),
+        label="Estado Actual"
+    )
+
+    class Meta(SolicitudForm.Meta):
+        fields = SolicitudForm.Meta.fields + ['estado']
