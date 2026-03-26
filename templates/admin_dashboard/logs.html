@@ -6,62 +6,116 @@
 {% block content %}
 <div class="p-8">
     <!-- Header -->
-    <div class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
             <h2 class="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white">
-                    <i class="fas fa-terminal text-lg"></i>
+                <div class="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-lg shadow-slate-200">
+                    <i class="fas fa-terminal text-xl"></i>
                 </div>
                 Logs de Actividad
             </h2>
-            <p class="text-[11px] font-bold text-gray-400 mt-2 uppercase tracking-widest">Auditoría y trazabilidad de eventos críticos</p>
+            <p class="text-[11px] font-bold text-gray-400 mt-2 uppercase tracking-widest">Auditoría completa y trazabilidad de eventos</p>
         </div>
-        <div class="flex items-center gap-4">
-            <span class="text-[10px] font-black text-slate-400 uppercase bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">Últimos 50 Registros</span>
+        <div class="flex items-center gap-3">
+            <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}export=true"
+                onclick="window.location.href='{% url 'admin_dashboard:logs_export' %}?' + new URLSearchParams(window.location.search).toString(); return false;"
+                class="px-5 py-3 bg-emerald-600 text-white text-xs font-black rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2">
+                <i class="fas fa-file-excel"></i>
+                EXPORTAR EXCEL
+            </a>
             <a href="{% url 'admin_dashboard:dashboard' %}"
-                class="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-black rounded-xl hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2">
-                <i class="fas fa-arrow-left text-xs opacity-40"></i>
-                Dashboard
+                class="px-5 py-3 bg-white border border-gray-200 text-gray-700 text-xs font-black rounded-2xl hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2">
+                <i class="fas fa-arrow-left opacity-40"></i>
+                DASHBOARD
             </a>
         </div>
     </div>
 
-    <!-- Tabla de Logs Premium -->
+    <!-- Filters Bar -->
+    <div class="mb-8 bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+        <form method="GET" class="flex flex-wrap items-end gap-6">
+            <!-- Search -->
+            <div class="flex-1 min-w-[300px]">
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Búsqueda rápida</label>
+                <div class="relative group">
+                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-slate-900 transition-colors"></i>
+                    <input type="text" name="search" value="{{ filtros.search|default:'' }}" 
+                        placeholder="Buscar por acción, descripción o usuario..."
+                        class="w-full pl-12 pr-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-slate-100 transition-all">
+                </div>
+            </div>
+
+            <!-- Role Filter -->
+            <div class="w-48">
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Filtrar por Rol</label>
+                <select name="role" class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-slate-100 transition-all appearance-none">
+                    <option value="">TODOS LOS ROLES</option>
+                    {% for val, label in role_choices %}
+                    <option value="{{ val }}" {% if filtros.role == val %}selected{% endif %}>{{ label|upper }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Type Filter -->
+            <div class="w-48">
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Tipo de Acción</label>
+                <select name="tipo" class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-slate-100 transition-all appearance-none">
+                    <option value="">TODOS LOS TIPOS</option>
+                    {% for val, label in tipo_choices %}
+                    <option value="{{ val }}" {% if filtros.tipo == val %}selected{% endif %}>{{ label|upper }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2">
+                <button type="submit" class="p-4 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
+                    <i class="fas fa-filter"></i>
+                </button>
+                {% if filtros.role or filtros.tipo or filtros.search %}
+                <a href="{% url 'admin_dashboard:logs' %}" class="p-4 bg-gray-100 text-gray-500 rounded-2xl hover:bg-gray-200 transition-all" title="Limpiar filtros">
+                    <i class="fas fa-times"></i>
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Table -->
     <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-slate-500/5 transition-all duration-500">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-50">
                 <thead class="bg-gray-50/50">
                     <tr>
-                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest w-48">
-                            Fecha y Hora
-                        </th>
-                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest w-64">
-                            Autor del Evento
-                        </th>
-                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                            Acción y Detalles
-                        </th>
+                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest w-48">Fecha y Hora</th>
+                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest w-64">Usuario / Rol</th>
+                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Acción y Detalles</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-50">
-                    {% for log in logs %}
+                    {% for log in page_obj %}
                     <tr class="hover:bg-slate-50/50 transition-colors group">
                         <td class="px-10 py-6 whitespace-nowrap">
                             <div class="flex flex-col">
                                 <span class="text-sm font-black text-gray-900 tabular-nums">{{ log.timestamp|date:"d M, Y" }}</span>
-                                <span class="text-[10px] font-bold text-slate-400 mt-1">{{ log.timestamp|date:"H:i:s" }}</span>
+                                <span class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">{{ log.timestamp|date:"H:i:s" }} HRS</span>
                             </div>
                         </td>
                         <td class="px-10 py-6 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-white flex items-center justify-center font-black text-xs shadow-sm group-hover:scale-105 transition-transform">
+                                <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-white flex items-center justify-center font-black text-[10px] shadow-sm group-hover:scale-105 transition-transform">
                                     {{ log.usuario.first_name.0|default:'S' }}{{ log.usuario.last_name.0|default:'S' }}
                                 </div>
                                 <div class="ml-4 flex flex-col">
                                     <p class="text-sm font-black text-gray-900 leading-tight">
                                         {{ log.usuario.get_full_name|default:"Sistema Automático" }}
                                     </p>
-                                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">{{ log.ip_address }}</span>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-[9px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-wider">
+                                            {{ log.usuario.get_role_display|default:"SISTEMA" }}
+                                        </span>
+                                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{{ log.ip_address }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </td>
@@ -91,8 +145,8 @@
                     <tr>
                         <td colspan="3" class="px-10 py-24 text-center">
                             <div class="flex flex-col items-center opacity-30">
-                                <i class="fas fa-inbox text-5xl mb-4"></i>
-                                <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Sin actividad registrada</p>
+                                <i class="fas fa-inbox text-5xl mb-4 text-slate-300"></i>
+                                <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Sin actividad que coincida con los filtros</p>
                             </div>
                         </td>
                     </tr>
@@ -100,13 +154,50 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="bg-gray-50/50 px-10 py-6 flex items-center justify-between border-t border-gray-50">
+            <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }} registros
+            </div>
+            <div class="flex gap-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                   class="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
+                    <i class="fas fa-chevron-left text-xs"></i>
+                </a>
+                {% endif %}
+
+                {% for i in page_obj.paginator.page_range %}
+                    {% if page_obj.number == i %}
+                    <span class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xs font-black shadow-lg shadow-slate-200">
+                        {{ i }}
+                    </span>
+                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <a href="?page={{ i }}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                       class="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 text-xs font-bold hover:bg-gray-50 transition-all shadow-sm">
+                        {{ i }}
+                    </a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                   class="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Optimization Notice -->
-    <div class="mt-8 flex items-center justify-center gap-3 py-4 px-6 bg-amber-50 border border-amber-100 rounded-2xl max-w-2xl mx-auto shadow-sm shadow-amber-500/5">
-        <i class="fas fa-bolt text-amber-500 text-sm"></i>
-        <p class="text-[10px] font-black text-amber-700 uppercase tracking-widest">
-            Sistema optimizado: Solo se registran eventos críticos para garantizar el máximo rendimiento
+    <div class="mt-8 flex items-center justify-center gap-3 py-4 px-6 bg-slate-50 border border-slate-100 rounded-2xl max-w-2xl mx-auto shadow-sm shadow-slate-500/5">
+        <i class="fas fa-shield-alt text-slate-400 text-sm"></i>
+        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            Auditoría de alta fidelidad optimizada para rendimiento del sistema
         </p>
     </div>
 </div>
