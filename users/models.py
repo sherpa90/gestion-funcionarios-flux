@@ -123,6 +123,23 @@ class CustomUser(AbstractUser):
         except (TypeError, ZeroDivisionError):
             return 0
 
+    def recalculate_dias_disponibles(self):
+        """Recalcula los días disponibles restando los permisos APROBADOS del año actual."""
+        from permisos.models import SolicitudPermiso
+        from django.db.models import Sum
+        from django.utils import timezone
+        
+        current_year = timezone.now().year
+        total_aprobados = SolicitudPermiso.objects.filter(
+            usuario=self, 
+            estado='APROBADO',
+            fecha_inicio__year=current_year
+        ).aggregate(total=Sum('dias_solicitados'))['total'] or 0.0
+        
+        self.dias_disponibles = max(0.0, 6.0 - float(total_aprobados))
+        self.save()
+        return self.dias_disponibles
+
     def save(self, *args, **kwargs):
         # Normalizar el RUT antes de guardar (con puntos para formato chileno)
         if self.run:

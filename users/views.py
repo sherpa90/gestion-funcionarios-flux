@@ -948,3 +948,26 @@ class BackupRestoreUsersView(LoginRequiredMixin, UserPassesTestMixin, View):
         except Exception as e:
             messages.error(request, f"Error al procesar archivo de respaldo: {str(e)}")
             return redirect('backup_restore_users')
+class UserRecalculateBalancesView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para recalcular los saldos de todos los usuarios basándose en permisos aprobados"""
+    
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+        
+    def post(self, request, *args, **kwargs):
+        users = CustomUser.objects.all()
+        count = 0
+        for user in users:
+            user.recalculate_dias_disponibles()
+            count += 1
+            
+        registrar_log(
+            usuario=request.user,
+            tipo='UPDATE',
+            accion='Recalcular Saldos Global',
+            descripcion=f'Se recalcularon los saldos de {count} usuarios',
+            ip_address=get_client_ip(request)
+        )
+        
+        messages.success(request, f"Se han sincronizado los saldos de {count} usuarios exitosamente.")
+        return redirect('user_list')
