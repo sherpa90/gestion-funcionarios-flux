@@ -46,6 +46,7 @@ class SolicitudForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         # La jornada se controla con JavaScript en el template
         # No ocultamos el campo aquí, lo manejamos con CSS/JS
@@ -71,7 +72,9 @@ class SolicitudForm(forms.ModelForm):
         jornada = cleaned_data.get('jornada')
 
         if fecha_inicio and dias:
-            if not BusinessDayCalculator.is_business_day(fecha_inicio):
+            # Priorizar self.user (pasado desde la vista) o self.instance.usuario
+            user = getattr(self, 'user', None) or getattr(self.instance, 'usuario', None)
+            if not BusinessDayCalculator.is_business_day(fecha_inicio, user=user):
                 raise forms.ValidationError("La fecha de inicio debe ser un día hábil.")
 
         # Validar jornada solo si es medio día
@@ -134,8 +137,9 @@ class SolicitudBypassForm(forms.ModelForm):
         dias = cleaned_data.get('dias_solicitados')
         jornada = cleaned_data.get('jornada')
 
+        usuario = cleaned_data.get('usuario')
         if fecha_inicio and dias:
-            if not BusinessDayCalculator.is_business_day(fecha_inicio):
+            if not BusinessDayCalculator.is_business_day(fecha_inicio, user=usuario):
                 raise forms.ValidationError("La fecha de inicio debe ser un día hábil.")
 
         # Validar jornada solo si es medio día

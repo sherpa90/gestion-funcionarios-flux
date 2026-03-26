@@ -37,15 +37,18 @@ class SolicitudCancelView(LoginRequiredMixin, View):
 class SolicitudCreateView(LoginRequiredMixin, CreateView):
     model = SolicitudPermiso
     form_class = SolicitudForm
-    template_name = 'permisos/solicitud_form.html'
-    success_url = reverse_lazy('dashboard_funcionario')
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def form_valid(self, form):
         form.instance.usuario = self.request.user
         # Calcular fecha termino
         form.instance.fecha_termino = BusinessDayCalculator.calculate_end_date(
             form.instance.fecha_inicio,
-            form.instance.dias_solicitados
+            form.instance.dias_solicitados,
+            user=self.request.user
         )
 
         # Validar saldo considerando solicitudes pendientes
@@ -88,7 +91,8 @@ class SolicitudBypassView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             # Calcular fecha termino
             form.instance.fecha_termino = BusinessDayCalculator.calculate_end_date(
                 form.instance.fecha_inicio, 
-                form.instance.dias_solicitados
+                form.instance.dias_solicitados,
+                user=form.instance.usuario
             )
             
             # Validar saldo considerando solicitudes pendientes
@@ -405,7 +409,8 @@ class SolicitudAdminEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView
         if 'fecha_inicio' in form.changed_data or 'dias_solicitados' in form.changed_data:
             form.instance.fecha_termino = BusinessDayCalculator.calculate_end_date(
                 form.instance.fecha_inicio,
-                form.instance.dias_solicitados
+                form.instance.dias_solicitados,
+                user=form.instance.usuario
             )
 
         # Manejar cambios de estado que afectan el saldo de días

@@ -14,16 +14,29 @@ class BusinessDayCalculator:
     ]
 
     @classmethod
-    def is_business_day(cls, day):
+    def is_business_day(cls, day, user=None):
+        """
+        Determina si un día es hábil.
+        Para la mayoría es Lunes a Viernes (excluyendo feriados).
+        Para el rol SERENO, se incluyen los fines de semana (excluyendo feriados).
+        """
         # 0=Monday, 4=Friday, 5=Saturday, 6=Sunday
-        if day.weekday() >= 5:
+        is_weekend = day.weekday() >= 5
+        
+        # Verificar si el usuario es SERENO
+        es_sereno = False
+        if user and hasattr(user, 'funcion') and user.funcion == 'SERENO':
+            es_sereno = True
+            
+        if is_weekend and not es_sereno:
             return False
+            
         if day in cls.HOLIDAYS:
             return False
         return True
 
     @classmethod
-    def calculate_end_date(cls, start_date, duration_days):
+    def calculate_end_date(cls, start_date, duration_days, user=None):
         """
         Calcula la fecha de término dado una fecha de inicio y duración en días hábiles.
         Si duration_days es 0.5, se considera el mismo día.
@@ -35,7 +48,7 @@ class BusinessDayCalculator:
         days_added = 0
         
         # Si el día de inicio no es hábil, avanzamos al siguiente hábil
-        while not cls.is_business_day(current_date):
+        while not cls.is_business_day(current_date, user=user):
             current_date += timedelta(days=1)
             
         # Consumimos el primer día
@@ -50,20 +63,20 @@ class BusinessDayCalculator:
         
         while remaining_days > 0:
             current_date += timedelta(days=1)
-            if cls.is_business_day(current_date):
+            if cls.is_business_day(current_date, user=user):
                 remaining_days -= 1
                 
         return current_date
 
     @classmethod
-    def count_business_days(cls, start_date, end_date):
+    def count_business_days(cls, start_date, end_date, user=None):
         """
         Cuenta los días hábiles entre dos fechas (inclusive).
         """
         count = 0
         current = start_date
         while current <= end_date:
-            if cls.is_business_day(current):
+            if cls.is_business_day(current, user=user):
                 count += 1
             current += timedelta(days=1)
         return count
