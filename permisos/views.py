@@ -402,61 +402,81 @@ class SolicitudAdminEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView
         return kwargs
 
     def form_valid(self, form):
-        # Guardar el estado anterior para comparar
-        estado_anterior = self.object.estado
-        dias_anteriores = self.object.dias_solicitados
-
-        # Recalcular fecha término si cambió la fecha o días
-        if 'fecha_inicio' in form.changed_data or 'dias_solicitados' in form.changed_data:
-            form.instance.fecha_termino = BusinessDayCalculator.calculate_end_date(
-                form.instance.fecha_inicio,
-                form.instance.dias_solicitados,
-                user=form.instance.usuario
-            )
-
-        # Manejar cambios de estado que afectan el saldo de días
+        # 1. Obtener datos originales antes del cambio
+        solicitud_actual = self.get_object()
+        estado_anterior = solicitud_actual.estado
+        dias_anteriores = solicitud_actual.dias_solicitados
+        
+        # 2. Preparar el objeto para guardar pero sin persistir aún
+        solicitud = form.save(commit=False)
+        
+        # 3. Forzar captura del nuevo estado (desde cleaned_data o POST)
         nuevo_estado = form.cleaned_data.get('estado') or self.request.POST.get('estado')
-
+        
         if not nuevo_estado:
-            form.add_error(None, "El estado no puede estar vacío.")
+            form.add_error('estado', 'El estado es obligatorio.')
             return self.form_invalid(form)
 
-        with transaction.atomic():
-            # Volver a cargar el usuario desde la BD con bloqueo para evitar race conditions
-            usuario = CustomUser.objects.select_for_update().get(pk=form.instance.usuario.pk)
-
-            # Si cambió de aprobado a otro estado, devolver días (máximo 6.0)
-            if estado_anterior == 'APROBADO' and nuevo_estado != 'APROBADO':
-                usuario.dias_disponibles = min(6.0, usuario.dias_disponibles + dias_anteriores)
-                usuario.save()
-
-            # Si cambió a aprobado desde otro estado, descontar días
-            elif estado_anterior != 'APROBADO' and nuevo_estado == 'APROBADO':
-                if usuario.dias_disponibles >= form.instance.dias_solicitados:
-                    usuario.dias_disponibles -= form.instance.dias_solicitados
-                    usuario.save()
-                else:
-                    form.add_error(None, f"El usuario no tiene suficientes días disponibles ({usuario.dias_disponibles} disponibles, {form.instance.dias_solicitados} solicitados).")
-                    return self.form_invalid(form)
-
-            # Actualizar el estado (y usuario en objeto actual por consistencia)
-            form.instance.usuario = usuario
-            form.instance.estado = nuevo_estado
-            form.instance.updated_at = timezone.now()
-
-            # Guardar form invoca form.save() dentro de la transacción atómica
-            respuesta = super().form_valid(form)
-
-            registrar_log(
-                usuario=self.request.user,
-                tipo='UPDATE',
-                accion='Edición Admin de Permiso',
-                descripcion=f'Se editó permiso de {form.instance.usuario.get_full_name()} (Estado: {nuevo_estado})',
-                ip_address=get_client_ip(self.request)
+        # 4. Recalcular fecha término si cambiaron fechas o días
+        if 'fecha_inicio' in form.changed_data or 'dias_solicitados' in form.changed_data:
+            solicitud.fecha_termino = BusinessDayCalculator.calculate_end_date(
+                solicitud.fecha_inicio,
+                solicitud.dias_solicitados,
+                user=solicitud.usuario
             )
-            messages.success(self.request, f'Solicitud de {form.instance.usuario.get_full_name()} actualizada a {nuevo_estado} exitosamente.')
-            
-            return respuesta
+
+        try:
+            with transaction.atomic():
+                # 5. Bloquear al usuario para actualización de saldo segura
+                usuario = CustomUser.objects.select_for_update().get(pk=solicitud.usuario.pk)
+                
+                # Caso A: Se desaprueba algo que estaba APROBADO (Devolver días con tope 6.0)
+                if estado_anterior == 'APROBADO' and nuevo_estado != 'APROBADO':
+                    usuario.dias_disponibles = min(6.0, usuario.dias_disponibles + dias_anteriores)
+                    usuario.save()
+                
+                # Caso B: Se aprueba algo que NO estaba aprobado (Descontar días)
+                elif estado_anterior != 'APROBADO' and nuevo_estado == 'APROBADO':
+                    if usuario.dias_disponibles >= solicitud.dias_solicitados:
+                        usuario.dias_disponibles -= solicitud.dias_solicitados
+                        usuario.save()
+                    else:
+                        form.add_error(None, f"El usuario {usuario.get_full_name()} no tiene días suficientes ({usuario.dias_disponibles} disponibles).")
+                        return self.form_invalid(form)
+                
+                # Caso C: Sigue aprobado pero cambiaron los días solicitados
+                elif estado_anterior == 'APROBADO' and nuevo_estado == 'APROBADO' and 'dias_solicitados' in form.changed_data:
+                    # Devolvemos lo anterior y descontamos lo nuevo
+                    temp_disponibles = min(6.0, usuario.dias_disponibles + dias_anteriores)
+                    if temp_disponibles >= solicitud.dias_solicitados:
+                        usuario.dias_disponibles = temp_disponibles - solicitud.dias_solicitados
+                        usuario.save()
+                    else:
+                        form.add_error(None, f"Saldo insuficiente para actualizar los días ({temp_disponibles} disponibles tras ajuste).")
+                        return self.form_invalid(form)
+
+                # 6. Asignar estado final y otros metadatos
+                solicitud.estado = nuevo_estado
+                solicitud.updated_at = timezone.now()
+                
+                # 7. Guardar solicitud (Esto dispara el UPDATE en DB)
+                solicitud.save()
+                
+                # 8. Registrar Auditoría
+                registrar_log(
+                    usuario=self.request.user,
+                    tipo='UPDATE',
+                    accion='Edición Admin de Permiso',
+                    descripcion=f'Se editó permiso de {solicitud.usuario.get_full_name()} (Estado anterior: {estado_anterior} -> {nuevo_estado})',
+                    ip_address=get_client_ip(self.request)
+                )
+                
+                messages.success(self.request, f'Solicitud de {solicitud.usuario.get_full_name()} actualizada exitosamente.')
+                return redirect(self.success_url)
+
+        except Exception as e:
+            form.add_error(None, f"Ocurrió un error inesperado al guardar: {str(e)}")
+            return self.form_invalid(form)
 
 
 class SolicitudAdminDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
