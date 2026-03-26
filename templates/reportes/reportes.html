@@ -4,21 +4,22 @@
 
 {% block content %}
 <div class="p-6">
-    <div class="mb-6 flex justify-between items-center">
-        <div>
+    <div class="mb-8">
+        <div class="mb-4">
             <h2 class="text-2xl font-bold text-gray-900">Reportes</h2>
             <p class="text-gray-600 mt-1">Vista consolidada de días administrativos y licencias médicas</p>
         </div>
-        <div class="flex space-x-3 items-center">
+        
+        <div class="flex flex-wrap gap-3 items-center">
             <!-- Reporte Mensual con dropdown -->
             <div class="relative group">
                 <button type="button"
-                    class="inline-flex items-center px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-sm transition-colors">
+                    class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-sm transition-colors h-11">
                     <i class="fas fa-calendar-alt mr-2"></i>Reporte Mensual
                     <i class="fas fa-chevron-down ml-2 text-xs"></i>
                 </button>
                 <div
-                    class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-gray-200">
+                    class="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-gray-200">
                     <div class="p-3">
                         <label class="block text-xs font-medium text-gray-700 mb-1">Año</label>
                         <select id="mensual_year"
@@ -55,15 +56,60 @@
                 </div>
             </div>
 
+            <!-- Exportar Reporte DAEM con dropdown -->
+            <div class="relative group">
+                <button type="button"
+                    class="inline-flex items-center px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-medium rounded-lg shadow-sm transition-colors h-11">
+                    <i class="fas fa-file-excel mr-2"></i>Reporte DAEM
+                    <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                </button>
+                <div
+                    class="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-gray-200">
+                    <div class="p-3">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Año</label>
+                        <select id="daem_year"
+                            class="block w-full text-sm border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500">
+                            <option value="">Todos</option>
+                            {% for y in years %}
+                            <option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <label class="block text-xs font-medium text-gray-700 mb-1 mt-2">Mes</label>
+                        <select id="daem_mes"
+                            class="block w-full text-sm border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500">
+                            <option value="">Todos</option>
+                            <option value="1" {% if filtros.mes == '1' %}selected{% endif %}>Enero</option>
+                            <option value="2" {% if filtros.mes == '2' %}selected{% endif %}>Febrero</option>
+                            <option value="3" {% if filtros.mes == '3' %}selected{% endif %}>Marzo</option>
+                            <option value="4" {% if filtros.mes == '4' %}selected{% endif %}>Abril</option>
+                            <option value="5" {% if filtros.mes == '5' %}selected{% endif %}>Mayo</option>
+                            <option value="6" {% if filtros.mes == '6' %}selected{% endif %}>Junio</option>
+                            <option value="7" {% if filtros.mes == '7' %}selected{% endif %}>Julio</option>
+                            <option value="8" {% if filtros.mes == '8' %}selected{% endif %}>Agosto</option>
+                            <option value="9" {% if filtros.mes == '9' %}selected{% endif %}>Septiembre</option>
+                            <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
+                            <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
+                            <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
+                        </select>
+                        <button
+                            onclick="window.location.href='{% url 'reportes_daem_excel' %}?year=' + document.getElementById('daem_year').value + '&mes=' + document.getElementById('daem_mes').value"
+                            class="mt-3 w-full bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium py-1.5 rounded-md transition-colors">
+                            Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Exportar Excel con dropdown -->
             <div class="relative group">
                 <button type="button"
-                    class="inline-flex items-center px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition-colors">
+                    class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition-colors h-11">
                     <i class="fas fa-file-excel mr-2"></i>Exportar Excel
                     <i class="fas fa-chevron-down ml-2 text-xs"></i>
                 </button>
                 <div
-                    class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-gray-200">
+                    class="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-gray-200">
                     <div class="p-3">
                         <label class="block text-xs font-medium text-gray-700 mb-1">Año</label>
                         <select id="excel_year"
@@ -103,12 +149,12 @@
             <!-- Exportar PDF con dropdown -->
             <div class="relative group">
                 <button type="button"
-                    class="inline-flex items-center px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow-sm transition-colors">
+                    class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow-sm transition-colors h-11">
                     <i class="fas fa-file-pdf mr-2"></i>Exportar PDF
                     <i class="fas fa-chevron-down ml-2 text-xs"></i>
                 </button>
                 <div
-                    class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-gray-200">
+                    class="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-gray-200">
                     <div class="p-3">
                         <label class="block text-xs font-medium text-gray-700 mb-1">Año</label>
                         <select id="pdf_year"
@@ -148,14 +194,14 @@
     </div>
 
     <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
-        <form method="get" class="grid grid-cols-1 md:grid-cols-12 gap-3">
-            <div class="md:col-span-4">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-10 gap-3">
+            <div class="md:col-span-3">
                 <input type="text" name="search" value="{{ filtros.search }}" placeholder="Buscar por nombre o RUN..."
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    class="block w-full h-11 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
             </div>
             <div class="md:col-span-2">
                 <select name="year"
-                    class="block w-full px-3 py-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    class="block w-full h-11 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                     <option value="">Todos los años</option>
                     {% for y in years %}
                     <option value="{{ y }}" {% if filtros.year|stringformat:"s" == y|stringformat:"s" %}selected{% endif %}>{{ y }}
@@ -165,7 +211,7 @@
             </div>
             <div class="md:col-span-2">
                 <select name="mes"
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    class="block w-full h-11 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                     <option value="">Todos los meses</option>
                     <option value="1" {% if filtros.mes == '1' %}selected{% endif %}>Enero</option>
                     <option value="2" {% if filtros.mes == '2' %}selected{% endif %}>Febrero</option>
@@ -183,16 +229,17 @@
             </div>
             <div class="md:col-span-2">
                 <input type="date" name="fecha_inicio" value="{{ filtros.fecha_inicio }}" placeholder="Desde"
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    class="block w-full h-11 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
             </div>
-            <div class="md:col-span-2">
+            <div class="md:col-span-1">
                 <button type="submit"
-                    class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                    class="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
                     <i class="fas fa-search"></i>
                 </button>
             </div>
         </form>
     </div>
+
 
     <div class="bg-white rounded-lg shadow-sm overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">

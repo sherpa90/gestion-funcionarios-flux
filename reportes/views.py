@@ -416,3 +416,99 @@ class ReporteMensualDiasAdministrativosView(LoginRequiredMixin, UserPassesTestMi
         response['Content-Disposition'] = f'inline; filename=reporte_dias_administrativos_{year}_{mes:02d}.pdf'
         response.write(result)
         return response
+
+class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Exportar reporte DAEM a Excel (Multi-pestaña)"""
+    
+    def test_func(self):
+        return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
+
+    def get(self, request):
+        year = request.GET.get('year', '')
+        mes = request.GET.get('mes', '')
+        
+        wb = openpyxl.Workbook()
+        
+        # Pestaña 1: Nómina
+        ws_nomina = wb.active
+        ws_nomina.title = "Nómina"
+        ws_nomina.append(['N°', 'Funcionario', 'RUN', 'Cargo'])
+        for col in ['A']:
+            ws_nomina.column_dimensions[col].width = 10
+        for col in ['B', 'C', 'D']:
+            ws_nomina.column_dimensions[col].width = 30
+
+        funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name', 'last_name')
+        for i, f in enumerate(funcionarios, 1):
+            ws_nomina.append([i, f.get_full_name() or f.username, f.run, f.get_funcion_display() or ""])
+            
+        # Pestaña 2: Permisos Administrativos
+        ws_permisos = wb.create_sheet(title="Permisos Administrativos")
+        ws_permisos.append(['N°', 'Funcionario', 'RUN', 'Días Solicitados', 'Fecha Desde', 'Fecha Hasta', 'Fecha Solicitud'])
+        for col in ['A']:
+            ws_permisos.column_dimensions[col].width = 10
+        for col in ['B', 'C', 'D', 'E', 'F', 'G']:
+            ws_permisos.column_dimensions[col].width = 25
+
+        permisos = SolicitudPermiso.objects.filter(estado='APROBADO', usuario__in=funcionarios).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
+        if year:
+            permisos = permisos.filter(fecha_inicio__year=year)
+        if mes:
+            permisos = permisos.filter(fecha_inicio__month=mes)
+            
+        for i, p in enumerate(permisos, 1):
+            ws_permisos.append([
+                i,
+                p.usuario.get_full_name() or p.usuario.username,
+                p.usuario.run,
+                float(p.dias_solicitados),
+                p.fecha_inicio.strftime("%d-%m-%Y") if p.fecha_inicio else "",
+                p.fecha_termino.strftime("%d-%m-%Y") if p.fecha_termino else "",
+                p.created_at.strftime("%d-%m-%Y") if p.created_at else ""
+            ])
+
+        # Pestaña 3: Licencias Médicas
+        ws_licencias = wb.create_sheet(title="Licencias Médicas")
+        ws_licencias.append(['N°', 'Funcionario', 'RUN', 'Tipo de Licencia', 'Días', 'Fecha Desde', 'Fecha Hasta'])
+        for col in ['A']:
+            ws_licencias.column_dimensions[col].width = 10
+        for col in ['B', 'C', 'D', 'E', 'F', 'G']:
+            ws_licencias.column_dimensions[col].width = 25
+
+        licencias = LicenciaMedica.objects.filter(usuario__in=funcionarios).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
+        if year:
+            licencias = licencias.filter(fecha_inicio__year=year)
+        if mes:
+            licencias = licencias.filter(fecha_inicio__month=mes)
+            
+        for i, lic in enumerate(licencias, 1):
+            ws_licencias.append([
+                i,
+                lic.usuario.get_full_name() or lic.usuario.username,
+                lic.usuario.run,
+                lic.get_tipo_licencia_display(),
+                lic.dias,
+                lic.fecha_inicio.strftime("%d-%m-%Y") if lic.fecha_inicio else "",
+                lic.fecha_termino.strftime("%d-%m-%Y") if lic.fecha_termino else ""
+            ])
+
+        # Pestañas estilo (Header en negrita)
+        from openpyxl.styles import Font, PatternFill
+        header_font = Font(bold=True, color="FFFFFF")
+        fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+        
+        for ws in [ws_nomina, ws_permisos, ws_licencias]:
+            for cell in ws[1]:
+                cell.font = header_font
+                cell.fill = fill
+
+        # Generar archivo
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        filename = f"reporte_daem"
+        if mes and year:
+            filename += f"_{mes}_{year}"
+        elif year:
+            filename += f"_{year}"
+        response['Content-Disposition'] = f'attachment; filename={filename}.xlsx'
+        wb.save(response)
+        return response
