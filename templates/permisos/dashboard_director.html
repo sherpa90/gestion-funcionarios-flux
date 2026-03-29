@@ -13,15 +13,18 @@
         
         <!-- Resumen 5 Días (Aceptados) -->
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-2 flex items-center gap-1 sm:gap-2">
-            <div class="px-4 py-2 border-r border-gray-100 hidden sm:block">
+             <div class="px-4 py-2 border-r border-gray-100 hidden sm:block">
                 <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Carga Semanal</p>
                 <p class="text-xs font-bold text-emerald-600">Permisos Aceptados</p>
+                <p class="text-[8px] text-gray-500">Doc / Asis</p>
             </div>
             {% for dia in resumen_semanal %}
-            <div class="flex-1 min-w-[50px] sm:min-w-[65px] text-center p-2 rounded-2xl transition-all {% if dia.es_hoy %}bg-blue-50 ring-1 ring-blue-100{% endif %}">
-                <p class="text-[10px] font-bold {% if dia.es_hoy %}text-blue-600{% else %}text-gray-400{% endif %} uppercase mb-1">{{ dia.nombre }}</p>
+            <div class="flex-1 min-w-[50px] sm:min-w-[65px] text-center p-1 rounded-2xl transition-all {% if dia.es_hoy %}bg-blue-50 ring-1 ring-blue-100{% endif %}">
+                <p class="text-[10px] font-bold {% if dia.es_hoy %}text-blue-600{% else %}text-gray-400{% endif %} uppercase mb-0.5">{{ dia.nombre }}</p>
                 <div class="flex items-center justify-center">
-                    <span class="text-lg font-black {% if dia.count > 0 %}text-gray-900{% else %}text-gray-300{% endif %}">{{ dia.count }}</span>
+                    <span class="text-sm font-black text-purple-600">{{ dia.docente_count }}</span>
+                    <span class="text-xs text-gray-400 mx-0.5">/</span>
+                    <span class="text-sm font-black text-blue-600">{{ dia.asistente_count }}</span>
                 </div>
             </div>
             {% endfor %}
@@ -90,46 +93,46 @@
         </div>
 
         {% if solicitudes %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 gap-1">
             {% for solicitud in solicitudes %}
-            <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 hover:shadow-xl hover:shadow-gray-200/50 transition-all group flex flex-col">
+            <div class="bg-white rounded-md shadow-sm border border-gray-100 p-1.5 hover:shadow-lg hover:shadow-gray-200/50 transition-all group flex flex-col">
                 <!-- Info Funcionario -->
-                <div class="flex items-center gap-4 mb-5 pb-5 border-b border-gray-50">
-                    <div class="w-14 h-14 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl flex items-center justify-center text-blue-600 font-black text-xl shadow-inner group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-500">
+                <div class="flex items-center gap-2 mb-1 pb-1 border-b border-gray-50">
+                    <div class="w-7 h-7 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-md flex items-center justify-center text-blue-600 font-black text-xs shadow-inner group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-500">
                         {{ solicitud.usuario.first_name.0|upper }}{{ solicitud.usuario.last_name.0|upper }}
                     </div>
                     <div class="min-w-0 flex-1">
-                        <p class="font-black text-gray-900 truncate leading-tight">{{ solicitud.usuario.get_full_name }}</p>
-                        <p class="text-xs text-gray-400 font-bold mt-1 uppercase tracking-tighter">{{ solicitud.usuario.run }}</p>
-                        <span class="inline-flex mt-2 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter {% if solicitud.usuario.role == 'DOCENTE' %}bg-purple-50 text-purple-600{% else %}bg-blue-50 text-blue-600{% endif %}">
-                            {{ solicitud.usuario.role }}
+                        <p class="font-black text-gray-900 truncate leading-tight text-sm">{{ solicitud.usuario.get_full_name }}</p>
+                        <p class="text-xs text-gray-400 font-bold mt-0.5 uppercase tracking-tighter">{{ solicitud.usuario.run }}</p>
+                        <span class="inline-flex mt-0.5 px-1 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-600{% else %}bg-blue-50 text-blue-600{% endif %}">
+                            {{ solicitud.usuario.get_funcion_display|default:solicitud.usuario.get_role_display }}
                         </span>
                     </div>
                 </div>
 
                 <!-- Detalles del Permiso -->
-                <div class="space-y-4 flex-1">
-                    <div class="flex justify-between items-center bg-gray-50/50 rounded-2xl p-4 border border-gray-100">
-                        <div class="space-y-1">
-                            <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Días Solicitados</p>
-                            <p class="text-2xl font-black text-gray-900">
+                <div class="space-y-0.5 flex-1">
+                    <div class="flex justify-between items-center bg-gray-50/50 rounded-md p-1 border border-gray-100">
+                        <div class="space-y-0.5">
+                            <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest">Días Solicitados</p>
+                            <p class="text-base font-black text-gray-900">
                                 {{ solicitud.dias_solicitados }}
                                 {% if solicitud.dias_solicitados == 0.5 %}
-                                <span class="text-[10px] font-black uppercase text-blue-500 ml-1">
+                                <span class="text-[9px] font-black uppercase text-blue-500 ml-1">
                                     {% if solicitud.jornada == 'AM' %}AM{% elif solicitud.jornada == 'PM' %}PM{% endif %}
                                 </span>
                                 {% endif %}
                             </p>
                         </div>
-                        <div class="text-right space-y-1">
-                            <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Saldo Actual</p>
-                            <p class="text-2xl font-black {% if solicitud.usuario.dias_disponibles >= 2 %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                        <div class="text-right space-y-0.5">
+                            <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest">Saldo Actual</p>
+                            <p class="text-base font-black {% if solicitud.usuario.dias_disponibles >= 2 %}text-emerald-600{% else %}text-rose-600{% endif %}">
                                 {{ solicitud.usuario.dias_disponibles|floatformat:1 }}
                             </p>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3 text-sm text-gray-600 px-1">
+                    <div class="flex items-center gap-1 text-xs text-gray-600 px-1">
                         <i class="far fa-calendar-alt text-gray-400"></i>
                         <span class="font-bold">{{ solicitud.fecha_inicio|date:"l d M" }}</span>
                         <span class="text-gray-300">→</span>
@@ -137,15 +140,15 @@
                     </div>
 
                     {% if solicitud.observacion %}
-                    <div class="bg-blue-50/30 rounded-xl p-3 text-xs text-gray-600 italic leading-relaxed border-l-2 border-blue-200">
-                        "{{ solicitud.observacion|truncatechars:100 }}"
+                    <div class="bg-blue-50/30 rounded p-1 text-xs text-gray-600 italic leading-relaxed border-l-2 border-blue-200">
+                        "{{ solicitud.observacion|truncatechars:80 }}"
                     </div>
                     {% endif %}
 
                     {% if solicitud.es_fuera_de_plazo %}
-                    <div class="bg-rose-50 rounded-xl p-3 flex items-start gap-3 border border-rose-100">
+                    <div class="bg-rose-50 rounded p-1 flex items-start gap-1 border border-rose-100">
                         <i class="fas fa-exclamation-circle text-rose-500 mt-0.5"></i>
-                        <p class="text-[10px] font-bold text-rose-700 leading-tight uppercase tracking-tighter">
+                        <p class="text-[9px] font-bold text-rose-700 leading-tight uppercase tracking-tighter">
                             Fuera de plazo (menos de 48h)
                         </p>
                     </div>
@@ -153,35 +156,35 @@
                 </div>
 
                 <!-- Acciones Uniformes -->
-                <div class="mt-6 pt-6 border-t border-gray-50 grid grid-cols-2 gap-3">
+                <div class="mt-1 pt-1 border-t border-gray-50 grid grid-cols-2 gap-1">
                     {% if user.role == 'DIRECTOR' or user.role == 'ADMIN' %}
                     <form action="{% url 'solicitud_action' solicitud.pk 'approve' %}" method="post" class="contents">
                         {% csrf_token %}
                         <button type="submit" onclick="return confirm('¿Aprobar permiso?')"
-                                class="flex items-center justify-center py-3 bg-emerald-600 text-white text-xs font-black rounded-2xl hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-200 transition-all uppercase tracking-widest">
-                            <i class="fas fa-check mr-2"></i> Aprobar
+                                class="flex items-center justify-center py-1 bg-emerald-600 text-white text-xs font-black rounded-md hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-200 transition-all uppercase tracking-widest">
+                            <i class="fas fa-check"></i> Aprobar
                         </button>
                     </form>
-                    
+
                     <button type="button"
                             onclick="document.getElementById('reject-{{ solicitud.pk }}').classList.toggle('hidden')"
-                            class="flex items-center justify-center py-3 bg-rose-50 text-rose-700 text-xs font-black rounded-2xl hover:bg-rose-600 hover:text-white hover:shadow-lg hover:shadow-rose-200 transition-all uppercase tracking-widest">
-                        <i class="fas fa-times mr-2"></i> Rechazar
+                            class="flex items-center justify-center py-1 bg-rose-50 text-rose-700 text-xs font-black rounded-md hover:bg-rose-600 hover:text-white hover:shadow-lg hover:shadow-rose-200 transition-all uppercase tracking-widest">
+                        <i class="fas fa-times"></i> Rechazar
                     </button>
                     {% endif %}
                 </div>
 
                 <!-- Modal de Rechazo Inline -->
-                <div id="reject-{{ solicitud.pk }}" class="hidden mt-4 pt-4 animate-in fade-in slide-in-from-top-2">
+                <div id="reject-{{ solicitud.pk }}" class="hidden mt-1 pt-1 animate-in fade-in slide-in-from-top-2">
                     <form action="{% url 'solicitud_action' solicitud.pk 'reject' %}" method="post">
                         {% csrf_token %}
-                        <textarea name="motivo_rechazo" rows="2" 
-                                  class="w-full text-sm border-gray-200 rounded-2xl focus:ring-4 focus:ring-rose-500/10 focus:border-rose-500 transition-all p-3 mb-3"
-                                  placeholder="Indique el motivo del rechazo..."></textarea>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button type="submit" class="py-2.5 bg-rose-600 text-white text-xs font-black rounded-xl hover:bg-rose-700 transition-all uppercase">Confirmar</button>
+                        <textarea name="motivo_rechazo" rows="1"
+                                  class="w-full text-xs border-gray-200 rounded-md focus:ring-4 focus:ring-rose-500/10 focus:border-rose-500 transition-all p-1 mb-1"
+                                  placeholder="Motivo..."></textarea>
+                        <div class="grid grid-cols-2 gap-1">
+                            <button type="submit" class="py-1 bg-rose-600 text-white text-xs font-black rounded-md hover:bg-rose-700 transition-all uppercase">Confirmar</button>
                             <button type="button" onclick="document.getElementById('reject-{{ solicitud.pk }}').classList.add('hidden')"
-                                    class="py-2.5 bg-gray-100 text-gray-600 text-xs font-black rounded-xl hover:bg-gray-200 transition-all uppercase">Cancelar</button>
+                                    class="py-1 bg-gray-100 text-gray-600 text-xs font-black rounded-md hover:bg-gray-200 transition-all uppercase">Cancelar</button>
                         </div>
                     </form>
                 </div>

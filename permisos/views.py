@@ -172,19 +172,30 @@ class SolicitudDirectorDashboardView(LoginRequiredMixin, UserPassesTestMixin, Li
         # --- Lógica de Resumen Semanal de Aceptados ---
         hoy = timezone.now().date()
         lunes = hoy - timedelta(days=hoy.weekday())
-        
+
         dias_semana = []
         for i in range(5): # Lunes a Viernes
             fecha_dia = lunes + timedelta(days=i)
-            # Contar permisos aprobados que cubren este día
-            count = SolicitudPermiso.objects.filter(
+            # Contar permisos aprobados que cubren este día, diferenciando Docentes y Asistentes
+            solicitudes_dia = SolicitudPermiso.objects.filter(
                 estado='APROBADO',
                 fecha_inicio__lte=fecha_dia,
                 fecha_termino__gte=fecha_dia
-            ).count()
+            ).select_related('usuario')
+
+            docente_count = 0
+            asistente_count = 0
+            for solicitud in solicitudes_dia:
+                if solicitud.usuario.tipo_funcionario == 'DOCENTE':
+                    docente_count += 1
+                elif solicitud.usuario.tipo_funcionario == 'ASISTENTE':
+                    asistente_count += 1
+
             dias_semana.append({
                 'nombre': ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'][i],
-                'count': count,
+                'count': docente_count + asistente_count,
+                'docente_count': docente_count,
+                'asistente_count': asistente_count,
                 'es_hoy': fecha_dia == hoy
             })
         context['resumen_semanal'] = dias_semana
@@ -321,7 +332,7 @@ class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, List
         return self.request.user.role in ['ADMIN', 'SECRETARIA']
 
     def get_queryset(self):
-        queryset = SolicitudPermiso.objects.select_related('usuario', 'created_by', 'cancelled_by').order_by('-created_at')
+        queryset = SolicitudPermiso.objects.select_related('usuario', 'created_by', 'cancelled_by').order_by('-fecha_inicio')
 
         # Filtros
         usuario_id = self.request.GET.get('usuario')
@@ -375,6 +386,37 @@ class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, List
             'rechazadas': solicitudes_rechazadas,
             'canceladas': solicitudes_canceladas,
         }
+
+        # --- Lógica de Resumen Semanal de Aceptados ---
+        hoy = timezone.now().date()
+        lunes = hoy - timedelta(days=hoy.weekday())
+
+        dias_semana = []
+        for i in range(5): # Lunes a Viernes
+            fecha_dia = lunes + timedelta(days=i)
+            # Contar permisos aprobados que cubren este día, diferenciando Docentes y Asistentes
+            solicitudes_dia = SolicitudPermiso.objects.filter(
+                estado='APROBADO',
+                fecha_inicio__lte=fecha_dia,
+                fecha_termino__gte=fecha_dia
+            ).select_related('usuario')
+
+            docente_count = 0
+            asistente_count = 0
+            for solicitud in solicitudes_dia:
+                if solicitud.usuario.tipo_funcionario == 'DOCENTE':
+                    docente_count += 1
+                elif solicitud.usuario.tipo_funcionario == 'ASISTENTE':
+                    asistente_count += 1
+
+            dias_semana.append({
+                'nombre': ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'][i],
+                'count': docente_count + asistente_count,
+                'docente_count': docente_count,
+                'asistente_count': asistente_count,
+                'es_hoy': fecha_dia == hoy
+            })
+        context['resumen_semanal'] = dias_semana
 
         # Filtros aplicados
         context['filtros_aplicados'] = {
