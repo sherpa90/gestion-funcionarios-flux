@@ -186,9 +186,9 @@ class SolicitudDirectorDashboardView(LoginRequiredMixin, UserPassesTestMixin, Li
             docente_count = 0
             asistente_count = 0
             for solicitud in solicitudes_dia:
-                if solicitud.usuario.tipo_funcionario == 'DOCENTE':
+                if solicitud.usuario.categoria_funcionario == 'DOCENTE':
                     docente_count += 1
-                elif solicitud.usuario.tipo_funcionario == 'ASISTENTE':
+                elif solicitud.usuario.categoria_funcionario == 'ASISTENTE':
                     asistente_count += 1
 
             dias_semana.append({
@@ -404,9 +404,9 @@ class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, List
             docente_count = 0
             asistente_count = 0
             for solicitud in solicitudes_dia:
-                if solicitud.usuario.tipo_funcionario == 'DOCENTE':
+                if solicitud.usuario.categoria_funcionario == 'DOCENTE':
                     docente_count += 1
-                elif solicitud.usuario.tipo_funcionario == 'ASISTENTE':
+                elif solicitud.usuario.categoria_funcionario == 'ASISTENTE':
                     asistente_count += 1
 
             dias_semana.append({

@@ -188,6 +188,7 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Funcionario</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Cargo</th>
                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Periodo</th>
                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Días</th>
                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Estado</th>
@@ -207,6 +208,11 @@
                                     <div class="text-xs text-gray-400">{{ solicitud.usuario.run }}</div>
                                 </div>
                             </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded text-xs font-bold uppercase {% if solicitud.usuario.funcion %}bg-purple-100 text-purple-700{% elif solicitud.usuario.tipo_funcionario %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ solicitud.usuario.get_funcion_display|default:solicitud.usuario.get_tipo_funcionario_display|default:solicitud.usuario.get_role_display }}
+                            </span>
                         </td>
                         <td class="px-6 py-4">
                             <div class="text-sm font-medium text-gray-700">
@@ -264,35 +270,35 @@
         <!-- Vista Móvil (Cards) -->
         <div class="lg:hidden divide-y divide-gray-100">
             {% for solicitud in solicitudes %}
-            <div class="p-3 bg-white hover:bg-gray-50 transition-colors">
-                <div class="flex justify-between items-start mb-2">
+            <div class="p-4 bg-white hover:bg-gray-50 transition-colors">
+                <div class="flex justify-between items-start mb-3">
                     <div class="flex items-center">
-                        <div class="h-7 w-7 rounded-md bg-blue-50 flex items-center justify-center text-blue-600">
-                            <i class="fas fa-user text-xs"></i>
+                        <div class="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                            <i class="fas fa-user text-sm"></i>
                         </div>
-                        <div class="ml-2">
-                            <div class="text-sm font-bold text-gray-900 leading-tight">{{ solicitud.usuario.get_full_name }}</div>
-                            <div class="text-xs text-gray-400">{{ solicitud.usuario.run }}</div>
-                            <span class="inline-flex mt-0.5 px-1 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-600{% else %}bg-blue-50 text-blue-600{% endif %}">
-                                {{ solicitud.usuario.get_funcion_display|default:solicitud.usuario.get_role_display }}
+                        <div class="ml-3">
+                            <div class="text-base font-bold text-gray-900 leading-tight">{{ solicitud.usuario.get_full_name }}</div>
+                            <div class="text-sm text-gray-400">{{ solicitud.usuario.run }}</div>
+                            <span class="inline-flex mt-1 px-2 py-1 rounded text-xs font-black uppercase tracking-tighter {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-600{% elif solicitud.usuario.tipo_funcionario %}bg-blue-50 text-blue-600{% else %}bg-gray-50 text-gray-600{% endif %}">
+                                {{ solicitud.usuario.get_funcion_display|default:solicitud.usuario.get_tipo_funcionario_display|default:solicitud.usuario.get_role_display }}
                             </span>
                         </div>
                     </div>
                     {% if solicitud.estado == 'APROBADO' %}
-                    <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-emerald-100 text-emerald-800">Aprobado</span>
+                    <span class="px-2 py-1 rounded text-xs font-extrabold uppercase bg-emerald-100 text-emerald-800">Aprobado</span>
                     {% elif solicitud.estado == 'RECHAZADO' %}
-                    <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-rose-100 text-rose-800">Rechazado</span>
+                    <span class="px-2 py-1 rounded text-xs font-extrabold uppercase bg-rose-100 text-rose-800">Rechazado</span>
                     {% elif solicitud.estado == 'CANCELADO' %}
-                    <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-slate-100 text-slate-800">Cancelado</span>
+                    <span class="px-2 py-1 rounded text-xs font-extrabold uppercase bg-slate-100 text-slate-800">Cancelado</span>
                     {% else %}
-                    <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-amber-100 text-amber-800">Pendiente</span>
+                    <span class="px-2 py-1 rounded text-xs font-extrabold uppercase bg-amber-100 text-amber-800">Pendiente</span>
                     {% endif %}
                 </div>
 
-                <div class="flex justify-between items-center bg-gray-50 rounded-lg p-2 mb-2 border border-gray-100">
-                    <div class="space-y-0.5">
-                        <div class="text-xs text-gray-500 font-medium">Periodo</div>
-                        <div class="text-[10px] font-bold text-gray-700 uppercase">
+                <div class="flex justify-between items-center bg-gray-50 rounded-xl p-3 mb-3 border border-gray-100">
+                    <div class="space-y-1">
+                        <div class="text-sm text-gray-500 font-medium">Periodo</div>
+                        <div class="text-xs font-bold text-gray-700 uppercase">
                             {{ solicitud.fecha_inicio|date:"l d/m" }}
                             {% if solicitud.fecha_termino != solicitud.fecha_inicio %}
                             <span class="text-gray-300 px-1">→</span> {{ solicitud.fecha_termino|date:"l d/m" }}
@@ -300,26 +306,26 @@
                         </div>
                     </div>
                     <div class="text-center">
-                        <div class="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">Días</div>
-                        <div class="text-base font-black text-blue-600">
+                        <div class="text-xs text-gray-400 font-bold uppercase tracking-tighter">Días</div>
+                        <div class="text-lg font-black text-blue-600">
                             {{ solicitud.dias_solicitados|floatformat:1 }}
                             {% if solicitud.dias_solicitados == 0.5 %}
-                            <span class="text-[9px] text-purple-600">({{ solicitud.jornada }})</span>
+                            <span class="text-xs text-purple-600">({{ solicitud.jornada }})</span>
                             {% endif %}
                         </div>
                     </div>
                 </div>
 
-                <div class="flex space-x-1">
+                <div class="flex space-x-2">
                     <a href="{% url 'admin_edit_solicitud' solicitud.pk %}"
-                       class="flex-1 inline-flex justify-center items-center px-3 py-1.5 border border-blue-200 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-50 transition">
-                        <i class="fas fa-edit mr-1"></i> Editar
+                       class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-blue-200 text-blue-700 text-sm font-bold rounded-xl hover:bg-blue-50 transition">
+                        <i class="fas fa-edit mr-2"></i> Editar
                     </a>
                     <button type="button"
                             data-solicitud-id="{{ solicitud.pk }}"
                             data-user-name="{{ solicitud.usuario.get_full_name }}"
-                            class="delete-btn flex-1 inline-flex justify-center items-center px-3 py-1.5 border border-rose-200 text-rose-700 text-xs font-bold rounded-lg hover:bg-rose-50 transition">
-                        <i class="fas fa-trash-alt mr-1"></i> Eliminar
+                            class="delete-btn flex-1 inline-flex justify-center items-center px-4 py-2 border border-rose-200 text-rose-700 text-sm font-bold rounded-xl hover:bg-rose-50 transition">
+                        <i class="fas fa-trash-alt mr-2"></i> Eliminar
                     </button>
                 </div>
             </div>

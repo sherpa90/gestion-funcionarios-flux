@@ -172,6 +172,18 @@ class CustomUser(AbstractUser):
             except Exception as e:
                 print(f"Error al crear horario para {self.get_full_name()}: {e}")
 
+    @property
+    def categoria_funcionario(self):
+        """Determina la categoría del funcionario para estadísticas"""
+        if self.role in ['DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']:
+            return 'ADMINISTRATIVO'
+        elif self.tipo_funcionario == 'DOCENTE' or (self.funcion and 'DOCENTE' in self.funcion):
+            return 'DOCENTE'
+        elif self.tipo_funcionario == 'ASISTENTE' or (self.funcion and any(term in self.funcion for term in ['ASISTENTE', 'TECNICO', 'AUXILIAR', 'ENCARGADO', 'INSPECTOR', 'JEFE', 'PSICOPEDAGOGO', 'PSICOLOGO', 'FONOAUDIOLOGO', 'TERAPEUTA', 'ENFERMERO', 'SERENO', 'INFORMATICO'])):
+            return 'ASISTENTE'
+        else:
+            return 'OTRO'
+
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.run})"
 
