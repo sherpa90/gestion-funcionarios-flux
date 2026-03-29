@@ -39,6 +39,7 @@ class SolicitudCreateView(LoginRequiredMixin, CreateView):
     model = SolicitudPermiso
     form_class = SolicitudForm
     template_name = 'permisos/solicitud_form.html'
+    success_url = reverse_lazy('dashboard_funcionario')
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
