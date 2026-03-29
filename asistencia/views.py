@@ -352,12 +352,13 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             fecha__month=mes
         ).order_by('-fecha')
 
-        # Agregar horas trabajadas a cada registro para el template
+        # Agregar horas trabajadas y permiso_detalle a cada registro para el template
         for registro in registros:
             if registro.minutos_trabajados:
                 registro.horas_trabajadas = round(registro.minutos_trabajados / 60, 1)
             else:
                 registro.horas_trabajadas = None
+            registro.detalle_permiso = registro.permiso_detalle
 
         # Si no hay registros para el período seleccionado, intentar con el último período con datos
         if not registros.exists() and not mes and not anio:
@@ -378,6 +379,9 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
         dias_puntuales = registros.filter(estado='PUNTUAL').count()
         dias_retraso = registros.filter(estado='RETRASO').count()
         dias_ausente = registros.filter(estado='AUSENTE').count()
+        dias_medio_dia = registros.filter(estado='MEDIO_DIA').count()
+        dias_admin = registros.filter(estado='DIA_ADMINISTRATIVO').count()
+        dias_licencia = registros.filter(estado='LICENCIA_MEDICA').count()
 
         # Estadísticas de tiempo trabajado (solo si el campo existe)
         tiempo_promedio_trabajado = 0
@@ -464,6 +468,9 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 'dias_puntuales': dias_puntuales,
                 'dias_retraso': dias_retraso,
                 'dias_ausente': dias_ausente,
+                'dias_medio_dia': dias_medio_dia,
+                'dias_admin': dias_admin,
+                'dias_licencia': dias_licencia,
                 'porcentaje_puntualidad': round((dias_puntuales / total_dias * 100) if total_dias > 0 else 0, 1),
                 'dias_con_tiempo_trabajado': registros_con_tiempo.count(),
                 'tiempo_promedio_trabajado': tiempo_promedio_trabajado,
@@ -476,10 +483,10 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
         return context
 
 class CargaHorariosView(LoginRequiredMixin, UserPassesTestMixin, FormView):
-    """Vista para cargar archivos Excel de horarios de funcionarios"""
+    """Vista para cargar archivos Excel de registros de asistencia (marcaciones)"""
     template_name = "asistencia/carga_horarios.html"
     form_class = CargaHorariosForm
-    success_url = "/asistencia/admin/horarios/"
+    success_url = "/asistencia/cargar-horarios/"
 
     def test_func(self):
         return self.request.user.role in ["ADMIN", "SECRETARIA"]
@@ -488,29 +495,28 @@ class CargaHorariosView(LoginRequiredMixin, UserPassesTestMixin, FormView):
         archivo_excel = form.cleaned_data["archivo_excel"]
 
         try:
-            # Procesar el archivo Excel
-            horarios_creados, errores = self.procesar_excel_horarios(archivo_excel)
+            registros_creados, errores = self.procesar_excel_asistencia(archivo_excel)
 
-            if horarios_creados > 0:
+            if registros_creados > 0:
                 messages.success(
                     self.request,
-                    f"Se procesaron correctamente {horarios_creados} horarios de funcionarios."
+                    f"Se procesaron correctamente {registros_creados} registros de asistencia."
                 )
                 registrar_log(
                     usuario=self.request.user,
                     tipo='IMPORT',
-                    accion='Carga Masiva de Horarios',
-                    descripcion=f'Se cargaron {horarios_creados} horarios desde Excel',
+                    accion='Carga Masiva de Asistencia',
+                    descripcion=f'Se cargaron {registros_creados} registros desde Excel',
                     ip_address=get_client_ip(self.request)
                 )
             else:
-                messages.warning(self.request, "No se encontraron horarios válidos para procesar.")
+                messages.warning(self.request, "No se encontraron registros válidos para procesar.")
 
             if errores:
-                for error in errores[:5]:  # Mostrar máximo 5 errores
+                for error in errores[:8]:
                     messages.warning(self.request, error)
-                if len(errores) > 5:
-                    messages.warning(self.request, f"... y {len(errores) - 5} errores más.")
+                if len(errores) > 8:
+                    messages.warning(self.request, f"... y {len(errores) - 8} errores más.")
 
         except Exception as e:
             messages.error(self.request, f"Error al procesar el archivo: {str(e)}")
@@ -518,76 +524,120 @@ class CargaHorariosView(LoginRequiredMixin, UserPassesTestMixin, FormView):
 
         return super().form_valid(form)
 
-    def procesar_excel_horarios(self, archivo_excel):
-        """Procesa el archivo Excel y crea horarios de funcionarios"""
+    def procesar_excel_asistencia(self, archivo_excel):
+        """Procesa Excel con formato: RUT, Nombre, DD-MM-YYYY HH:MM"""
         rows = load_data_file(archivo_excel, None, None)
 
-        horarios_creados = 0
+        registros_creados = 0
         errores = []
+        datos_agrupados = {}  # {(rut, fecha): [hora1, hora2, ...]}
 
-        # Procesar cada fila
+        # Primera pasada: agrupar por (rut, fecha)
         for row_num, row in enumerate(rows, start=2):
-            if not any(row):  # Skip empty rows
+            if not any(row):
                 continue
 
             try:
-                # Asumir formato: RUT, Hora_Entrada, Tolerancia
-                # Ajustar según el formato real del Excel
-                rut, hora_entrada_str, tolerancia_str = row[:3]
-
-                if not rut or not hora_entrada_str:
-                    errores.append(f"Fila {row_num}: Faltan datos obligatorios (RUT o hora de entrada)")
+                if len(row) < 3:
                     continue
 
-                # Convertir RUT a string para procesamiento consistente
-                rut_str = str(rut).strip()
-
-                # Buscar funcionario por RUT usando función robusta
-                funcionario = find_user_by_rut(rut_str)
-                if not funcionario:
-                    errores.append(f"Fila {row_num}: No se encontró funcionario con RUT {rut_str}")
+                rut_raw = row[0]
+                if not rut_raw:
+                    errores.append(f"Fila {row_num}: Falta RUT")
                     continue
 
-                # Parsear hora
-                if isinstance(hora_entrada_str, str):
-                    try:
-                        hora_entrada = datetime.strptime(hora_entrada_str, "%H:%M:%S").time()
-                    except ValueError:
-                        hora_entrada = datetime.strptime(hora_entrada_str, "%H:%M").time()
+                rut_str = str(rut_raw).strip()
+
+                # Formato: RUT, Nombre, "DD-MM-YYYY HH:MM"
+                horario_raw = row[2]
+                horario_str = str(horario_raw).strip()
+
+                # Intentar parsear fecha+hora
+                fecha = None
+                hora = None
+
+                # Formato "DD-MM-YYYY HH:MM"
+                match = re.match(r'^(\d{1,2})-(\d{1,2})-(\d{4})\s+(\d{1,2}):(\d{2})$', horario_str)
+                if match:
+                    dia, mes_num, anio_num = match.groups()[:3]
+                    hora_str, minuto_str = match.groups()[3:]
+                    fecha = datetime(int(anio_num), int(mes_num), int(dia)).date()
+                    hora = time(int(hora_str), int(minuto_str))
                 else:
-                    hora_entrada = hora_entrada_str
+                    # Intentar formato datetime de Excel
+                    if isinstance(horario_raw, datetime):
+                        fecha = horario_raw.date()
+                        hora = horario_raw.time()
+                    else:
+                        # Intentar otros formatos comunes
+                        formatos_fecha = ["%d/%m/%Y %H:%M", "%Y-%m-%d %H:%M", "%d-%m-%Y %H:%M:%S"]
+                        for fmt in formatos_fecha:
+                            try:
+                                dt = datetime.strptime(horario_str, fmt)
+                                fecha = dt.date()
+                                hora = dt.time()
+                                break
+                            except ValueError:
+                                continue
 
-                # Parsear tolerancia (opcional, default 15)
-                tolerancia = 15  # default
-                if tolerancia_str:
-                    try:
-                        tolerancia = int(tolerancia_str)
-                    except (ValueError, TypeError):
-                        pass  # usar default
+                if not fecha or not hora:
+                    errores.append(f"Fila {row_num}: Formato inválido '{horario_str}'")
+                    continue
 
-                # Crear o actualizar horario
-                horario, created = HorarioFuncionario.objects.get_or_create(
-                    funcionario=funcionario,
-                    defaults={
-                        "hora_entrada": hora_entrada,
-                        "tolerancia_minutos": tolerancia,
-                        "activo": True,
-                    }
-                )
-
-                if not created:
-                    # Actualizar si ya existe
-                    horario.hora_entrada = hora_entrada
-                    horario.tolerancia_minutos = tolerancia
-                    horario.activo = True
-                    horario.save()
-
-                horarios_creados += 1
+                key = (rut_str, fecha)
+                if key not in datos_agrupados:
+                    datos_agrupados[key] = []
+                datos_agrupados[key].append(hora)
 
             except Exception as e:
-                errores.append(f"Fila {row_num}: Error procesando fila - {str(e)}")
+                errores.append(f"Fila {row_num}: Error - {str(e)}")
 
-        return horarios_creados, errores
+        # Segunda pasada: crear registros
+        for (rut_str, fecha), horas in datos_agrupados.items():
+            try:
+                funcionario = find_user_by_rut(rut_str)
+                if not funcionario:
+                    errores.append(f"RUT {rut_str} no encontrado")
+                    continue
+
+                horas_ordenadas = sorted(horas)
+                hora_entrada = None
+                hora_salida = None
+
+                if len(horas_ordenadas) == 1:
+                    if horas_ordenadas[0].hour < 12:
+                        hora_entrada = horas_ordenadas[0]
+                    else:
+                        hora_salida = horas_ordenadas[0]
+                elif len(horas_ordenadas) >= 2:
+                    horas_manana = [h for h in horas_ordenadas if h.hour < 12]
+                    horas_tarde = [h for h in horas_ordenadas if h.hour >= 12]
+                    if horas_manana:
+                        hora_entrada = horas_manana[0]
+                    if horas_tarde:
+                        hora_salida = horas_tarde[-1]
+
+                registro, created = RegistroAsistencia.objects.get_or_create(
+                    funcionario=funcionario,
+                    fecha=fecha,
+                    defaults={
+                        'hora_entrada_real': hora_entrada,
+                        'hora_salida_real': hora_salida,
+                        'procesado_por': self.request.user,
+                    }
+                )
+                if not created:
+                    registro.hora_entrada_real = hora_entrada
+                    registro.hora_salida_real = hora_salida
+                    registro.procesado_por = self.request.user
+                    registro.save()
+
+                registros_creados += 1
+
+            except Exception as e:
+                errores.append(f"Error {rut_str} {fecha}: {str(e)}")
+
+        return registros_creados, errores
 
 
 class GestionAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -1676,6 +1726,50 @@ class RecalcularEstadoAsistenciaView(LoginRequiredMixin, View):
             return redirect('asistencia:mi_asistencia')
 
 
+class RecalcularTodaAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para recalcular TODOS los registros de asistencia de TODOS los funcionarios"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def post(self, request):
+        registros = RegistroAsistencia.objects.select_related('funcionario').all()
+
+        if not registros.exists():
+            messages.warning(request, 'No hay registros de asistencia para recalcular.')
+            return redirect('asistencia:gestion_asistencia')
+
+        registros_actualizados = 0
+
+        for registro in registros:
+            try:
+                horario_actual = HorarioFuncionario.objects.filter(
+                    funcionario=registro.funcionario, activo=True
+                ).first()
+                if horario_actual:
+                    registro.horario_asignado = horario_actual
+            except Exception:
+                pass
+
+            registro.save()
+            registros_actualizados += 1
+
+        messages.success(
+            request,
+            f'Se recalcularon {registros_actualizados} registros de asistencia de todos los funcionarios.'
+        )
+
+        registrar_log(
+            usuario=request.user,
+            tipo='UPDATE',
+           accion='Recálculo Masivo de Asistencia',
+            descripcion=f'Se recalcularon {registros_actualizados} registros de asistencia',
+            ip_address=get_client_ip(request)
+        )
+
+        return redirect('asistencia:gestion_asistencia')
+
+
 class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
     """Vista para generar reporte individual de asistencia en PDF"""
 
@@ -1748,4 +1842,200 @@ class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
         filename = f'mi_asistencia_{anio}_{mes:02d}.pdf'
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
+        return response
+
+
+class ExportarRetrasosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Exporta atrasos a Excel - individual (con user_id) o masivo (sin user_id)"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get(self, request, user_id=None):
+        anio = int(request.GET.get('anio', datetime.now().year))
+        mes = int(request.GET.get('mes', datetime.now().month))
+
+        wb = openpyxl.Workbook()
+
+        if user_id:
+            usuario = get_object_or_404(CustomUser, id=user_id)
+            filename = f'atrasos_{usuario.last_name}_{anio}_{mes:02d}.xlsx'
+
+            ws = wb.active
+            ws.title = 'Atrasos'
+            headers = ['RUT', 'Nombre', 'Fecha', 'Horario Est.', 'Entrada Real', 'Min. Retraso', 'Observación']
+            header_fill = openpyxl.styles.PatternFill(start_color='1F4E79', end_color='1F4E79', fill_type='solid')
+            header_font = openpyxl.styles.Font(color='FFFFFF', bold=True, size=10)
+
+            for col, header in enumerate(headers, 1):
+                cell = ws.cell(row=1, column=col, value=header)
+                cell.fill = header_fill
+                cell.font = header_font
+
+            registros = RegistroAsistencia.objects.filter(
+                funcionario=usuario,
+                fecha__year=anio,
+                fecha__month=mes,
+                estado='RETRASO'
+            ).order_by('fecha')
+
+            row = 2
+            for reg in registros:
+                ws.cell(row=row, column=1, value=usuario.run)
+                ws.cell(row=row, column=2, value=usuario.get_full_name())
+                ws.cell(row=row, column=3, value=reg.fecha.strftime('%d/%m/%Y'))
+                ws.cell(row=row, column=4, value=reg.horario_asignado.hora_entrada.strftime('%H:%M') if reg.horario_asignado else '-')
+                ws.cell(row=row, column=5, value=reg.hora_entrada_real.strftime('%H:%M') if reg.hora_entrada_real else '-')
+                ws.cell(row=row, column=6, value=reg.minutos_retraso)
+                ws.cell(row=row, column=7, value=reg.justificacion_manual or '')
+                row += 1
+
+            # Resumen
+            row += 1
+            ws.cell(row=row, column=1, value='TOTAL ATRASOS:').font = openpyxl.styles.Font(bold=True)
+            ws.cell(row=row, column=2, value=registros.count()).font = openpyxl.styles.Font(bold=True, color='FF0000')
+            total_min = sum(r.minutos_retraso for r in registros)
+            ws.cell(row=row, column=4, value='TOTAL MIN.').font = openpyxl.styles.Font(bold=True)
+            ws.cell(row=row, column=5, value=total_min).font = openpyxl.styles.Font(bold=True, color='FF0000')
+
+            for col in ws.columns:
+                max_length = max(len(str(cell.value or '')) for cell in col)
+                ws.column_dimensions[col[0].column_letter].width = min(max_length + 3, 30)
+
+        else:
+            # Masivo: resumen por usuario
+            filename = f'atrasos_todos_{anio}_{mes:02d}.xlsx'
+            ws = wb.active
+            ws.title = 'Resumen Atrasos'
+
+            usuarios = CustomUser.objects.filter(
+                registros_asistencia__fecha__year=anio,
+                registros_asistencia__fecha__month=mes,
+                registros_asistencia__estado='RETRASO'
+            ).distinct().order_by('first_name', 'last_name')
+
+            headers = ['N°', 'RUT', 'Nombre', 'Cargo', 'Días con Atraso', 'Total Min. Retraso']
+            header_fill = openpyxl.styles.PatternFill(start_color='1F4E79', end_color='1F4E79', fill_type='solid')
+            header_font = openpyxl.styles.Font(color='FFFFFF', bold=True, size=10)
+
+            for col, header in enumerate(headers, 1):
+                cell = ws.cell(row=1, column=col, value=header)
+                cell.fill = header_fill
+                cell.font = header_font
+
+            row = 2
+            num = 0
+            total_general_min = 0
+            for usuario in usuarios:
+                registros = RegistroAsistencia.objects.filter(
+                    funcionario=usuario,
+                    fecha__year=anio,
+                    fecha__month=mes,
+                    estado='RETRASO'
+                )
+                dias_atraso = registros.count()
+                total_min = sum(r.minutos_retraso for r in registros)
+                total_general_min += total_min
+                num += 1
+
+                ws.cell(row=row, column=1, value=num)
+                ws.cell(row=row, column=2, value=usuario.run)
+                ws.cell(row=row, column=3, value=usuario.get_full_name())
+                ws.cell(row=row, column=4, value=usuario.get_funcion_display() or usuario.get_role_display())
+                ws.cell(row=row, column=5, value=dias_atraso)
+                ws.cell(row=row, column=6, value=total_min)
+
+                if total_min >= 60:
+                    ws.cell(row=row, column=6).font = openpyxl.styles.Font(color='FF0000', bold=True)
+
+                row += 1
+
+            # Resumen
+            row += 1
+            ws.cell(row=row, column=4, value='TOTAL GENERAL:').font = openpyxl.styles.Font(bold=True)
+            ws.cell(row=row, column=6, value=total_general_min).font = openpyxl.styles.Font(bold=True, color='FF0000', size=12)
+
+            # Ajustar anchos
+            ws.column_dimensions['A'].width = 5
+            ws.column_dimensions['B'].width = 14
+            ws.column_dimensions['C'].width = 30
+            ws.column_dimensions['D'].width = 20
+            ws.column_dimensions['E'].width = 16
+            ws.column_dimensions['F'].width = 18
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        wb.save(response)
+        return response
+
+
+class ExportarRetrasosPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Exporta atrasos a PDF - individual (con user_id) o masivo (sin user_id)"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get(self, request, user_id=None):
+        anio = int(request.GET.get('anio', datetime.now().year))
+        mes = int(request.GET.get('mes', datetime.now().month))
+
+        meses = [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+        ]
+        nombre_mes = meses[mes - 1]
+
+        if user_id:
+            usuario = get_object_or_404(CustomUser, id=user_id)
+            registros = RegistroAsistencia.objects.filter(
+                funcionario=usuario,
+                fecha__year=anio,
+                fecha__month=mes,
+                estado='RETRASO'
+            ).order_by('fecha')
+            usuarios_data = [{'usuario': usuario, 'registros': registros, 'total': registros.count()}]
+            filename = f'atrasos_{usuario.last_name}_{anio}_{mes:02d}.pdf'
+            titulo = f'Reporte de Atrasos - {usuario.get_full_name()}'
+            template = 'asistencia/reporte_retrasos_pdf.html'
+        else:
+            usuarios = CustomUser.objects.filter(
+                registros_asistencia__fecha__year=anio,
+                registros_asistencia__fecha__month=mes,
+                registros_asistencia__estado='RETRASO'
+            ).distinct().order_by('first_name', 'last_name')
+
+            usuarios_data = []
+            total_general = 0
+            for usuario in usuarios:
+                regs = RegistroAsistencia.objects.filter(
+                    funcionario=usuario,
+                    fecha__year=anio,
+                    fecha__month=mes,
+                    estado='RETRASO'
+                )
+                total_min = sum(r.minutos_retraso for r in regs)
+                total_general += total_min
+                usuarios_data.append({
+                    'usuario': usuario,
+                    'dias_atraso': regs.count(),
+                    'total_minutos': total_min,
+                })
+
+            filename = f'atrasos_todos_{anio}_{mes:02d}.pdf'
+            titulo = 'Reporte Masivo de Atrasos'
+            template = 'asistencia/reporte_retrasos_masivo_pdf.html'
+
+        html_content = render_to_string(template, {
+            'usuarios_data': usuarios_data,
+            'total_general': total_general if not user_id else None,
+            'anio': anio,
+            'mes': mes,
+            'nombre_mes': nombre_mes,
+            'titulo': titulo,
+            'fecha_actual': datetime.now(),
+        })
+
+        pdf_file = HTML(string=html_content).write_pdf()
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response

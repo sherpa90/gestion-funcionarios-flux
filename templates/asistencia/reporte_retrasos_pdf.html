@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Atrasos</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            line-height: 1.3;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #1a365d;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            font-size: 16px;
+            color: #1a365d;
+            margin: 0 0 5px 0;
+        }
+        .header p {
+            font-size: 11px;
+            color: #666;
+            margin: 2px 0;
+        }
+        .usuario-header {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin: 15px 0 8px 0;
+            page-break-inside: avoid;
+        }
+        .usuario-header h2 {
+            font-size: 13px;
+            color: #1a365d;
+            margin: 0 0 3px 0;
+        }
+        .usuario-header .info {
+            font-size: 9px;
+            color: #666;
+        }
+        .usuario-header .total-badge {
+            display: inline-block;
+            background-color: #dc3545;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 9px;
+        }
+        th {
+            background-color: #1a365d;
+            color: white;
+            padding: 5px 6px;
+            text-align: left;
+            font-size: 8px;
+            text-transform: uppercase;
+        }
+        td {
+            padding: 4px 6px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .min-retraso {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 8px;
+            color: #999;
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ titulo }}</h1>
+        <p>{{ nombre_mes }} {{ anio }}</p>
+        <p>Generado: {{ fecha_actual|date:"d/m/Y H:i" }}</p>
+    </div>
+
+    {% for data in usuarios_data %}
+    {% if data.registros %}
+    <div class="usuario-header">
+        <h2>{{ data.usuario.get_full_name }}</h2>
+        <span class="info">{{ data.usuario.run }} · {{ data.usuario.get_role_display }}</span>
+        <span class="total-badge">{{ data.total }} atraso{{ data.total|pluralize:"s" }}</span>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%">Fecha</th>
+                <th style="width: 20%">Horario Est.</th>
+                <th style="width: 20%">Entrada Real</th>
+                <th style="width: 15%">Min. Retraso</th>
+                <th style="width: 30%">Observación</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reg in data.registros %}
+            <tr>
+                <td>{{ reg.fecha|date:"d/m/Y (D)" }}</td>
+                <td>{% if reg.horario_asignado %}{{ reg.horario_asignado.hora_entrada|time:"H:i" }}{% else %}-{% endif %}</td>
+                <td>{% if reg.hora_entrada_real %}{{ reg.hora_entrada_real|time:"H:i" }}{% else %}-{% endif %}</td>
+                <td class="min-retraso">+{{ reg.minutos_retraso }} min</td>
+                <td>{{ reg.justificacion_manual|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    {% endfor %}
+
+    <div class="footer">
+        SGPAL - Sistema de Gestión de Permisos y Asistencia Laboral
+    </div>
+</body>
+</html>

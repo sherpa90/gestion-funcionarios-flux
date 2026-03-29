@@ -128,6 +128,7 @@ class RegistroAsistencia(models.Model):
         ("RETRASO", "Retraso"),
         ("AUSENTE", "Ausente"),
         ("JUSTIFICADO", "Justificado"),
+        ("MEDIO_DIA", "Medio Día Administrativo"),
         ("DIA_ADMINISTRATIVO", "Día Administrativo"),
         ("LICENCIA_MEDICA", "Licencia Médica"),
         ("DIA_FESTIVO", "Día Festivo"),
@@ -312,8 +313,30 @@ class RegistroAsistencia(models.Model):
             # Si no existe el modelo de licencias, retornar False
             return False
 
+    @property
+    def permiso_detalle(self):
+        """Retorna detalles del permiso si existe para esta fecha"""
+        try:
+            from permisos.models import SolicitudPermiso
+            permiso = SolicitudPermiso.objects.filter(
+                usuario=self.funcionario,
+                estado='APROBADO',
+                fecha_inicio__lte=self.fecha,
+                fecha_termino__gte=self.fecha
+            ).first()
+            if permiso:
+                return {
+                    'es_medio_dia': permiso.dias_solicitados == 0.5,
+                    'jornada': permiso.jornada if permiso.dias_solicitados == 0.5 else None,
+                    'jornada_display': permiso.get_jornada_display() if permiso.dias_solicitados == 0.5 else 'Día completo',
+                    'dias': permiso.dias_solicitados,
+                }
+            return None
+        except Exception:
+            return None
+
     def determinar_estado(self):
-        """Determina el estado basado en la hora de llegada y horario"""
+        """Determina el estado basado en la hora de llegada, horario y permisos"""
         if not self.horario_asignado:
             return "SIN_HORARIO"
 
@@ -326,8 +349,53 @@ class RegistroAsistencia(models.Model):
             return "LICENCIA_MEDICA"
 
         # Verificar permiso administrativo aprobado
-        if self.tiene_permiso_aprobado():
-            return "DIA_ADMINISTRATIVO"
+        from permisos.models import SolicitudPermiso
+        permisos_dia = SolicitudPermiso.objects.filter(
+            usuario=self.funcionario,
+            estado='APROBADO',
+            fecha_inicio__lte=self.fecha,
+            fecha_termino__gte=self.fecha
+        )
+
+        if permisos_dia.exists():
+            # Verificar si es medio día o día completo
+            for permiso in permisos_dia:
+                if permiso.dias_solicitados == 0.5:
+                    # Es medio día administrativo
+                    # Solo cuenta retraso si marcó en la jornada que SÍ trabaja
+                    if permiso.jornada == 'AM':
+                        # Tiene libre en la mañana, trabaja en la tarde
+                        if self.hora_entrada_real:
+                            # Si marcó entrada, verificar si fue en la tarde (después de 12:00)
+                            if self.hora_entrada_real.hour >= 12:
+                                # Marcó en su jornada laboral (tarde) - verificar si fue puntual respecto a las 14:00
+                                minutos_reales = self.hora_entrada_real.hour * 60 + self.hora_entrada_real.minute
+                                # Hora de referencia para la tarde: 14:00 (2 PM)
+                                minutos_referencia = 14 * 60
+                                diferencia = minutos_reales - minutos_referencia
+                                if diferencia > self.horario_asignado.tolerancia_minutos:
+                                    self.minutos_retraso = max(0, diferencia)
+                                return "MEDIO_DIA"
+                            else:
+                                # Marcó en la mañana pero tiene permiso AM - no debería contar retraso
+                                return "MEDIO_DIA"
+                        else:
+                            # No marcó, pero tiene medio día AM - ausente solo en la tarde
+                            return "MEDIO_DIA"
+
+                    elif permiso.jornada == 'PM':
+                        # Tiene libre en la tarde, trabaja en la mañana
+                        if self.hora_entrada_real:
+                            # Verificar retraso solo respecto a la mañana
+                            retraso = self.calcular_retraso()
+                            self.minutos_retraso = retraso
+                            return "MEDIO_DIA"
+                        else:
+                            # No marcó en la mañana - ausente
+                            return "MEDIO_DIA"
+                else:
+                    # Día completo administrativo
+                    return "DIA_ADMINISTRATIVO"
 
         # Verificar justificación manual
         if self.justificacion_manual:

@@ -3,244 +3,257 @@
 {% block page_title %}Ingresar Días Administrativos{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Header -->
-    <div class="mb-8 text-center">
-        <h2 class="text-3xl font-bold text-gray-900">Ingresar Días Administrativos</h2>
-        <p class="text-gray-600 mt-2">Registro de permisos para funcionarios. Requiere aprobación posterior del
-            Director.</p>
+<div class="p-3 sm:p-4 lg:p-6">
+    <!-- Header Compacto -->
+    <div class="mb-4">
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Ingresar Días Administrativos</h2>
+        <p class="text-xs text-gray-500 mt-0.5">Registro de permisos para funcionarios. Requiere aprobación del Director.</p>
     </div>
 
-    <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl overflow-hidden border border-white/20">
-        <div class="p-8">
-            <form method="post" class="space-y-6">
-                {% csrf_token %}
+    <div class="space-y-4">
+        <!-- Formulario -->
+        <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+            <div class="p-4">
+                <form method="post" class="space-y-3">
+                    {% csrf_token %}
 
-                {% if form.non_field_errors %}
-                <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-md">
-                    <div class="flex">
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-red-800">Errores en el formulario</h3>
-                            <div class="mt-2 text-sm text-red-700">
-                                {{ form.non_field_errors }}
-                            </div>
-                        </div>
+                    {% if form.non_field_errors %}
+                    <div class="p-3 bg-red-50 border border-red-100 rounded-lg">
+                        <p class="text-xs font-medium text-red-700">{{ form.non_field_errors }}</p>
                     </div>
-                </div>
-                {% endif %}
+                    {% endif %}
 
-                <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-2">
                     <!-- Usuario -->
-                    <div class="sm:col-span-2">
+                    <div>
                         <label for="{{ form.usuario.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700 mb-1">Funcionario</label>
+                            class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Funcionario</label>
                         {{ form.usuario }}
                         {% if form.usuario.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.usuario.errors.0 }}</p>
+                        <p class="mt-0.5 text-xs text-red-600">{{ form.usuario.errors.0 }}</p>
                         {% endif %}
                     </div>
 
-                    <!-- Fecha Inicio -->
-                    <div>
-                        <label for="{{ form.fecha_inicio.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700 mb-1">Fecha de Inicio</label>
-                        {{ form.fecha_inicio }}
-                        {% if form.fecha_inicio.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.fecha_inicio.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Días Solicitados -->
-                    <div>
-                        <label for="{{ form.dias_solicitados.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700 mb-1">Días a Registrar</label>
-                        {{ form.dias_solicitados }}
-                        {% if form.dias_solicitados.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.dias_solicitados.errors.0 }}</p>
-                        {% endif %}
+                    <!-- Fecha Inicio + Días -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="{{ form.fecha_inicio.id_for_label }}"
+                                class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Fecha de Inicio</label>
+                            {{ form.fecha_inicio }}
+                            {% if form.fecha_inicio.errors %}
+                            <p class="mt-0.5 text-xs text-red-600">{{ form.fecha_inicio.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="{{ form.dias_solicitados.id_for_label }}"
+                                class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Días a Registrar</label>
+                            {{ form.dias_solicitados }}
+                            {% if form.dias_solicitados.errors %}
+                            <p class="mt-0.5 text-xs text-red-600">{{ form.dias_solicitados.errors.0 }}</p>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <!-- Jornada (solo para medio día) -->
                     <div id="jornada-container" style="display: none;">
-                        <label for="{{ form.jornada.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700 mb-1">Jornada</label>
-                        <div class="space-y-2">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Jornada</label>
+                        <div class="flex gap-4">
                             {{ form.jornada }}
                         </div>
                         {% if form.jornada.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.jornada.errors.0 }}</p>
+                        <p class="mt-0.5 text-xs text-red-600">{{ form.jornada.errors.0 }}</p>
                         {% endif %}
-                        <p class="mt-1 text-xs text-gray-500">Selecciona si el medio día del permiso es para la mañana (AM) o tarde (PM)</p>
                     </div>
 
                     <!-- Observación -->
-                    <div class="sm:col-span-2">
+                    <div>
                         <label for="{{ form.observacion.id_for_label }}"
-                            class="block text-sm font-medium text-gray-700 mb-1">Observación <span
-                                class="text-gray-400 font-normal">(Opcional)</span></label>
+                            class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Observación <span class="font-normal normal-case">(Opcional)</span></label>
                         {{ form.observacion }}
                         {% if form.observacion.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.observacion.errors.0 }}</p>
+                        <p class="mt-0.5 text-xs text-red-600">{{ form.observacion.errors.0 }}</p>
                         {% endif %}
                     </div>
+
+                    <!-- Info -->
+                    <div class="rounded-lg bg-yellow-50 p-2.5 border border-yellow-100">
+                        <p class="text-[11px] text-yellow-700">
+                            <i class="fas fa-info-circle text-yellow-500 mr-1"></i>
+                            Quedará en estado <strong>PENDIENTE</strong>. El Director deberá aprobarlo.
+                        </p>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="flex items-center justify-end gap-2 pt-1">
+                        <a href="{% url 'dashboard' %}"
+                            class="px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            Cancelar
+                        </a>
+                        <button type="submit"
+                            class="px-4 py-2 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-all">
+                            <i class="fas fa-plus mr-1.5"></i>Registrar Permiso
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Historial -->
+        <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden flex flex-col">
+            <div class="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Ingresos Recientes</h3>
+                <span class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{{ mis_ingresos|length }}</span>
+            </div>
+            <div class="overflow-y-auto">
+                {% if mis_ingresos %}
+                <!-- Desktop Table -->
+                <div class="hidden sm:block">
+                    <table class="min-w-full divide-y divide-gray-50">
+                        <thead class="bg-gray-50/50 sticky top-0">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Funcionario</th>
+                                <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Fecha</th>
+                                <th class="px-3 py-2 text-center text-[9px] font-bold text-gray-400 uppercase tracking-widest">Días</th>
+                                <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Estado</th>
+                                <th class="px-3 py-2 text-right text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ingreso</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            {% for solicitud in mis_ingresos %}
+                            <tr class="hover:bg-gray-50/50 {% if solicitud.estado == 'CANCELADO' and solicitud.cancelled_by == user %}bg-blue-50/30{% endif %}">
+                                <td class="px-3 py-2">
+                                    <div class="flex items-center gap-2">
+                                        <div class="h-6 w-6 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
+                                            <span class="text-[8px] font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="text-xs font-bold text-gray-900 truncate">{{ solicitud.usuario.get_full_name }}</div>
+                                            <div class="text-[10px] text-gray-400">{{ solicitud.usuario.run }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-2 text-xs text-gray-600">
+                                    {{ solicitud.fecha_inicio|date:"d/m/Y" }}
+                                </td>
+                                <td class="px-3 py-2 text-center">
+                                    {% if solicitud.estado == 'CANCELADO' and solicitud.cancelled_by == user %}
+                                        <span class="text-xs font-black text-emerald-600">+{{ solicitud.dias_solicitados }}</span>
+                                    {% else %}
+                                        <span class="text-xs font-black text-gray-900">{{ solicitud.dias_solicitados }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-3 py-2">
+                                    {% if solicitud.estado == 'APROBADO' %}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+                                        <i class="fas fa-check mr-0.5 text-[8px]"></i>Aprobado
+                                    </span>
+                                    {% elif solicitud.estado == 'RECHAZADO' %}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700">
+                                        <i class="fas fa-times mr-0.5 text-[8px]"></i>Rechazado
+                                    </span>
+                                    {% elif solicitud.estado == 'CANCELADO' %}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700">
+                                        {% if solicitud.cancelled_by == user %}<i class="fas fa-undo mr-0.5 text-[8px]"></i>Devuelto{% else %}Cancelado{% endif %}
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700">
+                                        <i class="fas fa-clock mr-0.5 text-[8px]"></i>Pendiente
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-3 py-2 text-right text-[10px] text-gray-400">
+                                    {% if solicitud.estado == 'CANCELADO' and solicitud.cancelled_by == user %}
+                                        {{ solicitud.cancelled_at|date:"d/m H:i" }}
+                                    {% else %}
+                                        {{ solicitud.created_at|date:"d/m H:i" }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
 
-                <div class="rounded-xl bg-yellow-50 p-4 border border-yellow-100 mt-6">
-                    <div class="flex">
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-yellow-800">Información Importante</h3>
-                            <div class="mt-2 text-sm text-yellow-700">
-                                <p>Al registrar este permiso, quedará en estado <strong>PENDIENTE</strong>. El Director
-                                    deberá aprobarlo para que se descuenten los días del saldo del funcionario.</p>
+                <!-- Mobile Cards -->
+                <div class="sm:hidden divide-y divide-gray-50">
+                    {% for solicitud in mis_ingresos %}
+                    <div class="px-3 py-2 hover:bg-gray-50/50 {% if solicitud.estado == 'CANCELADO' and solicitud.cancelled_by == user %}bg-blue-50/30{% endif %}">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0 flex-1">
+                                <div class="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
+                                    <span class="text-[8px] font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-xs font-bold text-gray-900 truncate">{{ solicitud.usuario.get_full_name }}</div>
+                                    <div class="text-[10px] text-gray-400">{{ solicitud.fecha_inicio|date:"d/m" }} · {{ solicitud.usuario.run }}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1.5 flex-shrink-0">
+                                {% if solicitud.estado == 'CANCELADO' and solicitud.cancelled_by == user %}
+                                    <span class="text-xs font-black text-emerald-600">+{{ solicitud.dias_solicitados }}</span>
+                                {% else %}
+                                    <span class="text-xs font-black text-gray-900">{{ solicitud.dias_solicitados }}</span>
+                                {% endif %}
+                                {% if solicitud.estado == 'APROBADO' %}
+                                <span class="px-1 py-0.5 rounded text-[9px] font-extrabold bg-emerald-100 text-emerald-700">OK</span>
+                                {% elif solicitud.estado == 'RECHAZADO' %}
+                                <span class="px-1 py-0.5 rounded text-[9px] font-extrabold bg-rose-100 text-rose-700">Rech.</span>
+                                {% elif solicitud.estado == 'CANCELADO' %}
+                                <span class="px-1 py-0.5 rounded text-[9px] font-extrabold bg-blue-100 text-blue-700">Dev.</span>
+                                {% else %}
+                                <span class="px-1 py-0.5 rounded text-[9px] font-extrabold bg-amber-100 text-amber-700">Pend.</span>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-
-                <div class="flex items-center justify-end space-x-4 pt-4">
-                    <a href="{% url 'dashboard' %}"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                        Cancelar
-                    </a>
-                    <button type="submit"
-                        class="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-0.5">
-                        Registrar Permiso
-                    </button>
+                {% else %}
+                <div class="py-10 text-center">
+                    <i class="fas fa-inbox text-gray-200 text-3xl mb-2 block"></i>
+                    <p class="text-xs text-gray-400">No has ingresado solicitudes recientemente.</p>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Historial de Ingresos -->
-    <div class="mt-8">
-        <h3 class="text-xl font-bold text-gray-900 mb-4">Solicitudes Ingresadas Recientemente</h3>
-        <div class="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl overflow-hidden border border-white/20">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50/50">
-                        <tr>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Funcionario</th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Fecha Inicio</th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Días</th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Estado</th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Fecha Ingreso</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for solicitud in mis_ingresos %}
-                        <tr class="{% if solicitud.estado == 'CANCELADO' and solicitud.cancelled_by == user %}bg-blue-50{% endif %}">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">
-                                    {{ solicitud.usuario.get_full_name }}
-                                    {% if solicitud.estado == 'CANCELADO' and solicitud.cancelled_by == user %}
-                                        <span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            <i class="fas fa-undo mr-1"></i>
-                                            DEVOLUCIÓN
-                                        </span>
-                                    {% endif %}
-                                </div>
-                                <div class="text-xs text-gray-500">{{ solicitud.usuario.run }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ solicitud.fecha_inicio|date:"d/m/Y" }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {% if solicitud.estado == 'CANCELADO' and solicitud.cancelled_by == user %}
-                                    <span class="text-green-600 font-medium">+{{ solicitud.dias_solicitados }}</span>
-                                {% else %}
-                                    {{ solicitud.dias_solicitados }}
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                    {% if solicitud.estado == 'APROBADO' %}bg-green-100 text-green-800
-                                    {% elif solicitud.estado == 'RECHAZADO' %}bg-red-100 text-red-800
-                                    {% elif solicitud.estado == 'CANCELADO' %}bg-blue-100 text-blue-800
-                                    {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                                    {% if solicitud.estado == 'CANCELADO' and solicitud.cancelled_by == user %}
-                                        <i class="fas fa-undo mr-1"></i>Devuelto
-                                    {% else %}
-                                        {{ solicitud.get_estado_display }}
-                                    {% endif %}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {% if solicitud.estado == 'CANCELADO' and solicitud.cancelled_by == user %}
-                                    {{ solicitud.cancelled_at|date:"d/m/Y H:i" }}
-                                {% else %}
-                                    {{ solicitud.created_at|date:"d/m/Y H:i" }}
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                                <i class="fas fa-inbox text-4xl mb-3 text-gray-300"></i>
-                                <p>No has ingresado solicitudes recientemente.</p>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
 <style>
-/* Estilos para los radio buttons de jornada */
 .jornada-radio input[type="radio"] {
     appearance: none;
     -webkit-appearance: none;
-    -moz-appearance: none;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     border: 2px solid #d1d5db;
     border-radius: 50%;
-    margin-right: 8px;
+    margin-right: 6px;
     position: relative;
     cursor: pointer;
 }
-
 .jornada-radio input[type="radio"]:checked {
     border-color: #3b82f6;
     background-color: #3b82f6;
 }
-
 .jornada-radio input[type="radio"]:checked::after {
     content: '';
     position: absolute;
-    top: 3px;
-    left: 3px;
+    top: 2px;
+    left: 2px;
     width: 8px;
     height: 8px;
     background-color: white;
     border-radius: 50%;
 }
-
 .jornada-radio label {
     display: flex;
     align-items: center;
     cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
     transition: background-color 0.2s;
 }
-
-.jornada-radio label:hover {
-    background-color: #f3f4f6;
-}
-
+.jornada-radio label:hover { background-color: #f3f4f6; }
 .jornada-radio input[type="radio"]:checked + label {
     background-color: #eff6ff;
     border-color: #3b82f6;
@@ -255,32 +268,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function toggleJornada() {
         const selectedValue = parseFloat(diasSelect.value);
-        // Mostrar jornada para cualquier valor que termine en .5 (medio día)
         const esMedioDia = selectedValue % 1 === 0.5;
         if (esMedioDia) {
             jornadaContainer.style.display = 'block';
-            // Marcar como requerido
-            jornadaRadios.forEach(radio => {
-                radio.required = true;
-                radio.setAttribute('aria-required', 'true');
-            });
+            jornadaRadios.forEach(radio => { radio.required = true; });
         } else {
             jornadaContainer.style.display = 'none';
-            // Quitar requerido
-            jornadaRadios.forEach(radio => {
-                radio.required = false;
-                radio.removeAttribute('aria-required');
-            });
+            jornadaRadios.forEach(radio => { radio.required = false; });
         }
     }
 
-    // Event listener para cambios en el select
     diasSelect.addEventListener('change', toggleJornada);
-
-    // Verificar estado inicial
     toggleJornada();
 
-    // Warning de 2 días de anticipación
     const fechaInicioInput = document.getElementById('{{ form.fecha_inicio.id_for_label }}');
     function checkAnticipacion() {
         if(!fechaInicioInput.value) return;
@@ -289,29 +289,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
         const today = new Date();
         today.setHours(0,0,0,0);
-        
-        const diffTime = selectedDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+        const diffDays = Math.ceil((selectedDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
         let warningDiv = document.getElementById('fecha-warning');
         if (diffDays < 2) {
             if (!warningDiv) {
                 warningDiv = document.createElement('div');
                 warningDiv.id = 'fecha-warning';
-                warningDiv.className = 'mt-3 p-3 bg-amber-50 rounded-lg text-sm text-amber-800 font-medium shadow-sm flex items-start';
-                warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-2 mt-0.5 text-amber-500"></i><span><strong>Fuera de plazo:</strong> Se está solicitando este permiso con menos de 2 días de anticipación.</span>';
+                warningDiv.className = 'mt-2 p-2 bg-amber-50 rounded-lg text-[11px] text-amber-800 font-medium border border-amber-100 flex items-start';
+                warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-1.5 mt-0.5 text-amber-500 text-[10px]"></i><span><strong>Fuera de plazo:</strong> Menos de 2 días de anticipación.</span>';
                 fechaInicioInput.parentNode.appendChild(warningDiv);
             }
         } else {
-            if (warningDiv) {
-                warningDiv.remove();
-            }
+            if (warningDiv) warningDiv.remove();
         }
     }
-    
+
     if (fechaInicioInput) {
         fechaInicioInput.addEventListener('change', checkAnticipacion);
-        checkAnticipacion(); // check on load
+        checkAnticipacion();
     }
 });
 </script>
