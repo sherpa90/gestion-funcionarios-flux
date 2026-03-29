@@ -61,7 +61,7 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             estado='APROBADO',
             fecha_inicio__lte=domingo_actual,
             fecha_termino__gte=lunes_actual
-        ).order_by('usuario__first_name', 'usuario__last_name')
+        ).order_by('fecha_inicio')
         context['permisos_semana_actual'] = permisos_actual
 
         # 2. Permisos Semana Próxima
@@ -69,7 +69,7 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             estado='APROBADO',
             fecha_inicio__lte=domingo_proximo,
             fecha_termino__gte=lunes_proximo
-        ).order_by('usuario__first_name', 'usuario__last_name')
+        ).order_by('fecha_inicio')
         context['permisos_semana_proxima'] = permisos_proxima
 
         # 3. Licencias Semana Actual
@@ -105,28 +105,28 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 })
         context['licencias_semana_proxima'] = sorted(licencias_semana_proxima, key=lambda x: x['usuario'].get_full_name())
 
-        # --- Cálculo de Impacto Diario (Conteo de Personas Fuera - Solo Diás Hábiles) ---
+        # --- Cálculo de Impacto Diario (Conteo de Permisos - Solo Diás Hábiles) ---
         def get_diario_stats(inicio_semana, permisos_qs, licencias_list):
             stats = []
             dias_nombre = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie']
             for i in range(5):
                 dia = inicio_semana + timedelta(days=i)
-                # Contar permisos en este día
-                count_permisos = 0
+                # Contar permisos en este día, diferenciando docentes y asistentes
+                docente_count = 0
+                asistente_count = 0
                 for p in permisos_qs:
                     if p.fecha_inicio <= dia <= p.fecha_termino:
-                        count_permisos += 1
-                
-                # Contar licencias en este día
-                count_licencias = 0
-                for l in licencias_list:
-                    if l['fecha_inicio'] <= dia <= l['fecha_retorno']:
-                        count_licencias += 1
-                
+                        if p.usuario.categoria_funcionario == 'DOCENTE':
+                            docente_count += 1
+                        elif p.usuario.categoria_funcionario == 'ASISTENTE':
+                            asistente_count += 1
+
                 stats.append({
                     'dia': dia,
                     'nombre': dias_nombre[i],
-                    'total': count_permisos + count_licencias,
+                    'docente_count': docente_count,
+                    'asistente_count': asistente_count,
+                    'total': docente_count + asistente_count,
                     'is_today': dia == hoy
                 })
             return stats

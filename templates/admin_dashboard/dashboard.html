@@ -26,11 +26,15 @@
                 </div>
                 
                 <!-- Resumen Diario Actual (L-V) -->
-                <div class="flex gap-2">
+                <div class="flex gap-1">
                     {% for day in daily_stats_actual %}
-                    <div class="flex flex-col items-center min-w-[55px] p-2.5 rounded-2xl border {% if day.is_today %}bg-blue-600 border-blue-600 shadow-lg shadow-blue-100{% else %}bg-white border-gray-100 shadow-sm{% endif %} transition-all">
-                        <span class="text-[9px] font-black {% if day.is_today %}text-white/80{% else %}text-gray-400{% endif %} uppercase tracking-tighter">{{ day.nombre }}</span>
-                        <span class="text-sm font-black {% if day.is_today %}text-white{% else %}text-gray-900{% endif %}">{{ day.total }}</span>
+                    <div class="flex flex-col items-center min-w-[50px] p-1.5 rounded-lg border {% if day.is_today %}bg-blue-600 border-blue-600 shadow-lg shadow-blue-100{% else %}bg-white border-gray-100 shadow-sm{% endif %} transition-all">
+                        <span class="text-[8px] font-black {% if day.is_today %}text-white/80{% else %}text-gray-400{% endif %} uppercase tracking-tighter">{{ day.nombre }}</span>
+                        <div class="text-center">
+                            <span class="text-xs font-black text-purple-600 block">{{ day.docente_count }}</span>
+                            <span class="text-[8px] text-gray-300">/</span>
+                            <span class="text-xs font-black text-blue-600 block">{{ day.asistente_count }}</span>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -40,7 +44,7 @@
             <div class="space-y-10">
                 <!-- Permisos Administrativos -->
                 <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-500 group">
-                    <div class="px-10 py-7 border-b border-gray-50 flex items-center justify-between bg-purple-50/40">
+                    <div class="px-6 py-5 border-b border-gray-50 flex items-center justify-between bg-purple-50/40">
                         <h3 class="text-base font-black text-gray-900 flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-purple-100/50 flex items-center justify-center">
                                 <i class="fas fa-calendar-day text-purple-600 text-lg"></i>
@@ -56,42 +60,40 @@
                     </div>
                     <div class="flex-1">
                         {% if permisos_semana_actual %}
-                        <div class="divide-y divide-gray-50">
-                            {% for perm in permisos_semana_actual %}
-                            <div class="px-10 py-6 hover:bg-gray-50/50 transition-colors flex items-center justify-between gap-6">
-                                <div class="flex items-center gap-6">
-                                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-50 to-white border border-purple-100 text-purple-600 flex items-center justify-center font-black text-base shadow-sm group-hover:scale-105 transition-transform duration-300">
-                                        {{ perm.usuario.first_name.0 }}{{ perm.usuario.last_name.0 }}
-                                    </div>
-                                    <div class="flex flex-col">
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-base font-black text-gray-900 leading-tight">{{ perm.usuario.get_full_name }}</span>
-                                            {% if perm.usuario.tipo_funcionario %}
-                                            <span class="text-[9px] font-black px-2 py-1 rounded-lg {% if perm.usuario.tipo_funcionario == 'DOCENTE' %}bg-indigo-50 text-indigo-700 border border-indigo-100{% else %}bg-emerald-50 text-emerald-700 border border-emerald-100{% endif %} uppercase tracking-tighter">
-                                                {{ perm.usuario.get_tipo_funcionario_display }}
-                                            </span>
-                                            {% endif %}
-                                        </div>
-                                        <div class="flex items-center gap-2 mt-2">
-                                            <i class="fas fa-clock text-[10px] text-purple-400"></i>
-                                            <span class="text-[11px] font-bold text-purple-600 uppercase tracking-wide">{{ perm.fecha_inicio|date:"l d M" }} al {{ perm.fecha_termino|date:"l d M" }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="text-right flex flex-col items-end">
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <span class="text-lg font-black text-gray-900">{{ perm.dias_solicitados|floatformat:1 }}</span>
-                                        {% if perm.dias_solicitados == 0.5 %}
-                                        <span class="text-[10px] font-bold text-purple-600 uppercase">({{ perm.jornada }})</span>
-                                        {% else %}
-                                        <span class="text-[10px] font-bold text-gray-400 uppercase">Días</span>
-                                        {% endif %}
-                                    </div>
-                                    <span class="text-[10px] font-black text-purple-500 uppercase tracking-widest bg-purple-50 px-3 py-1 rounded-lg border border-purple-100/20">{{ perm.get_jornada_display }}</span>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
+                         <div class="divide-y divide-gray-50">
+                             {% for perm in permisos_semana_actual %}
+                             <div class="px-6 py-4 hover:bg-gray-50/50 transition-colors flex items-center justify-between gap-4">
+                                 <div class="flex items-center gap-4">
+                                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-50 to-white border border-purple-100 text-purple-600 flex items-center justify-center font-black text-sm shadow-sm group-hover:scale-105 transition-transform duration-300">
+                                         {{ perm.usuario.first_name.0 }}{{ perm.usuario.last_name.0 }}
+                                     </div>
+                                     <div class="flex flex-col">
+                                         <div class="flex items-center gap-2">
+                                             <span class="text-sm font-black text-gray-900 leading-tight">{{ perm.usuario.get_full_name }}</span>
+                                             <span class="text-[8px] font-black px-1.5 py-0.5 rounded {% if perm.usuario.categoria_funcionario == 'DOCENTE' %}bg-purple-50 text-purple-700 border border-purple-100{% elif perm.usuario.categoria_funcionario == 'ASISTENTE' %}bg-blue-50 text-blue-700 border border-blue-100{% else %}bg-gray-50 text-gray-700 border border-gray-100{% endif %} uppercase tracking-tighter">
+                                                 {{ perm.usuario.categoria_funcionario|default:'OTRO' }}
+                                             </span>
+                                         </div>
+                                         <div class="flex items-center gap-1 mt-1">
+                                             <i class="fas fa-clock text-[9px] text-purple-400"></i>
+                                             <span class="text-[10px] font-bold text-purple-600 uppercase tracking-wide">{{ perm.fecha_inicio|date:"l d M" }} al {{ perm.fecha_termino|date:"l d M" }}</span>
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <div class="text-right flex flex-col items-end">
+                                     <div class="flex items-center gap-1 mb-0.5">
+                                         <span class="text-base font-black text-gray-900">{{ perm.dias_solicitados|floatformat:1 }}</span>
+                                         {% if perm.dias_solicitados == 0.5 %}
+                                         <span class="text-[9px] font-bold text-purple-600 uppercase">({{ perm.jornada }})</span>
+                                         {% else %}
+                                         <span class="text-[9px] font-bold text-gray-400 uppercase">Días</span>
+                                         {% endif %}
+                                     </div>
+                                     <span class="text-[9px] font-black text-purple-500 uppercase tracking-widest bg-purple-50 px-2 py-0.5 rounded border border-purple-100/20">{{ perm.get_jornada_display }}</span>
+                                 </div>
+                             </div>
+                             {% endfor %}
+                         </div>
                         {% else %}
                         <div class="p-16 text-center opacity-40">
                             <i class="fas fa-calendar-check text-gray-200 text-6xl mb-4 block"></i>
@@ -103,7 +105,7 @@
 
                 <!-- Licencias Médicas -->
                 <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-rose-500/5 transition-all duration-500 group">
-                    <div class="px-10 py-7 border-b border-gray-50 flex items-center justify-between bg-rose-50/40">
+                    <div class="px-6 py-5 border-b border-gray-50 flex items-center justify-between bg-rose-50/40">
                         <h3 class="text-base font-black text-gray-900 flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-rose-100/50 flex items-center justify-center">
                                 <i class="fas fa-user-md text-rose-600 text-lg"></i>
@@ -119,48 +121,46 @@
                     </div>
                     <div class="flex-1">
                         {% if licencias_semana_actual %}
-                        <div class="divide-y divide-gray-50">
-                            {% for lic in licencias_semana_actual %}
-                            <div class="px-10 py-6 hover:bg-gray-50/50 transition-colors flex items-center justify-between gap-6">
-                                <div class="flex items-center gap-6">
-                                    <div class="relative">
-                                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-50 to-white border border-rose-100 text-rose-600 flex items-center justify-center font-black text-base shadow-sm group-hover:scale-105 transition-transform duration-300">
-                                            {{ lic.usuario.first_name.0 }}{{ lic.usuario.last_name.0 }}
-                                        </div>
-                                        {% if lic.es_activa %}
-                                        <span class="absolute -top-1 -right-1 flex h-5 w-5">
-                                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                          <span class="relative inline-flex rounded-full h-5 w-5 bg-rose-600 border-4 border-white"></span>
-                                        </span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="flex flex-col">
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-base font-black text-gray-900 leading-tight">{{ lic.usuario.get_full_name }}</span>
-                                            {% if lic.usuario.tipo_funcionario %}
-                                            <span class="text-[9px] font-black px-2 py-1 rounded-lg {% if lic.usuario.tipo_funcionario == 'DOCENTE' %}bg-indigo-50 text-indigo-700 border border-indigo-100{% else %}bg-emerald-50 text-emerald-700 border border-emerald-100{% endif %} uppercase tracking-tighter">
-                                                {{ lic.usuario.get_tipo_funcionario_display }}
-                                            </span>
-                                            {% endif %}
-                                        </div>
-                                        <div class="flex items-center gap-2 mt-2">
-                                            <i class="fas fa-calendar-alt text-[10px] text-rose-400"></i>
-                                            <span class="text-[11px] font-bold text-rose-600 uppercase tracking-wide">{{ lic.fecha_inicio|date:"l d M" }} al {{ lic.fecha_retorno|date:"l d M" }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="text-right flex flex-col items-end">
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <span class="text-lg font-black text-rose-700">{{ lic.dias }}</span>
-                                        <span class="text-[10px] font-bold text-gray-400 uppercase">Días</span>
-                                    </div>
-                                    {% if lic.es_activa %}
-                                    <span class="text-[9px] font-black text-white uppercase tracking-widest mt-1 bg-rose-500 px-3 py-1 rounded-lg border border-rose-600/20 shadow-sm">Ausencia Activa</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
+                         <div class="divide-y divide-gray-50">
+                             {% for lic in licencias_semana_actual %}
+                             <div class="px-6 py-4 hover:bg-gray-50/50 transition-colors flex items-center justify-between gap-4">
+                                 <div class="flex items-center gap-4">
+                                     <div class="relative">
+                                         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-50 to-white border border-rose-100 text-rose-600 flex items-center justify-center font-black text-sm shadow-sm group-hover:scale-105 transition-transform duration-300">
+                                             {{ lic.usuario.first_name.0 }}{{ lic.usuario.last_name.0 }}
+                                         </div>
+                                         {% if lic.es_activa %}
+                                         <span class="absolute -top-0.5 -right-0.5 flex h-4 w-4">
+                                           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                           <span class="relative inline-flex rounded-full h-4 w-4 bg-rose-600 border-2 border-white"></span>
+                                         </span>
+                                         {% endif %}
+                                     </div>
+                                     <div class="flex flex-col">
+                                         <div class="flex items-center gap-2">
+                                             <span class="text-sm font-black text-gray-900 leading-tight">{{ lic.usuario.get_full_name }}</span>
+                                             <span class="text-[8px] font-black px-1.5 py-0.5 rounded {% if lic.usuario.categoria_funcionario == 'DOCENTE' %}bg-purple-50 text-purple-700 border border-purple-100{% elif lic.usuario.categoria_funcionario == 'ASISTENTE' %}bg-blue-50 text-blue-700 border border-blue-100{% else %}bg-gray-50 text-gray-700 border border-gray-100{% endif %} uppercase tracking-tighter">
+                                                 {{ lic.usuario.categoria_funcionario|default:'OTRO' }}
+                                             </span>
+                                         </div>
+                                         <div class="flex items-center gap-1 mt-1">
+                                             <i class="fas fa-calendar-alt text-[9px] text-rose-400"></i>
+                                             <span class="text-[10px] font-bold text-rose-600 uppercase tracking-wide">{{ lic.fecha_inicio|date:"l d M" }} al {{ lic.fecha_retorno|date:"l d M" }}</span>
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <div class="text-right flex flex-col items-end">
+                                     <div class="flex items-center gap-1 mb-0.5">
+                                         <span class="text-base font-black text-rose-700">{{ lic.dias }}</span>
+                                         <span class="text-[9px] font-bold text-gray-400 uppercase">Días</span>
+                                     </div>
+                                     {% if lic.es_activa %}
+                                     <span class="text-[8px] font-black text-white uppercase tracking-widest mt-0.5 bg-rose-500 px-2 py-0.5 rounded border border-rose-600/20 shadow-sm">Activa</span>
+                                     {% endif %}
+                                 </div>
+                             </div>
+                             {% endfor %}
+                         </div>
                         {% else %}
                         <div class="p-16 text-center opacity-40">
                             <i class="fas fa-heart-pulse text-gray-200 text-6xl mb-4 block"></i>
@@ -184,20 +184,31 @@
                 </div>
                 
                 <!-- Resumen Diario Próxima (L-V) -->
-                <div class="flex gap-2 opacity-80">
-                    {% for day in daily_stats_proxima %}
-                    <div class="flex flex-col items-center min-w-[55px] p-2.5 rounded-2xl border bg-white border-gray-100 shadow-sm">
-                        <span class="text-[9px] font-black text-gray-400 uppercase tracking-tighter">{{ day.nombre }}</span>
-                        <span class="text-sm font-black text-gray-700">{{ day.total }}</span>
+                <div class="flex gap-1 opacity-80">
+                    <div class="border-r border-gray-100 pr-4 mr-4 hidden sm:block">
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Carga Semanal</p>
+                        <p class="text-xs font-bold text-emerald-600">Permisos Aceptados</p>
+                        <p class="text-[8px] text-gray-500">Doc / Asis</p>
                     </div>
-                    {% endfor %}
+                    <div class="flex justify-between flex-1">
+                        {% for day in daily_stats_proxima %}
+                        <div class="flex-1 text-center p-1.5 rounded-lg border bg-white border-gray-100 shadow-sm">
+                            <span class="text-[8px] font-black text-gray-400 uppercase tracking-tighter">{{ day.nombre }}</span>
+                            <div class="text-center">
+                                <span class="text-xs font-black text-purple-600 block">{{ day.docente_count }}</span>
+                                <span class="text-[8px] text-gray-300">/</span>
+                                <span class="text-xs font-black text-blue-600 block">{{ day.asistente_count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
 
             <div class="space-y-10">
                 <!-- Permisos Próximos -->
                 <div class="bg-gray-50/20 rounded-[2.5rem] border border-gray-200 border-dashed overflow-hidden flex flex-col hover:border-solid hover:bg-white transition-all duration-500 group/next">
-                    <div class="px-10 py-7 border-b border-gray-100 flex items-center justify-between">
+                    <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
                         <h3 class="text-base font-black text-gray-600 flex items-center gap-3">
                             <i class="fas fa-calendar-plus opacity-40 text-lg"></i>
                             Permisos Administrativos Solicitados
@@ -208,36 +219,31 @@
                     </div>
                     <div class="flex-1">
                         {% if permisos_semana_proxima %}
-                        <div class="divide-y divide-gray-100">
-                            {% for perm in permisos_semana_proxima %}
-                            <div class="px-10 py-6 flex items-center justify-between gap-6 grayscale-[0.4] opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
-                                <div class="flex items-center gap-6">
-                                    <div class="w-14 h-14 rounded-2xl bg-white border border-gray-100 text-gray-400 flex items-center justify-center font-black text-base shadow-sm">
-                                        {{ perm.usuario.first_name.0 }}{{ perm.usuario.last_name.0 }}
-                                    </div>
-                                    <div class="flex flex-col">
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-base font-black text-gray-700 leading-tight">{{ perm.usuario.get_full_name }}</span>
-                                            {% if perm.usuario.tipo_funcionario %}
-                                            <span class="text-[8px] font-black px-2 py-1 rounded-lg bg-white border border-gray-200 text-gray-400 uppercase tracking-tighter">
-                                                {{ perm.usuario.get_tipo_funcionario_display }}
-                                            </span>
-                                            {% endif %}
-                                        </div>
-                                        <span class="text-[11px] font-bold text-gray-400 uppercase mt-2 tracking-wide">{{ perm.fecha_inicio|date:"l d M" }} al {{ perm.fecha_termino|date:"l d M" }}</span>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-sm font-black text-gray-600 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm">
-                                        {{ perm.dias_solicitados|floatformat:1 }}
-                                        {% if perm.dias_solicitados == 0.5 %}
-                                        <span class="text-[10px] text-blue-500 ml-1">({{ perm.jornada }})</span>
-                                        {% else %}d{% endif %}
-                                    </span>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
+                         <div class="divide-y divide-gray-100">
+                             {% for perm in permisos_semana_proxima %}
+                             <div class="px-6 py-4 flex items-center justify-between gap-4 grayscale-[0.4] opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+                                 <div class="flex items-center gap-4">
+                                     <div class="w-10 h-10 rounded-xl bg-white border border-gray-100 text-gray-400 flex items-center justify-center font-black text-sm shadow-sm">
+                                         {{ perm.usuario.first_name.0 }}{{ perm.usuario.last_name.0 }}
+                                     </div>
+                                     <div class="flex flex-col">
+                                         <div class="flex items-center gap-2">
+                                             <span class="text-sm font-black text-gray-700 leading-tight">{{ perm.usuario.get_full_name }}</span>
+                                             <span class="text-[8px] font-black px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-400 uppercase tracking-tighter">
+                                                 {{ perm.usuario.categoria_funcionario|default:'OTRO' }}
+                                             </span>
+                                         </div>
+                                         <span class="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-wide">{{ perm.fecha_inicio|date:"l d M" }} al {{ perm.fecha_termino|date:"l d M" }}</span>
+                                     </div>
+                                 </div>
+                                 <div class="text-right">
+                                     <span class="text-sm font-black text-gray-600 bg-white px-2 py-1 rounded-lg border border-gray-200 shadow-sm">
+                                         {{ perm.dias_solicitados|floatformat:1 }}{% if perm.dias_solicitados == 0.5 %} ({{ perm.jornada }}){% else %}d{% endif %}
+                                     </span>
+                                 </div>
+                             </div>
+                             {% endfor %}
+                         </div>
                         {% else %}
                         <div class="p-16 text-center opacity-30">
                             <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Sin solicitudes para la próxima semana laboral</p>
@@ -248,7 +254,7 @@
 
                 <!-- Licencias Próximas -->
                 <div class="bg-gray-50/20 rounded-[2.5rem] border border-gray-200 border-dashed overflow-hidden flex flex-col hover:border-solid hover:bg-white transition-all duration-500 group/next">
-                    <div class="px-10 py-7 border-b border-gray-100 flex items-center justify-between">
+                    <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
                         <h3 class="text-base font-black text-gray-600 flex items-center gap-3">
                             <i class="fas fa-clock-rotate-left opacity-40 text-lg"></i>
                             Licencias Médicas Proyectadas
@@ -259,31 +265,29 @@
                     </div>
                     <div class="flex-1">
                         {% if licencias_semana_proxima %}
-                        <div class="divide-y divide-gray-100">
-                            {% for lic in licencias_semana_proxima %}
-                            <div class="px-10 py-6 flex items-center justify-between gap-6 grayscale-[0.4] opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
-                                <div class="flex items-center gap-6">
-                                    <div class="w-14 h-14 rounded-2xl bg-white border border-gray-100 text-gray-400 flex items-center justify-center font-black text-base shadow-sm">
-                                        {{ lic.usuario.first_name.0 }}{{ lic.usuario.last_name.0 }}
-                                    </div>
-                                    <div class="flex flex-col">
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-base font-black text-gray-700 leading-tight">{{ lic.usuario.get_full_name }}</span>
-                                            {% if lic.usuario.tipo_funcionario %}
-                                            <span class="text-[8px] font-black px-2 py-1 rounded-lg bg-white border border-gray-200 text-gray-400 uppercase tracking-tighter">
-                                                {{ lic.usuario.get_tipo_funcionario_display }}
-                                            </span>
-                                            {% endif %}
-                                        </div>
-                                        <span class="text-[11px] font-bold text-gray-400 uppercase mt-2 tracking-wide">{{ lic.fecha_inicio|date:"l d M" }} al {{ lic.fecha_retorno|date:"l d M" }}</span>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-sm font-black text-gray-600 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm">{{ lic.dias }} Días</span>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
+                         <div class="divide-y divide-gray-100">
+                             {% for lic in licencias_semana_proxima %}
+                             <div class="px-6 py-4 flex items-center justify-between gap-4 grayscale-[0.4] opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+                                 <div class="flex items-center gap-4">
+                                     <div class="w-10 h-10 rounded-xl bg-white border border-gray-100 text-gray-400 flex items-center justify-center font-black text-sm shadow-sm">
+                                         {{ lic.usuario.first_name.0 }}{{ lic.usuario.last_name.0 }}
+                                     </div>
+                                     <div class="flex flex-col">
+                                         <div class="flex items-center gap-2">
+                                             <span class="text-sm font-black text-gray-700 leading-tight">{{ lic.usuario.get_full_name }}</span>
+                                             <span class="text-[8px] font-black px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-400 uppercase tracking-tighter">
+                                                 {{ lic.usuario.categoria_funcionario|default:'OTRO' }}
+                                             </span>
+                                         </div>
+                                         <span class="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-wide">{{ lic.fecha_inicio|date:"l d M" }} al {{ lic.fecha_retorno|date:"l d M" }}</span>
+                                     </div>
+                                 </div>
+                                 <div class="text-right">
+                                     <span class="text-sm font-black text-gray-600 bg-white px-2 py-1 rounded-lg border border-gray-200 shadow-sm">{{ lic.dias }}d</span>
+                                 </div>
+                             </div>
+                             {% endfor %}
+                         </div>
                         {% else %}
                         <div class="p-16 text-center opacity-30">
                              <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Sin licencias proyectadas para la próxima semana laboral</p>
