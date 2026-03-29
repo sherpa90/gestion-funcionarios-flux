@@ -486,7 +486,7 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                 i,
                 lic.usuario.get_full_name() or lic.usuario.username,
                 lic.usuario.run,
-                lic.get_tipo_licencia_display(),
+                "Licencia Médica",
                 lic.dias,
                 lic.fecha_inicio.strftime("%d-%m-%Y") if lic.fecha_inicio else "",
                 lic.fecha_termino.strftime("%d-%m-%Y") if lic.fecha_termino else ""
