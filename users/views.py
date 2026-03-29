@@ -23,6 +23,8 @@ from core.security import audit_log
 from admin_dashboard.utils import registrar_log, get_client_ip
 
 from django.db.models import Q
+from django.utils import timezone
+from datetime import timedelta
 
 class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = CustomUser
@@ -76,11 +78,44 @@ class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['current_sort'] = self.request.GET.get('sort', 'recent')
-        
+
         # Recuperar contraseñas de importación masiva y limpiar sesión
         if 'bulk_passwords' in self.request.session:
             context['bulk_passwords'] = self.request.session.pop('bulk_passwords')
-            
+
+        # --- Lógica de Resumen Semanal de Aceptados ---
+        hoy = timezone.now().date()
+        lunes = hoy - timedelta(days=hoy.weekday())
+
+        from permisos.models import SolicitudPermiso  # Import here to avoid circular import
+
+        dias_semana = []
+        for i in range(5): # Lunes a Viernes
+            fecha_dia = lunes + timedelta(days=i)
+            # Contar permisos aprobados que cubren este día, diferenciando Docentes y Asistentes
+            solicitudes_dia = SolicitudPermiso.objects.filter(
+                estado='APROBADO',
+                fecha_inicio__lte=fecha_dia,
+                fecha_termino__gte=fecha_dia
+            ).select_related('usuario')
+
+            docente_count = 0
+            asistente_count = 0
+            for solicitud in solicitudes_dia:
+                if solicitud.usuario.categoria_funcionario == 'DOCENTE':
+                    docente_count += 1
+                elif solicitud.usuario.categoria_funcionario == 'ASISTENTE':
+                    asistente_count += 1
+
+            dias_semana.append({
+                'nombre': ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'][i],
+                'count': docente_count + asistente_count,
+                'docente_count': docente_count,
+                'asistente_count': asistente_count,
+                'es_hoy': fecha_dia == hoy
+            })
+        context['resumen_semanal'] = dias_semana
+
         return context
 
 class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):

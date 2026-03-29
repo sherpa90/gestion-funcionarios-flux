@@ -80,10 +80,13 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             
             empleados_data.append({
                 'funcionario': functorio,
+                'cargo': functorio.get_funcion_display() or functorio.get_tipo_funcionario_display() or functorio.get_role_display(),
                 'dias_disponibles': functorio.dias_disponibles,
                 'dias_usados': dias_usados,
                 'total_licencias': total_licencias,
                 'dias_licencias': dias_licencias,
+                'permisos': permisos.order_by('fecha_inicio'),
+                'licencias': licencias.order_by('fecha_inicio'),
             })
         
         # Aplicar ordenamiento
@@ -177,6 +180,7 @@ class PDFIndividualView(LoginRequiredMixin, UserPassesTestMixin, View):
         
         html_string = render_to_string('reportes/pdf_individual.html', {
             'functorio': functorio,
+            'cargo': functorio.get_funcion_display() or functorio.get_tipo_funcionario_display() or functorio.get_role_display(),
             'permisos': permisos,
             'licencias': licencias,
             'dias_usados': dias_usados,
@@ -314,7 +318,7 @@ class ExportarExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         ws.title = "Reporte Detallado"
         
         # Encabezados
-        ws.append(['Nombre', 'RUN', 'Rol', 'Días Disponibles', 'Días Usados', 'Días Licencia', 'Total Licencias'])
+        ws.append(['Nombre', 'RUN', 'Cargo', 'Días Disponibles', 'Días Usados', 'Días Licencia', 'Total Licencias'])
         
         # Preparar datos
         for functorio in funcionarios.order_by('first_name', 'last_name'):
@@ -344,7 +348,7 @@ class ExportarExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             ws.append([
                 functorio.get_full_name(),
                 functorio.run,
-                functorio.get_role_display(),
+                functorio.get_funcion_display() or functorio.get_tipo_funcionario_display() or functorio.get_role_display(),
                 functorio.dias_disponibles,
                 dias_usados,
                 dias_licencia,
@@ -379,7 +383,7 @@ class ReporteMensualDiasAdministrativosView(LoginRequiredMixin, UserPassesTestMi
             estado='APROBADO',
             fecha_inicio__year=year,
             fecha_inicio__month=mes
-        ).select_related('usuario').order_by('created_at', 'fecha_inicio')
+        ).select_related('usuario').order_by('fecha_inicio', 'created_at')
         
         # Preparar datos para el reporte - cada permiso es una fila
         empleados_data = []
@@ -387,6 +391,7 @@ class ReporteMensualDiasAdministrativosView(LoginRequiredMixin, UserPassesTestMi
         for permiso in permisos:
             empleados_data.append({
                 'funcionario': permiso.usuario,
+                'cargo': permiso.usuario.get_funcion_display() or permiso.usuario.get_tipo_funcionario_display() or permiso.usuario.get_role_display(),
                 'run': permiso.usuario.run,
                 'nombre_completo': permiso.usuario.get_full_name() or permiso.usuario.username,
                 'dias_solicitados': permiso.dias_solicitados,
