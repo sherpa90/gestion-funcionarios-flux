@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte Masivo de Atrasos</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #1a365d;
+            padding-bottom: 12px;
+        }
+        .header h1 {
+            font-size: 18px;
+            color: #1a365d;
+            margin: 0 0 5px 0;
+        }
+        .header p {
+            font-size: 12px;
+            color: #666;
+            margin: 2px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 10px;
+        }
+        th {
+            background-color: #1a365d;
+            color: white;
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 9px;
+            text-transform: uppercase;
+        }
+        th.center {
+            text-align: center;
+        }
+        td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        td.center {
+            text-align: center;
+        }
+        td.right {
+            text-align: right;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .min-rojo {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .resumen-row {
+            background-color: #1a365d !important;
+            color: white;
+            font-weight: bold;
+        }
+        .resumen-row td {
+            border-bottom: none;
+            padding: 10px;
+            font-size: 11px;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 8px;
+            color: #999;
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ titulo }}</h1>
+        <p>{{ nombre_mes }} {{ anio }}</p>
+        <p>Generado: {{ fecha_actual|date:"d/m/Y H:i" }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%">N°</th>
+                <th style="width: 14%">RUT</th>
+                <th style="width: 30%">Nombre</th>
+                <th style="width: 20%">Cargo</th>
+                <th class="center" style="width: 14%">Días con Atraso</th>
+                <th class="center" style="width: 17%">Total Min. Retraso</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in usuarios_data %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ data.usuario.run }}</td>
+                <td>{{ data.usuario.get_full_name }}</td>
+                <td>{{ data.usuario.get_funcion_display|default:data.usuario.get_role_display }}</td>
+                <td class="center">{{ data.dias_atraso }}</td>
+                <td class="center {% if data.total_minutos >= 60 %}min-rojo{% endif %}">{{ data.total_minutos }} min</td>
+            </tr>
+            {% endfor %}
+            {% if usuarios_data %}
+            <tr class="resumen-row">
+                <td colspan="4" style="text-align: right;">TOTAL GENERAL</td>
+                <td class="center">{{ usuarios_data|length }} func.</td>
+                <td class="center">{{ total_general }} min</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        SGPAL - Sistema de Gestión de Permisos y Asistencia Laboral
+    </div>
+</body>
+</html>

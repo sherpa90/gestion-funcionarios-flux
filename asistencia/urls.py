@@ -23,6 +23,9 @@ from .views import (
     CrearDiaFestivoView,
     EliminarDiaFestivoView,
     JustificarRegistroView,
+    ExportarRetrasosExcelView,
+    ExportarRetrasosPDFView,
+    RecalcularTodaAsistenciaView,
 )
 
 app_name = 'asistencia'
@@ -67,4 +70,13 @@ urlpatterns = [
 
     # Justificaciones manuales
     path("justificar-registro/<int:pk>/", JustificarRegistroView.as_view(), name="justificar_registro"),
+
+    # Exportar retrasos
+    path("exportar-retrasos/excel/", ExportarRetrasosExcelView.as_view(), name="exportar_retrasos_excel"),
+    path("exportar-retrasos/excel/<int:user_id>/", ExportarRetrasosExcelView.as_view(), name="exportar_retrasos_excel_individual"),
+    path("exportar-retrasos/pdf/", ExportarRetrasosPDFView.as_view(), name="exportar_retrasos_pdf"),
+    path("exportar-retrasos/pdf/<int:user_id>/", ExportarRetrasosPDFView.as_view(), name="exportar_retrasos_pdf_individual"),
+
+    # Recálculo masivo
+    path("recalcular-toda/", RecalcularTodaAsistenciaView.as_view(), name="recalcular_toda_asistencia"),
 ]
