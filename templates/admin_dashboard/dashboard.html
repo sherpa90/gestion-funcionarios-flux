@@ -73,16 +73,16 @@
                                          {{ perm.usuario.first_name.0 }}{{ perm.usuario.last_name.0 }}
                                      </div>
                                      <div class="flex flex-col">
-                                         <div class="flex items-center gap-2">
-                                             <span class="text-sm font-black text-gray-900 leading-tight">{{ perm.usuario.get_full_name }}</span>
-                                             <span class="text-[8px] font-black px-1.5 py-0.5 rounded {% if perm.usuario.categoria_funcionario == 'DOCENTE' %}bg-purple-50 text-purple-700 border border-purple-100{% elif perm.usuario.categoria_funcionario == 'ASISTENTE' %}bg-blue-50 text-blue-700 border border-blue-100{% else %}bg-gray-50 text-gray-700 border border-gray-100{% endif %} uppercase tracking-tighter">
-                                                 {{ perm.usuario.categoria_funcionario|default:'OTRO' }}
-                                             </span>
-                                         </div>
-                                         <div class="flex items-center gap-1 mt-1">
-                                             <i class="fas fa-clock text-[9px] text-purple-400"></i>
-                                             <span class="text-[10px] font-bold text-purple-600 uppercase tracking-wide">{{ perm.fecha_inicio|date:"l d M" }} al {{ perm.fecha_termino|date:"l d M" }}</span>
-                                         </div>
+                                          <div class="flex items-center gap-2">
+                                              <span class="text-sm font-black text-gray-900 leading-tight">{{ perm.usuario.get_full_name }}</span>
+                                              {% if perm.usuario.get_funcion_display %}
+                                              <span class="text-[10px] font-bold text-gray-400">{{ perm.usuario.get_funcion_display }}</span>
+                                              {% endif %}
+                                          </div>
+                                          <div class="flex items-center gap-1 mt-1">
+                                              <i class="fas fa-clock text-[9px] text-purple-400"></i>
+                                              <span class="text-[10px] font-bold text-purple-600 uppercase tracking-wide">{{ perm.fecha_inicio|date:"l d M" }} al {{ perm.fecha_termino|date:"l d M" }}</span>
+                                          </div>
                                      </div>
                                  </div>
                                  <div class="text-right flex flex-col items-end">
@@ -142,14 +142,14 @@
                                          {% endif %}
                                      </div>
                                      <div class="flex flex-col">
-                                         <div class="flex items-center gap-2">
-                                             <span class="text-sm font-black text-gray-900 leading-tight">{{ lic.usuario.get_full_name }}</span>
-                                             <span class="text-[8px] font-black px-1.5 py-0.5 rounded {% if lic.usuario.categoria_funcionario == 'DOCENTE' %}bg-purple-50 text-purple-700 border border-purple-100{% elif lic.usuario.categoria_funcionario == 'ASISTENTE' %}bg-blue-50 text-blue-700 border border-blue-100{% else %}bg-gray-50 text-gray-700 border border-gray-100{% endif %} uppercase tracking-tighter">
-                                                 {{ lic.usuario.categoria_funcionario|default:'OTRO' }}
-                                             </span>
-                                         </div>
-                                         <div class="flex items-center gap-1 mt-1">
-                                             <i class="fas fa-calendar-alt text-[9px] text-rose-400"></i>
+                                          <div class="flex items-center gap-2">
+                                              <span class="text-sm font-black text-gray-900 leading-tight">{{ lic.usuario.get_full_name }}</span>
+                                              {% if lic.usuario.get_funcion_display %}
+                                              <span class="text-[10px] font-bold text-gray-400">{{ lic.usuario.get_funcion_display }}</span>
+                                              {% endif %}
+                                          </div>
+                                          <div class="flex items-center gap-1 mt-1">
+                                              <i class="fas fa-calendar-alt text-[9px] text-rose-400"></i>
                                              <span class="text-[10px] font-bold text-rose-600 uppercase tracking-wide">{{ lic.fecha_inicio|date:"l d M" }} al {{ lic.fecha_retorno|date:"l d M" }}</span>
                                          </div>
                                      </div>
@@ -230,13 +230,13 @@
                                          {{ perm.usuario.first_name.0 }}{{ perm.usuario.last_name.0 }}
                                      </div>
                                      <div class="flex flex-col">
-                                         <div class="flex items-center gap-2">
-                                             <span class="text-sm font-black text-gray-700 leading-tight">{{ perm.usuario.get_full_name }}</span>
-                                             <span class="text-[8px] font-black px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-400 uppercase tracking-tighter">
-                                                 {{ perm.usuario.categoria_funcionario|default:'OTRO' }}
-                                             </span>
-                                         </div>
-                                         <span class="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-wide">{{ perm.fecha_inicio|date:"l d M" }} al {{ perm.fecha_termino|date:"l d M" }}</span>
+                                          <div class="flex items-center gap-2">
+                                              <span class="text-sm font-black text-gray-700 leading-tight">{{ perm.usuario.get_full_name }}</span>
+                                              {% if perm.usuario.get_funcion_display %}
+                                              <span class="text-[10px] font-bold text-gray-400">{{ perm.usuario.get_funcion_display }}</span>
+                                              {% endif %}
+                                          </div>
+                                          <span class="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-wide">{{ perm.fecha_inicio|date:"l d M" }} al {{ perm.fecha_termino|date:"l d M" }}</span>
                                      </div>
                                  </div>
                                  <div class="text-right">
@@ -276,13 +276,13 @@
                                          {{ lic.usuario.first_name.0 }}{{ lic.usuario.last_name.0 }}
                                      </div>
                                      <div class="flex flex-col">
-                                         <div class="flex items-center gap-2">
-                                             <span class="text-sm font-black text-gray-700 leading-tight">{{ lic.usuario.get_full_name }}</span>
-                                             <span class="text-[8px] font-black px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-400 uppercase tracking-tighter">
-                                                 {{ lic.usuario.categoria_funcionario|default:'OTRO' }}
-                                             </span>
-                                         </div>
-                                         <span class="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-wide">{{ lic.fecha_inicio|date:"l d M" }} al {{ lic.fecha_retorno|date:"l d M" }}</span>
+                                          <div class="flex items-center gap-2">
+                                              <span class="text-sm font-black text-gray-700 leading-tight">{{ lic.usuario.get_full_name }}</span>
+                                              {% if lic.usuario.get_funcion_display %}
+                                              <span class="text-[10px] font-bold text-gray-400">{{ lic.usuario.get_funcion_display }}</span>
+                                              {% endif %}
+                                          </div>
+                                          <span class="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-wide">{{ lic.fecha_inicio|date:"l d M" }} al {{ lic.fecha_retorno|date:"l d M" }}</span>
                                      </div>
                                  </div>
                                  <div class="text-right">

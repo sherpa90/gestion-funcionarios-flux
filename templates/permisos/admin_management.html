@@ -3,128 +3,85 @@
 {% block page_title %}Gestión Administrativa de Permisos{% endblock %}
 
 {% block content %}
-<div class="p-4 sm:p-6 lg:p-8">
-    <!-- Header -->
-    <div class="mb-6 lg:mb-8">
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Gestión de Permisos</h2>
-        <p class="text-gray-600 mt-1 sm:mt-2">Administra todas las solicitudes y saldos de días administrativos.</p>
+<div class="p-3 sm:p-4 lg:p-6">
+    <!-- Header Compacto con Stats Inline -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
+        <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Gestión de Permisos</h2>
+            <p class="text-xs text-gray-500 mt-0.5">Administra solicitudes y saldos de días administrativos.</p>
+        </div>
+        <!-- Stats Inline -->
+        <div class="flex flex-wrap gap-2">
+            <div class="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-full px-3 py-1.5">
+                <i class="fas fa-list text-blue-500 text-[10px]"></i>
+                <span class="text-[10px] font-bold text-blue-600 uppercase">Total</span>
+                <span class="text-sm font-black text-blue-700">{{ estadisticas.total }}</span>
+            </div>
+            <div class="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-full px-3 py-1.5">
+                <i class="fas fa-clock text-amber-500 text-[10px]"></i>
+                <span class="text-[10px] font-bold text-amber-600 uppercase">Pend.</span>
+                <span class="text-sm font-black text-amber-700">{{ estadisticas.pendientes }}</span>
+            </div>
+            <div class="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1.5">
+                <i class="fas fa-check text-emerald-500 text-[10px]"></i>
+                <span class="text-[10px] font-bold text-emerald-600 uppercase">Apr.</span>
+                <span class="text-sm font-black text-emerald-700">{{ estadisticas.aprobadas }}</span>
+            </div>
+            <div class="flex items-center gap-2 bg-rose-50 border border-rose-100 rounded-full px-3 py-1.5">
+                <i class="fas fa-times text-rose-500 text-[10px]"></i>
+                <span class="text-[10px] font-bold text-rose-600 uppercase">Rech.</span>
+                <span class="text-sm font-black text-rose-700">{{ estadisticas.rechazadas }}</span>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full px-3 py-1.5">
+                <i class="fas fa-ban text-slate-400 text-[10px]"></i>
+                <span class="text-[10px] font-bold text-slate-500 uppercase">Canc.</span>
+                <span class="text-sm font-black text-slate-700">{{ estadisticas.canceladas }}</span>
+            </div>
+        </div>
     </div>
 
-    <!-- Resumen Semanal -->
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100 mb-8">
-        <div class="flex justify-between items-center mb-2">
-            <div class="px-4 py-2 border-r border-gray-100 hidden sm:block">
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Carga Semanal</p>
+    <!-- Resumen Semanal Compacto -->
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-2.5 border border-blue-100 mb-4">
+        <div class="flex items-center gap-2">
+            <div class="px-3 py-1.5 border-r border-blue-100 hidden sm:block">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">Carga Semanal</p>
                 <p class="text-xs font-bold text-emerald-600">Permisos Aceptados</p>
                 <p class="text-[8px] text-gray-500">Doc / Asis</p>
             </div>
-            <div class="flex justify-between flex-1">
-                {% for dia in resumen_semanal %}
-                <div class="flex-1 min-w-[50px] sm:min-w-[65px] text-center p-1 rounded-2xl transition-all {% if dia.es_hoy %}bg-blue-50 ring-1 ring-blue-100{% endif %}">
-                    <p class="text-[10px] font-bold {% if dia.es_hoy %}text-blue-600{% else %}text-gray-400{% endif %} uppercase mb-1">{{ dia.nombre }}</p>
-                    <div class="flex items-center justify-center">
-                        <span class="text-sm font-black text-purple-600">{{ dia.docente_count }}</span>
-                        <span class="text-xs text-gray-400 mx-1">/</span>
-                        <span class="text-sm font-black text-blue-600">{{ dia.asistente_count }}</span>
-                    </div>
+            {% for dia in resumen_semanal %}
+            <div class="flex-1 min-w-[45px] sm:min-w-[55px] text-center p-1 rounded-lg transition-all {% if dia.es_hoy %}bg-blue-50 ring-1 ring-blue-200{% endif %}">
+                <p class="text-[9px] font-bold {% if dia.es_hoy %}text-blue-600{% else %}text-gray-400{% endif %} uppercase">{{ dia.nombre }}</p>
+                <div class="flex items-center justify-center">
+                    <span class="text-xs font-black text-purple-600">{{ dia.docente_count }}</span>
+                    <span class="text-[8px] text-gray-300 mx-0.5">/</span>
+                    <span class="text-xs font-black text-blue-600">{{ dia.asistente_count }}</span>
                 </div>
-                {% endfor %}
             </div>
+            {% endfor %}
         </div>
     </div>
 
-    <!-- Estadísticas -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6 mb-8">
-        <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-sm p-5 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-blue-100 text-xs font-semibold uppercase tracking-wider">Total</p>
-                    <p class="text-3xl font-extrabold mt-1">{{ estadisticas.total }}</p>
-                </div>
-                <div class="bg-white/15 rounded-xl p-3">
-                    <i class="fas fa-list text-xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-sm p-5 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-amber-100 text-xs font-semibold uppercase tracking-wider">Pendientes</p>
-                    <p class="text-3xl font-extrabold mt-1">{{ estadisticas.pendientes }}</p>
-                </div>
-                <div class="bg-white/15 rounded-xl p-3">
-                    <i class="fas fa-clock text-xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-sm p-5 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-emerald-100 text-xs font-semibold uppercase tracking-wider">Aprobadas</p>
-                    <p class="text-3xl font-extrabold mt-1">{{ estadisticas.aprobadas }}</p>
-                </div>
-                <div class="bg-white/15 rounded-xl p-3">
-                    <i class="fas fa-check text-xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-rose-500 to-red-600 rounded-2xl shadow-sm p-5 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-rose-100 text-xs font-semibold uppercase tracking-wider">Rechazadas</p>
-                    <p class="text-3xl font-extrabold mt-1">{{ estadisticas.rechazadas }}</p>
-                </div>
-                <div class="bg-white/15 rounded-xl p-3">
-                    <i class="fas fa-times text-xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-slate-500 to-slate-600 rounded-2xl shadow-sm p-5 text-white sm:col-span-2 lg:col-span-1">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-slate-100 text-xs font-semibold uppercase tracking-wider">Canceladas</p>
-                    <p class="text-3xl font-extrabold mt-1">{{ estadisticas.canceladas }}</p>
-                </div>
-                <div class="bg-white/15 rounded-xl p-3">
-                    <i class="fas fa-ban text-xl"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filtros -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 lg:p-6 mb-8">
-        <div class="flex items-center mb-5">
-            <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mr-3">
-                <i class="fas fa-filter text-sm"></i>
-            </div>
-            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">Filtros de Búsqueda</h3>
-        </div>
-        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-5 items-end">
+    <!-- Filtros Compactos -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-4">
+        <form method="get" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 items-end">
             <!-- Funcionario -->
-            <div class="sm:col-span-2 lg:col-span-1 min-w-0">
-                <label for="usuario" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Funcionario</label>
-                <div class="relative">
-                    <select name="usuario" id="usuario" class="filter-input block w-full text-sm border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 h-[44px] transition-all">
-                        <option value="">Todos los Funcionarios</option>
-                        {% for usuario in usuarios %}
-                        <option value="{{ usuario.id }}" {% if filtros_aplicados.usuario == usuario.id|stringformat:"s" %}selected{% endif %}>
-                            {{ usuario.get_full_name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="col-span-2 sm:col-span-1 min-w-0">
+                <label for="usuario" class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Funcionario</label>
+                <select name="usuario" id="usuario" class="block w-full text-xs border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 h-9 transition-all">
+                    <option value="">Todos</option>
+                    {% for usuario in usuarios %}
+                    <option value="{{ usuario.id }}" {% if filtros_aplicados.usuario == usuario.id|stringformat:"s" %}selected{% endif %}>
+                        {{ usuario.get_full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
             </div>
 
             <!-- Estado -->
             <div>
-                <label for="estado" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Estado</label>
-                <select name="estado" id="estado" class="filter-input block w-full text-sm border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 h-[44px] transition-all">
-                    <option value="">Todos los Estados</option>
+                <label for="estado" class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Estado</label>
+                <select name="estado" id="estado" class="block w-full text-xs border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 h-9 transition-all">
+                    <option value="">Todos</option>
                     {% for estado_valor, estado_label in estados %}
                     <option value="{{ estado_valor }}" {% if filtros_aplicados.estado == estado_valor %}selected{% endif %}>
                         {{ estado_label }}
@@ -135,125 +92,125 @@
 
             <!-- Desde -->
             <div>
-                <label for="fecha_desde" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Desde</label>
+                <label for="fecha_desde" class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Desde</label>
                 <input type="date" name="fecha_desde" id="fecha_desde" value="{{ filtros_aplicados.fecha_desde }}"
-                       class="filter-input block w-full text-sm border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 h-[44px] transition-all">
+                       class="block w-full text-xs border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 h-9 transition-all">
             </div>
 
             <!-- Hasta -->
             <div>
-                <label for="fecha_hasta" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Hasta</label>
+                <label for="fecha_hasta" class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Hasta</label>
                 <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ filtros_aplicados.fecha_hasta }}"
-                       class="filter-input block w-full text-sm border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 h-[44px] transition-all">
+                       class="block w-full text-xs border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 h-9 transition-all">
             </div>
 
             <!-- Buscar -->
-            <div class="sm:col-span-2 lg:col-span-1 min-w-0">
-                <label for="search" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Buscar texto</label>
+            <div>
+                <label for="search" class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Buscar</label>
                 <input type="text" name="search" id="search" value="{{ filtros_aplicados.search }}"
-                       placeholder="Motivo o detalle..."
-                       class="filter-input block w-full text-sm border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 h-[44px] transition-all">
+                       placeholder="Motivo..."
+                       class="block w-full text-xs border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 h-9 transition-all">
             </div>
 
             <!-- Botones -->
-            <div class="flex space-x-3 sm:col-span-2 lg:col-span-1">
-                <button type="submit" class="flex-1 inline-flex justify-center items-center h-[44px] bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-200 focus:ring-4 focus:ring-blue-100 transition-all">
-                    <i class="fas fa-search mr-2"></i>Filtrar
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 inline-flex justify-center items-center h-9 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-all">
+                    <i class="fas fa-search mr-1.5"></i>Filtrar
                 </button>
-                <a href="{% url 'admin_management' %}" class="inline-flex justify-center items-center w-[44px] h-[44px] bg-gray-100 text-gray-500 text-sm font-medium rounded-xl hover:bg-gray-200 hover:text-gray-700 transition-all">
+                <a href="{% url 'admin_management' %}" class="inline-flex justify-center items-center w-9 h-9 bg-gray-100 text-gray-500 text-xs rounded-lg hover:bg-gray-200 transition-all" title="Limpiar">
                     <i class="fas fa-undo-alt"></i>
                 </a>
             </div>
         </form>
     </div>
 
-    <!-- Contenido Principal: Tabla Desktop / Cards Móvil -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide">Registro de Solicitudes</h3>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700">
+    <!-- Contenido Principal -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-3 py-2.5 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Registro de Solicitudes</h3>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700">
                 {{ page_obj.paginator.count }} resultados
             </span>
         </div>
 
         {% if solicitudes %}
-        <!-- Vista Desktop (Tabla) -->
+        <!-- Vista Desktop (Tabla Compacta) -->
         <div class="hidden lg:block overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 whitespace-nowrap">
-                <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-gray-100 whitespace-nowrap">
+                <thead class="bg-gray-50/50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Funcionario</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Cargo</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Periodo</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Días</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Estado</th>
-                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Acciones</th>
+                        <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Funcionario</th>
+                        <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cargo</th>
+                        <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Periodo</th>
+                        <th class="px-3 py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">Días</th>
+                        <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Estado</th>
+                        <th class="px-3 py-2 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
+                <tbody class="bg-white divide-y divide-gray-50">
                     {% for solicitud in solicitudes %}
-                    <tr class="hover:bg-gray-50/50 transition-colors group">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center">
-                                <div class="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                    <i class="fas fa-user text-xs"></i>
+                    <tr class="hover:bg-blue-50/30 transition-colors group">
+                        <td class="px-3 py-2">
+                            <div class="flex items-center gap-2">
+                                <div class="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors flex-shrink-0">
+                                    <span class="text-[10px] font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
                                 </div>
-                                <div class="ml-3">
-                                    <div class="text-sm font-bold text-gray-900">{{ solicitud.usuario.get_full_name }}</div>
-                                    <div class="text-xs text-gray-400">{{ solicitud.usuario.run }}</div>
+                                <div class="min-w-0">
+                                    <div class="text-xs font-bold text-gray-900 truncate">{{ solicitud.usuario.get_full_name }}</div>
+                                    <div class="text-[10px] text-gray-400">{{ solicitud.usuario.run }}</div>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4">
-                            <span class="px-2 py-1 rounded text-xs font-bold uppercase {% if solicitud.usuario.funcion %}bg-purple-100 text-purple-700{% elif solicitud.usuario.tipo_funcionario %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                        <td class="px-3 py-2">
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-700{% elif solicitud.usuario.tipo_funcionario %}bg-blue-50 text-blue-700{% else %}bg-gray-50 text-gray-600{% endif %}">
                                 {{ solicitud.usuario.get_funcion_display|default:solicitud.usuario.get_tipo_funcionario_display|default:solicitud.usuario.get_role_display }}
                             </span>
                         </td>
-                        <td class="px-6 py-4">
-                            <div class="text-sm font-medium text-gray-700">
-                                {{ solicitud.fecha_inicio|date:"d M, Y" }} <span class="text-gray-300 mx-1">→</span> {{ solicitud.fecha_termino|date:"d M, Y" }}
+                        <td class="px-3 py-2">
+                            <div class="text-xs font-medium text-gray-700">
+                                {{ solicitud.fecha_inicio|date:"d/m" }} <span class="text-gray-300">→</span> {{ solicitud.fecha_termino|date:"d/m/Y" }}
                             </div>
-                            <div class="text-xs text-gray-400 mt-0.5 max-w-xs truncate">
-                                {{ solicitud.observacion|default:"Sin observación" }}
+                            <div class="text-[10px] text-gray-400 truncate max-w-[180px]">
+                                {{ solicitud.observacion|default:"—" }}
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="text-sm font-bold text-gray-900 bg-gray-100 px-2 py-1 rounded-md">
+                        <td class="px-3 py-2 text-center">
+                            <span class="text-xs font-black text-gray-900 bg-gray-100 px-1.5 py-0.5 rounded">
                                 {{ solicitud.dias_solicitados }}
                                 {% if solicitud.dias_solicitados == 0.5 %}
-                                <span class="text-[10px] text-blue-600 ml-1 font-black">{% if solicitud.jornada == 'AM' %}AM{% elif solicitud.jornada == 'PM' %}PM{% endif %}</span>
+                                <span class="text-[9px] text-blue-600 font-black">{% if solicitud.jornada == 'AM' %}AM{% elif solicitud.jornada == 'PM' %}PM{% endif %}</span>
                                 {% endif %}
                             </span>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-3 py-2">
                             {% if solicitud.estado == 'APROBADO' %}
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700">
-                                Aprobado
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+                                <i class="fas fa-check mr-1 text-[8px]"></i>Aprobado
                             </span>
                             {% elif solicitud.estado == 'RECHAZADO' %}
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-700">
-                                Rechazado
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700">
+                                <i class="fas fa-times mr-1 text-[8px]"></i>Rechazado
                             </span>
                             {% elif solicitud.estado == 'CANCELADO' %}
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-50 text-slate-700">
-                                Cancelado
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-700">
+                                <i class="fas fa-ban mr-1 text-[8px]"></i>Cancelado
                             </span>
                             {% else %}
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700">
-                                Pendiente
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700">
+                                <i class="fas fa-clock mr-1 text-[8px]"></i>Pendiente
                             </span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-right space-x-1">
+                        <td class="px-3 py-2 text-right">
                             <a href="{% url 'admin_edit_solicitud' solicitud.pk %}"
-                               class="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                                <i class="fas fa-edit mr-1.5"></i> Editar
+                               class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-lg hover:bg-blue-600 hover:text-white transition-all mr-1">
+                                <i class="fas fa-edit mr-1"></i> Editar
                             </a>
                             <button type="button"
                                     data-solicitud-id="{{ solicitud.pk }}"
                                     data-user-name="{{ solicitud.usuario.get_full_name }}"
-                                    class="delete-btn inline-flex items-center px-3 py-1.5 bg-rose-50 text-rose-700 text-xs font-bold rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm">
-                                <i class="fas fa-trash-alt mr-1.5"></i> Eliminar
+                                    class="delete-btn inline-flex items-center px-2 py-1 bg-rose-50 text-rose-700 text-[10px] font-bold rounded-lg hover:bg-rose-600 hover:text-white transition-all">
+                                <i class="fas fa-trash-alt mr-1"></i> Eliminar
                             </button>
                         </td>
                     </tr>
@@ -262,117 +219,105 @@
             </table>
         </div>
 
-        <!-- Vista Móvil (Cards) -->
-        <div class="lg:hidden divide-y divide-gray-100">
+        <!-- Vista Móvil/Tablet (Cards Compactas) -->
+        <div class="lg:hidden divide-y divide-gray-50">
             {% for solicitud in solicitudes %}
-            <div class="p-4 bg-white hover:bg-gray-50 transition-colors">
-                <div class="flex justify-between items-start mb-3">
-                    <div class="flex items-center">
-                        <div class="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-                            <i class="fas fa-user text-sm"></i>
+            <div class="px-3 py-2.5 bg-white hover:bg-gray-50/50 transition-colors">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                        <div class="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
+                            <span class="text-[10px] font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
                         </div>
-                        <div class="ml-3">
-                            <div class="text-base font-bold text-gray-900 leading-tight">{{ solicitud.usuario.get_full_name }}</div>
-                            <div class="text-sm text-gray-400">{{ solicitud.usuario.run }}</div>
-                            <span class="inline-flex mt-1 px-2 py-1 rounded text-xs font-black uppercase tracking-tighter {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-600{% elif solicitud.usuario.tipo_funcionario %}bg-blue-50 text-blue-600{% else %}bg-gray-50 text-gray-600{% endif %}">
-                                {{ solicitud.usuario.get_funcion_display|default:solicitud.usuario.get_tipo_funcionario_display|default:solicitud.usuario.get_role_display }}
-                            </span>
-                        </div>
-                    </div>
-                    {% if solicitud.estado == 'APROBADO' %}
-                    <span class="px-2 py-1 rounded text-xs font-extrabold uppercase bg-emerald-100 text-emerald-800">Aprobado</span>
-                    {% elif solicitud.estado == 'RECHAZADO' %}
-                    <span class="px-2 py-1 rounded text-xs font-extrabold uppercase bg-rose-100 text-rose-800">Rechazado</span>
-                    {% elif solicitud.estado == 'CANCELADO' %}
-                    <span class="px-2 py-1 rounded text-xs font-extrabold uppercase bg-slate-100 text-slate-800">Cancelado</span>
-                    {% else %}
-                    <span class="px-2 py-1 rounded text-xs font-extrabold uppercase bg-amber-100 text-amber-800">Pendiente</span>
-                    {% endif %}
-                </div>
-
-                <div class="flex justify-between items-center bg-gray-50 rounded-xl p-3 mb-3 border border-gray-100">
-                    <div class="space-y-1">
-                        <div class="text-sm text-gray-500 font-medium">Periodo</div>
-                        <div class="text-xs font-bold text-gray-700 uppercase">
-                            {{ solicitud.fecha_inicio|date:"l d/m" }}
-                            {% if solicitud.fecha_termino != solicitud.fecha_inicio %}
-                            <span class="text-gray-300 px-1">→</span> {{ solicitud.fecha_termino|date:"l d/m" }}
-                            {% endif %}
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs font-bold text-gray-900 truncate">{{ solicitud.usuario.get_full_name }}</span>
+                                <span class="flex-shrink-0 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-600{% elif solicitud.usuario.tipo_funcionario %}bg-blue-50 text-blue-600{% else %}bg-gray-50 text-gray-600{% endif %}">
+                                    {{ solicitud.usuario.get_funcion_display|default:solicitud.usuario.get_tipo_funcionario_display|default:solicitud.usuario.get_role_display }}
+                                </span>
+                            </div>
+                            <div class="text-[10px] text-gray-400 truncate">
+                                {{ solicitud.fecha_inicio|date:"d/m" }} <span class="text-gray-300">→</span> {{ solicitud.fecha_termino|date:"d/m" }}
+                                {% if solicitud.observacion %} · {{ solicitud.observacion|truncatechars:30 }}{% endif %}
+                            </div>
                         </div>
                     </div>
-                    <div class="text-center">
-                        <div class="text-xs text-gray-400 font-bold uppercase tracking-tighter">Días</div>
-                        <div class="text-lg font-black text-blue-600">
-                            {{ solicitud.dias_solicitados|floatformat:1 }}
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <!-- Días -->
+                        <div class="text-center">
+                            <span class="text-sm font-black text-gray-900">{{ solicitud.dias_solicitados|floatformat:1 }}</span>
                             {% if solicitud.dias_solicitados == 0.5 %}
-                            <span class="text-xs text-purple-600">({{ solicitud.jornada }})</span>
+                            <span class="text-[8px] text-blue-600 font-black block -mt-0.5">{{ solicitud.jornada }}</span>
                             {% endif %}
                         </div>
+                        <!-- Estado -->
+                        {% if solicitud.estado == 'APROBADO' %}
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-emerald-100 text-emerald-700">OK</span>
+                        {% elif solicitud.estado == 'RECHAZADO' %}
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-rose-100 text-rose-700">Rech.</span>
+                        {% elif solicitud.estado == 'CANCELADO' %}
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-slate-100 text-slate-700">Canc.</span>
+                        {% else %}
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-amber-100 text-amber-700">Pend.</span>
+                        {% endif %}
+                        <!-- Acciones Dropdown -->
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-all">
+                                <i class="fas fa-ellipsis-v text-[10px]"></i>
+                            </button>
+                            <div x-show="open" @click.away="open = false" x-transition
+                                 class="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 w-32 overflow-hidden">
+                                <a href="{% url 'admin_edit_solicitud' solicitud.pk %}" class="flex items-center gap-2 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50 transition">
+                                    <i class="fas fa-edit text-[10px]"></i> Editar
+                                </a>
+                                <button type="button"
+                                        data-solicitud-id="{{ solicitud.pk }}"
+                                        data-user-name="{{ solicitud.usuario.get_full_name }}"
+                                        class="delete-btn w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 transition border-t border-gray-50">
+                                    <i class="fas fa-trash-alt text-[10px]"></i> Eliminar
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-
-                <div class="flex space-x-2">
-                    <a href="{% url 'admin_edit_solicitud' solicitud.pk %}"
-                       class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-blue-200 text-blue-700 text-sm font-bold rounded-xl hover:bg-blue-50 transition">
-                        <i class="fas fa-edit mr-2"></i> Editar
-                    </a>
-                    <button type="button"
-                            data-solicitud-id="{{ solicitud.pk }}"
-                            data-user-name="{{ solicitud.usuario.get_full_name }}"
-                            class="delete-btn flex-1 inline-flex justify-center items-center px-4 py-2 border border-rose-200 text-rose-700 text-sm font-bold rounded-xl hover:bg-rose-50 transition">
-                        <i class="fas fa-trash-alt mr-2"></i> Eliminar
-                    </button>
                 </div>
             </div>
             {% endfor %}
         </div>
 
-        <!-- Paginación Eficiente -->
+        <!-- Paginación Compacta -->
         {% if is_paginated %}
-        <div class="bg-gray-50/50 px-5 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 gap-4">
-            <div class="text-xs font-bold text-gray-400 uppercase tracking-widest text-center sm:text-left">
-                Página <span class="text-gray-900">{{ page_obj.number }}</span> de {{ page_obj.paginator.num_pages }}
-                <span class="mx-2 text-gray-200">|</span>
-                <span class="text-gray-500 font-medium lowercase italic">{{ page_obj.paginator.count }} registros totales</span>
+        <div class="bg-gray-50/50 px-3 py-2.5 flex items-center justify-between border-t border-gray-100">
+            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                <span class="text-gray-700">{{ page_obj.number }}</span>/{{ page_obj.paginator.num_pages }}
+                <span class="mx-1 text-gray-200">|</span>
+                <span class="text-gray-400 font-medium lowercase">{{ page_obj.paginator.count }} regs.</span>
             </div>
-            <div class="flex items-center space-x-1.5 w-full sm:w-auto justify-center">
+            <div class="flex items-center space-x-1">
                 {% if page_obj.has_previous %}
-                <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                   class="inline-flex items-center justify-center w-9 h-9 bg-white border border-gray-200 text-gray-400 rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Primera página">
-                    <i class="fas fa-step-backward text-[10px]"></i>
-                </a>
                 <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                   class="inline-flex items-center justify-center w-9 h-9 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">
-                    <i class="fas fa-chevron-left text-[10px]"></i>
+                   class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-[10px] rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all">
+                    <i class="fas fa-chevron-left text-[8px]"></i>
                 </a>
                 {% endif %}
                 
-                <div class="flex items-center space-x-1 hidden md:flex">
+                <div class="hidden sm:flex items-center space-x-0.5">
                     {% for num in page_obj.paginator.page_range %}
                         {% if page_obj.number == num %}
-                            <span class="inline-flex items-center justify-center w-9 h-9 bg-blue-600 text-white text-xs font-black rounded-xl shadow-md shadow-blue-200">{{ num }}</span>
+                            <span class="inline-flex items-center justify-center w-7 h-7 bg-blue-600 text-white text-[10px] font-black rounded-lg">{{ num }}</span>
                         {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                             <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                               class="inline-flex items-center justify-center w-9 h-9 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">{{ num }}</a>
+                               class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-[10px] font-bold rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all">{{ num }}</a>
                         {% elif num == 1 or num == page_obj.paginator.num_pages %}
-                            <span class="text-gray-300 px-1">...</span>
+                            <span class="text-gray-300 text-[10px] px-0.5">..</span>
                             <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                               class="inline-flex items-center justify-center w-9 h-9 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">{{ num }}</a>
+                               class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-[10px] font-bold rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all">{{ num }}</a>
                         {% endif %}
                     {% endfor %}
                 </div>
 
-                <!-- Indicador simplificado para móvil -->
-                <span class="md:hidden px-3 py-1.5 bg-gray-100 text-gray-500 text-[10px] font-bold rounded-lg">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-
                 {% if page_obj.has_next %}
                 <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                   class="inline-flex items-center justify-center w-9 h-9 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">
-                    <i class="fas fa-chevron-right text-[10px]"></i>
-                </a>
-                <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                   class="inline-flex items-center justify-center w-9 h-9 bg-white border border-gray-200 text-gray-400 rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Última página">
-                    <i class="fas fa-step-forward text-[10px]"></i>
+                   class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-[10px] rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all">
+                    <i class="fas fa-chevron-right text-[8px]"></i>
                 </a>
                 {% endif %}
             </div>
@@ -380,50 +325,47 @@
         {% endif %}
 
         {% else %}
-        <div class="px-6 py-20 text-center">
-            <div class="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <i class="fas fa-inbox text-slate-300 text-3xl"></i>
+        <div class="px-6 py-12 text-center">
+            <div class="bg-slate-50 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                <i class="fas fa-inbox text-slate-300 text-xl"></i>
             </div>
-            <p class="text-slate-500 text-lg font-bold">Sin resultados</p>
-            <p class="text-slate-400 text-sm mt-1">No se encontraron solicitudes con los filtros aplicados.</p>
-            <a href="{% url 'admin_management' %}" class="inline-flex items-center mt-6 text-sm font-bold text-blue-600 hover:text-blue-700">
-                Limpiar filtros <i class="fas fa-arrow-right ml-2"></i>
+            <p class="text-slate-500 text-sm font-bold">Sin resultados</p>
+            <p class="text-slate-400 text-xs mt-1">No se encontraron solicitudes con los filtros aplicados.</p>
+            <a href="{% url 'admin_management' %}" class="inline-flex items-center mt-4 text-xs font-bold text-blue-600 hover:text-blue-700">
+                Limpiar filtros <i class="fas fa-arrow-right ml-1"></i>
             </a>
         </div>
         {% endif %}
     </div>
 </div>
 
-<!-- Modal de confirmación estilizado -->
-<div id="deleteModal" class="hidden fixed z-[100] inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-slate-900/60 transition-opacity backdrop-blur-sm" aria-hidden="true" onclick="closeDeleteModal()"></div>
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
-            <div class="bg-white px-6 pt-6 pb-6 mt-4">
-                <div class="sm:flex sm:items-start text-center sm:text-left">
-                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-14 w-14 rounded-2xl bg-rose-50 sm:mx-0">
-                        <i class="fas fa-exclamation-triangle text-rose-600 text-xl"></i>
+<!-- Modal de confirmación -->
+<div id="deleteModal" class="hidden fixed z-[100] inset-0 overflow-y-auto" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
+        <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl max-w-sm w-full border border-gray-100">
+            <div class="px-5 pt-5 pb-4">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-xl bg-rose-50">
+                        <i class="fas fa-exclamation-triangle text-rose-600"></i>
                     </div>
-                    <div class="mt-4 sm:mt-0 sm:ml-6">
-                        <h3 class="text-xl font-black text-gray-900 leading-tight">¿Eliminar esta solicitud?</h3>
-                        <div class="mt-2">
-                            <p class="text-sm text-gray-500" id="deleteMessage">
-                                Esta acción devolverá automáticamente los días al funcionario si la solicitud estaba aprobada.
-                            </p>
-                        </div>
+                    <div>
+                        <h3 class="text-base font-black text-gray-900 leading-tight">¿Eliminar esta solicitud?</h3>
+                        <p class="text-xs text-gray-500 mt-1" id="deleteMessage">
+                            Esta acción devolverá los días al funcionario si estaba aprobada.
+                        </p>
                     </div>
                 </div>
             </div>
-            <div class="bg-gray-50/80 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+            <div class="bg-gray-50/80 px-5 py-3 flex justify-end gap-2">
                 <button type="button" onclick="closeDeleteModal()"
-                        class="px-5 py-2.5 bg-white border border-gray-200 text-gray-600 text-sm font-bold rounded-2xl hover:bg-gray-50 shadow-xs transition">
+                        class="px-4 py-2 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-50 transition">
                     Cancelar
                 </button>
                 <form id="deleteForm" method="post" class="inline">
                     {% csrf_token %}
-                    <button type="submit" class="w-full px-5 py-2.5 bg-rose-600 text-white text-sm font-extrabold rounded-2xl hover:bg-rose-700 shadow-lg shadow-rose-200 transition-all">
-                        Sí, Eliminar Solicitud
+                    <button type="submit" class="px-4 py-2 bg-rose-600 text-white text-xs font-extrabold rounded-xl hover:bg-rose-700 shadow-lg shadow-rose-200 transition-all">
+                        Eliminar
                     </button>
                 </form>
             </div>
@@ -431,9 +373,9 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Select2 para el buscador de funcionarios - Adaptar a responsive
     if (typeof $ !== 'undefined' && $.fn.select2) {
         $('#usuario').select2({
             width: '100%',
@@ -442,64 +384,55 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Event listeners para botones de eliminación
     document.querySelectorAll('.delete-btn').forEach(button => {
         button.addEventListener('click', function() {
             const solicitudId = this.getAttribute('data-solicitud-id');
             const userName = this.getAttribute('data-user-name');
-
             document.getElementById('deleteMessage').innerHTML =
-                `Estás a punto de eliminar la solicitud de <span class="text-gray-900 font-black">${userName}</span>. ¿Estás seguro de continuar?`;
+                `Estás a punto de eliminar la solicitud de <span class="text-gray-900 font-black">${userName}</span>.`;
             document.getElementById('deleteForm').action = `/permisos/admin/eliminar/${solicitudId}/`;
             document.getElementById('deleteModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden'; // Bloquear scroll
+            document.body.style.overflow = 'hidden';
         });
     });
 });
 
 function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
-    document.body.style.overflow = ''; // Restaurar scroll
+    document.body.style.overflow = '';
 }
 
-// Cerrar modal con la tecla Esc
 document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        closeDeleteModal();
-    }
+    if (event.key === 'Escape') closeDeleteModal();
 });
 </script>
 
 <style>
 .select2-container--default .select2-selection--single {
-    border-radius: 0.75rem !important;
+    border-radius: 0.5rem !important;
     border: 1px solid #e5e7eb !important;
-    height: 44px !important;
+    height: 36px !important;
     display: flex !important;
     align-items: center !important;
-    padding: 0 12px !important;
+    padding: 0 8px !important;
     background-color: #fff !important;
-    transition: all 0.2s ease !important;
-}
-.select2-container--default.select2-container--focus .select2-selection--single {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+    font-size: 0.75rem !important;
 }
 .select2-container--default .select2-selection--single .select2-selection__rendered {
     color: #374151 !important;
-    font-size: 0.875rem !important;
+    font-size: 0.75rem !important;
     padding-left: 0 !important;
+    line-height: 24px !important;
 }
 .select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 44px !important;
-    right: 8px !important;
+    height: 34px !important;
+    right: 4px !important;
 }
 .select2-responsive-dropdown {
-    border-radius: 1rem !important;
+    border-radius: 0.75rem !important;
     border: 1px solid #f3f4f6 !important;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
-    margin-top: 4px !important;
-    overflow: hidden !important;
+    margin-top: 2px !important;
 }
 </style>
 {% endblock %}
