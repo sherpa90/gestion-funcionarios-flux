@@ -10,6 +10,29 @@
         <p class="text-gray-600 mt-1 sm:mt-2">Administra todas las solicitudes y saldos de días administrativos.</p>
     </div>
 
+    <!-- Resumen Semanal -->
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100 mb-8">
+        <div class="flex justify-between items-center mb-2">
+            <div class="px-4 py-2 border-r border-gray-100 hidden sm:block">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Carga Semanal</p>
+                <p class="text-xs font-bold text-emerald-600">Permisos Aceptados</p>
+                <p class="text-[8px] text-gray-500">Doc / Asis</p>
+            </div>
+            <div class="flex justify-between flex-1">
+                {% for dia in resumen_semanal %}
+                <div class="flex-1 min-w-[50px] sm:min-w-[65px] text-center p-1 rounded-2xl transition-all {% if dia.es_hoy %}bg-blue-50 ring-1 ring-blue-100{% endif %}">
+                    <p class="text-[10px] font-bold {% if dia.es_hoy %}text-blue-600{% else %}text-gray-400{% endif %} uppercase mb-1">{{ dia.nombre }}</p>
+                    <div class="flex items-center justify-center">
+                        <span class="text-sm font-black text-purple-600">{{ dia.docente_count }}</span>
+                        <span class="text-xs text-gray-400 mx-1">/</span>
+                        <span class="text-sm font-black text-blue-600">{{ dia.asistente_count }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
     <!-- Estadísticas -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6 mb-8">
         <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-sm p-5 text-white">
@@ -69,34 +92,6 @@
                 <div class="bg-white/15 rounded-xl p-3">
                     <i class="fas fa-ban text-xl"></i>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Resumen Semanal -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 lg:p-6 mb-8">
-        <div class="flex items-center mb-4">
-            <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mr-3">
-                <i class="fas fa-calendar-week text-sm"></i>
-            </div>
-            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">Carga Semanal de Permisos Aprobados</h3>
-        </div>
-        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100">
-            <div class="flex justify-between items-center mb-2">
-                <p class="text-xs text-blue-600 font-bold uppercase tracking-widest">Docentes / Asistentes</p>
-                <p class="text-xs text-gray-500 font-medium">Esta semana</p>
-            </div>
-            <div class="flex justify-between">
-                {% for dia in resumen_semanal %}
-                <div class="flex-1 text-center p-2 {% if dia.es_hoy %}bg-blue-100 rounded-xl{% endif %}">
-                    <p class="text-[10px] font-bold {% if dia.es_hoy %}text-blue-700{% else %}text-gray-500{% endif %} uppercase mb-1">{{ dia.nombre }}</p>
-                    <div class="text-sm font-black">
-                        <span class="text-purple-600">{{ dia.docente_count }}</span>
-                        <span class="text-gray-400 mx-1">/</span>
-                        <span class="text-blue-600">{{ dia.asistente_count }}</span>
-                    </div>
-                </div>
-                {% endfor %}
             </div>
         </div>
     </div>

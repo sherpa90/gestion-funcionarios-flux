@@ -26,14 +26,19 @@
                 </div>
                 
                 <!-- Resumen Diario Actual (L-V) -->
-                <div class="flex gap-1">
+                <div class="flex items-center gap-1">
+                    <div class="px-3 py-1.5 border-r border-gray-100 hidden sm:block">
+                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Carga Semanal</p>
+                        <p class="text-xs font-bold text-emerald-600">Permisos Aceptados</p>
+                        <p class="text-[8px] text-gray-500">Doc / Asis</p>
+                    </div>
                     {% for day in daily_stats_actual %}
-                    <div class="flex flex-col items-center min-w-[50px] p-1.5 rounded-lg border {% if day.is_today %}bg-blue-600 border-blue-600 shadow-lg shadow-blue-100{% else %}bg-white border-gray-100 shadow-sm{% endif %} transition-all">
-                        <span class="text-[8px] font-black {% if day.is_today %}text-white/80{% else %}text-gray-400{% endif %} uppercase tracking-tighter">{{ day.nombre }}</span>
-                        <div class="text-center">
-                            <span class="text-xs font-black text-purple-600 block">{{ day.docente_count }}</span>
-                            <span class="text-[8px] text-gray-300">/</span>
-                            <span class="text-xs font-black text-blue-600 block">{{ day.asistente_count }}</span>
+                    <div class="flex-1 min-w-[50px] text-center p-1.5 rounded-lg border {% if day.is_today %}bg-blue-50 border-blue-200 ring-1 ring-blue-100{% else %}bg-white border-gray-100 shadow-sm{% endif %} transition-all">
+                        <span class="text-[8px] font-black {% if day.is_today %}text-blue-600{% else %}text-gray-400{% endif %} uppercase tracking-tighter">{{ day.nombre }}</span>
+                        <div class="flex items-center justify-center">
+                            <span class="text-xs font-black text-purple-600">{{ day.docente_count }}</span>
+                            <span class="text-[8px] text-gray-300 mx-0.5">/</span>
+                            <span class="text-xs font-black text-blue-600">{{ day.asistente_count }}</span>
                         </div>
                     </div>
                     {% endfor %}
@@ -54,7 +59,7 @@
                         {% if permisos_semana_actual %}
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest mr-2">Personal Ausente</span>
-                            <span class="bg-purple-600 text-white text-[12px] font-black px-4 py-1 rounded-full uppercase shadow-lg shadow-purple-200">{{ permisos_semana_actual|length }}</span>
+                            <span class="bg-purple-100 text-purple-700 text-[12px] font-black px-3 py-0.5 rounded-full uppercase">{{ permisos_semana_actual|length }}</span>
                         </div>
                         {% endif %}
                     </div>
@@ -115,7 +120,7 @@
                         {% if licencias_semana_actual %}
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-bold text-rose-400 uppercase tracking-widest mr-2">Personal con Licencia</span>
-                            <span class="bg-rose-600 text-white text-[12px] font-black px-4 py-1 rounded-full uppercase shadow-lg shadow-rose-200">{{ licencias_semana_actual|length }}</span>
+                            <span class="bg-rose-100 text-rose-700 text-[12px] font-black px-3 py-0.5 rounded-full uppercase">{{ licencias_semana_actual|length }}</span>
                         </div>
                         {% endif %}
                     </div>
@@ -184,24 +189,22 @@
                 </div>
                 
                 <!-- Resumen Diario Próxima (L-V) -->
-                <div class="flex gap-1 opacity-80">
-                    <div class="border-r border-gray-100 pr-4 mr-4 hidden sm:block">
+                <div class="flex items-center gap-1 opacity-80">
+                    <div class="px-3 py-1.5 border-r border-gray-100 hidden sm:block">
                         <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Carga Semanal</p>
                         <p class="text-xs font-bold text-emerald-600">Permisos Aceptados</p>
                         <p class="text-[8px] text-gray-500">Doc / Asis</p>
                     </div>
-                    <div class="flex justify-between flex-1">
-                        {% for day in daily_stats_proxima %}
-                        <div class="flex-1 text-center p-1.5 rounded-lg border bg-white border-gray-100 shadow-sm">
-                            <span class="text-[8px] font-black text-gray-400 uppercase tracking-tighter">{{ day.nombre }}</span>
-                            <div class="text-center">
-                                <span class="text-xs font-black text-purple-600 block">{{ day.docente_count }}</span>
-                                <span class="text-[8px] text-gray-300">/</span>
-                                <span class="text-xs font-black text-blue-600 block">{{ day.asistente_count }}</span>
-                            </div>
+                    {% for day in daily_stats_proxima %}
+                    <div class="flex-1 min-w-[50px] text-center p-1.5 rounded-lg border bg-white border-gray-100 shadow-sm">
+                        <span class="text-[8px] font-black text-gray-400 uppercase tracking-tighter">{{ day.nombre }}</span>
+                        <div class="flex items-center justify-center">
+                            <span class="text-xs font-black text-purple-600">{{ day.docente_count }}</span>
+                            <span class="text-[8px] text-gray-300 mx-0.5">/</span>
+                            <span class="text-xs font-black text-blue-600">{{ day.asistente_count }}</span>
                         </div>
-                        {% endfor %}
                     </div>
+                    {% endfor %}
                 </div>
             </div>
 
