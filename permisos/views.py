@@ -38,6 +38,7 @@ class SolicitudCancelView(LoginRequiredMixin, View):
 class SolicitudCreateView(LoginRequiredMixin, CreateView):
     model = SolicitudPermiso
     form_class = SolicitudForm
+    template_name = 'permisos/solicitud_form.html'
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
