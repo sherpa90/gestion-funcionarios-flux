@@ -288,15 +288,26 @@ class GestionHorariosView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
     template_name = 'asistencia/gestion_horarios.html'
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Obtener todos los usuarios del sistema (incluyendo administradores)
+        # Búsqueda
+        search = self.request.GET.get('search', '').strip()
+
+        # Obtener todos los usuarios del sistema
         funcionarios = CustomUser.objects.filter(
             role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
-        ).order_by('last_name', 'first_name')
+        ).order_by('first_name', 'last_name')
+
+        if search:
+            from django.db.models import Q
+            funcionarios = funcionarios.filter(
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search) |
+                Q(run__icontains=search)
+            )
 
         # Agrupar todos los horarios activos en un diccionario (O(1) lookup)
         horarios_dict = {
@@ -326,6 +337,7 @@ class GestionHorariosView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
         context['funcionarios_data'] = funcionarios_data
         context['total_con_horario'] = con_horario
         context['total_sin_horario'] = sin_horario
+        context['search'] = search
         return context
 
 
