@@ -332,7 +332,7 @@ class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, List
         return self.request.user.role in ['ADMIN', 'SECRETARIA']
 
     def get_queryset(self):
-        queryset = SolicitudPermiso.objects.select_related('usuario', 'created_by', 'cancelled_by').order_by('-fecha_inicio')
+        queryset = SolicitudPermiso.objects.select_related('usuario', 'created_by', 'cancelled_by').order_by('-created_at')
 
         # Filtros
         usuario_id = self.request.GET.get('usuario')
