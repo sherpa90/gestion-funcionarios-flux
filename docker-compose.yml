@@ -17,6 +17,9 @@ services:
       - SQL_USER=sgpal_user
       - SQL_PASSWORD=Sgpal2025Secure*
       - DEBUG=True
+      - SESSION_COOKIE_SECURE=False
+      - CSRF_COOKIE_SECURE=False
+      - SECURE_SSL_REDIRECT=False
 
   db:
     image: postgres:15

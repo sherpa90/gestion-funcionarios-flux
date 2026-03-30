@@ -54,15 +54,8 @@ class SolicitudForm(forms.ModelForm):
     def clean_archivo_justificacion(self):
         archivo = self.cleaned_data.get('archivo_justificacion')
         if archivo:
-            # Validar tamaño (máximo 5MB)
-            if archivo.size > 5 * 1024 * 1024:
-                raise forms.ValidationError("El archivo no debe superar los 5MB")
-            
-            # Validar extensión
-            ext = archivo.name.split('.')[-1].lower()
-            if ext not in ['pdf', 'jpg', 'jpeg', 'png']:
-                raise forms.ValidationError("Solo se permiten archivos PDF, JPG o PNG")
-        
+            from core.validators import validate_file_upload
+            validate_file_upload(archivo)
         return archivo
 
     def clean(self):

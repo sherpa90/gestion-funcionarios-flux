@@ -96,9 +96,9 @@ class UserCreateForm(forms.ModelForm):
         if password:
             user.set_password(password)
         else:
-            import random
+            import secrets
             import string
-            temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+            temp_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
             user.set_password(temp_password)
         
         if commit:

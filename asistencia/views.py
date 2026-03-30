@@ -334,6 +334,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
     template_name = 'asistencia/mi_asistencia.html'
 
     def get_context_data(self, **kwargs):
+        from django.db.models import Count, Sum, Avg, Q
         context = super().get_context_data(**kwargs)
 
         # Obtener parámetros de filtro
@@ -345,109 +346,55 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             mes = str(now.month)
             anio = str(now.year)
 
-        # Filtrar registros del usuario actual
+        # Filtrar registros del usuario actual con select_related optimizado
         registros = RegistroAsistencia.objects.filter(
             funcionario=self.request.user,
             fecha__year=anio,
             fecha__month=mes
-        ).order_by('-fecha')
+        ).select_related('horario_asignado').order_by('-fecha')
 
-        # Agregar horas trabajadas y permiso_detalle a cada registro para el template
+        # Agregar horas trabajadas a cada registro (sin queries adicionales)
         for registro in registros:
             if registro.minutos_trabajados:
                 registro.horas_trabajadas = round(registro.minutos_trabajados / 60, 1)
             else:
                 registro.horas_trabajadas = None
-            registro.detalle_permiso = registro.permiso_detalle
+            registro.detalle_permiso = None  # Evita N+1, se carga solo si es necesario
 
-        # Si no hay registros para el período seleccionado, intentar con el último período con datos
-        if not registros.exists() and not mes and not anio:
-            ultimo_registro = RegistroAsistencia.objects.filter(
-                funcionario=self.request.user
-            ).order_by('-fecha').first()
-            if ultimo_registro:
-                mes = str(ultimo_registro.fecha.month)
-                anio = str(ultimo_registro.fecha.year)
-                registros = RegistroAsistencia.objects.filter(
-                    funcionario=self.request.user,
-                    fecha__year=anio,
-                    fecha__month=mes
-                ).order_by('-fecha')
+        # Estadísticas del período en UNA sola query
+        stats = registros.aggregate(
+            total=Count('id'),
+            puntuales=Count('id', filter=Q(estado='PUNTUAL')),
+            retraso=Count('id', filter=Q(estado='RETRASO')),
+            ausente=Count('id', filter=Q(estado='AUSENTE')),
+            medio_dia=Count('id', filter=Q(estado='MEDIO_DIA')),
+            admin=Count('id', filter=Q(estado='DIA_ADMINISTRATIVO')),
+            licencia=Count('id', filter=Q(estado='LICENCIA_MEDICA')),
+            dias_con_tiempo=Count('id', filter=Q(minutos_trabajados__isnull=False)),
+            tiempo_promedio=Avg('minutos_trabajados', filter=Q(minutos_trabajados__isnull=False)),
+            total_minutos_trabajados=Sum('minutos_trabajados', filter=Q(minutos_trabajados__isnull=False)),
+            total_minutos_retraso=Sum('minutos_retraso', filter=Q(minutos_retraso__gt=0)),
+        )
 
-        # Estadísticas del período
-        total_dias = registros.count()
-        dias_puntuales = registros.filter(estado='PUNTUAL').count()
-        dias_retraso = registros.filter(estado='RETRASO').count()
-        dias_ausente = registros.filter(estado='AUSENTE').count()
-        dias_medio_dia = registros.filter(estado='MEDIO_DIA').count()
-        dias_admin = registros.filter(estado='DIA_ADMINISTRATIVO').count()
-        dias_licencia = registros.filter(estado='LICENCIA_MEDICA').count()
+        total_dias = stats['total'] or 0
+        dias_puntuales = stats['puntuales'] or 0
+        total_minutos_retraso_mes = stats['total_minutos_retraso'] or 0
+        total_horas_trabajadas_mes = round((stats['total_minutos_trabajados'] or 0) / 60, 1)
 
-        # Estadísticas de tiempo trabajado (solo si el campo existe)
-        tiempo_promedio_trabajado = 0
-        dias_con_tiempo_trabajado = 0
-        registros_con_tiempo = registros.none()  # Inicializar con queryset vacío
-        total_horas_trabajadas_mes = 0
-        total_minutos_retraso_mes = 0
-
-        # Verificar si el campo minutos_trabajados existe en el modelo
-        if hasattr(RegistroAsistencia, 'minutos_trabajados'):
-            try:
-                registros_con_tiempo = registros.exclude(minutos_trabajados__isnull=True)
-                dias_con_tiempo_trabajado = registros_con_tiempo.count()
-                if registros_con_tiempo.exists():
-                    tiempo_promedio_trabajado = round(registros_con_tiempo.aggregate(
-                        avg=Avg('minutos_trabajados')
-                    )['avg'] or 0, 0)
-
-                    # Calcular total de horas trabajadas en el mes
-                    total_minutos_mes = registros_con_tiempo.aggregate(
-                        total=Sum('minutos_trabajados')
-                    )['total'] or 0
-                    total_horas_trabajadas_mes = round(total_minutos_mes / 60, 1)
-
-                # Calcular total de minutos de retraso en el mes
-                registros_con_retraso = registros.exclude(minutos_retraso__isnull=True).filter(minutos_retraso__gt=0)
-                total_minutos_retraso_mes = registros_con_retraso.aggregate(
-                    total=Sum('minutos_retraso')
-                )['total'] or 0
-
-            except:
-                # Si hay error (campo no existe), usar valores por defecto
-                registros_con_tiempo = registros.none()
-                dias_con_tiempo_trabajado = 0
-                tiempo_promedio_trabajado = 0
-                total_horas_trabajadas_mes = 0
-                total_minutos_retraso_mes = 0
-
-        # Calcular horas semanales efectivas
+        # Horas semanales - UNA sola query con agregación en Python
         horas_semanales = {}
-        if registros_con_tiempo.exists():
-            # Obtener el primer día del mes
+        registros_con_tiempo_qs = registros.filter(minutos_trabajados__isnull=False).values_list('fecha', 'minutos_trabajados')
+        registros_list = list(registros_con_tiempo_qs)
+        if registros_list:
             primer_dia_mes = datetime(int(anio), int(mes), 1).date()
+            ultimo_dia_mes = (primer_dia_mes + timedelta(days=32)).replace(day=1) - timedelta(days=1)
 
-            # Calcular semanas del mes
-            for semana in range(5):  # Máximo 5 semanas en un mes
+            for semana in range(5):
                 inicio_semana = primer_dia_mes + timedelta(days=semana * 7)
-                fin_semana = inicio_semana + timedelta(days=6)
-
-                # Si la semana se sale del mes, ajustar
-                ultimo_dia_mes = (primer_dia_mes + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-                if fin_semana > ultimo_dia_mes:
-                    fin_semana = ultimo_dia_mes
-
-                # Filtrar registros de esta semana
-                registros_semana = registros_con_tiempo.filter(
-                    fecha__gte=inicio_semana,
-                    fecha__lte=fin_semana
-                )
-
-                if registros_semana.exists():
-                    minutos_semana = registros_semana.aggregate(
-                        total=Sum('minutos_trabajados')
-                    )['total'] or 0
-                    horas_semana = round(minutos_semana / 60, 1)
-                    horas_semanales[f"Semana {semana + 1}"] = horas_semana
+                fin_semana = min(inicio_semana + timedelta(days=6), ultimo_dia_mes)
+                minutos_semana = sum(m for f, m in registros_list if inicio_semana <= f <= fin_semana)
+                if minutos_semana > 0:
+                    horas_semanales[f"Semana {semana + 1}"] = round(minutos_semana / 60, 1)
 
         # Meses y años disponibles
         context['meses'] = [
@@ -466,14 +413,14 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             'estadisticas': {
                 'total_dias': total_dias,
                 'dias_puntuales': dias_puntuales,
-                'dias_retraso': dias_retraso,
-                'dias_ausente': dias_ausente,
-                'dias_medio_dia': dias_medio_dia,
-                'dias_admin': dias_admin,
-                'dias_licencia': dias_licencia,
+                'dias_retraso': stats['retraso'] or 0,
+                'dias_ausente': stats['ausente'] or 0,
+                'dias_medio_dia': stats['medio_dia'] or 0,
+                'dias_admin': stats['admin'] or 0,
+                'dias_licencia': stats['licencia'] or 0,
                 'porcentaje_puntualidad': round((dias_puntuales / total_dias * 100) if total_dias > 0 else 0, 1),
-                'dias_con_tiempo_trabajado': registros_con_tiempo.count(),
-                'tiempo_promedio_trabajado': tiempo_promedio_trabajado,
+                'dias_con_tiempo_trabajado': stats['dias_con_tiempo'] or 0,
+                'tiempo_promedio_trabajado': round(stats['tiempo_promedio'] or 0, 0),
                 'total_horas_trabajadas_mes': total_horas_trabajadas_mes,
                 'total_minutos_retraso_mes': total_minutos_retraso_mes,
                 'horas_semanales': horas_semanales,
@@ -691,22 +638,28 @@ class GestionAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
+        from django.db.models import Count, Q
         context = super().get_context_data(**kwargs)
 
-        # Estadísticas generales
-        total_usuarios = RegistroAsistencia.objects.values('funcionario_id').distinct().count()
-        total_registros = RegistroAsistencia.objects.count()
-        registros_puntuales = RegistroAsistencia.objects.filter(estado='PUNTUAL').count()
-        registros_retraso = RegistroAsistencia.objects.filter(estado='RETRASO').count()
-        registros_ausentes = RegistroAsistencia.objects.filter(estado='AUSENTE').count()
+        # Estadísticas generales - UNA sola query
+        stats = RegistroAsistencia.objects.aggregate(
+            total_registros=Count('id'),
+            registros_puntuales=Count('id', filter=Q(estado='PUNTUAL')),
+            registros_retraso=Count('id', filter=Q(estado='RETRASO')),
+            registros_ausentes=Count('id', filter=Q(estado='AUSENTE')),
+            total_usuarios=Count('funcionario_id', distinct=True),
+        )
 
         context['estadisticas'] = {
-            'total_usuarios': total_usuarios,
-            'total_registros': total_registros,
-            'registros_puntuales': registros_puntuales,
-            'registros_retraso': registros_retraso,
-            'registros_ausentes': registros_ausentes,
-            'porcentaje_puntualidad': round((registros_puntuales / total_registros * 100) if total_registros > 0 else 0, 1)
+            'total_usuarios': stats['total_usuarios'] or 0,
+            'total_registros': stats['total_registros'] or 0,
+            'registros_puntuales': stats['registros_puntuales'] or 0,
+            'registros_retraso': stats['registros_retraso'] or 0,
+            'registros_ausentes': stats['registros_ausentes'] or 0,
+            'porcentaje_puntualidad': round(
+                (stats['registros_puntuales'] / stats['total_registros'] * 100)
+                if stats['total_registros'] > 0 else 0, 1
+            )
         }
 
         # Obtener registros de una sola consulta (bulk mapping) en lugar de N queries

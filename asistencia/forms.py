@@ -36,12 +36,8 @@ class CargaHorariosForm(forms.Form):
     def clean_archivo_excel(self):
         archivo = self.cleaned_data.get("archivo_excel")
         if archivo:
-            # Validar extensión
-            if not archivo.name.lower().endswith((".xlsx", ".xls", ".pdf")):
-                raise forms.ValidationError("El archivo debe ser Excel (.xlsx/.xls) o PDF")
-            # Validar tamaño (max 5MB)
-            if archivo.size > 5 * 1024 * 1024:
-                raise forms.ValidationError("El archivo no debe superar los 5MB")
+            from core.validators import validate_file_upload
+            validate_file_upload(archivo)
         return archivo
 
 
@@ -83,10 +79,6 @@ class CargaRegistrosAsistenciaForm(forms.Form):
     def clean_archivo_excel(self):
         archivo = self.cleaned_data.get("archivo_excel")
         if archivo:
-            # Validar extensión
-            if not archivo.name.lower().endswith((".xlsx", ".xls", ".pdf")):
-                raise forms.ValidationError("El archivo debe ser Excel (.xlsx/.xls) o PDF")
-            # Validar tamaño (max 10MB para registros)
-            if archivo.size > 10 * 1024 * 1024:
-                raise forms.ValidationError("El archivo no debe superar los 10MB")
+            from core.validators import validate_file_upload
+            validate_file_upload(archivo)
         return archivo
