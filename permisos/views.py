@@ -332,7 +332,15 @@ class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, List
         return self.request.user.role in ['ADMIN', 'SECRETARIA']
 
     def get_queryset(self):
-        queryset = SolicitudPermiso.objects.select_related('usuario', 'created_by', 'cancelled_by').order_by('-created_at')
+        queryset = SolicitudPermiso.objects.select_related('usuario', 'created_by', 'cancelled_by')
+
+        # Orden por defecto: creación descendente (más recientes primero)
+        sort = self.request.GET.get('sort', '-created_at')
+        allowed_sorts = ['-created_at', 'created_at', '-fecha_inicio', 'fecha_inicio']
+        if sort in allowed_sorts:
+            queryset = queryset.order_by(sort)
+        else:
+            queryset = queryset.order_by('-created_at')
 
         # Filtros
         usuario_id = self.request.GET.get('usuario')
@@ -425,6 +433,7 @@ class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, List
             'fecha_desde': self.request.GET.get('fecha_desde'),
             'fecha_hasta': self.request.GET.get('fecha_hasta'),
             'search': self.request.GET.get('search'),
+            'sort': self.request.GET.get('sort', '-created_at'),
         }
 
         return context

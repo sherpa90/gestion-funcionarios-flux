@@ -61,6 +61,37 @@
         </div>
     </div>
 
+    <!-- Quick Filters + Orden -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+        <div class="flex items-center gap-1 bg-white rounded-xl border border-gray-100 p-1 shadow-sm">
+            <a href="{% url 'admin_management' %}{% if filtros_aplicados.search %}?search={{ filtros_aplicados.search }}{% endif %}"
+               class="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all {% if not filtros_aplicados.estado %}bg-gray-900 text-white shadow{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
+                Todas
+            </a>
+            <a href="{% url 'admin_management' %}?estado=PENDIENTE{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}"
+               class="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all {% if filtros_aplicados.estado == 'PENDIENTE' %}bg-amber-500 text-white shadow{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
+                Pendientes
+            </a>
+            <a href="{% url 'admin_management' %}?estado=APROBADO{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}"
+               class="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all {% if filtros_aplicados.estado == 'APROBADO' %}bg-emerald-500 text-white shadow{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
+                Aceptadas
+            </a>
+            <a href="{% url 'admin_management' %}?estado=RECHAZADO{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}"
+               class="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all {% if filtros_aplicados.estado == 'RECHAZADO' %}bg-rose-500 text-white shadow{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
+                Rechazadas
+            </a>
+        </div>
+        <div class="flex items-center gap-2">
+            <label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Orden:</label>
+            <select id="sort-selector" class="text-xs border-gray-200 rounded-lg h-7 w-40" onchange="applySort(this.value)">
+                <option value="-created_at" {% if filtros_aplicados.sort == '-created_at' or not filtros_aplicados.sort %}selected{% endif %}>Creación (recientes)</option>
+                <option value="created_at" {% if filtros_aplicados.sort == 'created_at' %}selected{% endif %}>Creación (antiguas)</option>
+                <option value="-fecha_inicio" {% if filtros_aplicados.sort == '-fecha_inicio' %}selected{% endif %}>Permiso (recientes)</option>
+                <option value="fecha_inicio" {% if filtros_aplicados.sort == 'fecha_inicio' %}selected{% endif %}>Permiso (antiguas)</option>
+            </select>
+        </div>
+    </div>
+
     <!-- Filtros Compactos -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-4">
         <form method="get" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 items-end">
@@ -405,6 +436,12 @@ function closeDeleteModal() {
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') closeDeleteModal();
 });
+
+function applySort(sortValue) {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('sort', sortValue);
+    window.location.href = '?' + urlParams.toString();
+}
 </script>
 
 <style>
