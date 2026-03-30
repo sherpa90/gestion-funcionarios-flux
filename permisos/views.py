@@ -398,7 +398,7 @@ class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, List
             'canceladas': stats['canceladas'] or 0,
         }
 
-        # --- Lógica de Resumen Semanal de Aceptados - UNA query por día con aggregation ---
+        # --- Lógica de Resumen Semanal de Aceptados ---
         from datetime import date as date_type
         hoy = timezone.now().date()
         lunes = hoy - timedelta(days=hoy.weekday())
@@ -406,16 +406,19 @@ class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, List
         dias_semana = []
         for i in range(5): # Lunes a Viernes
             fecha_dia = lunes + timedelta(days=i)
-            counts = SolicitudPermiso.objects.filter(
+            solicitudes_dia = SolicitudPermiso.objects.filter(
                 estado='APROBADO',
                 fecha_inicio__lte=fecha_dia,
                 fecha_termino__gte=fecha_dia
-            ).aggregate(
-                docente=Count('id', filter=Q(usuario__categoria_funcionario='DOCENTE')),
-                asistente=Count('id', filter=Q(usuario__categoria_funcionario='ASISTENTE')),
-            )
-            docente_count = counts['docente'] or 0
-            asistente_count = counts['asistente'] or 0
+            ).select_related('usuario')
+
+            docente_count = 0
+            asistente_count = 0
+            for solicitud in solicitudes_dia:
+                if solicitud.usuario.categoria_funcionario == 'DOCENTE':
+                    docente_count += 1
+                elif solicitud.usuario.categoria_funcionario == 'ASISTENTE':
+                    asistente_count += 1
 
             dias_semana.append({
                 'nombre': ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'][i],
