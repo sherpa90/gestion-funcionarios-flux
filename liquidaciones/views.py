@@ -148,9 +148,7 @@ class CargaLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, FormView):
 
         except Exception as e:
             logger.exception(f"Critical error in PDF processing: {e}")
-            import traceback
-            tb = traceback.format_exc()
-            messages.error(self.request, f"Error interno del servidor al procesar el archivo: {e} | {tb}")
+            messages.error(self.request, "Error interno del servidor al procesar el archivo. Intente nuevamente o contacte al administrador.")
             return self.form_invalid(form)
 
         return super().form_valid(form)
@@ -468,8 +466,8 @@ class AdminEliminarLiquidacionView(LoginRequiredMixin, UserPassesTestMixin, View
         except Liquidacion.DoesNotExist:
             messages.error(request, 'La liquidación especificada no existe.')
 
-        # Redirigir de vuelta a la vista del funcionario
-        return redirect(request.META.get('HTTP_REFERER', 'admin_liquidaciones_overview'))
+        # Redirigir a vista segura
+        return redirect('admin_liquidaciones_overview')
 
 class AdminEliminarTodasLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, View):
     """Vista para que administradores eliminen TODAS las liquidaciones del sistema"""

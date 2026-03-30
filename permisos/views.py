@@ -380,42 +380,42 @@ class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, List
             ('CANCELADO', 'Cancelado'),
         ]
 
-        # Estadísticas
-        total_solicitudes = SolicitudPermiso.objects.count()
-        solicitudes_pendientes = SolicitudPermiso.objects.filter(estado='PENDIENTE').count()
-        solicitudes_aprobadas = SolicitudPermiso.objects.filter(estado='APROBADO').count()
-        solicitudes_rechazadas = SolicitudPermiso.objects.filter(estado='RECHAZADO').count()
-        solicitudes_canceladas = SolicitudPermiso.objects.filter(estado='CANCELADO').count()
+        # Estadísticas - UNA sola query con agregación
+        from django.db.models import Count, Q
+        stats = SolicitudPermiso.objects.aggregate(
+            total=Count('id'),
+            pendientes=Count('id', filter=Q(estado='PENDIENTE')),
+            aprobadas=Count('id', filter=Q(estado='APROBADO')),
+            rechazadas=Count('id', filter=Q(estado='RECHAZADO')),
+            canceladas=Count('id', filter=Q(estado='CANCELADO')),
+        )
 
         context['estadisticas'] = {
-            'total': total_solicitudes,
-            'pendientes': solicitudes_pendientes,
-            'aprobadas': solicitudes_aprobadas,
-            'rechazadas': solicitudes_rechazadas,
-            'canceladas': solicitudes_canceladas,
+            'total': stats['total'] or 0,
+            'pendientes': stats['pendientes'] or 0,
+            'aprobadas': stats['aprobadas'] or 0,
+            'rechazadas': stats['rechazadas'] or 0,
+            'canceladas': stats['canceladas'] or 0,
         }
 
-        # --- Lógica de Resumen Semanal de Aceptados ---
+        # --- Lógica de Resumen Semanal de Aceptados - UNA query por día con aggregation ---
+        from datetime import date as date_type
         hoy = timezone.now().date()
         lunes = hoy - timedelta(days=hoy.weekday())
 
         dias_semana = []
         for i in range(5): # Lunes a Viernes
             fecha_dia = lunes + timedelta(days=i)
-            # Contar permisos aprobados que cubren este día, diferenciando Docentes y Asistentes
-            solicitudes_dia = SolicitudPermiso.objects.filter(
+            counts = SolicitudPermiso.objects.filter(
                 estado='APROBADO',
                 fecha_inicio__lte=fecha_dia,
                 fecha_termino__gte=fecha_dia
-            ).select_related('usuario')
-
-            docente_count = 0
-            asistente_count = 0
-            for solicitud in solicitudes_dia:
-                if solicitud.usuario.categoria_funcionario == 'DOCENTE':
-                    docente_count += 1
-                elif solicitud.usuario.categoria_funcionario == 'ASISTENTE':
-                    asistente_count += 1
+            ).aggregate(
+                docente=Count('id', filter=Q(usuario__categoria_funcionario='DOCENTE')),
+                asistente=Count('id', filter=Q(usuario__categoria_funcionario='ASISTENTE')),
+            )
+            docente_count = counts['docente'] or 0
+            asistente_count = counts['asistente'] or 0
 
             dias_semana.append({
                 'nombre': ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'][i],
@@ -528,7 +528,10 @@ class SolicitudAdminEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView
                 return redirect(self.success_url)
 
         except Exception as e:
-            form.add_error(None, f"Ocurrió un error inesperado al guardar: {str(e)}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.exception(f"Error al guardar solicitud: {e}")
+            form.add_error(None, "Ocurrió un error inesperado. Intente nuevamente o contacte al administrador.")
             return self.form_invalid(form)
 
 

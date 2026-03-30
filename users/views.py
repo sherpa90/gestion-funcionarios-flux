@@ -242,8 +242,10 @@ class BulkUserImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
                         errors.append(f"Fila {row_num}: Usuario con RUN {run} ya existe")
                         continue
                     
-                    # Generar contraseña
-                    password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+                    # Generar contraseña segura
+                    import secrets
+                    import string
+                    password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
                     
                     # Crear usuario
                     user = CustomUser.objects.create_user(
