@@ -73,58 +73,55 @@
         </div>
         {% endif %}
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Left Side: Data Input -->
-            <div class="space-y-6">
-                <!-- User Selection (Visible for Admins/Secretaries) -->
-                {% if user.role == 'SECRETARIA' or user.role == 'ADMIN' %}
-                <div class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 space-y-4">
-                    <label class="block text-[10px] font-black text-blue-600 uppercase tracking-widest">
-                        Funcionario Responsable
-                    </label>
-                    <div class="relative">
-                        {{ form.usuario }}
-                        <div
-                            class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-300">
-                            <i class="fas fa-search"></i>
-                        </div>
+        <div class="space-y-6">
+            <!-- User Selection (Visible for Admins/Secretaries) -->
+            {% if user.role == 'SECRETARIA' or user.role == 'ADMIN' %}
+            <div class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 space-y-4">
+                <label class="block text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                    Funcionario Responsable
+                </label>
+                <div class="relative">
+                    {{ form.usuario }}
+                    <div
+                        class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-300">
+                        <i class="fas fa-search"></i>
                     </div>
-                    {% if form.usuario.errors %}
-                    <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{ form.usuario.errors.0 }}
+                </div>
+                {% if form.usuario.errors %}
+                <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{ form.usuario.errors.0 }}
+                </p>
+                {% endif %}
+                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Busca por RUN o nombre
+                    completo.</p>
+            </div>
+            {% endif %}
+
+            <!-- Date and Duration -->
+            <div
+                class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div class="space-y-3">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        Fecha de Inicio
+                    </label>
+                    {{ form.fecha_inicio }}
+                    {% if form.fecha_inicio.errors %}
+                    <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{
+                        form.fecha_inicio.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div class="space-y-3">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        Cantidad de Días
+                    </label>
+                    {{ form.dias }}
+                    {% if form.dias.errors %}
+                    <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{ form.dias.errors.0 }}
                     </p>
                     {% endif %}
-                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Busca por RUN o nombre
-                        completo.</p>
-                </div>
-                {% endif %}
-
-                <!-- Date and Duration -->
-                <div
-                    class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div class="space-y-3">
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                            Fecha de Inicio
-                        </label>
-                        {{ form.fecha_inicio }}
-                        {% if form.fecha_inicio.errors %}
-                        <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{
-                            form.fecha_inicio.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                    <div class="space-y-3">
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                            Cantidad de Días
-                        </label>
-                        {{ form.dias }}
-                        {% if form.dias.errors %}
-                        <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{ form.dias.errors.0 }}
-                        </p>
-                        {% endif %}
-                    </div>
                 </div>
             </div>
 
-            <!-- Right Side: File Upload -->
+            <!-- File Upload -->
             <div class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 flex flex-col">
                 <label class="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-4 sm:mb-6">
                     Documento de Respaldo <span class="text-gray-300 ml-2">(Opcional)</span>
