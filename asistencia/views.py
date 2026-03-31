@@ -1837,14 +1837,11 @@ class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
         import calendar as cal
 
         # Obtener datos del usuario actual para el mes
-        registros_mes = RegistroAsistencia.objects.filter(
+        registros_mes = list(RegistroAsistencia.objects.filter(
             funcionario=request.user,
             fecha__year=anio,
             fecha__month=mes
-        ).select_related('horario_asignado').order_by('fecha')
-
-        # Indexar registros por fecha
-        registros_por_fecha = {r.fecha: r for r in registros_mes}
+        ).select_related('horario_asignado').order_by('fecha'))
 
         # Obtener horario del funcionario
         try:
@@ -1900,9 +1897,10 @@ class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
                 })
 
         # Segundo: detectar días sin registro que son inasistencias
-        # Días pasados sin registro, que no sean festivos, fines de semana (para no serenos), ni vacaciones
+        # Días pasados sin registro, que no sean festivos ni fines de semana (para no serenos)
         today = datetime.now().date()
         num_dias = cal.monthrange(anio, mes)[0]
+        ano_escolar_activo = AnoEscolar.get_activo()
         for dia in range(1, num_dias + 1):
             fecha = datetime(anio, mes, dia).date()
             es_pasado = fecha < today
@@ -1914,14 +1912,36 @@ class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
             es_festivo = fecha in festivos
             if es_festivo:
                 continue
-            # Verificar año escolar (excluir vacaciones)
-            if not AnoEscolar.es_dia_escolar(fecha):
+            # Verificar año escolar SOLO si hay uno activo configurado
+            if ano_escolar_activo and not AnoEscolar.es_dia_escolar(fecha):
                 continue
             # Mismo filtro de fin de semana que la página
             dia_semana = fecha.weekday()
             es_fin_de_semana = dia_semana >= 5
             if es_fin_de_semana and not es_sereno:
                 continue
+
+            # Verificar si tiene permiso administrativo aprobado
+            if SolicitudPermiso.objects.filter(
+                usuario=request.user,
+                estado='APROBADO',
+                fecha_inicio__lte=fecha,
+                fecha_termino__gte=fecha
+            ).exists():
+                justificaciones_detalle.append({'fecha': fecha, 'tipo': 'permiso'})
+                continue
+
+            # Verificar si tiene licencia médica
+            licencia_cubre = False
+            for lic in LicenciaMedica.objects.filter(usuario=request.user, fecha_inicio__lte=fecha):
+                fecha_fin_lic = lic.fecha_inicio + timedelta(days=lic.dias - 1)
+                if fecha <= fecha_fin_lic:
+                    licencia_cubre = True
+                    break
+            if licencia_cubre:
+                justificaciones_detalle.append({'fecha': fecha, 'tipo': 'licencia'})
+                continue
+
             # Es una inasistencia sin registro
             inasistencias_detalle.append({
                 'fecha': fecha,
@@ -1960,6 +1980,7 @@ class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
             'total_justificados': total_justificados,
             'total_minutos_retraso': total_minutos_retraso,
             'fecha_actual': datetime.now(),
+            'ano_escolar': ano_escolar_activo,
         })
 
         # Generar PDF
