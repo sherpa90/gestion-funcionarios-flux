@@ -51,8 +51,13 @@ COPY --chown=appuser:appgroup . /app/
 RUN chmod +x /app/entrypoint.sh
 
 # Create logs directory and ensure permissions
-RUN mkdir -p /app/logs /app/media /app/staticfiles && \
+RUN mkdir -p /app/logs /app/media /app/staticfiles /app/.cache/fontconfig && \
     chown -R appuser:appgroup /app
+
+# Create fontconfig cache directory for WeasyPrint
+RUN mkdir -p /tmp/fontconfig-cache && \
+    chown -R appuser:appgroup /tmp/fontconfig-cache
+ENV XDG_CACHE_HOME=/tmp/fontconfig-cache
 
 # Switch to non-root user
 USER appuser
