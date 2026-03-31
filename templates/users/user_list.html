@@ -7,13 +7,10 @@
 {% block content %}
 <div class="p-4 sm:p-6 space-y-8">
     <!-- Header Section -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-        <div>
-            <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Gestión de Usuarios</h2>
-            <p class="text-sm sm:text-base text-gray-500 mt-1 font-medium">Administra los usuarios, roles y saldos de días administrativos.
-            </p>
-        </div>
-        <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+    <div>
+        <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Gestión de Usuarios</h2>
+        <p class="text-sm sm:text-base text-gray-500 mt-1 font-medium">Administra los usuarios, roles y saldos de días administrativos.</p>
+        <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto mt-6">
             {% if request.user.role == 'ADMIN' %}
             <div class="relative group/backup">
                 <button
@@ -49,37 +46,6 @@
             </a>
         </div>
     </div>
-
-    <!-- Resumen Semanal de Permisos -->
-    {% if user.role in 'ADMIN,SECRETARIA,DIRECTOR,DIRECTIVO' %}
-    <div class="bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 p-6 mb-8">
-        <div class="flex items-center mb-4">
-            <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 mr-3">
-                <i class="fas fa-calendar-week text-sm"></i>
-            </div>
-            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-widest">Carga Semanal de Permisos Aprobados</h3>
-        </div>
-        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100">
-            <div class="flex justify-between items-center mb-2">
-                <p class="text-xs text-blue-600 font-bold uppercase tracking-widest">Docentes / Asistentes</p>
-                <p class="text-xs text-gray-500 font-medium">Esta semana</p>
-            </div>
-            <div class="flex justify-between">
-                {% load tz %}
-                {% for dia in resumen_semanal %}
-                <div class="flex-1 text-center p-2 {% if dia.es_hoy %}bg-blue-100 rounded-xl{% endif %}">
-                    <p class="text-[10px] font-bold {% if dia.es_hoy %}text-blue-700{% else %}text-gray-500{% endif %} uppercase mb-1">{{ dia.nombre }}</p>
-                    <div class="text-sm font-black">
-                        <span class="text-purple-600">{{ dia.docente_count }}</span>
-                        <span class="text-gray-400 mx-1">/</span>
-                        <span class="text-blue-600">{{ dia.asistente_count }}</span>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    {% endif %}
 
     <!-- Search Section -->
     <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50">
