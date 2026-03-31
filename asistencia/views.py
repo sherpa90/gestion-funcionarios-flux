@@ -1623,6 +1623,7 @@ class ReporteAsistenciaMensualView(LoginRequiredMixin, UserPassesTestMixin, View
         return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
 
     def get(self, request, anio=None, mes=None):
+        import calendar as cal
         # Si no se pasan como parámetros de URL, obtener de GET
         if not anio or not mes or anio == '0':
             anio_str = request.GET.get('anio')
@@ -1713,6 +1714,28 @@ class ReporteAsistenciaMensualView(LoginRequiredMixin, UserPassesTestMixin, View
                         'detalle': detalle,
                     }
                     func_data['justificados'].append(justificado_info)
+
+            # Detectar días sin registro que son inasistencias
+            fechas_con_registro = {r.fecha for r in registros_funcionario}
+            today = datetime.now().date()
+            num_dias = cal.monthrange(anio, mes)[0]
+            for dia in range(1, num_dias + 1):
+                fecha = datetime(anio, mes, dia).date()
+                if fecha >= today:
+                    continue
+                if fecha in fechas_con_registro:
+                    continue
+                if DiaFestivo.objects.filter(fecha=fecha).exists():
+                    continue
+                if fecha.weekday() >= 5 and not (funcionario.funcion == 'SERENO' or funcionario.tipo_funcionario == 'SERENO'):
+                    continue
+                inasistencia_info = {
+                    'fecha': fecha,
+                    'hora_esperada': None,
+                    'justificada': False,
+                }
+                func_data['inasistencias'].append(inasistencia_info)
+                func_data['total_inasistencias_sin_justificar'] += 1
 
             # Solo incluir funcionarios que tienen atrasos, inasistencias o justificaciones
             if func_data['atrasos'] or func_data['inasistencias'] or func_data['justificados']:
