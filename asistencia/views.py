@@ -1900,7 +1900,7 @@ class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
                 })
 
         # Segundo: detectar días sin registro que son inasistencias
-        # Misma lógica que MiAsistenciaView: es_falta_sin_registro = es_pasado and not registro and not es_festivo and es_dia_escolar
+        # Días pasados sin registro, que no sean festivos, fines de semana (para no serenos), ni vacaciones
         today = datetime.now().date()
         num_dias = cal.monthrange(anio, mes)[0]
         for dia in range(1, num_dias + 1):
@@ -1914,8 +1914,8 @@ class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
             es_festivo = fecha in festivos
             if es_festivo:
                 continue
-            es_dia_escolar = AnoEscolar.es_dia_escolar(fecha)
-            if not es_dia_escolar:
+            # Verificar año escolar (excluir vacaciones)
+            if not AnoEscolar.es_dia_escolar(fecha):
                 continue
             # Mismo filtro de fin de semana que la página
             dia_semana = fecha.weekday()
