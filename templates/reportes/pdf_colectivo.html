@@ -105,6 +105,16 @@
             color: #6b21a8;
         }
 
+        .badge-red {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-amber {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
         .footer {
             margin-top: 20px;
             text-align: center;
@@ -153,12 +163,14 @@
     <table>
         <thead>
             <tr>
-                <th style="width: 25%;">Funcionario</th>
-                <th style="width: 12%;">RUN</th>
-                <th style="width: 12%;" class="text-center">Días Disp.</th>
-                <th style="width: 12%;" class="text-center">Días Usados</th>
-                <th style="width: 12%;" class="text-center">Licencias</th>
-                <th style="width: 12%;" class="text-center">Días Lic.</th>
+                <th style="width: 22%;">Funcionario</th>
+                <th style="width: 10%;">RUN</th>
+                <th style="width: 9%;" class="text-center">Inasistencias</th>
+                <th style="width: 9%;" class="text-center">Atrasos</th>
+                <th style="width: 10%;" class="text-center">Días Disp.</th>
+                <th style="width: 10%;" class="text-center">Días Usados</th>
+                <th style="width: 10%;" class="text-center">Licencias</th>
+                <th style="width: 10%;" class="text-center">Días Lic.</th>
             </tr>
         </thead>
         <tbody>
@@ -166,6 +178,12 @@
             <tr>
                 <td><strong>{{ empleado.funcionario.get_full_name }}</strong></td>
                 <td>{{ empleado.funcionario.run }}</td>
+                <td class="text-center">
+                    <span class="badge badge-red">{{ empleado.total_inasistencias }}</span>
+                </td>
+                <td class="text-center">
+                    <span class="badge badge-amber">{{ empleado.total_atrasos }}</span>
+                </td>
                 <td class="text-center"><strong>{{ empleado.dias_disponibles|floatformat:1 }}</strong></td>
                 <td class="text-center">
                     <span class="badge badge-blue">{{ empleado.dias_usados|floatformat:1 }}</span>

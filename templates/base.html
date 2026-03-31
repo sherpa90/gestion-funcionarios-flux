@@ -375,6 +375,10 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-calendar-day fa-fw mr-3"></i><span class="ml-3">Feriados</span>
                     </a>
+                    <a href="{% url 'asistencia:gestion_ano_escolar' %}"
+                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
+                        <i class="fa-solid fa-school fa-fw mr-3"></i><span class="ml-3">Año Escolar</span>
+                    </a>
                     {% endif %}
 
                     <!-- Reportes -->
@@ -621,6 +625,10 @@
                     <a href="{% url 'asistencia:gestion_festivos' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-calendar-day fa-fw mr-3"></i><span class="ml-3">Feriados</span>
+                    </a>
+                    <a href="{% url 'asistencia:gestion_ano_escolar' %}"
+                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
+                        <i class="fa-solid fa-school fa-fw mr-3"></i><span class="ml-3">Año Escolar</span>
                     </a>
                     {% endif %}
 

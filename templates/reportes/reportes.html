@@ -11,6 +11,49 @@
         </div>
         
         <div class="flex flex-wrap gap-3 items-center">
+            <!-- Reporte Asistencia Mensual con dropdown -->
+            <div class="relative group">
+                <button type="button"
+                    class="inline-flex items-center px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-lg shadow-sm transition-colors h-11">
+                    <i class="fas fa-clipboard-list mr-2"></i>Reporte Asistencia
+                    <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                </button>
+                <div
+                    class="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 border border-gray-200">
+                    <div class="p-3">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Año</label>
+                        <select id="asistencia_year"
+                            class="block w-full text-sm border-gray-300 rounded-md focus:ring-rose-500 focus:border-rose-500">
+                            {% for y in years %}
+                            <option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <label class="block text-xs font-medium text-gray-700 mb-1 mt-2">Mes</label>
+                        <select id="asistencia_mes"
+                            class="block w-full text-sm border-gray-300 rounded-md focus:ring-rose-500 focus:border-rose-500">
+                            <option value="1" {% if filtros.mes == '1' %}selected{% endif %}>Enero</option>
+                            <option value="2" {% if filtros.mes == '2' %}selected{% endif %}>Febrero</option>
+                            <option value="3" {% if filtros.mes == '3' %}selected{% endif %}>Marzo</option>
+                            <option value="4" {% if filtros.mes == '4' %}selected{% endif %}>Abril</option>
+                            <option value="5" {% if filtros.mes == '5' %}selected{% endif %}>Mayo</option>
+                            <option value="6" {% if filtros.mes == '6' %}selected{% endif %}>Junio</option>
+                            <option value="7" {% if filtros.mes == '7' %}selected{% endif %}>Julio</option>
+                            <option value="8" {% if filtros.mes == '8' %}selected{% endif %}>Agosto</option>
+                            <option value="9" {% if filtros.mes == '9' %}selected{% endif %}>Septiembre</option>
+                            <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
+                            <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
+                            <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
+                        </select>
+                        <button
+                            onclick="window.open('/asistencia/reporte-mensual/' + document.getElementById('asistencia_year').value + '/' + document.getElementById('asistencia_mes').value + '/', '_blank')"
+                            class="mt-3 w-full bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium py-1.5 rounded-md transition-colors">
+                            Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Reporte Mensual con dropdown -->
             <div class="relative group">
                 <button type="button"
@@ -259,7 +302,35 @@
                     </th>
                     <th scope="col"
                         class="px-4 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
-                        onclick="window.location.href='?sort={% if current_sort == 'dias' %}dias_asc{% else %}dias{% endif %}&search={{ filtros.search }}&year={{ filtros.year }}&fecha_inicio={{ filtros.fecha_inicio }}&fecha_fin={{ filtros.fecha_fin }}'">
+                        onclick="window.location.href='?sort={% if current_sort == 'inasistencias' %}inasistencias_asc{% else %}inasistencias{% endif %}&search={{ filtros.search }}&year={{ filtros.year }}&mes={{ filtros.mes }}&fecha_inicio={{ filtros.fecha_inicio }}&fecha_fin={{ filtros.fecha_fin }}'">
+                        <div class="flex items-center justify-center space-x-1">
+                            <span>Inasistencias</span>
+                            <span class="text-gray-400">
+                                {% if current_sort == 'inasistencias' %}<i
+                                    class="fas fa-sort-numeric-down text-blue-600"></i>
+                                {% elif current_sort == 'inasistencias_asc' %}<i
+                                    class="fas fa-sort-numeric-up text-blue-600"></i>
+                                {% else %}<i class="fas fa-sort"></i>{% endif %}
+                            </span>
+                        </div>
+                    </th>
+                    <th scope="col"
+                        class="px-4 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
+                        onclick="window.location.href='?sort={% if current_sort == 'atrasos' %}atrasos_asc{% else %}atrasos{% endif %}&search={{ filtros.search }}&year={{ filtros.year }}&mes={{ filtros.mes }}&fecha_inicio={{ filtros.fecha_inicio }}&fecha_fin={{ filtros.fecha_fin }}'">
+                        <div class="flex items-center justify-center space-x-1">
+                            <span>Atrasos</span>
+                            <span class="text-gray-400">
+                                {% if current_sort == 'atrasos' %}<i
+                                    class="fas fa-sort-numeric-down text-blue-600"></i>
+                                {% elif current_sort == 'atrasos_asc' %}<i
+                                    class="fas fa-sort-numeric-up text-blue-600"></i>
+                                {% else %}<i class="fas fa-sort"></i>{% endif %}
+                            </span>
+                        </div>
+                    </th>
+                    <th scope="col"
+                        class="px-4 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
+                        onclick="window.location.href='?sort={% if current_sort == 'dias' %}dias_asc{% else %}dias{% endif %}&search={{ filtros.search }}&year={{ filtros.year }}&mes={{ filtros.mes }}&fecha_inicio={{ filtros.fecha_inicio }}&fecha_fin={{ filtros.fecha_fin }}'">
                         <div class="flex items-center justify-center space-x-1">
                             <span>Días Disponibles</span>
                             <span class="text-gray-400">
@@ -272,7 +343,7 @@
                     </th>
                     <th scope="col"
                         class="px-4 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
-                        onclick="window.location.href='?sort={% if current_sort == 'dias_usados' %}dias_usados_asc{% else %}dias_usados{% endif %}&search={{ filtros.search }}&year={{ filtros.year }}&fecha_inicio={{ filtros.fecha_inicio }}&fecha_fin={{ filtros.fecha_fin }}'">
+                        onclick="window.location.href='?sort={% if current_sort == 'dias_usados' %}dias_usados_asc{% else %}dias_usados{% endif %}&search={{ filtros.search }}&year={{ filtros.year }}&mes={{ filtros.mes }}&fecha_inicio={{ filtros.fecha_inicio }}&fecha_fin={{ filtros.fecha_fin }}'">
                         <div class="flex items-center justify-center space-x-1">
                             <span>Días Usados</span>
                             <span class="text-gray-400">
@@ -286,7 +357,7 @@
                     </th>
                     <th scope="col"
                         class="px-4 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
-                        onclick="window.location.href='?sort={% if current_sort == 'licencias' %}licencias_asc{% else %}licencias{% endif %}&search={{ filtros.search }}&year={{ filtros.year }}&fecha_inicio={{ filtros.fecha_inicio }}&fecha_fin={{ filtros.fecha_fin }}'">
+                        onclick="window.location.href='?sort={% if current_sort == 'licencias' %}licencias_asc{% else %}licencias{% endif %}&search={{ filtros.search }}&year={{ filtros.year }}&mes={{ filtros.mes }}&fecha_inicio={{ filtros.fecha_inicio }}&fecha_fin={{ filtros.fecha_fin }}'">
                         <div class="flex items-center justify-center space-x-1">
                             <span>Licencias</span>
                             <span class="text-gray-400">
@@ -300,7 +371,7 @@
                     </th>
                     <th scope="col"
                         class="px-4 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider group cursor-pointer hover:bg-gray-100"
-                        onclick="window.location.href='?sort={% if current_sort == 'dias_licencias' %}dias_licencias_asc{% else %}dias_licencias{% endif %}&search={{ filtros.search }}&year={{ filtros.year }}&fecha_inicio={{ filtros.fecha_inicio }}&fecha_fin={{ filtros.fecha_fin }}'">
+                        onclick="window.location.href='?sort={% if current_sort == 'dias_licencias' %}dias_licencias_asc{% else %}dias_licencias{% endif %}&search={{ filtros.search }}&year={{ filtros.year }}&mes={{ filtros.mes }}&fecha_inicio={{ filtros.fecha_inicio }}&fecha_fin={{ filtros.fecha_fin }}'">
                         <div class="flex items-center justify-center space-x-1">
                             <span>Días Licencia</span>
                             <span class="text-gray-400">
@@ -330,6 +401,16 @@
                                 <div class="text-xs text-gray-500">{{ empleado.funcionario.run }}</div>
                             </div>
                         </div>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {% if empleado.total_inasistencias > 0 %}bg-red-100 text-red-800{% else %}bg-gray-100 text-gray-600{% endif %}">
+                            {{ empleado.total_inasistencias }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {% if empleado.total_atrasos > 0 %}bg-amber-100 text-amber-800{% else %}bg-gray-100 text-gray-600{% endif %}">
+                            {{ empleado.total_atrasos }}
+                        </span>
                     </td>
                     <td class="px-4 py-3">
                         <div class="flex items-center justify-center">
@@ -368,7 +449,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="px-4 py-12 text-center">
+                    <td colspan="8" class="px-4 py-12 text-center">
                         <i class="fas fa-inbox text-gray-300 text-4xl mb-3"></i>
                         <p class="text-gray-500">No se encontraron resultados</p>
                     </td>

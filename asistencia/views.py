@@ -8,6 +8,8 @@ from django.db.models import Q, Avg, Sum
 from django.http import HttpResponse
 import openpyxl
 from datetime import datetime, time, timedelta
+from licencias.models import LicenciaMedica
+from permisos.models import SolicitudPermiso
 import zipfile
 import io
 import re
@@ -34,7 +36,7 @@ try:
 except ImportError:
     PYPDF_AVAILABLE = False
     pypdf = None
-from .models import HorarioFuncionario, RegistroAsistencia, DiaFestivo, AlegacionAsistencia
+from .models import HorarioFuncionario, RegistroAsistencia, DiaFestivo, AlegacionAsistencia, AnoEscolar
 from .forms import CargaHorariosForm, HorarioFuncionarioForm, CargaRegistrosAsistenciaForm
 from django.shortcuts import get_object_or_404, redirect
 from users.models import CustomUser
@@ -347,6 +349,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         from django.db.models import Count, Sum, Avg, Q
+        from calendar import Calendar
         context = super().get_context_data(**kwargs)
 
         # Obtener parámetros de filtro
@@ -358,55 +361,124 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             mes = str(now.month)
             anio = str(now.year)
 
+        mes_int = int(mes)
+        anio_int = int(anio)
+
+        # Determinar si el funcionario es sereno
+        es_sereno = self.request.user.funcion == 'SERENO'
+
         # Filtrar registros del usuario actual con select_related optimizado
-        registros = RegistroAsistencia.objects.filter(
+        registros_qs = RegistroAsistencia.objects.filter(
             funcionario=self.request.user,
             fecha__year=anio,
             fecha__month=mes
-        ).select_related('horario_asignado').order_by('-fecha')
+        ).select_related('horario_asignado')
 
-        # Agregar horas trabajadas a cada registro (sin queries adicionales)
-        for registro in registros:
+        # Indexar registros por fecha para acceso rápido
+        registros_por_fecha = {}
+        for registro in registros_qs:
             if registro.minutos_trabajados:
                 registro.horas_trabajadas = round(registro.minutos_trabajados / 60, 1)
             else:
                 registro.horas_trabajadas = None
-            registro.detalle_permiso = None  # Evita N+1, se carga solo si es necesario
+            registro.detalle_permiso = None
+            registros_por_fecha[registro.fecha] = registro
 
-        # Estadísticas del período en UNA sola query
-        stats = registros.aggregate(
-            total=Count('id'),
-            puntuales=Count('id', filter=Q(estado='PUNTUAL')),
-            retraso=Count('id', filter=Q(estado='RETRASO')),
-            ausente=Count('id', filter=Q(estado='AUSENTE')),
-            medio_dia=Count('id', filter=Q(estado='MEDIO_DIA')),
-            admin=Count('id', filter=Q(estado='DIA_ADMINISTRATIVO')),
-            licencia=Count('id', filter=Q(estado='LICENCIA_MEDICA')),
-            dias_con_tiempo=Count('id', filter=Q(minutos_trabajados__isnull=False)),
-            tiempo_promedio=Avg('minutos_trabajados', filter=Q(minutos_trabajados__isnull=False)),
-            total_minutos_trabajados=Sum('minutos_trabajados', filter=Q(minutos_trabajados__isnull=False)),
-            total_minutos_retraso=Sum('minutos_retraso', filter=Q(minutos_retraso__gt=0)),
+        # Generar estructura de calendario mensual
+        cal = Calendar(firstweekday=0)  # Lunes como primer día
+        semanas_calendario = []
+        primer_dia_mes = datetime(anio_int, mes_int, 1).date()
+        ultimo_dia_mes = (primer_dia_mes + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+
+        # Obtener días festivos del mes
+        festivos = set(
+            DiaFestivo.objects.filter(
+                fecha__year=anio_int,
+                fecha__month=mes_int
+            ).values_list('fecha', flat=True)
         )
+
+        for semana in cal.monthdayscalendar(anio_int, mes_int):
+            dias_semana = []
+            for dia_num in semana:
+                if dia_num == 0:
+                    dias_semana.append(None)
+                else:
+                    fecha = datetime(anio_int, mes_int, dia_num).date()
+                    dia_semana = fecha.weekday()  # 0=Lunes, 6=Domingo
+                    es_fin_de_semana = dia_semana >= 5
+                    es_festivo = fecha in festivos
+                    registro = registros_por_fecha.get(fecha)
+                    today = datetime.now().date()
+                    es_pasado = fecha < today
+                    es_hoy = fecha == today
+                    es_dia_escolar = AnoEscolar.es_dia_escolar(fecha)
+                    es_falta_sin_registro = es_pasado and not registro and not es_festivo and es_dia_escolar
+
+                    # Los fines de semana solo aplican para serenos
+                    if es_fin_de_semana and not es_sereno:
+                        dias_semana.append({
+                            'dia': dia_num,
+                            'fecha': fecha,
+                            'es_fin_de_semana': True,
+                            'es_festivo': es_festivo,
+                            'es_sereno': False,
+                            'registro': None,
+                            'es_laboral': False,
+                            'es_hoy': es_hoy,
+                            'es_falta_sin_registro': False,
+                            'es_dia_escolar': es_dia_escolar,
+                        })
+                        continue
+
+                    dias_semana.append({
+                        'dia': dia_num,
+                        'fecha': fecha,
+                        'es_fin_de_semana': es_fin_de_semana,
+                        'es_festivo': es_festivo,
+                        'es_sereno': es_sereno,
+                        'registro': registro,
+                        'es_laboral': True,
+                        'es_hoy': es_hoy,
+                        'es_falta_sin_registro': es_falta_sin_registro,
+                        'es_dia_escolar': es_dia_escolar,
+                    })
+            semanas_calendario.append(dias_semana)
+
+        # Estadísticas del período
+        registros_list = list(registros_por_fecha.values())
+        faltas_sin_registro = sum(
+            1 for semana in semanas_calendario for dia in semana
+            if dia and dia.get('es_falta_sin_registro')
+        )
+        stats = {
+            'total': len(registros_list),
+            'puntuales': sum(1 for r in registros_list if r.estado == 'PUNTUAL'),
+            'retraso': sum(1 for r in registros_list if r.estado == 'RETRASO'),
+            'ausente': sum(1 for r in registros_list if r.estado == 'AUSENTE') + faltas_sin_registro,
+            'medio_dia': sum(1 for r in registros_list if r.estado == 'MEDIO_DIA'),
+            'admin': sum(1 for r in registros_list if r.estado == 'DIA_ADMINISTRATIVO'),
+            'licencia': sum(1 for r in registros_list if r.estado == 'LICENCIA_MEDICA'),
+            'dias_con_tiempo': sum(1 for r in registros_list if r.minutos_trabajados is not None),
+            'tiempo_promedio': (sum(r.minutos_trabajados for r in registros_list if r.minutos_trabajados is not None) / max(1, sum(1 for r in registros_list if r.minutos_trabajados is not None))),
+            'total_minutos_trabajados': sum(r.minutos_trabajados or 0 for r in registros_list),
+            'total_minutos_retraso': sum(r.minutos_retraso for r in registros_list if r.minutos_retraso > 0),
+        }
 
         total_dias = stats['total'] or 0
         dias_puntuales = stats['puntuales'] or 0
         total_minutos_retraso_mes = stats['total_minutos_retraso'] or 0
         total_horas_trabajadas_mes = round((stats['total_minutos_trabajados'] or 0) / 60, 1)
 
-        # Horas semanales - UNA sola query con agregación en Python
+        # Horas semanales
         horas_semanales = {}
-        registros_con_tiempo_qs = registros.filter(minutos_trabajados__isnull=False).values_list('fecha', 'minutos_trabajados')
-        registros_list = list(registros_con_tiempo_qs)
-        if registros_list:
-            primer_dia_mes = datetime(int(anio), int(mes), 1).date()
-            ultimo_dia_mes = (primer_dia_mes + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-
-            for semana in range(5):
-                inicio_semana = primer_dia_mes + timedelta(days=semana * 7)
-                fin_semana = min(inicio_semana + timedelta(days=6), ultimo_dia_mes)
-                minutos_semana = sum(m for f, m in registros_list if inicio_semana <= f <= fin_semana)
-                if minutos_semana > 0:
-                    horas_semanales[f"Semana {semana + 1}"] = round(minutos_semana / 60, 1)
+        for i, semana in enumerate(semanas_calendario):
+            minutos_semana = 0
+            for d in semana:
+                if d and d['registro'] and d['registro'].minutos_trabajados:
+                    minutos_semana += d['registro'].minutos_trabajados
+            if minutos_semana > 0:
+                horas_semanales[f"Semana {i + 1}"] = round(minutos_semana / 60, 1)
 
         # Meses y años disponibles
         context['meses'] = [
@@ -419,9 +491,15 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
         ).values_list('fecha__year', flat=True).distinct().order_by('-fecha__year')
 
         context.update({
-            'registros': registros,
+            'registros': registros_list,
+            'semanas_calendario': semanas_calendario,
+            'es_sereno': es_sereno,
             'mes': mes,
+            'mes_int': mes_int,
             'anio': anio,
+            'anio_int': anio_int,
+            'today': datetime.now().date(),
+            'ano_escolar_activo': AnoEscolar.get_activo(),
             'estadisticas': {
                 'total_dias': total_dias,
                 'dias_puntuales': dias_puntuales,
@@ -1587,6 +1665,9 @@ class ReporteAsistenciaMensualView(LoginRequiredMixin, UserPassesTestMixin, View
                 'inasistencias': [],
                 'justificados': [],
                 'tiene_registros': len(registros_funcionario) > 0,
+                'total_atrasos': 0,
+                'total_minutos_retraso': 0,
+                'total_inasistencias_sin_justificar': 0,
             }
 
             # Procesar registros del funcionario
@@ -1598,16 +1679,30 @@ class ReporteAsistenciaMensualView(LoginRequiredMixin, UserPassesTestMixin, View
                         'minutos_retraso': registro.minutos_retraso,
                     }
                     func_data['atrasos'].append(atraso_info)
+                    func_data['total_atrasos'] += 1
+                    func_data['total_minutos_retraso'] += registro.minutos_retraso or 0
                 elif registro.estado == 'AUSENTE':
                     inasistencia_info = {
                         'fecha': registro.fecha,
                         'hora_esperada': registro.horario_asignado.hora_entrada if registro.horario_asignado else None,
+                        'justificada': False,
                     }
                     func_data['inasistencias'].append(inasistencia_info)
-                elif registro.estado == 'JUSTIFICADO':
+                    func_data['total_inasistencias_sin_justificar'] += 1
+                elif registro.estado in ('JUSTIFICADO', 'DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA'):
+                    if registro.estado == 'DIA_ADMINISTRATIVO':
+                        tipo_just = 'dia_administrativo'
+                        detalle = 'Día administrativo aprobado'
+                    elif registro.estado == 'LICENCIA_MEDICA':
+                        tipo_just = 'licencia'
+                        detalle = 'Licencia médica'
+                    else:
+                        tipo_just = 'permiso' if registro.tiene_permiso_aprobado() else 'licencia' if registro.tiene_licencia_medica() else 'otro'
+                        detalle = 'Ausencia justificada'
                     justificado_info = {
                         'fecha': registro.fecha,
-                        'tipo': 'permiso' if registro.tiene_permiso_aprobado() else 'licencia' if registro.tiene_licencia_medica() else 'otro',
+                        'tipo': tipo_just,
+                        'detalle': detalle,
                     }
                     func_data['justificados'].append(justificado_info)
 
@@ -1739,6 +1834,8 @@ class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
     """Vista para generar reporte individual de asistencia en PDF"""
 
     def get(self, request, anio, mes):
+        import calendar as cal
+
         # Obtener datos del usuario actual para el mes
         registros_mes = RegistroAsistencia.objects.filter(
             funcionario=request.user,
@@ -1746,39 +1843,101 @@ class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
             fecha__month=mes
         ).select_related('horario_asignado').order_by('fecha')
 
+        # Indexar registros por fecha
+        registros_por_fecha = {r.fecha: r for r in registros_mes}
+
+        # Obtener horario del funcionario
+        try:
+            horario = HorarioFuncionario.objects.get(funcionario=request.user, activo=True)
+        except HorarioFuncionario.DoesNotExist:
+            horario = None
+
+        # Obtener festivos del mes
+        festivos = set(
+            DiaFestivo.objects.filter(
+                fecha__year=anio, fecha__month=mes
+            ).values_list('fecha', flat=True)
+        )
+
+        # Determinar si es sereno
+        es_sereno = request.user.role == 'FUNCIONARIO' and request.user.funcion == 'SERENO'
+        if request.user.tipo_funcionario == 'SERENO':
+            es_sereno = True
+
         # Recopilar detalles de atrasos, inasistencias y justificaciones
         atrasos_detalle = []
         inasistencias_detalle = []
         justificaciones_detalle = []
 
+        # Obtener fechas con registro de forma confiable
+        fechas_con_registro = set()
+        for r in registros_mes:
+            fechas_con_registro.add(r.fecha)
+
+        # Primero: procesar registros existentes por estado
         for registro in registros_mes:
             if registro.estado == 'RETRASO':
-                atraso_info = {
+                atrasos_detalle.append({
                     'fecha': registro.fecha,
                     'hora_entrada': registro.hora_entrada_real,
                     'minutos_retraso': registro.minutos_retraso,
-                }
-                atrasos_detalle.append(atraso_info)
+                })
             elif registro.estado == 'AUSENTE':
-                inasistencia_info = {
+                inasistencias_detalle.append({
                     'fecha': registro.fecha,
                     'hora_esperada': registro.horario_asignado.hora_entrada if registro.horario_asignado else None,
-                }
-                inasistencias_detalle.append(inasistencia_info)
+                })
             elif registro.estado in ['JUSTIFICADO', 'DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA']:
-                # Determinar el tipo de justificación basado en el estado
                 if registro.estado == 'DIA_ADMINISTRATIVO':
                     tipo = 'permiso'
                 elif registro.estado == 'LICENCIA_MEDICA':
                     tipo = 'licencia'
                 else:
                     tipo = 'permiso' if registro.tiene_permiso_aprobado() else 'licencia' if registro.tiene_licencia_medica() else 'otro'
-
-                justificacion_info = {
+                justificaciones_detalle.append({
                     'fecha': registro.fecha,
                     'tipo': tipo,
-                }
-                justificaciones_detalle.append(justificacion_info)
+                })
+
+        # Segundo: detectar días sin registro que son inasistencias
+        # Misma lógica que MiAsistenciaView: es_falta_sin_registro = es_pasado and not registro and not es_festivo and es_dia_escolar
+        today = datetime.now().date()
+        num_dias = cal.monthrange(anio, mes)[0]
+        for dia in range(1, num_dias + 1):
+            fecha = datetime(anio, mes, dia).date()
+            es_pasado = fecha < today
+            if not es_pasado:
+                continue
+            tiene_registro = fecha in fechas_con_registro
+            if tiene_registro:
+                continue
+            es_festivo = fecha in festivos
+            if es_festivo:
+                continue
+            es_dia_escolar = AnoEscolar.es_dia_escolar(fecha)
+            if not es_dia_escolar:
+                continue
+            # Mismo filtro de fin de semana que la página
+            dia_semana = fecha.weekday()
+            es_fin_de_semana = dia_semana >= 5
+            if es_fin_de_semana and not es_sereno:
+                continue
+            # Es una inasistencia sin registro
+            inasistencias_detalle.append({
+                'fecha': fecha,
+                'hora_esperada': horario.hora_entrada if horario else None,
+            })
+
+        # Ordenar por fecha
+        atrasos_detalle.sort(key=lambda x: x['fecha'])
+        inasistencias_detalle.sort(key=lambda x: x['fecha'])
+        justificaciones_detalle.sort(key=lambda x: x['fecha'])
+
+        # Totales
+        total_atrasos = len(atrasos_detalle)
+        total_inasistencias = len(inasistencias_detalle)
+        total_justificados = len(justificaciones_detalle)
+        total_minutos_retraso = sum(a['minutos_retraso'] for a in atrasos_detalle)
 
         # Nombre del mes
         meses = [
@@ -1796,6 +1955,10 @@ class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
             'atrasos_detalle': atrasos_detalle,
             'inasistencias_detalle': inasistencias_detalle,
             'justificaciones_detalle': justificaciones_detalle,
+            'total_atrasos': total_atrasos,
+            'total_inasistencias': total_inasistencias,
+            'total_justificados': total_justificados,
+            'total_minutos_retraso': total_minutos_retraso,
             'fecha_actual': datetime.now(),
         })
 
@@ -2004,3 +2167,98 @@ class ExportarRetrasosPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
+
+
+class GestionAnoEscolarView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """Vista para gestionar la configuración del año escolar"""
+    template_name = 'asistencia/gestion_ano_escolar.html'
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['ano_activo'] = AnoEscolar.get_activo()
+        context['todos_anos'] = AnoEscolar.objects.all()
+        return context
+
+    def post(self, request):
+        from django.core.exceptions import ValidationError
+
+        ano = request.POST.get('ano')
+        sem1_inicio = request.POST.get('sem1_inicio')
+        sem1_fin = request.POST.get('sem1_fin')
+        sem2_inicio = request.POST.get('sem2_inicio')
+        sem2_fin = request.POST.get('sem2_fin')
+        accion = request.POST.get('accion')
+
+        if accion == 'eliminar':
+            pk = request.POST.get('pk')
+            try:
+                ano_obj = AnoEscolar.objects.get(pk=pk)
+                ano_obj.delete()
+                messages.success(request, f'Año escolar {pk} eliminado correctamente.')
+            except AnoEscolar.DoesNotExist:
+                messages.error(request, 'Año escolar no encontrado.')
+            return redirect('asistencia:gestion_ano_escolar')
+
+        if accion == 'activar':
+            pk = request.POST.get('pk')
+            try:
+                AnoEscolar.objects.update(activo=False)
+                ano_obj = AnoEscolar.objects.get(pk=pk)
+                ano_obj.activo = True
+                ano_obj.save()
+                messages.success(request, f'Año escolar {ano_obj.ano} activado correctamente.')
+            except AnoEscolar.DoesNotExist:
+                messages.error(request, 'Año escolar no encontrado.')
+            return redirect('asistencia:gestion_ano_escolar')
+
+        if accion == 'desactivar':
+            pk = request.POST.get('pk')
+            try:
+                ano_obj = AnoEscolar.objects.get(pk=pk)
+                ano_obj.activo = False
+                ano_obj.save()
+                messages.success(request, f'Año escolar {ano_obj.ano} desactivado.')
+            except AnoEscolar.DoesNotExist:
+                messages.error(request, 'Año escolar no encontrado.')
+            return redirect('asistencia:gestion_ano_escolar')
+
+        # Crear o actualizar año escolar
+        if not all([ano, sem1_inicio, sem1_fin, sem2_inicio, sem2_fin]):
+            messages.error(request, 'Todos los campos son obligatorios.')
+            return redirect('asistencia:gestion_ano_escolar')
+
+        try:
+            ano = int(ano)
+            sem1_inicio = datetime.strptime(sem1_inicio, '%Y-%m-%d').date()
+            sem1_fin = datetime.strptime(sem1_fin, '%Y-%m-%d').date()
+            sem2_inicio = datetime.strptime(sem2_inicio, '%Y-%m-%d').date()
+            sem2_fin = datetime.strptime(sem2_fin, '%Y-%m-%d').date()
+        except ValueError:
+            messages.error(request, 'Formato de fecha inválido.')
+            return redirect('asistencia:gestion_ano_escolar')
+
+        # Verificar si ya existe
+        existente = AnoEscolar.objects.filter(ano=ano).first()
+        if existente:
+            existente.sem1_inicio = sem1_inicio
+            existente.sem1_fin = sem1_fin
+            existente.sem2_inicio = sem2_inicio
+            existente.sem2_fin = sem2_fin
+            existente.save()
+            messages.success(request, f'Año escolar {ano} actualizado correctamente.')
+        else:
+            AnoEscolar.objects.create(
+                ano=ano,
+                sem1_inicio=sem1_inicio,
+                sem1_fin=sem1_fin,
+                sem2_inicio=sem2_inicio,
+                sem2_fin=sem2_fin,
+                activo=False,
+                creado_por=request.user,
+            )
+            messages.success(request, f'Año escolar {ano} creado correctamente.')
+
+        return redirect('asistencia:gestion_ano_escolar')

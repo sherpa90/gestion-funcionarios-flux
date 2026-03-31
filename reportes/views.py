@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 from weasyprint import HTML
 from permisos.models import SolicitudPermiso
 from licencias.models import LicenciaMedica
+from asistencia.models import RegistroAsistencia
 from users.models import CustomUser
 from core.services import BusinessDayCalculator
 import openpyxl
@@ -77,6 +78,22 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             
             total_licencias = licencias.count()
             dias_licencias = licencias.aggregate(Sum('dias'))['dias__sum'] or 0
+
+            # Obtener registros de asistencia para contar atrasos e inasistencias
+            registros_asistencia = RegistroAsistencia.objects.filter(funcionario=functorio)
+            if year:
+                registros_asistencia = registros_asistencia.filter(fecha__year=year)
+            if mes:
+                registros_asistencia = registros_asistencia.filter(fecha__month=mes)
+            if fecha_inicio:
+                registros_asistencia = registros_asistencia.filter(fecha__gte=fecha_inicio)
+            if fecha_fin:
+                registros_asistencia = registros_asistencia.filter(fecha__lte=fecha_fin)
+
+            total_atrasos = registros_asistencia.filter(estado='RETRASO').count()
+            total_inasistencias = registros_asistencia.filter(estado='AUSENTE').count()
+            total_minutos_retraso = registros_asistencia.filter(estado='RETRASO').aggregate(
+                total=Sum('minutos_retraso'))['total'] or 0
             
             empleados_data.append({
                 'funcionario': functorio,
@@ -87,6 +104,9 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 'dias_licencias': dias_licencias,
                 'permisos': permisos.order_by('fecha_inicio'),
                 'licencias': licencias.order_by('fecha_inicio'),
+                'total_atrasos': total_atrasos,
+                'total_inasistencias': total_inasistencias,
+                'total_minutos_retraso': total_minutos_retraso,
             })
         
         # Aplicar ordenamiento
@@ -110,6 +130,14 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             empleados_data.sort(key=lambda x: x['dias_licencias'], reverse=True)
         elif sort_by == 'dias_licencias_asc':
             empleados_data.sort(key=lambda x: x['dias_licencias'])
+        elif sort_by == 'inasistencias':
+            empleados_data.sort(key=lambda x: x['total_inasistencias'], reverse=True)
+        elif sort_by == 'inasistencias_asc':
+            empleados_data.sort(key=lambda x: x['total_inasistencias'])
+        elif sort_by == 'atrasos':
+            empleados_data.sort(key=lambda x: x['total_atrasos'], reverse=True)
+        elif sort_by == 'atrasos_asc':
+            empleados_data.sort(key=lambda x: x['total_atrasos'])
         
         context['empleados_data'] = empleados_data
         context['filtros'] = {
@@ -177,6 +205,22 @@ class PDFIndividualView(LoginRequiredMixin, UserPassesTestMixin, View):
             licencias = licencias.filter(fecha_inicio__gte=fecha_inicio)
         if fecha_fin:
             licencias = licencias.filter(fecha_inicio__lte=fecha_fin)
+
+        # Obtener registros de asistencia para contar atrasos e inasistencias
+        registros_asistencia = RegistroAsistencia.objects.filter(funcionario=functorio)
+        if year:
+            registros_asistencia = registros_asistencia.filter(fecha__year=year)
+        if mes:
+            registros_asistencia = registros_asistencia.filter(fecha__month=mes)
+        if fecha_inicio:
+            registros_asistencia = registros_asistencia.filter(fecha__gte=fecha_inicio)
+        if fecha_fin:
+            registros_asistencia = registros_asistencia.filter(fecha__lte=fecha_fin)
+
+        total_inasistencias = registros_asistencia.filter(estado='AUSENTE').count()
+        total_atrasos = registros_asistencia.filter(estado='RETRASO').count()
+        total_minutos_retraso = registros_asistencia.filter(estado='RETRASO').aggregate(
+            total=Sum('minutos_retraso'))['total'] or 0
         
         html_string = render_to_string('reportes/pdf_individual.html', {
             'functorio': functorio,
@@ -185,6 +229,9 @@ class PDFIndividualView(LoginRequiredMixin, UserPassesTestMixin, View):
             'licencias': licencias,
             'dias_usados': dias_usados,
             'total_dias_licencias': licencias.aggregate(Sum('dias'))['dias__sum'] or 0,
+            'total_inasistencias': total_inasistencias,
+            'total_atrasos': total_atrasos,
+            'total_minutos_retraso': total_minutos_retraso,
             'year': year,
             'mes': mes,
             'mes_nombre': {1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'}.get(int(mes) if mes else 0, ''),
@@ -255,16 +302,35 @@ class PDFColectivoView(LoginRequiredMixin, UserPassesTestMixin, View):
             dias_usados = permisos.aggregate(Sum('dias_solicitados'))['dias_solicitados__sum'] or 0
             dias_lic = licencias.aggregate(Sum('dias'))['dias__sum'] or 0
             total_lic = licencias.count()
-            
+
+            # Obtener registros de asistencia para contar atrasos e inasistencias
+            registros_asistencia = RegistroAsistencia.objects.filter(funcionario=functorio)
+            if year:
+                registros_asistencia = registros_asistencia.filter(fecha__year=year)
+            if mes:
+                registros_asistencia = registros_asistencia.filter(fecha__month=mes)
+            if fecha_inicio:
+                registros_asistencia = registros_asistencia.filter(fecha__gte=fecha_inicio)
+            if fecha_fin:
+                registros_asistencia = registros_asistencia.filter(fecha__lte=fecha_fin)
+
+            total_atrasos = registros_asistencia.filter(estado='RETRASO').count()
+            total_inasistencias = registros_asistencia.filter(estado='AUSENTE').count()
+            total_minutos_retraso = registros_asistencia.filter(estado='RETRASO').aggregate(
+                total=Sum('minutos_retraso'))['total'] or 0
+
             total_dias_disponibles += float(functorio.dias_disponibles)
             total_licencias += total_lic
-            
+
             empleados_data.append({
                 'funcionario': functorio,
                 'dias_disponibles': functorio.dias_disponibles,
                 'dias_usados': dias_usados,
                 'total_licencias': total_lic,
                 'dias_licencias': dias_lic,
+                'total_atrasos': total_atrasos,
+                'total_inasistencias': total_inasistencias,
+                'total_minutos_retraso': total_minutos_retraso,
             })
         
         html_string = render_to_string('reportes/pdf_colectivo.html', {
@@ -318,7 +384,7 @@ class ExportarExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         ws.title = "Reporte Detallado"
         
         # Encabezados
-        ws.append(['Nombre', 'RUN', 'Cargo', 'Días Disponibles', 'Días Usados', 'Días Licencia', 'Total Licencias'])
+        ws.append(['Nombre', 'RUN', 'Cargo', 'Inasistencias sin Justificar', 'Atrasos', 'Min. Retraso Total', 'Días Disponibles', 'Días Usados', 'Días Licencia', 'Total Licencias'])
         
         # Preparar datos
         for functorio in funcionarios.order_by('first_name', 'last_name'):
@@ -344,11 +410,30 @@ class ExportarExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             
             dias_usados = permisos.aggregate(Sum('dias_solicitados'))['dias_solicitados__sum'] or 0
             dias_licencia = licencias.aggregate(Sum('dias'))['dias__sum'] or 0
+
+            # Contar inasistencias y atrasos
+            registros = RegistroAsistencia.objects.filter(funcionario=functorio)
+            if year:
+                registros = registros.filter(fecha__year=year)
+            if mes:
+                registros = registros.filter(fecha__month=mes)
+            if fecha_inicio:
+                registros = registros.filter(fecha__gte=fecha_inicio)
+            if fecha_fin:
+                registros = registros.filter(fecha__lte=fecha_fin)
+
+            total_inasistencias = registros.filter(estado='AUSENTE').count()
+            total_atrasos = registros.filter(estado='RETRASO').count()
+            total_minutos_retraso = registros.filter(estado='RETRASO').aggregate(
+                total=Sum('minutos_retraso'))['total'] or 0
             
             ws.append([
                 functorio.get_full_name(),
                 functorio.run,
                 functorio.get_funcion_display() or functorio.get_tipo_funcionario_display() or functorio.get_role_display(),
+                total_inasistencias,
+                total_atrasos,
+                total_minutos_retraso,
                 functorio.dias_disponibles,
                 dias_usados,
                 dias_licencia,
@@ -497,12 +582,41 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                 lic.fecha_termino.strftime("%d-%m-%Y") if lic.fecha_termino else ""
             ])
 
+        # Pestaña 4: Asistencia (Inasistencias y Atrasos)
+        ws_asistencia = wb.create_sheet(title="Asistencia")
+        ws_asistencia.append(['N°', 'Funcionario', 'RUN', 'Inasistencias', 'Atrasos', 'Min. Retraso Total'])
+        for col in ['A']:
+            ws_asistencia.column_dimensions[col].width = 10
+        for col in ['B', 'C']:
+            ws_asistencia.column_dimensions[col].width = 30
+        for col in ['D', 'E', 'F']:
+            ws_asistencia.column_dimensions[col].width = 20
+
+        for i, f in enumerate(funcionarios, 1):
+            registros = RegistroAsistencia.objects.filter(funcionario=f)
+            if year:
+                registros = registros.filter(fecha__year=year)
+            if mes:
+                registros = registros.filter(fecha__month=mes)
+            total_inasistencias = registros.filter(estado='AUSENTE').count()
+            total_atrasos = registros.filter(estado='RETRASO').count()
+            total_minutos_retraso = registros.filter(estado='RETRASO').aggregate(
+                total=Sum('minutos_retraso'))['total'] or 0
+            ws_asistencia.append([
+                i,
+                f.get_full_name() or f.username,
+                f.run,
+                total_inasistencias,
+                total_atrasos,
+                total_minutos_retraso
+            ])
+
         # Pestañas estilo (Header en negrita)
         from openpyxl.styles import Font, PatternFill
         header_font = Font(bold=True, color="FFFFFF")
         fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
-        
-        for ws in [ws_nomina, ws_permisos, ws_licencias]:
+
+        for ws in [ws_nomina, ws_permisos, ws_licencias, ws_asistencia]:
             for cell in ws[1]:
                 cell.font = header_font
                 cell.fill = fill
