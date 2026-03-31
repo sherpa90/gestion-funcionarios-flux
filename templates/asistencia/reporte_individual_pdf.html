@@ -120,6 +120,13 @@
         <div class="info">
             <strong>RUT:</strong> {{ funcionario.run }}
         </div>
+        {% if ano_escolar %}
+        <div class="info" style="font-size: 10px; color: #666;">
+            <strong>Año Escolar {{ ano_escolar.ano }}:</strong>
+            Sem.1: {{ ano_escolar.sem1_inicio|date:"d/m/Y" }} - {{ ano_escolar.sem1_fin|date:"d/m/Y" }} |
+            Sem.2: {{ ano_escolar.sem2_inicio|date:"d/m/Y" }} - {{ ano_escolar.sem2_fin|date:"d/m/Y" }}
+        </div>
+        {% endif %}
     </div>
 
     <!-- Resumen de totales -->
