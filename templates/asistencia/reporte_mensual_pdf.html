@@ -127,30 +127,6 @@
         </div>
     </div>
 
-    <!-- Resumen General -->
-    <div class="totales-generales">
-        <table>
-            <thead>
-                <tr>
-                    <th style="text-align: center;">Total Funcionarios con Novedades</th>
-                    <th style="text-align: center;">Total Atrasos</th>
-                    <th style="text-align: center;">Total Min. Retraso</th>
-                    <th style="text-align: center;">Total Inasistencias sin Justificar</th>
-                    <th style="text-align: center;">Total Justificados</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="text-center" style="font-weight: bold;">{{ funcionarios|length }}</td>
-                    <td class="text-center" style="font-weight: bold; color: #856404;">{% for d in funcionarios %}{{ d.total_atrasos }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}</td>
-                    <td class="text-center" style="font-weight: bold; color: #856404;">{% for d in funcionarios %}{{ d.total_minutos_retraso }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}</td>
-                    <td class="text-center" style="font-weight: bold; color: #721c24;">{% for d in funcionarios %}{{ d.total_inasistencias_sin_justificar }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}</td>
-                    <td class="text-center" style="font-weight: bold; color: #155724;">{% for d in funcionarios %}{{ d.justificados|length }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
     <!-- Detalle por funcionario -->
     <table>
         <thead>
