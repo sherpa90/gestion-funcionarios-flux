@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Eliminar Licencia Médica{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <i class="fas fa-trash text-red-500"></i>
+            Eliminar Licencia
+        </h2>
+        <p class="text-gray-600 mt-2">Esta acción no se puede deshacer.</p>
+    </div>
+
+    <div class="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
+        <div class="p-6 sm:p-8">
+            <!-- Información de la licencia -->
+            <div class="bg-gray-50 rounded-xl p-5 mb-6">
+                <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Detalles de la licencia</h3>
+                <dl class="space-y-3">
+                    <div>
+                        <dt class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Funcionario</dt>
+                        <dd class="text-sm font-bold text-gray-900 mt-1">{{ licencia.usuario.get_full_name }} ({{ licencia.usuario.run }})</dd>
+                    </div>
+                    <div>
+                        <dt class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fecha de Inicio</dt>
+                        <dd class="text-sm font-bold text-gray-900 mt-1">{{ licencia.fecha_inicio|date:"d/m/Y" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fecha de Término</dt>
+                        <dd class="text-sm font-bold text-gray-900 mt-1">{{ licencia.fecha_termino|date:"d/m/Y" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Días</dt>
+                        <dd class="mt-1">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700">
+                                {{ licencia.dias }} días
+                            </span>
+                        </dd>
+                    </div>
+                    {% if licencia.created_by %}
+                    <div>
+                        <dt class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Registrado Por</dt>
+                        <dd class="text-sm font-bold text-gray-900 mt-1">{{ licencia.created_by.get_full_name }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+
+            <!-- Advertencia -->
+            <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-xl mb-6">
+                <div class="flex">
+                    <i class="fas fa-exclamation-triangle text-red-400 mt-0.5"></i>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-bold text-red-800">Advertencia</h3>
+                        <p class="mt-1 text-sm text-red-700">
+                            Al eliminar esta licencia, el registro será borrado permanentemente del sistema.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+
+                <div class="flex items-center justify-end gap-3">
+                    <a href="{% url 'licencia_admin_list' %}"
+                        class="inline-flex justify-center py-3 px-6 border border-gray-200 text-xs font-black uppercase tracking-widest rounded-xl text-gray-600 bg-white hover:bg-gray-50 transition">
+                        Cancelar
+                    </a>
+                    <button type="submit"
+                        class="inline-flex justify-center py-3 px-6 text-xs font-black uppercase tracking-widest rounded-xl text-white bg-red-600 hover:bg-red-700 shadow-lg transition">
+                        <i class="fas fa-trash mr-2"></i> Eliminar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
