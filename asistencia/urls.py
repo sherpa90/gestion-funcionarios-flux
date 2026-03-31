@@ -26,6 +26,7 @@ from .views import (
     ExportarRetrasosExcelView,
     ExportarRetrasosPDFView,
     RecalcularTodaAsistenciaView,
+    GestionAnoEscolarView,
 )
 
 app_name = 'asistencia'
@@ -67,6 +68,9 @@ urlpatterns = [
     path("gestion-festivos/", GestionDiasFestivosView.as_view(), name="gestion_festivos"),
     path("crear-festivo/", CrearDiaFestivoView.as_view(), name="crear_festivo"),
     path("eliminar-festivo/<int:pk>/", EliminarDiaFestivoView.as_view(), name="eliminar_festivo"),
+
+    # Año escolar
+    path("gestion-ano-escolar/", GestionAnoEscolarView.as_view(), name="gestion_ano_escolar"),
 
     # Justificaciones manuales
     path("justificar-registro/<int:pk>/", JustificarRegistroView.as_view(), name="justificar_registro"),

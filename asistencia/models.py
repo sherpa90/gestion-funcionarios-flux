@@ -237,9 +237,10 @@ class RegistroAsistencia(models.Model):
         entrada = timezone.datetime.combine(self.fecha, self.hora_entrada_real)
         salida = timezone.datetime.combine(self.fecha, self.hora_salida_real)
 
-        # Si la salida es anterior a la entrada (posible error), devolver None
+        # Si la salida es anterior a la entrada (turno nocturno de serenos PM->AM)
+        # la salida corresponde al día siguiente
         if salida <= entrada:
-            return None
+            salida = salida + timedelta(days=1)
 
         # Calcular diferencia en minutos
         diferencia = (salida - entrada).total_seconds() / 60
@@ -431,3 +432,68 @@ class RegistroAsistencia(models.Model):
         self.estado = self.determinar_estado()
 
         super().save(*args, **kwargs)
+
+
+class AnoEscolar(models.Model):
+    """Configuración del año escolar con 2 semestres"""
+    ano = models.PositiveIntegerField(
+        unique=True,
+        help_text="Año escolar (ej: 2026)"
+    )
+    sem1_inicio = models.DateField(
+        help_text="Fecha de inicio del primer semestre"
+    )
+    sem1_fin = models.DateField(
+        help_text="Fecha de fin del primer semestre"
+    )
+    sem2_inicio = models.DateField(
+        help_text="Fecha de inicio del segundo semestre"
+    )
+    sem2_fin = models.DateField(
+        help_text="Fecha de fin del segundo semestre"
+    )
+    activo = models.BooleanField(
+        default=False,
+        help_text="Si este es el año escolar activo"
+    )
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="anos_escolares_creados"
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Año Escolar"
+        verbose_name_plural = "Años Escolares"
+        ordering = ["-ano"]
+
+    def __str__(self):
+        return f"Año Escolar {self.ano}"
+
+    @classmethod
+    def get_activo(cls):
+        """Retorna el año escolar activo o None"""
+        return cls.objects.filter(activo=True).first()
+
+    @classmethod
+    def es_dia_escolar(cls, fecha):
+        """Verifica si una fecha cae dentro de algún semestre del año escolar activo"""
+        activo = cls.get_activo()
+        if not activo:
+            return True  # Si no hay año escolar configurado, asumir que es día escolar
+        en_sem1 = activo.sem1_inicio <= fecha <= activo.sem1_fin
+        en_sem2 = activo.sem2_inicio <= fecha <= activo.sem2_fin
+        return en_sem1 or en_sem2
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.sem1_fin <= self.sem1_inicio:
+            raise ValidationError("La fecha de fin del primer semestre debe ser posterior a la de inicio.")
+        if self.sem2_fin <= self.sem2_inicio:
+            raise ValidationError("La fecha de fin del segundo semestre debe ser posterior a la de inicio.")
+        if self.sem2_inicio <= self.sem1_fin:
+            raise ValidationError("El segundo semestre debe comenzar después de que termine el primero.")

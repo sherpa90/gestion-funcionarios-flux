@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Configuración Año Escolar{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-900">Año Escolar</h2>
+        <p class="text-gray-600 mt-2">Configure los semestres del año escolar. Los días fuera de los semestres no se consideran para asistencia.</p>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Año activo -->
+    {% if ano_activo %}
+    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white">ACTIVO</span>
+                    <span class="text-lg font-bold text-emerald-900">Año Escolar {{ ano_activo.ano }}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-3">
+                    <div class="bg-white rounded-lg p-3 border border-emerald-100">
+                        <div class="text-xs font-bold text-emerald-600 uppercase mb-1">1er Semestre</div>
+                        <div class="text-sm text-gray-700">{{ ano_activo.sem1_inicio|date:"d/m/Y" }} - {{ ano_activo.sem1_fin|date:"d/m/Y" }}</div>
+                    </div>
+                    <div class="bg-white rounded-lg p-3 border border-emerald-100">
+                        <div class="text-xs font-bold text-emerald-600 uppercase mb-1">2do Semestre</div>
+                        <div class="text-sm text-gray-700">{{ ano_activo.sem2_inicio|date:"d/m/Y" }} - {{ ano_activo.sem2_fin|date:"d/m/Y" }}</div>
+                    </div>
+                </div>
+            </div>
+            <form method="post" onsubmit="return confirm('¿Desactivar este año escolar?')">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="desactivar">
+                <input type="hidden" name="pk" value="{{ ano_activo.pk }}">
+                <button type="submit" class="px-3 py-1.5 text-xs font-bold text-amber-700 bg-amber-100 rounded-lg hover:bg-amber-200 transition">
+                    Desactivar
+                </button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-5 mb-6">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>
+            <div>
+                <div class="font-bold text-yellow-800">Sin año escolar activo</div>
+                <div class="text-sm text-yellow-700">Configure y active un año escolar para que las inasistencias solo se marquen en días laborales.</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Formulario para crear/editar -->
+    <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden mb-6">
+        <div class="px-5 py-4 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900"><i class="fas fa-plus-circle text-blue-500 mr-2"></i>Crear / Actualizar Año Escolar</h3>
+        </div>
+        <form method="post" class="p-5">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="guardar">
+
+            <div class="mb-5">
+                <label class="block text-sm font-bold text-gray-700 mb-1">Año</label>
+                <input type="number" name="ano" min="2020" max="2099" value="{% now 'Y' %}" required
+                    class="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Semestre 1 -->
+                <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                    <h4 class="text-sm font-bold text-blue-800 uppercase mb-3"><i class="fas fa-calendar-alt mr-1"></i>Primer Semestre</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Fecha Inicio</label>
+                            <input type="date" name="sem1_inicio" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Fecha Fin</label>
+                            <input type="date" name="sem1_fin" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Semestre 2 -->
+                <div class="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                    <h4 class="text-sm font-bold text-purple-800 uppercase mb-3"><i class="fas fa-calendar-alt mr-1"></i>Segundo Semestre</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Fecha Inicio</label>
+                            <input type="date" name="sem2_inicio" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Fecha Fin</label>
+                            <input type="date" name="sem2_fin" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5 flex justify-end">
+                <button type="submit" class="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition text-sm">
+                    <i class="fas fa-save mr-2"></i>Guardar Año Escolar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Historial de años escolares -->
+    {% if todos_anos %}
+    <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900"><i class="fas fa-history text-gray-400 mr-2"></i>Historial</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Año</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">1er Semestre</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">2do Semestre</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for ano in todos_anos %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm font-bold text-gray-900">{{ ano.ano }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ ano.sem1_inicio|date:"d/m/Y" }} - {{ ano.sem1_fin|date:"d/m/Y" }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ ano.sem2_inicio|date:"d/m/Y" }} - {{ ano.sem2_fin|date:"d/m/Y" }}</td>
+                        <td class="px-4 py-3 text-center">
+                            {% if ano.activo %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Activo</span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-500">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                {% if not ano.activo %}
+                                <form method="post" onsubmit="return confirm('¿Activar el año escolar {{ ano.ano }}?')">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="accion" value="activar">
+                                    <input type="hidden" name="pk" value="{{ ano.pk }}">
+                                    <button type="submit" class="text-xs font-bold text-emerald-600 hover:text-emerald-800">
+                                        <i class="fas fa-check-circle mr-1"></i>Activar
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <form method="post" onsubmit="return confirm('¿Eliminar el año escolar {{ ano.ano }}?')">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="accion" value="eliminar">
+                                    <input type="hidden" name="pk" value="{{ ano.pk }}">
+                                    <button type="submit" class="text-xs font-bold text-red-600 hover:text-red-800">
+                                        <i class="fas fa-trash-alt mr-1"></i>Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -10,12 +10,12 @@
         }
         body {
             font-family: Arial, sans-serif;
-            font-size: 12px;
+            font-size: 11px;
             line-height: 1.4;
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         .title {
             font-size: 18px;
@@ -28,36 +28,95 @@
         }
         .info {
             font-size: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 15px;
         }
         th, td {
             border: 1px solid #000;
-            padding: 8px;
+            padding: 6px 8px;
             text-align: left;
         }
         th {
             background-color: #f0f0f0;
             font-weight: bold;
         }
+        .text-center {
+            text-align: center;
+        }
+        .tipo-atraso {
+            background-color: #fff3cd;
+        }
+        .tipo-inasistencia {
+            background-color: #f8d7da;
+        }
+        .tipo-justificado {
+            background-color: #d4edda;
+        }
+        .resumen-funcionario {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+        .resumen-funcionario td {
+            border-top: 2px solid #333;
+            padding: 8px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .badge-retraso {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .badge-inasistencia {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .badge-justificado {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .badge-admin {
+            background-color: #6f42c1;
+            color: #fff;
+        }
+        .badge-licencia {
+            background-color: #fd7e14;
+            color: #fff;
+        }
         .footer {
-            margin-top: 40px;
+            margin-top: 30px;
             text-align: center;
             font-size: 10px;
             color: #666;
+        }
+        .totales-generales {
+            margin-top: 20px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+        }
+        .totales-generales table {
+            margin-top: 5px;
+        }
+        .totales-generales th {
+            background-color: #343a40;
+            color: #fff;
+        }
+        .page-break {
+            page-break-before: always;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="title">MUNICIPALIDAD DE PUERTO MONTT</div>
-        <div class="subtitle">DEPARTAMENTO ADMINISTRATIVO DE EDUCACIÓN MUNICIPAL</div>
-        <div class="subtitle">UNIDAD DE RECURSOS HUMANOS</div>
-
         <div class="title" style="margin-top: 20px;">INFORME ASISTENCIA LABORAL</div>
 
         <div class="info">
@@ -68,90 +127,117 @@
         </div>
     </div>
 
+    <!-- Resumen General -->
+    <div class="totales-generales">
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align: center;">Total Funcionarios con Novedades</th>
+                    <th style="text-align: center;">Total Atrasos</th>
+                    <th style="text-align: center;">Total Min. Retraso</th>
+                    <th style="text-align: center;">Total Inasistencias sin Justificar</th>
+                    <th style="text-align: center;">Total Justificados</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center" style="font-weight: bold;">{{ funcionarios|length }}</td>
+                    <td class="text-center" style="font-weight: bold; color: #856404;">{% for d in funcionarios %}{{ d.total_atrasos }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}</td>
+                    <td class="text-center" style="font-weight: bold; color: #856404;">{% for d in funcionarios %}{{ d.total_minutos_retraso }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}</td>
+                    <td class="text-center" style="font-weight: bold; color: #721c24;">{% for d in funcionarios %}{{ d.total_inasistencias_sin_justificar }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}</td>
+                    <td class="text-center" style="font-weight: bold; color: #155724;">{% for d in funcionarios %}{{ d.justificados|length }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Detalle por funcionario -->
     <table>
         <thead>
             <tr>
-                <th style="width: 20%;">Nombre y Apellido</th>
-                <th style="width: 15%;">RUT</th>
-                <th style="width: 15%;">Fecha</th>
-                <th style="width: 15%;">Hora</th>
-                <th style="width: 15%;">Tipo</th>
-                <th style="width: 20%;">Detalle</th>
+                <th style="width: 18%;">Nombre y Apellido</th>
+                <th style="width: 12%;">RUT</th>
+                <th style="width: 12%;">Fecha</th>
+                <th style="width: 10%;">Hora</th>
+                <th style="width: 14%;">Tipo</th>
+                <th style="width: 34%;">Detalle</th>
             </tr>
         </thead>
         <tbody>
             {% for data in funcionarios %}
                 {% for atraso in data.atrasos %}
-                <tr>
-                    <td>{{ data.funcionario.get_full_name }}</td>
-                    <td>{{ data.funcionario.run }}</td>
+                <tr class="tipo-atraso">
+                    {% if forloop.first %}
+                    <td rowspan="{% widthratio data.atrasos|length 1 1 %}">{{ data.funcionario.get_full_name }}</td>
+                    <td rowspan="{% widthratio data.atrasos|length 1 1 %}">{{ data.funcionario.run }}</td>
+                    {% endif %}
+                    {% if forloop.first %}
                     <td style="text-align: center;">{{ atraso.fecha|date:"d/m/Y" }}</td>
-                    <td style="text-align: center;">
+                    {% else %}
+                    <td style="text-align: center;">{{ atraso.fecha|date:"d/m/Y" }}</td>
+                    {% endif %}
+                    <td class="text-center">
                         {% if atraso.hora_entrada %}
                             {{ atraso.hora_entrada|time:"H:i" }}
                         {% else %}
                             -
                         {% endif %}
                     </td>
-                    <td style="text-align: center;">Atraso</td>
-                    <td style="text-align: center;">{{ atraso.minutos_retraso }} minutos</td>
+                    <td class="text-center"><span class="badge badge-retraso">Atraso</span></td>
+                    <td class="text-center">{{ atraso.minutos_retraso }} minutos de retraso</td>
                 </tr>
                 {% endfor %}
                 {% for inasistencia in data.inasistencias %}
-                <tr>
+                <tr class="tipo-inasistencia">
                     <td>{{ data.funcionario.get_full_name }}</td>
                     <td>{{ data.funcionario.run }}</td>
                     <td style="text-align: center;">{{ inasistencia.fecha|date:"d/m/Y" }}</td>
-                    <td style="text-align: center;">
+                    <td class="text-center">
                         {% if inasistencia.hora_esperada %}
                             {{ inasistencia.hora_esperada|time:"H:i" }}
                         {% else %}
                             -
                         {% endif %}
                     </td>
-                    <td style="text-align: center;">Inasistencia</td>
-                    <td style="text-align: center;">No registró asistencia</td>
+                    <td class="text-center"><span class="badge badge-inasistencia">Sin Justificar</span></td>
+                    <td class="text-center">Inasistencia sin justificar - No registró asistencia</td>
                 </tr>
                 {% endfor %}
                 {% for justificado in data.justificados %}
-                <tr>
+                <tr class="tipo-justificado">
                     <td>{{ data.funcionario.get_full_name }}</td>
                     <td>{{ data.funcionario.run }}</td>
                     <td style="text-align: center;">{{ justificado.fecha|date:"d/m/Y" }}</td>
-                    <td style="text-align: center;">-</td>
-                    <td style="text-align: center;">Justificado</td>
-                    <td style="text-align: center;">
-                        {% if justificado.tipo == 'permiso' %}
-                            {% for permiso in data.funcionario.solicitudes.filter(fecha_inicio__lte=justificado.fecha, fecha_termino__gte=justificado.fecha, estado='APROBADO').order_by('-fecha_inicio') %}
-                                {% if permiso.dias_solicitados == 0.5 %}
-                                    Día administrativo aprobado - {{ permiso.get_jornada_display }}
-                                {% else %}
-                                    Día administrativo aprobado
-                                {% endif %}
-                            {% empty %}
-                                Día administrativo aprobado
-                            {% endfor %}
+                    <td class="text-center">-</td>
+                    <td class="text-center">
+                        {% if justificado.tipo == 'dia_administrativo' %}
+                            <span class="badge badge-admin">Día Admin.</span>
                         {% elif justificado.tipo == 'licencia' %}
-                            Licencia médica
+                            <span class="badge badge-licencia">Licencia Médica</span>
                         {% else %}
-                            Ausencia justificada
+                            <span class="badge badge-justificado">Justificado</span>
                         {% endif %}
                     </td>
+                    <td class="text-center">{{ justificado.detalle }}</td>
                 </tr>
                 {% endfor %}
-                {% if not data.atrasos and not data.inasistencias %}
-                <tr>
-                    <td>{{ data.funcionario.get_full_name }}</td>
-                    <td>{{ data.funcionario.run }}</td>
-                    <td colspan="4" style="text-align: center; font-style: italic;">
-                        {% if data.tiene_registros %}
-                            Sin atrasos ni inasistencias
-                        {% else %}
-                            Sin registros de asistencia
-                        {% endif %}
+
+                <!-- Resumen del funcionario -->
+                <tr class="resumen-funcionario">
+                    <td colspan="2">{{ data.funcionario.get_full_name }}</td>
+                    <td colspan="4" class="text-center">
+                        Atrasos: <strong>{{ data.total_atrasos }}</strong> |
+                        Min. Retraso: <strong>{{ data.total_minutos_retraso }} min</strong> |
+                        Inasistencias sin Justificar: <strong>{{ data.total_inasistencias_sin_justificar }}</strong> |
+                        Justificados: <strong>{{ data.justificados|length }}</strong>
                     </td>
                 </tr>
-                {% endif %}
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center" style="font-style: italic; padding: 20px;">
+                        No se registraron novedades de asistencia en el período seleccionado
+                    </td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>
