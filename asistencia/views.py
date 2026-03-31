@@ -486,9 +486,17 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'),
             (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
         ]
-        context['anios_disponibles'] = RegistroAsistencia.objects.filter(
+        anios_con_registros = list(RegistroAsistencia.objects.filter(
             funcionario=self.request.user
-        ).values_list('fecha__year', flat=True).distinct().order_by('-fecha__year')
+        ).values_list('fecha__year', flat=True).distinct().order_by('-fecha__year'))
+        
+        # Si no hay registros, mostrar años por defecto (actual y anterior)
+        if not anios_con_registros:
+            from datetime import datetime as dt
+            anio_actual = dt.now().year
+            anios_con_registros = [anio_actual, anio_actual - 1]
+        
+        context['anios_disponibles'] = anios_con_registros
 
         context.update({
             'registros': registros_list,
