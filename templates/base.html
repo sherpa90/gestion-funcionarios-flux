@@ -227,6 +227,11 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-home fa-fw mr-3"></i><span class="ml-3">Dashboard</span>
                     </a>
+
+                    <!-- Mi Gestión -->
+                    <div class="pt-4 pb-2">
+                        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Mi Gestión</p>
+                    </div>
                     <a href="{% url 'mis_liquidaciones' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-file-invoice-dollar fa-fw mr-3"></i><span class="ml-3">Mis
@@ -236,11 +241,6 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-clock fa-fw mr-3"></i><span class="ml-3">Mi Asistencia</span>
                     </a>
-
-                    <!-- Mi Gestión -->
-                    <div class="pt-4 pb-2">
-                        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Mi Gestión</p>
-                    </div>
                     <a href="{% url 'email_directory' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-address-book fa-fw mr-3"></i><span class="ml-3">Directorio de
@@ -298,16 +298,6 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-notes-medical fa-fw mr-3"></i><span class="ml-3">Licencias</span>
                     </a>
-                    <a href="{% url 'admin_liquidaciones_overview' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-coins fa-fw mr-3"></i><span class="ml-3">Liquidaciones</span>
-                    </a>
-                    {% if user.role == 'ADMIN' %}
-                    <a href="{% url 'admin_dashboard:system_backup' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-red-900/40 text-red-300 transition-colors mt-2">
-                        <i class="fa-solid fa-server fa-fw mr-3"></i><span class="ml-3">Respaldo y Recuperación</span>
-                    </a>
-                    {% endif %}
                     {% if user.role != 'SECRETARIA' %}
                     <a href="{% url 'lista_equipos' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
@@ -329,13 +319,15 @@
                         {% endif %}
                     </a>
                     {% endif %}
-                    {% endif %}
-
+                    <a href="{% url 'admin_liquidaciones_overview' %}"
+                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
+                        <i class="fa-solid fa-coins fa-fw mr-3"></i><span class="ml-3">Liquidaciones</span>
+                    </a>
                     {% if user.role == 'ADMIN' %}
-                    <!-- Gestion de Usuarios -->
-                    <div class="pt-4 pb-2">
-                        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Gestion de Usuarios</p>
-                    </div>
+                    <a href="{% url 'admin_dashboard:system_backup' %}"
+                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
+                        <i class="fa-solid fa-server fa-fw mr-3"></i><span class="ml-3">Respaldo y Recuperación</span>
+                    </a>
                     <a href="{% url 'admin_dashboard:blocked_users' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-user-lock fa-fw mr-3"></i><span class="ml-3">Usuarios Bloqueados</span>
@@ -344,6 +336,7 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-terminal fa-fw mr-3"></i><span class="ml-3">Logs de Sistema</span>
                     </a>
+                    {% endif %}
                     {% endif %}
 
                     {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
@@ -484,6 +477,11 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-home fa-fw mr-3"></i><span class="ml-3">Dashboard</span>
                     </a>
+
+                    <!-- Mi Gestión -->
+                    <div class="pt-4 pb-2">
+                        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Mi Gestión</p>
+                    </div>
                     <a href="{% url 'mis_liquidaciones' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-file-invoice-dollar fa-fw mr-3"></i><span class="ml-3">Mis
@@ -493,11 +491,6 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-clock fa-fw mr-3"></i><span class="ml-3">Mi Asistencia</span>
                     </a>
-
-                    <!-- Mi Gestión -->
-                    <div class="pt-4 pb-2">
-                        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Mi Gestión</p>
-                    </div>
                     <a href="{% url 'email_directory' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-address-book fa-fw mr-3"></i><span class="ml-3">Directorio de
@@ -555,10 +548,6 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-notes-medical fa-fw mr-3"></i><span class="ml-3">Licencias</span>
                     </a>
-                    <a href="{% url 'admin_liquidaciones_overview' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-coins fa-fw mr-3"></i><span class="ml-3">Liquidaciones</span>
-                    </a>
                     {% if user.role != 'SECRETARIA' %}
                     <a href="{% url 'lista_equipos' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
@@ -580,13 +569,15 @@
                         {% endif %}
                     </a>
                     {% endif %}
-                    {% endif %}
-
+                    <a href="{% url 'admin_liquidaciones_overview' %}"
+                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
+                        <i class="fa-solid fa-coins fa-fw mr-3"></i><span class="ml-3">Liquidaciones</span>
+                    </a>
                     {% if user.role == 'ADMIN' %}
-                    <!-- Gestion de Usuarios -->
-                    <div class="pt-4 pb-2">
-                        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Gestion de Usuarios</p>
-                    </div>
+                    <a href="{% url 'admin_dashboard:system_backup' %}"
+                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
+                        <i class="fa-solid fa-server fa-fw mr-3"></i><span class="ml-3">Respaldo y Recuperación</span>
+                    </a>
                     <a href="{% url 'admin_dashboard:blocked_users' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-user-lock fa-fw mr-3"></i><span class="ml-3">Usuarios Bloqueados</span>
@@ -595,6 +586,7 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-terminal fa-fw mr-3"></i><span class="ml-3">Logs de Sistema</span>
                     </a>
+                    {% endif %}
                     {% endif %}
 
                     {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
