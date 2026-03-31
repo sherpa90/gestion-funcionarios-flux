@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Editar Licencia Médica{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <i class="fas fa-file-medical text-blue-600"></i>
+            Editar Licencia Médica
+        </h2>
+        <p class="text-gray-600 mt-2">Modifica los datos de la licencia de {{ object.usuario.get_full_name }}</p>
+    </div>
+
+    <div class="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
+        <div class="p-6 sm:p-8">
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-xl">
+                    <div class="flex">
+                        <i class="fas fa-exclamation-circle text-red-500 mt-0.5"></i>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-bold text-red-800">Errores en el formulario</h3>
+                            <div class="mt-1 text-sm text-red-700">{{ form.non_field_errors }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Funcionario -->
+                <div>
+                    <label for="{{ form.usuario.id_for_label }}" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                        Funcionario
+                    </label>
+                    {{ form.usuario }}
+                    {% if form.usuario.errors %}
+                    <p class="mt-1 text-xs text-red-500 font-bold">{{ form.usuario.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Fecha Inicio y Días -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.fecha_inicio.id_for_label }}" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                            Fecha de Inicio
+                        </label>
+                        {{ form.fecha_inicio }}
+                        {% if form.fecha_inicio.errors %}
+                        <p class="mt-1 text-xs text-red-500 font-bold">{{ form.fecha_inicio.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.dias.id_for_label }}" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                            Cantidad de Días
+                        </label>
+                        {{ form.dias }}
+                        {% if form.dias.errors %}
+                        <p class="mt-1 text-xs text-red-500 font-bold">{{ form.dias.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Archivo -->
+                <div>
+                    <label for="{{ form.archivo.id_for_label }}" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                        Documento de Respaldo
+                    </label>
+                    {% if object.archivo %}
+                    <div class="mb-3 p-3 bg-gray-50 rounded-xl flex items-center gap-3">
+                        <i class="fas fa-file-pdf text-red-500"></i>
+                        <a href="{{ object.archivo.url }}" target="_blank" class="text-sm text-blue-600 font-bold hover:underline">Ver archivo actual</a>
+                    </div>
+                    {% endif %}
+                    {{ form.archivo }}
+                    {% if form.archivo.errors %}
+                    <p class="mt-1 text-xs text-red-500 font-bold">{{ form.archivo.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest">Subir un nuevo archivo reemplazará el actual</p>
+                </div>
+
+                <!-- Botones -->
+                <div class="pt-5 border-t border-gray-100 flex items-center justify-end gap-3">
+                    <a href="{% url 'licencia_admin_list' %}"
+                        class="inline-flex justify-center py-3 px-6 border border-gray-200 text-xs font-black uppercase tracking-widest rounded-xl text-gray-600 bg-white hover:bg-gray-50 transition">
+                        Cancelar
+                    </a>
+                    <button type="submit"
+                        class="inline-flex justify-center py-3 px-6 text-xs font-black uppercase tracking-widest rounded-xl text-white bg-gray-900 hover:bg-blue-600 shadow-lg transition">
+                        <i class="fas fa-save mr-2"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

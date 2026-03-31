@@ -1,6 +1,8 @@
-from django.shortcuts import render
-from django.views.generic import CreateView, ListView
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.generic import CreateView, ListView, UpdateView
+from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib import messages
 from django.urls import reverse_lazy
 from django import forms
 from django.db.models import Sum, Count
@@ -107,3 +109,94 @@ class LicenciaListView(LoginRequiredMixin, ListView):
         context['current_year'] = current_year
         
         return context
+
+
+class LicenciaAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Vista para que admin/secretaria vean todas las licencias de todos los funcionarios"""
+    model = LicenciaMedica
+    template_name = 'licencias/admin_list.html'
+    context_object_name = 'licencias'
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+
+    def get_queryset(self):
+        queryset = LicenciaMedica.objects.select_related('usuario', 'created_by').all()
+
+        # Filtros opcionales
+        year = self.request.GET.get('year')
+        month = self.request.GET.get('month')
+        usuario_id = self.request.GET.get('usuario')
+
+        if year:
+            queryset = queryset.filter(fecha_inicio__year=year)
+        if month:
+            queryset = queryset.filter(fecha_inicio__month=month)
+        if usuario_id:
+            queryset = queryset.filter(usuario_id=usuario_id)
+
+        return queryset.order_by('-fecha_inicio')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        selected_year = self.request.GET.get('year')
+        selected_month = self.request.GET.get('month')
+        selected_usuario = self.request.GET.get('usuario')
+
+        context['selected_year'] = int(selected_year) if selected_year else None
+        context['selected_month'] = int(selected_month) if selected_month else None
+        context['selected_usuario'] = int(selected_usuario) if selected_usuario else None
+
+        # Años disponibles
+        years = LicenciaMedica.objects.dates('fecha_inicio', 'year', order='DESC')
+        context['available_years'] = [d.year for d in years]
+
+        # Usuarios con licencias
+        from users.models import CustomUser
+        context['usuarios'] = CustomUser.objects.filter(
+            licencias__isnull=False
+        ).distinct().order_by('last_name', 'first_name')
+
+        # Estadísticas generales
+        current_year = selected_year if selected_year else datetime.now().year
+        licencias_año = LicenciaMedica.objects.filter(fecha_inicio__year=current_year)
+        context['total_dias_año'] = licencias_año.aggregate(Sum('dias'))['dias__sum'] or 0
+        context['total_licencias_año'] = licencias_año.count()
+        context['current_year'] = current_year
+
+        return context
+
+
+class LicenciaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """Vista para que admin/secretaria editen licencias"""
+    model = LicenciaMedica
+    form_class = LicenciaForm
+    template_name = 'licencias/admin_edit.html'
+    success_url = reverse_lazy('licencia_admin_list')
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Licencia actualizada exitosamente.')
+        return super().form_valid(form)
+
+
+class LicenciaDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para que admin/secretaria eliminen licencias"""
+    template_name = 'licencias/admin_delete.html'
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+
+    def get(self, request, pk):
+        licencia = get_object_or_404(LicenciaMedica, pk=pk)
+        return render(request, self.template_name, {'licencia': licencia})
+
+    def post(self, request, pk):
+        licencia = get_object_or_404(LicenciaMedica, pk=pk)
+        usuario_nombre = licencia.usuario.get_full_name()
+        licencia.delete()
+        messages.success(request, f'Licencia de {usuario_nombre} eliminada exitosamente.')
+        return redirect('licencia_admin_list')
