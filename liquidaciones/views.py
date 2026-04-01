@@ -2,7 +2,6 @@ import io
 import re
 import zipfile
 import logging
-import pypdf
 from django.shortcuts import render, redirect
 from django.views.generic import FormView, ListView, View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
