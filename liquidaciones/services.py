@@ -55,13 +55,15 @@ class PayrollService:
     ) -> Optional[Liquidacion]:
         """
         Crea una liquidación a partir de contenido PDF.
+        Aplica compresión agresiva: primero a nivel PDF, y si el resultado
+        sigue siendo pesado, re-renderiza como imagen JPEG comprimida.
 
         Args:
-            pdf_content: Contenido del PDF
+            pdf_content: Contenido del PDF completo
             user: Usuario al que pertenece la liquidación
             month: Mes de la liquidación
             year: Año de la liquidación
-            page_num: Número de página (para logging)
+            page_num: Número de página a extraer
 
         Returns:
             Liquidacion creada o None si hay error
@@ -70,19 +72,57 @@ class PayrollService:
             import io
             import fitz
 
-            # Crear PDF con una sola página original usando fitz
+            # Extraer solo la página correspondiente
             doc = fitz.open(stream=pdf_content, filetype="pdf")
             new_doc = fitz.open()
             new_doc.insert_pdf(doc, from_page=page_num, to_page=page_num)
+            doc.close()
 
-            # Aplicar compresión máxima (nivel 4 de limpieza y compresión de flujo)
-            pdf_bytes = new_doc.write(garbage=4, deflate=True)
+            # Compresión agresiva a nivel PDF
+            pdf_bytes = new_doc.write(garbage=4, deflate=True, clean=True)
+            new_doc.close()
+
+            MAX_SIZE = 400 * 1024  # 400KB máximo aceptable
+
+            # Si sigue pesado, re-renderizar como imagen JPEG comprimida
+            if len(pdf_bytes) > MAX_SIZE:
+                try:
+                    from PIL import Image
+
+                    # Re-abrir el PDF extraído para renderizar
+                    temp_doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+                    page = temp_doc[0]
+
+                    # Renderizar a 150 DPI (matriz de escala 150/72 ≈ 2.08)
+                    zoom = 150 / 72
+                    mat = fitz.Matrix(zoom, zoom)
+                    pix = page.get_pixmap(matrix=mat, alpha=False)
+
+                    # Convertir pixmap a imagen PIL y comprimir como JPEG
+                    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                    img_buffer = io.BytesIO()
+                    img.save(img_buffer, format="JPEG", quality=70, optimize=True)
+                    img_bytes = img_buffer.getvalue()
+
+                    # Crear nuevo PDF con la imagen comprimida
+                    img_doc = fitz.open()
+                    img_page = img_doc.new_page(width=page.rect.width, height=page.rect.height)
+                    img_page.insert_image(
+                        img_page.rect,
+                        stream=img_bytes,
+                        keep_proportion=True
+                    )
+
+                    pdf_bytes = img_doc.write(garbage=4, deflate=True)
+                    img_doc.close()
+                    temp_doc.close()
+
+                except Exception as e:
+                    logger.warning(f"Fallback de compresión por imagen falló, usando PDF original: {e}")
+
             output_buffer = io.BytesIO(pdf_bytes)
-
-            # Crear nombre de archivo
             filename = f"liquidacion_{year}_{month}_{user.run}.pdf"
 
-            # Crear liquidación
             liquidacion = Liquidacion(
                 funcionario=user,
                 mes=month,
@@ -90,7 +130,8 @@ class PayrollService:
             )
             liquidacion.archivo.save(filename, ContentFile(output_buffer.getvalue()))
 
-            logger.info(f"Payroll created: {filename} for user {user.get_full_name()}")
+            size_kb = len(pdf_bytes) / 1024
+            logger.info(f"Payroll created: {filename} ({size_kb:.1f} KB) for user {user.get_full_name()}")
             return liquidacion
 
         except Exception as e:
