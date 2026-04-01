@@ -128,6 +128,7 @@ class RegistroAsistencia(models.Model):
         ("RETRASO", "Retraso"),
         ("AUSENTE", "Ausente"),
         ("JUSTIFICADO", "Justificado"),
+        ("SIN_MARCACION_ENTRADA", "Sin Marcación de Entrada"),
         ("MEDIO_DIA", "Medio Día Administrativo"),
         ("DIA_ADMINISTRATIVO", "Día Administrativo"),
         ("LICENCIA_MEDICA", "Licencia Médica"),
@@ -161,7 +162,7 @@ class RegistroAsistencia(models.Model):
         help_text="Minutos totales trabajados (calculado automáticamente)"
     )
     estado = models.CharField(
-        max_length=20,
+        max_length=25,
         choices=ESTADO_CHOICES,
         default="AUSENTE"
     )
@@ -403,6 +404,9 @@ class RegistroAsistencia(models.Model):
             return "JUSTIFICADO"
 
         if not self.hora_entrada_real:
+            if self.hora_salida_real:
+                # Hay marcación de salida pero no de entrada - no es ausencia
+                return "SIN_MARCACION_ENTRADA"
             return "AUSENTE"
 
         retraso = self.calcular_retraso()

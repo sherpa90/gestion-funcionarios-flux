@@ -4,16 +4,15 @@
 
 {% block content %}
 <div class="p-4 sm:p-6 lg:p-8">
-    <!-- Header Premium -->
+    <!-- Header -->
     <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
             <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Aprobación de Permisos</h2>
             <p class="text-gray-500 mt-2 font-medium">Gestiona y autoriza las solicitudes de días administrativos.</p>
         </div>
-        
-        <!-- Resumen 5 Días (Aceptados) -->
+        <!-- Resumen Semanal -->
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-2 flex items-center gap-1 sm:gap-2">
-             <div class="px-4 py-2 border-r border-gray-100 hidden sm:block">
+            <div class="px-4 py-2 border-r border-gray-100 hidden sm:block">
                 <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Carga Semanal</p>
                 <p class="text-xs font-bold text-emerald-600">Permisos Aceptados</p>
                 <p class="text-[8px] text-gray-500">Doc / Asis</p>
@@ -31,13 +30,13 @@
         </div>
     </div>
 
-    <!-- Filtros Rápidos / Stats -->
+    <!-- Filtros Rápidos -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <a href="?status=pending" 
+        <a href="?status=pending"
            class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-sm p-6 text-white relative overflow-hidden group hover:scale-[1.02] transition-all {% if current_filter == 'pending' %}ring-4 ring-amber-200{% endif %}">
             <div class="relative z-10 flex items-center justify-between">
                 <div>
-                    <p class="text-amber-100 text-xs font-semibold uppercase tracking-wider">Pendientes de Revisión</p>
+                    <p class="text-amber-100 text-xs font-semibold uppercase tracking-wider">Pendientes</p>
                     <p class="text-4xl font-black mt-2">{% if is_paginated %}{{ paginator.count }}{% else %}{{ solicitudes.count }}{% endif %}</p>
                 </div>
                 <div class="bg-white/10 rounded-2xl p-4 backdrop-blur-md group-hover:scale-110 transition-transform">
@@ -49,11 +48,11 @@
             </div>
         </a>
 
-        <a href="?status=processed" 
+        <a href="?status=processed"
            class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-sm p-6 text-white relative overflow-hidden group hover:scale-[1.02] transition-all {% if current_filter == 'processed' %}ring-4 ring-emerald-200{% endif %}">
             <div class="relative z-10 flex items-center justify-between">
                 <div>
-                    <p class="text-emerald-100 text-xs font-semibold uppercase tracking-wider">Historial Procesado</p>
+                    <p class="text-emerald-100 text-xs font-semibold uppercase tracking-wider">Historial</p>
                     <p class="text-4xl font-black mt-2">{{ historial_page.paginator.count }}</p>
                 </div>
                 <div class="bg-white/10 rounded-2xl p-4 backdrop-blur-md group-hover:scale-110 transition-transform">
@@ -65,11 +64,11 @@
             </div>
         </a>
 
-        <a href="?status=all" 
+        <a href="?status=all"
            class="bg-gradient-to-br from-gray-700 to-gray-900 rounded-2xl shadow-sm p-6 text-white relative overflow-hidden group hover:scale-[1.02] transition-all {% if current_filter == 'all' %}ring-4 ring-gray-300{% endif %}">
             <div class="relative z-10 flex items-center justify-between">
                 <div>
-                    <p class="text-gray-300 text-xs font-semibold uppercase tracking-wider">Vista General</p>
+                    <p class="text-gray-300 text-xs font-semibold uppercase tracking-wider">Total</p>
                     <p class="text-4xl font-black mt-2">{{ paginator.count|add:historial_page.paginator.count }}</p>
                 </div>
                 <div class="bg-white/10 rounded-2xl p-4 backdrop-blur-md group-hover:scale-110 transition-transform">
@@ -87,114 +86,136 @@
     <div class="mb-10">
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest flex items-center">
-                <span class="w-3 h-3 bg-amber-500 rounded-full mr-3 shadow-md shadow-amber-200"></span>
+                <span class="w-3 h-3 bg-amber-500 rounded-full mr-3 shadow-md shadow-amber-200 animate-pulse"></span>
                 Solicitudes por Aprobar
             </h3>
         </div>
 
         {% if solicitudes %}
-        <div class="grid grid-cols-1 gap-2">
+        <div class="grid grid-cols-1 gap-4">
             {% for solicitud in solicitudes %}
-            <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-2 hover:shadow-lg hover:shadow-gray-200/50 transition-all group flex flex-col">
-                <!-- Info Funcionario -->
-                <div class="flex items-center gap-2 mb-2 pb-2 border-b border-gray-50">
-                    <div class="w-8 h-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center text-blue-600 font-black text-sm shadow-inner group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-500">
-                        {{ solicitud.usuario.first_name.0|upper }}{{ solicitud.usuario.last_name.0|upper }}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="font-black text-gray-900 truncate leading-tight text-base">{{ solicitud.usuario.get_full_name }}</p>
-                        <p class="text-sm text-gray-400 font-bold mt-0.5 uppercase tracking-tighter">{{ solicitud.usuario.run }}</p>
-                        <span class="inline-flex mt-1 px-2 py-1 rounded text-xs font-black uppercase tracking-tighter {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-600{% elif solicitud.usuario.tipo_funcionario %}bg-blue-50 text-blue-600{% else %}bg-gray-50 text-gray-600{% endif %}">
-                            {{ solicitud.usuario.get_funcion_display|default:solicitud.usuario.get_tipo_funcionario_display|default:solicitud.usuario.get_role_display }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Detalles del Permiso -->
-                <div class="space-y-1 flex-1">
-                    <div class="flex justify-between items-center bg-gray-50/50 rounded-lg p-1.5 border border-gray-100">
-                        <div class="space-y-0.5">
-                            <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Días Solicitados</p>
-                            <p class="text-lg font-black text-gray-900">
-                                {{ solicitud.dias_solicitados }}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 group">
+                <div class="flex">
+                    <div class="w-1.5 bg-gradient-to-b from-amber-400 to-orange-500 flex-shrink-0 rounded-l-2xl"></div>
+                    <div class="flex-1 p-4 sm:p-5">
+                        <!-- Info Funcionario -->
+                        <div class="flex items-start justify-between gap-4 mb-4">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform flex-shrink-0">
+                                    {{ solicitud.usuario.first_name.0|upper }}{{ solicitud.usuario.last_name.0|upper }}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="font-black text-gray-900 truncate text-base leading-tight">{{ solicitud.usuario.get_full_name }}</p>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <span class="text-xs text-gray-400 font-bold uppercase tracking-tight">{{ solicitud.usuario.run }}</span>
+                                        <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tight {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-600{% elif solicitud.usuario.tipo_funcionario %}bg-blue-50 text-blue-600{% else %}bg-gray-50 text-gray-600{% endif %}">
+                                            {{ solicitud.usuario.get_funcion_display|default:solicitud.usuario.get_tipo_funcionario_display|default:solicitud.usuario.get_role_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0 text-center bg-gray-50 rounded-xl px-4 py-2">
+                                <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest">Días</p>
+                                <p class="text-2xl font-black text-gray-900 leading-none mt-0.5">
+                                    {{ solicitud.dias_solicitados }}
+                                </p>
                                 {% if solicitud.dias_solicitados == 0.5 %}
-                                <span class="text-[10px] font-black uppercase text-blue-500 ml-1">
+                                <span class="text-[10px] font-black text-blue-600">
                                     {% if solicitud.jornada == 'AM' %}AM{% elif solicitud.jornada == 'PM' %}PM{% endif %}
                                 </span>
                                 {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Detalles -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                            <div class="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
+                                <i class="far fa-calendar-alt text-blue-500"></i>
+                                <div>
+                                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Periodo</p>
+                                    <p class="text-xs font-bold text-gray-800">{{ solicitud.fecha_inicio|date:"d/m" }} <span class="text-gray-300">→</span> {{ solicitud.fecha_termino|date:"d/m/Y" }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
+                                <i class="fas fa-wallet {% if solicitud.usuario.dias_disponibles >= 2 %}text-emerald-500{% else %}text-rose-500{% endif %}"></i>
+                                <div>
+                                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Saldo</p>
+                                    <p class="text-xs font-bold {% if solicitud.usuario.dias_disponibles >= 2 %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                                        {{ solicitud.usuario.dias_disponibles|floatformat:1 }} días disp.
+                                    </p>
+                                </div>
+                            </div>
+                            {% if solicitud.es_fuera_de_plazo %}
+                            <div class="flex items-center gap-2 bg-rose-50 rounded-xl px-3 py-2.5 border border-rose-100">
+                                <i class="fas fa-exclamation-triangle text-rose-500"></i>
+                                <div>
+                                    <p class="text-[9px] text-rose-400 font-bold uppercase tracking-widest">Alerta</p>
+                                    <p class="text-xs font-bold text-rose-700">Fuera de plazo</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if solicitud.observacion %}
+                        <div class="bg-blue-50/40 rounded-xl px-4 py-2.5 mb-4 border-l-[3px] border-blue-300">
+                            <p class="text-xs text-gray-600 italic leading-relaxed">
+                                <i class="fas fa-quote-left text-blue-300 text-[10px] mr-1"></i>
+                                {{ solicitud.observacion|truncatechars:120 }}
                             </p>
                         </div>
-                        <div class="text-right space-y-0.5">
-                            <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Saldo Actual</p>
-                            <p class="text-lg font-black {% if solicitud.usuario.dias_disponibles >= 2 %}text-emerald-600{% else %}text-rose-600{% endif %}">
-                                {{ solicitud.usuario.dias_disponibles|floatformat:1 }}
-                            </p>
+                        {% endif %}
+
+                        <!-- Acciones -->
+                        <div class="flex items-center gap-3">
+                            {% if user.role == 'DIRECTOR' or user.role == 'ADMIN' %}
+                            <form action="{% url 'solicitud_action' solicitud.pk 'approve' %}{% if current_filter %}?status={{ current_filter }}{% endif %}" method="post" class="flex-1">
+                                {% csrf_token %}
+                                <button type="submit" onclick="return confirm('¿Aprobar permiso de {{ solicitud.usuario.get_full_name }} ({{ solicitud.dias_solicitados }} días)?')"
+                                        class="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-sm font-extrabold rounded-xl hover:from-emerald-600 hover:to-green-700 hover:shadow-lg hover:shadow-emerald-200 active:scale-[0.98] transition-all uppercase tracking-wider">
+                                    <i class="fas fa-check-circle"></i> Aprobar
+                                </button>
+                            </form>
+
+                            <button type="button"
+                                    onclick="document.getElementById('reject-{{ solicitud.pk }}').classList.toggle('hidden')"
+                                    class="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white border-2 border-rose-200 text-rose-600 text-sm font-extrabold rounded-xl hover:bg-rose-600 hover:text-white hover:border-rose-600 hover:shadow-lg hover:shadow-rose-200 active:scale-[0.98] transition-all uppercase tracking-wider">
+                                <i class="fas fa-times-circle"></i> Rechazar
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        <!-- Formulario de Rechazo Inline -->
+                        <div id="reject-{{ solicitud.pk }}" class="hidden mt-3">
+                            <div class="bg-rose-50 rounded-xl p-4 border border-rose-100">
+                                <form action="{% url 'solicitud_action' solicitud.pk 'reject' %}{% if current_filter %}?status={{ current_filter }}{% endif %}" method="post">
+                                    {% csrf_token %}
+                                    <p class="text-xs font-bold text-rose-700 uppercase tracking-wider mb-2">
+                                        <i class="fas fa-comment-dots mr-1"></i> Motivo del rechazo
+                                    </p>
+                                    <textarea name="motivo_rechazo" rows="2"
+                                              class="w-full text-sm border-rose-200 rounded-xl focus:ring-4 focus:ring-rose-500/10 focus:border-rose-400 transition-all p-3 mb-3 resize-none"
+                                              placeholder="Escribe el motivo del rechazo..."></textarea>
+                                    <div class="flex gap-2">
+                                        <button type="submit" class="flex-1 py-2 bg-rose-600 text-white text-sm font-bold rounded-xl hover:bg-rose-700 transition-all uppercase tracking-wider">
+                                            <i class="fas fa-check mr-1"></i> Confirmar Rechazo
+                                        </button>
+                                        <button type="button" onclick="document.getElementById('reject-{{ solicitud.pk }}').classList.add('hidden')"
+                                                class="px-4 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-bold rounded-xl hover:bg-gray-50 transition-all uppercase tracking-wider">
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="flex items-center gap-1 text-sm text-gray-600 px-1">
-                        <i class="far fa-calendar-alt text-gray-400"></i>
-                        <span class="font-bold">{{ solicitud.fecha_inicio|date:"l d M" }}</span>
-                        <span class="text-gray-300">→</span>
-                        <span class="font-bold">{{ solicitud.fecha_termino|date:"l d M, Y" }}</span>
-                    </div>
-
-                    {% if solicitud.observacion %}
-                    <div class="bg-blue-50/30 rounded p-1.5 text-sm text-gray-600 italic leading-relaxed border-l-2 border-blue-200">
-                        "{{ solicitud.observacion|truncatechars:80 }}"
-                    </div>
-                    {% endif %}
-
-                    {% if solicitud.es_fuera_de_plazo %}
-                    <div class="bg-rose-50 rounded p-1.5 flex items-start gap-1 border border-rose-100">
-                        <i class="fas fa-exclamation-circle text-rose-500 mt-0.5"></i>
-                        <p class="text-[10px] font-bold text-rose-700 leading-tight uppercase tracking-tighter">
-                            Fuera de plazo (menos de 48h)
-                        </p>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- Acciones Uniformes -->
-                <div class="mt-2 pt-2 border-t border-gray-50 grid grid-cols-2 gap-2">
-                    {% if user.role == 'DIRECTOR' or user.role == 'ADMIN' %}
-                    <form action="{% url 'solicitud_action' solicitud.pk 'approve' %}" method="post" class="contents">
-                        {% csrf_token %}
-                        <button type="submit" onclick="return confirm('¿Aprobar permiso?')"
-                                class="flex items-center justify-center py-1.5 bg-emerald-600 text-white text-sm font-black rounded-lg hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-200 transition-all uppercase tracking-widest">
-                            <i class="fas fa-check"></i> Aprobar
-                        </button>
-                    </form>
-
-                    <button type="button"
-                            onclick="document.getElementById('reject-{{ solicitud.pk }}').classList.toggle('hidden')"
-                            class="flex items-center justify-center py-1.5 bg-rose-50 text-rose-700 text-sm font-black rounded-lg hover:bg-rose-600 hover:text-white hover:shadow-lg hover:shadow-rose-200 transition-all uppercase tracking-widest">
-                        <i class="fas fa-times"></i> Rechazar
-                    </button>
-                    {% endif %}
-                </div>
-
-                <!-- Modal de Rechazo Inline -->
-                <div id="reject-{{ solicitud.pk }}" class="hidden mt-2 pt-2 animate-in fade-in slide-in-from-top-2">
-                    <form action="{% url 'solicitud_action' solicitud.pk 'reject' %}" method="post">
-                        {% csrf_token %}
-                        <textarea name="motivo_rechazo" rows="1"
-                                  class="w-full text-sm border-gray-200 rounded-lg focus:ring-4 focus:ring-rose-500/10 focus:border-rose-500 transition-all p-1.5 mb-1"
-                                  placeholder="Motivo..."></textarea>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button type="submit" class="py-1.5 bg-rose-600 text-white text-sm font-black rounded-lg hover:bg-rose-700 transition-all uppercase">Confirmar</button>
-                            <button type="button" onclick="document.getElementById('reject-{{ solicitud.pk }}').classList.add('hidden')"
-                                    class="py-1.5 bg-gray-100 text-gray-600 text-sm font-black rounded-lg hover:bg-gray-200 transition-all uppercase">Cancelar</button>
-                        </div>
-                    </form>
                 </div>
             </div>
             {% endfor %}
         </div>
 
-        <!-- Paginación Pendientes -->
         {% if is_paginated %}
-        <div class="mt-8 bg-white px-5 py-4 flex flex-col sm:flex-row items-center justify-between border border-gray-100 rounded-[2rem] gap-4">
+        <div class="mt-8 bg-white px-5 py-4 flex flex-col sm:flex-row items-center justify-between border border-gray-100 rounded-2xl gap-4">
             <div class="text-xs font-bold text-gray-400 uppercase tracking-widest">
                 Página <span class="text-gray-900">{{ page_obj.number }}</span> de {{ page_obj.paginator.num_pages }}
             </div>
@@ -205,7 +226,6 @@
                     <i class="fas fa-chevron-left mr-2"></i> Anterior
                 </a>
                 {% endif %}
-                
                 {% if page_obj.has_next %}
                 <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
                    class="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-50 transition">
@@ -217,12 +237,11 @@
         {% endif %}
 
         {% else %}
-        <!-- Empty State -->
-        <div class="bg-white rounded-[3rem] shadow-sm border border-gray-100 p-20 text-center">
-            <div class="bg-emerald-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fas fa-check-double text-emerald-500 text-4xl"></i>
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-16 text-center">
+            <div class="bg-emerald-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5">
+                <i class="fas fa-check-double text-emerald-500 text-3xl"></i>
             </div>
-            <h4 class="text-2xl font-black text-gray-900 mb-2">¡Todo al día!</h4>
+            <h4 class="text-xl font-black text-gray-900 mb-2">Todo al día!</h4>
             <p class="text-gray-500 font-medium">No hay solicitudes pendientes por el momento.</p>
         </div>
         {% endif %}
@@ -240,17 +259,17 @@
         </div>
 
         {% if historial_page %}
-        <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-100">
-                    <thead class="bg-gray-50">
+                    <thead class="bg-gray-50/80">
                         <tr>
-                            <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Funcionario</th>
-                            <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Periodo</th>
-                            <th class="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Días</th>
-                            <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Estado</th>
-                            <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Observación</th>
-                            <th class="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Acciones</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Funcionario</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Periodo</th>
+                            <th class="px-6 py-3 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Días</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Estado</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Observación</th>
+                            <th class="px-6 py-3 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -262,9 +281,9 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-xs font-bold text-gray-700 uppercase">
-                                    {{ solicitud.fecha_inicio|date:"l d/m" }}
+                                    {{ solicitud.fecha_inicio|date:"d/m" }}
                                     <span class="text-gray-300 mx-1">→</span>
-                                    {{ solicitud.fecha_termino|date:"l d/m/Y" }}
+                                    {{ solicitud.fecha_termino|date:"d/m/Y" }}
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-center">
@@ -277,19 +296,25 @@
                             </td>
                             <td class="px-6 py-4">
                                 {% if solicitud.estado == 'APROBADO' %}
-                                <span class="px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase rounded-lg">Aprobado</span>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase rounded-lg">
+                                    <i class="fas fa-check text-[8px]"></i> Aprobado
+                                </span>
                                 {% elif solicitud.estado == 'RECHAZADO' %}
-                                <span class="px-2 py-1 bg-rose-50 text-rose-700 text-[10px] font-black uppercase rounded-lg">Rechazado</span>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 text-rose-700 text-[10px] font-black uppercase rounded-lg">
+                                    <i class="fas fa-times text-[8px]"></i> Rechazado
+                                </span>
                                 {% else %}
-                                <span class="px-2 py-1 bg-slate-100 text-slate-700 text-[10px] font-black uppercase rounded-lg">{{ solicitud.estado }}</span>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-700 text-[10px] font-black uppercase rounded-lg">
+                                    {{ solicitud.estado }}
+                                </span>
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 text-xs text-gray-400 italic max-w-xs truncate">
-                                {{ solicitud.observacion|default:"-" }}
+                                {% if solicitud.motivo_rechazo %}{{ solicitud.motivo_rechazo }}{% else %}{{ solicitud.observacion|default:"-" }}{% endif %}
                             </td>
                             <td class="px-6 py-4 text-right">
                                 {% if solicitud.estado == 'APROBADO' and user.role != 'FUNCIONARIO' %}
-                                <form action="{% url 'solicitud_action' solicitud.pk 'cancel' %}" method="post">
+                                <form action="{% url 'solicitud_action' solicitud.pk 'cancel' %}{% if current_filter %}?status={{ current_filter }}{% endif %}" method="post">
                                     {% csrf_token %}
                                     <input type="hidden" name="motivo_cancelacion" value="Devolución por no uso">
                                     <button type="submit" onclick="return confirm('¿Devolver días al funcionario?')"
@@ -305,9 +330,8 @@
                 </table>
             </div>
 
-            <!-- Paginación Historial -->
             {% if historial_page.has_other_pages %}
-            <div class="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+            <div class="px-6 py-3 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
                 <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                     Página {{ historial_page.number }} de {{ historial_page.paginator.num_pages }}
                 </div>
@@ -316,7 +340,6 @@
                     <a href="?h_page={{ historial_page.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'h_page' and key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
                        class="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-gray-50 transition">Anterior</a>
                     {% endif %}
-                    
                     {% if historial_page.has_next %}
                     <a href="?h_page={{ historial_page.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'h_page' and key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
                        class="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-gray-50 transition">Siguiente</a>

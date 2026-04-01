@@ -348,14 +348,17 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-user-clock fa-fw mr-3"></i><span class="ml-3">Horarios</span>
                     </a>
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'asistencia:carga_horarios' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-upload fa-fw mr-3"></i><span class="ml-3">Cargar Horarios</span>
                     </a>
+                    {% endif %}
                     <a href="{% url 'asistencia:gestion_asistencia' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-clipboard-list fa-fw mr-3"></i><span class="ml-3">Ver Asistencia</span>
                     </a>
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'asistencia:carga_registros' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-file-upload fa-fw mr-3"></i><span class="ml-3">Cargar Registros</span>
@@ -372,6 +375,7 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-school fa-fw mr-3"></i><span class="ml-3">Año Escolar</span>
                     </a>
+                    {% endif %}
                     {% endif %}
 
                     <!-- Reportes -->
@@ -598,14 +602,17 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-user-clock fa-fw mr-3"></i><span class="ml-3">Horarios</span>
                     </a>
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'asistencia:carga_horarios' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-upload fa-fw mr-3"></i><span class="ml-3">Cargar Horarios</span>
                     </a>
+                    {% endif %}
                     <a href="{% url 'asistencia:gestion_asistencia' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-clipboard-list fa-fw mr-3"></i><span class="ml-3">Ver Asistencia</span>
                     </a>
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'asistencia:carga_registros' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-file-upload fa-fw mr-3"></i><span class="ml-3">Cargar Registros</span>
@@ -622,6 +629,7 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-school fa-fw mr-3"></i><span class="ml-3">Año Escolar</span>
                     </a>
+                    {% endif %}
                     {% endif %}
 
                     <!-- Reportes -->

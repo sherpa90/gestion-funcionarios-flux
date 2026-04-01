@@ -55,6 +55,21 @@ def validate_file_upload(file):
 
     expected_signatures = _ALLOWED_FILE_TYPES[ext]
     if not any(header.startswith(sig) for sig in expected_signatures):
+        # Para .xls, intentar parsear con xlrd como fallback
+        # Algunos archivos XLS válidos pueden tener encabezados no estándar
+        if ext == '.xls':
+            try:
+                import xlrd
+                file.seek(0)
+                xlrd.open_workbook(file_contents=file.read())
+                file.seek(0)
+                return  # El archivo es un XLS válido aunque los magic bytes no coincidan
+            except Exception:
+                file.seek(0)
+                raise ValidationError(
+                    'El contenido del archivo no coincide con su extensión. '
+                    'Asegúrate de subir un archivo Excel válido (.xls o .xlsx).'
+                )
         raise ValidationError(
             'El contenido del archivo no coincide con su extensión. '
             'Asegúrate de subir un archivo válido.'
