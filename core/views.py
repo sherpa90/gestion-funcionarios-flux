@@ -38,12 +38,7 @@ class CustomLoginView(LoginView):
 
 class DashboardView(LoginRequiredMixin, View):
     def get(self, request):
-        user = request.user
-        if user.role == 'ADMIN':
-            # Administradores van al dashboard de funcionarios para ver días y solicitar permisos
-            return redirect('dashboard_funcionario')
-        else:
-            return redirect('dashboard_funcionario')
+        return redirect('dashboard_funcionario')
 
 
 class HealthCheckView(View):

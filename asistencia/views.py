@@ -384,11 +384,52 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             registro.detalle_permiso = None
             registros_por_fecha[registro.fecha] = registro
 
+        # Consultar permisos administrativos aprobados para este mes
+        from permisos.models import SolicitudPermiso
+        from licencias.models import LicenciaMedica
+        from datetime import timedelta as td
+
+        primer_dia_mes = datetime(anio_int, mes_int, 1).date()
+        ultimo_dia_mes = (primer_dia_mes + td(days=32)).replace(day=1) - td(days=1)
+
+        permisos_qs = SolicitudPermiso.objects.filter(
+            usuario=self.request.user,
+            estado='APROBADO',
+            fecha_inicio__lte=ultimo_dia_mes
+        ).filter(
+            Q(fecha_termino__gte=primer_dia_mes) | Q(fecha_termino__isnull=True)
+        )
+
+        # Construir dict de permisos por fecha
+        permisos_por_fecha = {}
+        for permiso in permisos_qs:
+            inicio = max(permiso.fecha_inicio, primer_dia_mes)
+            fin = permiso.fecha_termino or ultimo_dia_mes
+            fin = min(fin, ultimo_dia_mes)
+            d = inicio
+            while d <= fin:
+                permisos_por_fecha[d] = permiso
+                d += td(days=1)
+
+        # Consultar licencias médicas para este mes
+        licencias_qs = LicenciaMedica.objects.filter(
+            usuario=self.request.user,
+            fecha_inicio__lte=ultimo_dia_mes
+        )
+
+        licencias_por_fecha = {}
+        for licencia in licencias_qs:
+            fin_lic = licencia.fecha_inicio + td(days=licencia.dias - 1)
+            inicio = max(licencia.fecha_inicio, primer_dia_mes)
+            fin = min(fin_lic, ultimo_dia_mes)
+            d = inicio
+            while d <= fin:
+                licencias_por_fecha[d] = licencia
+                d += td(days=1)
+
         # Generar estructura de calendario mensual
         cal = Calendar(firstweekday=0)  # Lunes como primer día
         semanas_calendario = []
-        primer_dia_mes = datetime(anio_int, mes_int, 1).date()
-        ultimo_dia_mes = (primer_dia_mes + timedelta(days=32)).replace(day=1) - timedelta(days=1)
 
         # Obtener días festivos del mes
         festivos = set(
@@ -397,6 +438,27 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 fecha__month=mes_int
             ).values_list('fecha', flat=True)
         )
+
+        ESTADO_DISPLAY = {
+            'DIA_ADMINISTRATIVO': 'Día Administrativo',
+            'MEDIO_DIA': 'Medio Día Administrativo',
+            'LICENCIA_MEDICA': 'Licencia Médica',
+        }
+
+        class RegistroVirtual:
+            """Registro virtual para días con permiso/licencia sin marcación"""
+            def __init__(self, estado):
+                self.estado = estado
+                self.minutos_retraso = 0
+                self.hora_entrada_real = None
+                self.hora_salida_real = None
+                self.minutos_trabajados = None
+                self.horas_trabajadas = None
+                self.horario_asignado = None
+                self.alegacion = None
+                self._estado_display = ESTADO_DISPLAY.get(estado, estado)
+            def get_estado_display(self):
+                return self._estado_display
 
         for semana in cal.monthdayscalendar(anio_int, mes_int):
             dias_semana = []
@@ -413,6 +475,21 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                     es_pasado = fecha < today
                     es_hoy = fecha == today
                     es_dia_escolar = AnoEscolar.es_dia_escolar(fecha)
+
+                    # Crear registro virtual si hay permiso/licencia
+                    # Reemplaza registros AUSENTE retroactivamente
+                    if fecha in licencias_por_fecha:
+                        if not registro or registro.estado == 'AUSENTE':
+                            registro = RegistroVirtual('LICENCIA_MEDICA')
+                    elif fecha in permisos_por_fecha:
+                        permiso = permisos_por_fecha[fecha]
+                        if not registro or registro.estado == 'AUSENTE':
+                            if permiso.dias_solicitados == 0.5:
+                                registro = RegistroVirtual('MEDIO_DIA')
+                            else:
+                                registro = RegistroVirtual('DIA_ADMINISTRATIVO')
+
+                    # No es falta si hay registro (real o virtual), festivo, o no es día escolar
                     es_falta_sin_registro = es_pasado and not registro and not es_festivo and es_dia_escolar
 
                     # Los fines de semana solo aplican para serenos
@@ -447,18 +524,29 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
 
         # Estadísticas del período
         registros_list = list(registros_por_fecha.values())
+
+        # Incluir registros virtuales (permisos/licencias sin marcación)
+        registros_virtuales = []
+        for semana in semanas_calendario:
+            for dia in semana:
+                if dia and dia.get('registro') and isinstance(dia['registro'], RegistroVirtual):
+                    registros_virtuales.append(dia['registro'])
+
+        todos_registros = registros_list + registros_virtuales
+
         faltas_sin_registro = sum(
             1 for semana in semanas_calendario for dia in semana
             if dia and dia.get('es_falta_sin_registro')
         )
         stats = {
-            'total': len(registros_list),
-            'puntuales': sum(1 for r in registros_list if r.estado == 'PUNTUAL'),
-            'retraso': sum(1 for r in registros_list if r.estado == 'RETRASO'),
-            'ausente': sum(1 for r in registros_list if r.estado == 'AUSENTE') + faltas_sin_registro,
-            'medio_dia': sum(1 for r in registros_list if r.estado == 'MEDIO_DIA'),
-            'admin': sum(1 for r in registros_list if r.estado == 'DIA_ADMINISTRATIVO'),
-            'licencia': sum(1 for r in registros_list if r.estado == 'LICENCIA_MEDICA'),
+            'total': len(todos_registros),
+            'puntuales': sum(1 for r in todos_registros if r.estado == 'PUNTUAL'),
+            'retraso': sum(1 for r in todos_registros if r.estado == 'RETRASO'),
+            'ausente': sum(1 for r in todos_registros if r.estado == 'AUSENTE') + faltas_sin_registro,
+            'medio_dia': sum(1 for r in todos_registros if r.estado == 'MEDIO_DIA'),
+            'admin': sum(1 for r in todos_registros if r.estado == 'DIA_ADMINISTRATIVO'),
+            'licencia': sum(1 for r in todos_registros if r.estado == 'LICENCIA_MEDICA'),
+            'sin_marcacion': sum(1 for r in todos_registros if r.estado == 'SIN_MARCACION_ENTRADA'),
             'dias_con_tiempo': sum(1 for r in registros_list if r.minutos_trabajados is not None),
             'tiempo_promedio': (sum(r.minutos_trabajados for r in registros_list if r.minutos_trabajados is not None) / max(1, sum(1 for r in registros_list if r.minutos_trabajados is not None))),
             'total_minutos_trabajados': sum(r.minutos_trabajados or 0 for r in registros_list),
@@ -1297,6 +1385,33 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
         registros_puntuales = registros_usuario.filter(estado='PUNTUAL').count()
         registros_retraso = registros_usuario.filter(estado='RETRASO').count()
         registros_ausentes = registros_usuario.filter(estado='AUSENTE').count()
+        total_minutos_retraso = sum(r.minutos_retraso for r in registros_usuario if r.minutos_retraso > 0)
+
+        ESTADO_DISPLAY = {
+            'DIA_ADMINISTRATIVO': 'Día Administrativo',
+            'MEDIO_DIA': 'Medio Día Administrativo',
+            'LICENCIA_MEDICA': 'Licencia Médica',
+        }
+
+        class RegistroVirtual:
+            """Registro virtual para días con permiso/licencia sin marcación"""
+            def __init__(self, fecha, estado):
+                self.fecha = fecha
+                self.estado = estado
+                self.minutos_retraso = 0
+                self.hora_entrada_real = None
+                self.hora_salida_real = None
+                self.minutos_trabajados = None
+                self.horario_asignado = None
+                self.alegacion = None
+                self._estado_display = ESTADO_DISPLAY.get(estado, estado)
+            def get_estado_display(self):
+                return self._estado_display
+
+        # Consultar permisos y licencias del usuario (una sola vez)
+        from permisos.models import SolicitudPermiso
+        from licencias.models import LicenciaMedica
+        from datetime import timedelta as td
 
         # Agrupar registros por año
         registros_por_anio = {}
@@ -1305,24 +1420,97 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
         for anio in anios_disponibles:
             registros_anio = registros_usuario.filter(fecha__year=anio).order_by('-fecha')
 
+            # Consultar permisos aprobados para este año
+            primer_dia_anio = datetime(anio, 1, 1).date()
+            ultimo_dia_anio = datetime(anio, 12, 31).date()
+
+            permisos_qs = SolicitudPermiso.objects.filter(
+                usuario=usuario,
+                estado='APROBADO',
+                fecha_inicio__lte=ultimo_dia_anio
+            ).filter(
+                Q(fecha_termino__gte=primer_dia_anio) | Q(fecha_termino__isnull=True)
+            )
+
+            permisos_por_fecha = {}
+            for permiso in permisos_qs:
+                inicio = max(permiso.fecha_inicio, primer_dia_anio)
+                fin = permiso.fecha_termino or ultimo_dia_anio
+                fin = min(fin, ultimo_dia_anio)
+                d = inicio
+                while d <= fin:
+                    permisos_por_fecha[d] = permiso
+                    d += td(days=1)
+
+            # Consultar licencias médicas para este año
+            licencias_qs = LicenciaMedica.objects.filter(
+                usuario=usuario,
+                fecha_inicio__lte=ultimo_dia_anio
+            )
+
+            licencias_por_fecha = {}
+            for licencia in licencias_qs:
+                fin_lic = licencia.fecha_inicio + td(days=licencia.dias - 1)
+                inicio = max(licencia.fecha_inicio, primer_dia_anio)
+                fin = min(fin_lic, ultimo_dia_anio)
+                d = inicio
+                while d <= fin:
+                    licencias_por_fecha[d] = licencia
+                    d += td(days=1)
+
             # Agrupar por mes dentro del año
             registros_por_mes = {}
             meses_con_datos = registros_anio.values_list('fecha__month', flat=True).distinct().order_by('fecha__month')
 
+            total_minutos_retraso_anio = 0
             for mes in meses_con_datos:
-                registros_mes = registros_anio.filter(fecha__month=mes).order_by('fecha')
+                registros_mes_qs = registros_anio.filter(fecha__month=mes).order_by('fecha')
+                registros_mes_list = list(registros_mes_qs)
+                fechas_con_registro = {r.fecha for r in registros_mes_list}
+
+                # Agregar registros virtuales para días con permiso/licencia sin registro
+                primer_dia_mes = datetime(anio, mes, 1).date()
+                ultimo_dia_mes = (primer_dia_mes + td(days=32)).replace(day=1) - td(days=1)
+                d = primer_dia_mes
+                while d <= ultimo_dia_mes:
+                    if d not in fechas_con_registro:
+                        if d in licencias_por_fecha:
+                            registros_mes_list.append(RegistroVirtual(d, 'LICENCIA_MEDICA'))
+                        elif d in permisos_por_fecha:
+                            permiso = permisos_por_fecha[d]
+                            if permiso.dias_solicitados == 0.5:
+                                registros_mes_list.append(RegistroVirtual(d, 'MEDIO_DIA'))
+                            else:
+                                registros_mes_list.append(RegistroVirtual(d, 'DIA_ADMINISTRATIVO'))
+                    d += td(days=1)
+
+                registros_mes_list.sort(key=lambda r: r.fecha)
+
+                minutos_retraso_mes = sum(r.minutos_retraso for r in registros_mes_qs if r.minutos_retraso > 0)
+                total_minutos_retraso_anio += minutos_retraso_mes
+
+                ausentes_mes = sum(1 for r in registros_mes_list if r.estado == 'AUSENTE')
+                admin_mes = sum(1 for r in registros_mes_list if r.estado == 'DIA_ADMINISTRATIVO')
+                licencia_mes = sum(1 for r in registros_mes_list if r.estado == 'LICENCIA_MEDICA')
+                medio_dia_mes = sum(1 for r in registros_mes_list if r.estado == 'MEDIO_DIA')
+
                 registros_por_mes[mes] = {
-                    'registros': registros_mes,
-                    'total': registros_mes.count(),
-                    'puntuales': registros_mes.filter(estado='PUNTUAL').count(),
-                    'retrasos': registros_mes.filter(estado='RETRASO').count(),
-                    'ausentes': registros_mes.filter(estado='AUSENTE').count(),
+                    'registros': registros_mes_list,
+                    'total': len(registros_mes_list),
+                    'puntuales': sum(1 for r in registros_mes_list if r.estado == 'PUNTUAL'),
+                    'retrasos': sum(1 for r in registros_mes_list if r.estado == 'RETRASO'),
+                    'ausentes': ausentes_mes,
+                    'admin': admin_mes,
+                    'licencias': licencia_mes,
+                    'medio_dia': medio_dia_mes,
+                    'minutos_retraso_mes': minutos_retraso_mes,
                 }
 
             registros_por_anio[anio] = {
                 'registros_por_mes': registros_por_mes,
                 'total_anio': registros_anio.count(),
                 'puntuales_anio': registros_anio.filter(estado='PUNTUAL').count(),
+                'minutos_retraso_anio': total_minutos_retraso_anio,
             }
 
         # Horario asignado
@@ -1346,6 +1534,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 'registros_puntuales': registros_puntuales,
                 'registros_retraso': registros_retraso,
                 'registros_ausentes': registros_ausentes,
+                'total_minutos_retraso': total_minutos_retraso,
                 'anios_con_asistencia': len(anios_disponibles),
                 'promedio_por_anio': round(total_registros / len(anios_disponibles), 1) if anios_disponibles else 0,
                 'porcentaje_puntualidad': round((registros_puntuales / total_registros * 100) if total_registros > 0 else 0, 1),

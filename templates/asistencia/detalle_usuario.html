@@ -32,7 +32,7 @@
     </div>
 
     <!-- Estadísticas del Funcionario -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
             <div class="flex items-center justify-between">
                 <div>
@@ -66,6 +66,19 @@
                 </div>
                 <div class="bg-white/20 rounded-full p-4">
                     <i class="fas fa-chart-line text-3xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-red-100 text-sm font-medium uppercase">Atraso Acumulado</p>
+                    <p class="text-4xl font-bold mt-2">{{ estadisticas_funcionario.total_minutos_retraso }} <span class="text-xl">min</span></p>
+                    <p class="text-red-100 text-xs mt-1">{{ estadisticas_funcionario.registros_retraso }} registro{{ estadisticas_funcionario.registros_retraso|pluralize }} con retraso</p>
+                </div>
+                <div class="bg-white/20 rounded-full p-4">
+                    <i class="fas fa-clock text-3xl"></i>
                 </div>
             </div>
         </div>
@@ -132,6 +145,11 @@
                     <span class="ml-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                         {{ datos_anio.puntuales_anio }} puntual{{ datos_anio.puntuales_anio|pluralize }}
                     </span>
+                    {% if datos_anio.minutos_retraso_anio > 0 %}
+                    <span class="ml-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                        <i class="fas fa-clock mr-1"></i> {{ datos_anio.minutos_retraso_anio }} min atraso
+                    </span>
+                    {% endif %}
                 </h3>
             </div>
 
@@ -153,6 +171,11 @@
                         {% if datos_mes.retrasos > 0 %}
                         <span class="ml-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                             {{ datos_mes.retrasos }} retraso{{ datos_mes.retrasos|pluralize }}
+                        </span>
+                        {% endif %}
+                        {% if datos_mes.minutos_retraso_mes > 0 %}
+                        <span class="ml-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <i class="fas fa-clock mr-1"></i> {{ datos_mes.minutos_retraso_mes }} min atraso
                         </span>
                         {% endif %}
                         {% if datos_mes.ausentes > 0 %}
@@ -231,12 +254,16 @@
                                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                                 <i class="fas fa-exclamation-triangle mr-1"></i> Sin Horario
                                             </span>
+                                        {% elif registro.estado == 'SIN_MARCACION_ENTRADA' %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                                <i class="fas fa-sign-in-alt mr-1"></i> Sin Marcación Entrada
+                                            </span>
                                         {% elif registro.estado == 'DIA_ADMINISTRATIVO' %}
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                 <i class="fas fa-calendar-check mr-1"></i> Día Administrativo
                                             </span>
                                         {% elif registro.estado == 'LICENCIA_MEDICA' %}
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                                 <i class="fas fa-notes-medical mr-1"></i> Licencia Médica
                                             </span>
                                         {% else %}
@@ -260,6 +287,19 @@
                                 </tr>
                                 {% endfor %}
                             </tbody>
+                            {% if datos_mes.minutos_retraso_mes > 0 %}
+                            <tfoot>
+                                <tr class="bg-red-50">
+                                    <td colspan="4" class="px-4 py-3 text-sm font-semibold text-red-800 text-right">
+                                        <i class="fas fa-clock mr-1"></i> Acumulado de atraso del mes:
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-red-700">
+                                        {{ datos_mes.minutos_retraso_mes }} min
+                                    </td>
+                                    <td{% if user.role in 'ADMIN,SECRETARIA' %} colspan="2"{% endif %}></td>
+                                </tr>
+                            </tfoot>
+                            {% endif %}
                         </table>
                     </div>
                 </div>

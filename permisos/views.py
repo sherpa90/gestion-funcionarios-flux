@@ -7,6 +7,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.db.models import Q, Sum
 from django.core.paginator import Paginator
+from django.http import JsonResponse
 from .models import SolicitudPermiso
 from .forms import SolicitudForm, SolicitudBypassForm, SolicitudAdminForm
 from users.models import CustomUser
@@ -257,16 +258,21 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
         try:
             pk = int(pk)
         except (ValueError, TypeError):
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'Solicitud inválida.'})
             messages.error(request, 'Solicitud inválida.')
             return redirect('dashboard_director')
-        
+
         # Validate action is a valid choice
         valid_actions = ['approve', 'reject', 'cancel']
         if action not in valid_actions:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'Acción inválida.'})
             messages.error(request, 'Acción inválida.')
             return redirect('dashboard_director')
-            
+
         solicitud = get_object_or_404(SolicitudPermiso, pk=pk)
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
         if action == 'approve':
             if solicitud.usuario.dias_disponibles >= solicitud.dias_solicitados:
@@ -281,8 +287,19 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
                     descripcion=f'Se aprobó permiso de {solicitud.usuario.get_full_name()} ({solicitud.dias_solicitados} días)',
                     ip_address=get_client_ip(request)
                 )
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'action': 'approved',
+                        'solicitud_id': pk,
+                        'estado': 'APROBADO',
+                        'dias_disponibles': float(solicitud.usuario.dias_disponibles),
+                        'message': 'Solicitud aprobada correctamente.'
+                    })
                 messages.success(request, 'Solicitud aprobada.')
             else:
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': 'El usuario no tiene saldo suficiente.'})
                 messages.error(request, 'El usuario no tiene saldo suficiente.')
         elif action == 'reject':
             solicitud.estado = 'RECHAZADO'
@@ -295,6 +312,14 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
                 descripcion=f'Se rechazó permiso de {solicitud.usuario.get_full_name()}',
                 ip_address=get_client_ip(request)
             )
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'action': 'rejected',
+                    'solicitud_id': pk,
+                    'estado': 'RECHAZADO',
+                    'message': 'Solicitud rechazada correctamente.'
+                })
             messages.success(request, 'Solicitud rechazada.')
         elif action == 'cancel':
             # Solo admins, secretarias y directores pueden cancelar solicitudes aprobadas
@@ -314,11 +339,26 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
                     descripcion=f'Admin canceló permiso aprobado de {solicitud.usuario.get_full_name()}',
                     ip_address=get_client_ip(request)
                 )
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'action': 'cancelled',
+                        'solicitud_id': pk,
+                        'estado': 'CANCELADO',
+                        'message': f'Solicitud cancelada. Se devolvieron {solicitud.dias_solicitados} días.'
+                    })
                 messages.success(request, f'Solicitud cancelada. Se devolvieron {solicitud.dias_solicitados} días a {solicitud.usuario.get_full_name()}.')
             else:
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': 'No tienes permisos para cancelar esta solicitud.'})
                 messages.error(request, 'No tienes permisos para cancelar esta solicitud.')
 
-        return redirect('dashboard_director')
+        # Preservar filtro activo al redirigir
+        from urllib.parse import urlencode
+        status = request.GET.get('status', '')
+        if status:
+            return redirect(f'{reverse_lazy("solicitudes_admin")}?status={status}')
+        return redirect('solicitudes_admin')
 
 
 class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -329,7 +369,7 @@ class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, List
     paginate_by = 15
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR']
 
     def get_queryset(self):
         queryset = SolicitudPermiso.objects.select_related('usuario', 'created_by', 'cancelled_by')
