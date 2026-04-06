@@ -109,7 +109,7 @@
   .btn-cancel:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
 
   .actions-container {
-    display: flex; flex-direction: column-reverse; gap: 1rem; margin-top: 2rem; border-top: 1px solid #f1f5f9; padding-top: 1.5rem;
+    display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; border-top: 1px solid #f1f5f9; padding-top: 1.5rem;
   }
   @media (min-width: 640px) { .actions-container { flex-direction: row; justify-content: flex-end; } }
 
@@ -226,12 +226,12 @@
             </div>
 
             <div class="actions-container">
-                <a href="{% url 'dashboard_funcionario' %}" class="btn-cancel">
-                    <i class="fas fa-times text-gray-400"></i> Cancelar
-                </a>
                 <button type="submit" class="btn-submit">
                     Enviar Solicitud <i class="fas fa-paper-plane"></i>
                 </button>
+                <a href="{% url 'dashboard_funcionario' %}" class="btn-cancel">
+                    <i class="fas fa-times text-gray-400"></i> Cancelar
+                </a>
             </div>
         </form>
       </div>
