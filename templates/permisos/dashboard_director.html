@@ -171,10 +171,25 @@
                             {% if user.role == 'DIRECTOR' or user.role == 'ADMIN' %}
                             <form action="{% url 'solicitud_action' solicitud.pk 'approve' %}{% if current_filter %}?status={{ current_filter }}{% endif %}" method="post" class="flex-1">
                                 {% csrf_token %}
-                                <button type="submit" onclick="return confirm('¿Aprobar permiso de {{ solicitud.usuario.get_full_name }} ({{ solicitud.dias_solicitados }} días)?')"
+                                <button type="button" onclick="document.getElementById('modal-approve-{{ solicitud.pk }}').classList.remove('hidden')"
                                         class="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-sm font-extrabold rounded-xl hover:from-emerald-600 hover:to-green-700 hover:shadow-lg hover:shadow-emerald-200 active:scale-[0.98] transition-all uppercase tracking-wider">
                                     <i class="fas fa-check-circle"></i> Aprobar
                                 </button>
+                                
+                                <!-- Modal Aprobar Individual -->
+                                <div id="modal-approve-{{ solicitud.pk }}" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm transition-opacity px-4">
+                                    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full mx-4 shadow-2xl relative border-t-8 border-emerald-500 text-center mt-0">
+                                        <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <h3 class="text-xl font-bold text-gray-900 mb-2">¿Aprobar Solicitud?</h3>
+                                        <p class="text-gray-500 text-sm mb-6">Se confirmarán <strong>{{ solicitud.dias_solicitados }} días</strong> para {{ solicitud.usuario.get_full_name }}.</p>
+                                        <div class="flex flex-col gap-3">
+                                            <button type="submit" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700">Sí, Aprobar Permiso</button>
+                                            <button type="button" onclick="document.getElementById('modal-approve-{{ solicitud.pk }}').classList.add('hidden')" class="w-full py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200">Cancelar</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </form>
 
                             <button type="button"
@@ -317,10 +332,25 @@
                                 <form action="{% url 'solicitud_action' solicitud.pk 'cancel' %}{% if current_filter %}?status={{ current_filter }}{% endif %}" method="post">
                                     {% csrf_token %}
                                     <input type="hidden" name="motivo_cancelacion" value="Devolución por no uso">
-                                    <button type="submit" onclick="return confirm('¿Devolver días al funcionario?')"
+                                    <button type="button" onclick="document.getElementById('modal-return-{{ solicitud.pk }}').classList.remove('hidden')"
                                             class="text-[10px] font-black uppercase tracking-widest text-rose-600 hover:text-rose-800 transition-colors">
                                         <i class="fas fa-undo mr-1"></i> Devolver
                                     </button>
+                                    
+                                    <!-- Modal Devolver -->
+                                    <div id="modal-return-{{ solicitud.pk }}" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm transition-opacity px-4">
+                                        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative border-t-8 border-rose-500 text-center whitespace-normal mt-0">
+                                            <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center text-xl mx-auto mb-3">
+                                                <i class="fas fa-undo"></i>
+                                            </div>
+                                            <h3 class="text-lg font-bold text-gray-900 mb-2">¿Devolver Días?</h3>
+                                            <p class="text-gray-500 text-xs mb-4">Esta acción regresará los días al saldo original del trabajador.</p>
+                                            <div class="flex flex-col gap-2">
+                                                <button type="submit" class="w-full py-2 bg-rose-600 text-white font-bold rounded-lg hover:bg-rose-700">Confirmar Devolución</button>
+                                                <button type="button" onclick="document.getElementById('modal-return-{{ solicitud.pk }}').classList.add('hidden')" class="w-full py-2 bg-gray-100 text-gray-600 font-bold rounded-lg hover:bg-gray-200">Atrás</button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </form>
                                 {% endif %}
                             </td>

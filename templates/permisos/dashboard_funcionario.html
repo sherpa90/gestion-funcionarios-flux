@@ -3,306 +3,549 @@
 {% block page_title %}Mi Dashboard{% endblock %}
 
 {% block content %}
-<div class="p-4 sm:p-6">
-    <!-- Header con saludo -->
-    <div class="mb-6 sm:mb-8">
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">¡Hola, {{ user.get_full_name }}!</h2>
-        <p class="text-gray-600 mt-1 text-sm sm:text-base">Bienvenido a tu panel de control</p>
-    </div>
+<style>
+  /* Base & Tipografía */
+  .premium-container {
+      padding: 1.5rem;
+      max-w: 1200px;
+      margin: 0 auto;
+      font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  .premium-header-icon {
+      width: 3rem;
+      height: 3rem;
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      color: white;
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+  }
 
-    <!-- Tarjeta de Días Disponibles -->
-    <div
-        class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl shadow-xl p-6 sm:p-8 mb-6 sm:mb-8 text-white">
-        <div class="flex items-center justify-between">
-            <div class="flex-1">
-                <p class="text-blue-100 text-xs sm:text-sm font-medium uppercase tracking-wide">Días Administrativos</p>
-                <div class="mt-2 sm:mt-3 flex items-baseline">
-                    <span class="text-3xl sm:text-4xl lg:text-5xl font-bold
-                        {% if dias_disponibles < 2 %}text-red-200
-                        {% elif dias_disponibles < 4 %}text-yellow-200
-                        {% else %}text-white{% endif %}">
-                        {{ dias_disponibles|floatformat:1 }}
-                    </span>
-                    <span class="text-lg sm:text-xl lg:text-2xl font-medium ml-2 text-blue-100">/ {{ dias_totales|floatformat:1 }}</span>
-                </div>
-                <p class="text-blue-100 text-xs sm:text-sm mt-2">días disponibles</p>
-            </div>
-            <div class="bg-white bg-opacity-20 rounded-full p-4 sm:p-6 ml-4">
-                <i class="fas fa-calendar-check text-3xl sm:text-4xl lg:text-5xl"></i>
-            </div>
-        </div>
+  .premium-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.025em;
+  }
 
-        <!-- Barra de progreso con colores dinámicos -->
-        <div class="mt-6 bg-white bg-opacity-20 rounded-full h-3 overflow-hidden">
-            {% widthratio dias_disponibles dias_totales 100 as porcentaje %}
-            <div class="h-full rounded-full transition-all duration-500 
-                {% if dias_disponibles >= 4 %}bg-green-400
-                {% elif dias_disponibles >= 2 %}bg-yellow-400
-                {% else %}bg-red-400{% endif %}" style="width: {{ porcentaje }}%">
-            </div>
-        </div>
+  .premium-subtitle {
+      color: #64748b;
+      font-size: 0.95rem;
+      margin-top: 0.25rem;
+  }
 
-        <!-- Mensaje de advertencia -->
-        {% if dias_disponibles <= 1 %} <div class="mt-3 flex items-center text-red-200">
-            <i class="fas fa-exclamation-triangle mr-2"></i>
-            <span class="text-sm font-medium">¡Quedan pocos días disponibles!</span>
-    </div>
-    {% elif dias_disponibles < 2 %} <div class="mt-3 flex items-center text-yellow-200">
-        <i class="fas fa-info-circle mr-2"></i>
-        <span class="text-sm font-medium">Considera planificar tus días restantes</span>
-</div>
-{% endif %}
-</div>
+  /* Tarjeta de Saldos Gigante */
+  .balance-card {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      border-radius: 1.5rem;
+      padding: 2rem;
+      color: #ffffff;
+      box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.3), 0 8px 10px -6px rgba(59, 130, 246, 0.1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+  }
+  .balance-card::after {
+      content: '';
+      position: absolute;
+      top: -50%; right: -20%;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+      border-radius: 50%;
+  }
 
-<!-- Acciones Rápidas -->
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-    <a href="{% url 'solicitar_permiso' %}"
-        class="group bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-lg transition-all p-4 sm:p-6 border-2 border-transparent hover:border-blue-500 touch-manipulation">
-        <div class="flex items-center justify-between">
-            <div class="flex-1 min-w-0">
-                <h3
-                    class="text-base sm:text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition truncate">
-                    Solicitar Días
-                </h3>
-                <p class="text-gray-600 text-xs sm:text-sm mt-1">Crear nueva solicitud</p>
-            </div>
-            <div
-                class="bg-blue-100 text-blue-600 rounded-full p-3 sm:p-4 group-hover:bg-blue-600 group-hover:text-white transition ml-3 flex-shrink-0">
-                <i class="fas fa-calendar-plus text-xl sm:text-2xl"></i>
-            </div>
-        </div>
-    </a>
+  .balance-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: relative;
+      z-index: 10;
+  }
 
-    <a href="{% url 'licencia_list' %}"
-        class="group bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-lg transition-all p-4 sm:p-6 border-2 border-transparent hover:border-green-500 touch-manipulation">
-        <div class="flex items-center justify-between">
-            <div class="flex-1 min-w-0">
-                <h3
-                    class="text-base sm:text-lg font-semibold text-gray-900 group-hover:text-green-600 transition truncate">
-                    Mis Licencias
-                </h3>
-                <p class="text-gray-600 text-xs sm:text-sm mt-1">Ver licencias médicas</p>
-            </div>
-            <div
-                class="bg-green-100 text-green-600 rounded-full p-3 sm:p-4 group-hover:bg-green-600 group-hover:text-white transition ml-3 flex-shrink-0">
-                <i class="fas fa-file-medical text-xl sm:text-2xl"></i>
-            </div>
-        </div>
-    </a>
-</div>
+  .balance-value-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+  }
+  .balance-number {
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.05em;
+  }
+  .balance-number.warning { color: #fef08a; } /* Amarillo */
+  .balance-number.danger { color: #fecaca; } /* Rojo */
 
-<!-- Mis Solicitudes Recientes -->
-<div class="bg-white rounded-lg sm:rounded-xl shadow-sm overflow-hidden">
-    <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between">
-        <h3 class="text-base sm:text-lg font-semibold text-gray-900">Mis Solicitudes Recientes</h3>
-        <a href="{% url 'dashboard_funcionario' %}"
-            class="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium">
-            Ver todas <i class="fas fa-arrow-right ml-1"></i>
-        </a>
-    </div>
+  .balance-max {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.7);
+  }
 
-    {% if solicitudes %}
-    <!-- Desktop Table View (hidden on mobile) -->
-    <div class="hidden md:block overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha
-                        Inicio</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Días
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Término</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Estado</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Observación</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                {% for solicitud in solicitudes %}
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <i class="fas fa-calendar text-blue-600 mr-2"></i>
-                            <span class="text-sm font-medium text-gray-900">{{ solicitud.fecha_inicio|date:"d/m/Y" }}</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex-1">
-                            <p class="text-sm text-gray-500">Días solicitados</p>
-                            <div class="flex items-center space-x-2 mt-1">
-                                <i class="fas fa-clock text-blue-600"></i>
-                                <span
-                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
-                                    {{ solicitud.dias_solicitados }} días
-                                    {% if solicitud.dias_solicitados == 0.5 %}
-                                    <span class="ml-1 text-[10px] uppercase">({{ solicitud.jornada }})</span>
-                                    {% endif %}
-                                </span>
+  /* Progress Bar */
+  .balance-progress-bg {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 99px;
+      height: 12px;
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      z-index: 10;
+  }
+  .balance-progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .fill-good { background: #4ade80; }
+  .fill-warning { background: #facc15; }
+  .fill-danger { background: #f87171; }
+
+  /* Acciones Rapidas (Tarjetas enlace) */
+  .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      margin-bottom: 2rem;
+  }
+  @media (min-width: 640px) {
+      .quick-actions { grid-template-columns: 1fr 1fr; }
+  }
+
+  .action-card {
+      background: #ffffff;
+      border-radius: 1.25rem;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+  }
+  .action-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+  }
+  .action-card.ac-blue:hover { border-color: #3b82f6; }
+  .action-card.ac-green:hover { border-color: #22c55e; }
+
+  .ac-icon {
+      width: 3.5rem;
+      height: 3.5rem;
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      transition: all 0.3s ease;
+  }
+  .ac-blue .ac-icon { background: #eff6ff; color: #3b82f6; }
+  .ac-blue:hover .ac-icon { background: #3b82f6; color: #ffffff; }
+
+  .ac-green .ac-icon { background: #f0fdf4; color: #22c55e; }
+  .ac-green:hover .ac-icon { background: #22c55e; color: #ffffff; }
+
+  .ac-content h3 {
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 1.1rem;
+      margin: 0;
+  }
+  .ac-content p {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin: 0;
+      margin-top: 0.25rem;
+  }
+
+  /* Listado de Solicitudes */
+  .table-card {
+      background: #ffffff;
+      border-radius: 1.25rem;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+      overflow: hidden;
+  }
+  .table-header {
+      padding: 1.25rem 1.5rem;
+      border-b: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+  }
+  .table-header h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+  }
+
+  /* Desktop Table */
+  .desktop-table {
+      width: 100%;
+      border-collapse: collapse;
+      display: none;
+  }
+  @media (min-width: 1024px) {
+      .desktop-table { display: table; }
+      .mobile-cards { display: none !important; }
+  }
+  .desktop-table th {
+      background: #f8fafc;
+      padding: 1rem 1.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-align: left;
+  }
+  .desktop-table td {
+      padding: 1rem 1.5rem;
+      font-size: 0.9rem;
+      color: #475569;
+      border-top: 1px solid #f1f5f9;
+      vertical-align: middle;
+  }
+  .desktop-table tr:hover td { background: #f8fafc; }
+
+  /* Mobile Cards Layout */
+  .mobile-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+      background: #f8fafc;
+  }
+  .m-card {
+      background: #ffffff;
+      border-radius: 1rem;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      overflow: hidden;
+      transition: transform 0.2s;
+  }
+  .m-card:active { transform: scale(0.98); }
+  
+  .m-card-header {
+      padding: 1rem;
+      border-b: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fcfcfc;
+  }
+  .m-card-body { padding: 1rem; }
+  .m-card-footer {
+      padding: 0.75rem 1rem;
+      background: #f8fafc;
+      border-top: 1px solid #f1f5f9;
+  }
+
+  /* Badges & Botones de Tabla */
+  .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.025em;
+  }
+  .b-aprobado { background: #dcfce7; color: #166534; }
+  .b-rechazado { background: #fee2e2; color: #991b1b; }
+  .b-cancelado { background: #f1f5f9; color: #475569; }
+  .b-pendiente { background: #fef9c3; color: #854d0e; }
+  .b-info { background: #eff6ff; color: #1e40af; } /* Para días */
+
+  .btn-cancel {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.5rem;
+      background: #fee2e2;
+      color: #dc2626;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+  }
+  .btn-cancel:hover {
+      background: #f87171;
+      color: #fff;
+  }
+  .btn-cancel-mobile {
+      width: 100%;
+      justify-content: center;
+      padding: 0.75rem;
+      font-size: 0.85rem;
+  }
+
+  .empty-state {
+      padding: 3rem 1.5rem;
+      text-align: center;
+      color: #94a3b8;
+  }
+  .empty-icon {
+      font-size: 3rem;
+      color: #cbd5e1;
+      margin-bottom: 1rem;
+  }
+</style>
+
+<div class="premium-container">
+  
+  <!-- Header -->
+  <div style="margin-bottom: 2rem;">
+      <h2 class="premium-title">¡Hola, {{ user.first_name }}! 👋</h2>
+      <p class="premium-subtitle">Este es tu panel interactivo de permisos y licencias.</p>
+  </div>
+
+  <!-- Tarjeta de Saldo Gigante -->
+  <div class="balance-card">
+      <div class="balance-top">
+          <div>
+              <p style="font-size:0.85rem; text-transform:uppercase; letter-spacing:0.1em; opacity:0.9; margin-bottom:0.5rem; font-weight:600;">Días Administrativos Restantes</p>
+              <div class="balance-value-wrap">
+                  <span class="balance-number 
+                      {% if dias_disponibles < 2 %}danger
+                      {% elif dias_disponibles < 4 %}warning{% endif %}">
+                      {{ dias_disponibles|floatformat:1 }}
+                  </span>
+                  <span class="balance-max">/ {{ dias_totales|floatformat:1 }}</span>
+              </div>
+          </div>
+          <div style="background: rgba(255,255,255,0.2); padding: 1.25rem; border-radius: 1.25rem; backdrop-filter: blur(10px);">
+              <i class="fas fa-calendar-check" style="font-size:2rem;"></i>
+          </div>
+      </div>
+
+      <!-- Barra y Alertas -->
+      <div style="position: relative; z-index: 10;">
+          {% widthratio dias_disponibles dias_totales 100 as porcentaje %}
+          <div class="balance-progress-bg">
+              <div class="balance-progress-fill 
+                  {% if dias_disponibles >= 4 %}fill-good
+                  {% elif dias_disponibles >= 2 %}fill-warning
+                  {% else %}fill-danger{% endif %}" 
+                  style="width: {{ porcentaje }}%">
+              </div>
+          </div>
+          
+          <div style="margin-top:0.75rem; font-size:0.85rem; font-weight:500;">
+              {% if dias_disponibles <= 1 %}
+                  <span style="color:#fecaca;"><i class="fas fa-exclamation-circle"></i> Nivel Crítico. Quedan muy pocos días del año.</span>
+              {% elif dias_disponibles < 4 %}
+                  <span style="color:#fef08a;"><i class="fas fa-info-circle"></i> Has consumido una porción considerable de tu saldo anual.</span>
+              {% else %}
+                  <span style="color:#d1fae5;"><i class="fas fa-shield-check"></i> Saldo saludable para el resto del año.</span>
+              {% endif %}
+          </div>
+      </div>
+  </div>
+
+  <!-- Acciones Rápidas -->
+  <div class="quick-actions">
+      <a href="{% url 'solicitar_permiso' %}" class="action-card ac-blue">
+          <div class="ac-content">
+              <h3>Solicitar Días</h3>
+              <p>Generar nueva solicitud de permiso</p>
+          </div>
+          <div class="ac-icon"><i class="fas fa-calendar-plus"></i></div>
+      </a>
+
+      <a href="{% url 'licencia_list' %}" class="action-card ac-green">
+          <div class="ac-content">
+              <h3>Mis Licencias</h3>
+              <p>Historial médico y documentación</p>
+          </div>
+          <div class="ac-icon"><i class="fas fa-file-medical"></i></div>
+      </a>
+  </div>
+
+  <!-- Mis Solicitudes Recientes -->
+  <div class="table-card">
+      <div class="table-header">
+          <h3>Mis Solicitudes de Permiso</h3>
+          <span style="font-size:0.8rem; font-weight:700; color:#cbd5e1; background:#f1f5f9; padding:0.2rem 0.6rem; border-radius:99px;">Últimas 20</span>
+      </div>
+
+      {% if solicitudes %}
+      
+      <!-- DESKTOP VIEW -->
+      <table class="desktop-table">
+          <thead>
+              <tr>
+                  <th>Fecha Inicio</th>
+                  <th>Días Solicitados</th>
+                  <th>Fecha Término</th>
+                  <th>Estado</th>
+                  <th>Observaciones</th>
+                  <th>Acciones</th>
+              </tr>
+          </thead>
+          <tbody>
+              {% for solicitud in solicitudes %}
+              <tr>
+                  <td>
+                      <div style="font-weight:700; color:#0f172a;"><i class="fas fa-calendar-day" style="color:#94a3b8; margin-right:0.4rem;"></i>{{ solicitud.fecha_inicio|date:"d/m/Y" }}</div>
+                  </td>
+                  <td>
+                      <span class="badge b-info">
+                          <i class="fas fa-clock"></i> {{ solicitud.dias_solicitados }} días
+                          {% if solicitud.dias_solicitados == 0.5 %}
+                          <span style="opacity:0.7; font-size:0.65rem;">({{ solicitud.jornada }})</span>
+                          {% endif %}
+                      </span>
+                  </td>
+                  <td><span style="font-weight:600;">{{ solicitud.fecha_termino|date:"d/m/Y" }}</span></td>
+                  <td>
+                      {% if solicitud.estado == 'APROBADO' %}<span class="badge b-aprobado"><i class="fas fa-check-circle"></i> Aprobado</span>
+                      {% elif solicitud.estado == 'RECHAZADO' %}<span class="badge b-rechazado"><i class="fas fa-times-circle"></i> Rechazado</span>
+                      {% elif solicitud.estado == 'CANCELADO' %}<span class="badge b-cancelado"><i class="fas fa-ban"></i> Cancelado</span>
+                      {% else %}<span class="badge b-pendiente"><i class="fas fa-hourglass-half"></i> Pendiente</span>{% endif %}
+                  </td>
+                  <td style="font-size:0.8rem; line-height:1.4;">
+                      {% if solicitud.observacion %}
+                          <div style="color:#64748b;"><strong style="color:#475569;">Motivo:</strong> {{ solicitud.observacion }}</div>
+                      {% endif %}
+                      {% if solicitud.motivo_rechazo %}
+                          <div style="color:#b91c1c; margin-top:0.2rem;"><strong>Rechazo:</strong> {{ solicitud.motivo_rechazo }}</div>
+                      {% endif %}
+                      {% if not solicitud.observacion and not solicitud.motivo_rechazo %}
+                          <span style="color:#cbd5e1; font-style:italic;">- Ninguna -</span>
+                      {% endif %}
+                  </td>
+                  <td>
+                      {% if solicitud.estado == 'PENDIENTE' %}
+                      <button type="button" class="btn-cancel" onclick="document.getElementById('modal-cancel-{{ solicitud.pk }}').classList.remove('hidden')">
+                          <i class="fas fa-times"></i> Cancelar
+                      </button>
+                      
+                      <!-- Modal Cancelar Individual -->
+                      <div id="modal-cancel-{{ solicitud.pk }}" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900 bg-opacity-50 transition-opacity">
+                          <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full mx-4 shadow-2xl relative border-t-8 border-red-500" style="background:#fff; border-radius:1.5rem; padding:2rem; width:100%; max-width:400px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+                            <div style="width:4rem; height:4rem; background:#fee2e2; color:#dc2626; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 1.5rem auto;">
+                                <i class="fas fa-exclamation-triangle"></i>
                             </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {{ solicitud.fecha_termino|date:"d/m/Y" }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        {% if solicitud.estado == 'APROBADO' %}
-                        <span
-                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800"><i
-                                class="fas fa-check-circle mr-1"></i> Aprobado</span>
-                        {% elif solicitud.estado == 'RECHAZADO' %}
-                        <span
-                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800"><i
-                                class="fas fa-times-circle mr-1"></i> Rechazado</span>
-                        {% elif solicitud.estado == 'CANCELADO' %}
-                        <span
-                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800"><i
-                                class="fas fa-ban mr-1"></i> Cancelado</span>
-                        {% else %}
-                        <span
-                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800"><i
-                                class="fas fa-clock mr-1"></i> Pendiente</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-6 py-4 text-sm">
-                        <div class="space-y-2">
-                            {% if solicitud.observacion %}
-                            <div>
-                                <p class="text-xs font-semibold text-gray-500 uppercase">Motivo (Funcionario):</p>
-                                <p class="text-gray-700">{{ solicitud.observacion }}</p>
-                            </div>
-                            {% endif %}
-                            {% if solicitud.motivo_rechazo %}
-                            <div class="{% if solicitud.observacion %}mt-2 pt-2 border-t border-gray-200{% endif %}">
-                                <p class="text-xs font-semibold text-red-600 uppercase">Observación (Director):</p>
-                                <p class="text-gray-700">{{ solicitud.motivo_rechazo }}</p>
-                            </div>
-                            {% endif %}
-                            {% if solicitud.motivo_cancelacion %}
-                            <div
-                                class="{% if solicitud.observacion or solicitud.motivo_rechazo %}mt-2 pt-2 border-t border-gray-200{% endif %}">
-                                <p class="text-xs font-semibold text-gray-600 uppercase">Cancelación:</p>
-                                <p class="text-gray-700">{{ solicitud.motivo_cancelacion }}</p>
-                            </div>
-                            {% endif %}
-                            {% if not solicitud.observacion and not solicitud.motivo_rechazo and not solicitud.motivo_cancelacion %}
-                            <span class="text-gray-400 italic">Sin observaciones</span>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        {% if solicitud.estado == 'PENDIENTE' %}
-                        <form action="{% url 'solicitud_cancel' solicitud.pk %}" method="post" class="inline">{% csrf_token %}<input type="hidden" name="motivo_cancelacion"
-                                value="Cancelado por el solicitante"><button type="submit"
-                                onclick="return confirm('¿Estás seguro de que deseas cancelar esta solicitud?')"
-                                class="inline-flex items-center px-3 py-1 rounded text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200"><i
-                                    class="fas fa-times mr-1"></i> Cancelar</button></form>
-                        {% else %}<span class="text-gray-400">-</span>{% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                            <h3 style="font-size:1.25rem; font-weight:800; text-align:center; color:#0f172a; margin-bottom:0.5rem; margin-top:0;">¿Cancelar Solicitud?</h3>
+                            <p style="color:#64748b; font-size:0.9rem; text-align:center; margin-bottom:1.5rem;">Esta acción anulará tu petición del <strong>{{ solicitud.fecha_inicio|date:"d/m/Y" }}</strong> y no podrá deshacerse.</p>
+                            
+                            <form action="{% url 'solicitud_cancel' solicitud.pk %}" method="post" style="margin:0; display:flex; flex-direction:column; gap:0.75rem;">
+                                {% csrf_token %}
+                                <input type="hidden" name="motivo_cancelacion" value="Cancelado por el solicitante">
+                                <button type="submit" style="width:100%; padding:0.8rem; background:#dc2626; color:#fff; font-weight:700; border-radius:1rem; border:none; cursor:pointer;">
+                                    Sí, Anular Permiso
+                                </button>
+                                <button type="button" onclick="document.getElementById('modal-cancel-{{ solicitud.pk }}').classList.add('hidden')" style="width:100%; padding:0.8rem; background:#f1f5f9; color:#475569; font-weight:700; border-radius:1rem; border:none; cursor:pointer;">
+                                    Volver Atrás
+                                </button>
+                            </form>
+                          </div>
+                      </div>
+                      {% else %}
+                      <span style="color:#cbd5e1;">-</span>
+                      {% endif %}
+                  </td>
+              </tr>
+              {% endfor %}
+          </tbody>
+      </table>
 
-    <!-- Mobile Card View (hidden on desktop) -->
-    <div class="md:hidden space-y-3 p-4">
-        {% for solicitud in solicitudes %}
-        <div class="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
-            <!-- Card Header -->
-            <div class="px-4 py-3 bg-white border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <i class="fas fa-calendar text-blue-600 mr-2"></i>
-                        <span class="text-sm font-medium text-gray-900">{{ solicitud.fecha_inicio|date:"d/m/Y" }}</span>
-                    </div>
-                    {% if solicitud.estado == 'APROBADO' %}
-                    <span
-                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                        <i class="fas fa-check-circle mr-1"></i> Aprobado
-                    </span>
-                    {% elif solicitud.estado == 'RECHAZADO' %}
-                    <span
-                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800"><i
-                            class="fas fa-times-circle mr-1"></i> Rechazado</span>
-                    {% elif solicitud.estado == 'CANCELADO' %}
-                    <span
-                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800"><i
-                            class="fas fa-ban mr-1"></i> Cancelado</span>
-                    {% else %}
-                    <span
-                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
-                        <i class="fas fa-clock mr-1"></i> Pendiente
-                    </span>
-                    {% endif %}
-                </div>
-            </div>
+      <!-- MOBILE CARDS -->
+      <div class="mobile-cards">
+          {% for solicitud in solicitudes %}
+          <div class="m-card">
+              <div class="m-card-header">
+                  <div style="font-weight:800; font-size:1rem; color:#0f172a;">
+                      {{ solicitud.fecha_inicio|date:"d M" }}
+                  </div>
+                  <div>
+                      {% if solicitud.estado == 'APROBADO' %}<span class="badge b-aprobado"><i class="fas fa-check-circle"></i> Aprobado</span>
+                      {% elif solicitud.estado == 'RECHAZADO' %}<span class="badge b-rechazado"><i class="fas fa-times-circle"></i> Rechazado</span>
+                      {% elif solicitud.estado == 'CANCELADO' %}<span class="badge b-cancelado"><i class="fas fa-ban"></i> Cancelado</span>
+                      {% else %}<span class="badge b-pendiente"><i class="fas fa-hourglass-half"></i> Pendiente</span>{% endif %}
+                  </div>
+              </div>
+              <div class="m-card-body">
+                  <div style="display:flex; justify-content:space-between; margin-bottom:0.75rem;">
+                      <div>
+                          <span style="font-size:0.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase;">Duración</span>
+                          <div style="font-weight:700; color:#3b82f6;">{{ solicitud.dias_solicitados }} días {% if solicitud.dias_solicitados == 0.5 %}<span style="font-size:0.7rem;">({{ solicitud.jornada }})</span>{% endif %}</div>
+                      </div>
+                      <div style="text-align:right;">
+                          <span style="font-size:0.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase;">Término</span>
+                          <div style="font-weight:600; color:#475569;">{{ solicitud.fecha_termino|date:"d/m/Y" }}</div>
+                      </div>
+                  </div>
+                  
+                  {% if solicitud.observacion or solicitud.motivo_rechazo %}
+                  <div style="background:#f8fafc; padding:0.75rem; border-radius:0.75rem; font-size:0.85rem; line-height:1.4;">
+                      {% if solicitud.observacion %}
+                          <span style="color:#64748b;"><strong>Motivo:</strong> {{ solicitud.observacion }}</span><br>
+                      {% endif %}
+                      {% if solicitud.motivo_rechazo %}
+                          <span style="color:#dc2626;"><strong>Rechazo:</strong> {{ solicitud.motivo_rechazo }}</span>
+                      {% endif %}
+                  </div>
+                  {% endif %}
+              </div>
+              
+              {% if solicitud.estado == 'PENDIENTE' %}
+              <div class="m-card-footer">
+                  <button type="button" class="btn-cancel btn-cancel-mobile" onclick="document.getElementById('modal-cancel-mobile-{{ solicitud.pk }}').classList.remove('hidden')">
+                      <i class="fas fa-times-circle"></i> Anular Solicitud
+                  </button>
+                  
+                  <!-- Modal Mobile -->
+                  <div id="modal-cancel-mobile-{{ solicitud.pk }}" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900 bg-opacity-50 transition-opacity px-4">
+                      <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl relative border-t-8 border-red-500">
+                        <h3 style="font-size:1.2rem; font-weight:800; text-align:center; color:#0f172a; margin-bottom:1rem;">¿Anular Solicitud?</h3>
+                        <form action="{% url 'solicitud_cancel' solicitud.pk %}" method="post" style="margin:0; display:flex; flex-direction:column; gap:0.5rem;">
+                            {% csrf_token %}
+                            <input type="hidden" name="motivo_cancelacion" value="Cancelado por el solicitante">
+                            <button type="submit" style="width:100%; padding:0.8rem; background:#dc2626; color:#fff; font-weight:700; border-radius:1rem; border:none;">
+                                Confirmar Anulación
+                            </button>
+                            <button type="button" onclick="document.getElementById('modal-cancel-mobile-{{ solicitud.pk }}').classList.add('hidden')" style="width:100%; padding:0.8rem; background:#f1f5f9; color:#475569; font-weight:700; border-radius:1rem; border:none;">
+                                Cancelar
+                            </button>
+                        </form>
+                      </div>
+                  </div>
+              </div>
+              {% endif %}
+          </div>
+          {% endfor %}
+      </div>
 
-            <!-- Card Content -->
-            <div class="px-4 py-3 space-y-3">
-                <!-- Días y Fechas -->
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-clock text-orange-500"></i>
-                        <span class="text-sm text-gray-900">
-                            <span class="font-semibold">{{ solicitud.dias_solicitados }} días</span>
-                            {% if solicitud.dias_solicitados == 0.5 %}
-                            <span class="text-xs font-bold text-blue-600 uppercase">({{ solicitud.jornada }})</span>
-                            {% endif %}
-                        </span>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-xs text-gray-500">Hasta</div>
-                        <div class="text-sm font-medium text-gray-900">{{ solicitud.fecha_termino|date:"d/m/Y" }}</div>
-                    </div>
-                </div>
+      {% else %}
+      <!-- Empty State -->
+      <div class="empty-state">
+          <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+          <h4 style="font-size:1.2rem; font-weight:700; color:#475569; margin-bottom:0.5rem;">No tienes solicitudes solicitadas</h4>
+          <p style="font-size:0.9rem; margin-bottom:1.5rem;">Aún no has ingresado ningún permiso administrativo este año.</p>
+          <a href="{% url 'solicitar_permiso' %}" class="btn-action ac-blue" style="display:inline-flex; align-items:center; gap:0.5rem; background:#3b82f6; color:#fff; padding:0.8rem 1.5rem; border-radius:99px; text-decoration:none; font-weight:700;">
+              <i class="fas fa-plus"></i> Ingresar Primera Solicitud
+          </a>
+      </div>
+      {% endif %}
+  </div>
 
-                <!-- Observaciones -->
-                {% if solicitud.observacion or solicitud.motivo_rechazo or solicitud.motivo_cancelacion %}
-                <div class="space-y-2">
-                    {% if solicitud.observacion %}
-                    <div>
-                        <span class="text-xs font-bold text-gray-500 uppercase">Motivo:</span>
-                        <p class="text-sm text-gray-700 mt-1">{{ solicitud.observacion }}</p>
-                    </div>
-                    {% endif %}
-                    {% if solicitud.motivo_rechazo %}
-                    <div class="{% if solicitud.observacion %}mt-2 pt-2 border-t border-gray-200{% endif %}">
-                        <span class="text-xs font-bold text-red-600 uppercase">Observación:</span>
-                        <p class="text-sm text-red-700 mt-1">{{ solicitud.motivo_rechazo }}</p>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endif %}
-
-                <!-- Botón Cancelar (solo para pendientes) -->
-                {% if solicitud.estado == 'PENDIENTE' %}
-                <div class="mt-3 pt-3 border-t border-gray-200">
-                    <form action="{% url 'solicitud_cancel' solicitud.pk %}" method="post">{% csrf_token %}<input
-                            type="hidden" name="motivo_cancelacion" value="Cancelado por el solicitante"><button
-                            type="submit"
-                            onclick="return confirm('¿Estás seguro de que deseas cancelar esta solicitud?')"
-                            class="w-full inline-flex items-center justify-center px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm font-medium"><i
-                                class="fas fa-times mr-2"></i> Cancelar Solicitud</button></form>
-                </div>{% endif %}
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="px-4 sm:px-6 py-8 sm:py-12 text-center">
-        <i class="fas fa-inbox text-gray-300 text-4xl sm:text-5xl mb-4"></i>
-        <p class="text-gray-500 mb-4 text-sm sm:text-base">No tienes solicitudes recientes</p>
-        <a href="{% url 'solicitar_permiso' %}"
-            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm sm:text-base">
-            <i class="fas fa-plus mr-2"></i>
-            Crear primera solicitud
-        </a>
-    </div>
-    {% endif %}
-</div>
 </div>
 {% endblock %}
