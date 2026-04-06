@@ -4,99 +4,257 @@
 {% block page_title %}Mis Liquidaciones{% endblock %}
 
 {% block content %}
-<div class="p-4 md:p-6 max-w-5xl mx-auto">
+<style>
+  /* ─── Design tokens ─── */
+  :root {
+    --liq-radius: 1.25rem;
+    --liq-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    --liq-shadow-hover: 0 10px 25px -4px rgba(0, 0, 0, 0.08);
+  }
+
+  /* ─── Layout ─── */
+  .liq-page { background: #f8f9fc; min-height: 100%; padding: 1.25rem; }
+  @media (min-width: 768px) { .liq-page { padding: 2rem 2.5rem; } }
+
+  /* ─── Cards ─── */
+  .liq-card {
+    background: #fff;
+    border-radius: var(--liq-radius);
+    box-shadow: var(--liq-shadow);
+    border: 1px solid #eef0f4;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  /* ─── Stats ─── */
+  .liq-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 640px) {
+    .liq-stat-grid { grid-template-columns: 1fr; gap: 0.75rem; margin-bottom: 1.5rem; }
+  }
+  
+  .liq-stat-box {
+    background: #fff;
+    border-radius: var(--liq-radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #eef0f4;
+    box-shadow: var(--liq-shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .liq-stat-box::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  }
+  .liq-stat-box:nth-child(1)::after { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+  .liq-stat-box:nth-child(2)::after { background: linear-gradient(90deg, #10b981, #059669); }
+  .liq-stat-box:nth-child(3)::after { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+
+  .liq-stat-value { font-size: 2.25rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.25rem; }
+  .liq-stat-box:nth-child(1) .liq-stat-value { color: #2563eb; }
+  .liq-stat-box:nth-child(2) .liq-stat-value { color: #059669; }
+  .liq-stat-box:nth-child(3) .liq-stat-value { color: #7c3aed; }
+
+  .liq-stat-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
+
+  /* ─── Year Section ─── */
+  .liq-year-card { margin-bottom: 1.25rem; overflow: hidden; }
+  
+  .liq-year-header {
+    background: #fff; padding: 1.25rem 1.5rem; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    transition: background 0.15s ease;
+  }
+  .liq-year-header:hover { background: #f8fafc; }
+  @media (max-width: 640px) {
+    .liq-year-header { padding: 1rem; }
+  }
+  
+  .liq-year-title-container { display: flex; align-items: center; gap: 0.75rem; }
+  .liq-year-icon { color: #94a3b8; font-size: 0.875rem; transition: transform 0.3s ease; }
+  .liq-year-icon.open { transform: rotate(90deg); color: #6366f1; }
+  
+  .liq-year-title { font-size: 1.125rem; font-weight: 800; color: #0f172a; }
+  .liq-year-badge { background: #f1f5f9; color: #475569; font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 999px; }
+  
+  .liq-year-download_all {
+    display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.85rem;
+    border-radius: 0.75rem; font-size: 0.8rem; font-weight: 700;
+    color: #4f46e5; background: #e0e7ff; transition: all 0.2s ease; text-decoration: none; border: 1.5px solid transparent;
+  }
+  .liq-year-download_all:hover { background: #c7d2fe; color: #4338ca; transform: translateY(-1px); }
+
+  .liq-year-content { display: none; background: #fafbff; border-top: 1px solid #f1f5f9; }
+  .liq-year-content.open { display: block; animation: slideDown 0.3s ease; }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ─── Month Items ─── */
+  .liq-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.25rem 1.5rem; border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s ease;
+  }
+  .liq-item:last-child { border-bottom: none; }
+  .liq-item:hover { background: #fff; box-shadow: inset 4px 0 0 #3b82f6; }
+  
+  @media (max-width: 640px) {
+    .liq-item { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1rem; }
+  }
+
+  .liq-item-info { display: flex; align-items: center; gap: 1rem; }
+  .liq-month-avatar {
+    width: 3rem; height: 3rem; border-radius: 0.75rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    color: #2563eb; font-weight: 800; font-size: 1rem; text-transform: uppercase;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid #bfdbfe; box-shadow: 0 2px 5px rgba(37,99,235,0.1);
+    flex-shrink: 0;
+  }
+  
+  .liq-month-name { font-size: 1.05rem; font-weight: 800; color: #1e293b; text-transform: capitalize; }
+  .liq-month-sub { font-size: 0.75rem; font-weight: 600; color: #94a3b8; margin-top: 0.125rem; }
+
+  .liq-actions { display: flex; gap: 0.5rem; }
+  @media (min-width: 640px) { .liq-actions { justify-content: flex-end; } }
+  
+  .liq-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    padding: 0.6rem 1rem; border-radius: 0.75rem; font-size: 0.85rem; font-weight: 700;
+    transition: all 0.2s ease; cursor: pointer; text-decoration: none; flex: 1; text-align: center;
+    white-space: nowrap;
+  }
+  @media (min-width: 640px) { .liq-btn { flex: none; } }
+  
+  .liq-btn-view { background: #fff; color: #475569; border: 1.5px solid #cbd5e1; }
+  .liq-btn-view:hover { background: #f8fafc; color: #0f172a; border-color: #94a3b8; transform: translateY(-1px); }
+  
+  .liq-btn-download { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; border: 1.5px solid transparent; box-shadow: 0 2px 4px rgba(37,99,235,0.2); }
+  .liq-btn-download:hover { background: linear-gradient(135deg, #2563eb, #1d4ed8); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(37,99,235,0.3); }
+
+  /* ─── Empty State ─── */
+  .liq-empty {
+    background: #fff; border-radius: var(--liq-radius); padding: 4rem 2rem;
+    text-align: center; border: 1px dashed #cbd5e1; box-shadow: var(--liq-shadow);
+  }
+  .liq-empty-icon {
+    width: 4.5rem; height: 4.5rem; border-radius: 50%; background: #f1f5f9;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;
+    color: #94a3b8; font-size: 1.75rem;
+  }
+  .liq-empty-title { font-size: 1.25rem; font-weight: 800; color: #334155; margin-bottom: 0.5rem; }
+  .liq-empty-desc { font-size: 0.9rem; color: #64748b; font-weight: 500; }
+</style>
+
+<div class="liq-page">
+  <div style="max-width: 1000px; margin: 0 auto;">
+    
     <!-- Header -->
-    <div class="mb-6">
-        <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Mis Liquidaciones</h1>
-        <p class="text-gray-500 mt-1 text-sm">Consulta tus liquidaciones de sueldo por año</p>
+    <div style="display:flex;flex-direction:column;gap:.85rem;margin-bottom:1.5rem;">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:.75rem;">
+        <div>
+          <h1 style="font-size:1.75rem;font-weight:800;color:#0f172a;margin:0;line-height:1.2;">Mis Liquidaciones</h1>
+          <p style="color:#64748b;font-size:0.9rem;margin:.3rem 0 0;font-weight:500;">Consulta y descarga tus liquidaciones de sueldo históricas</p>
+        </div>
+        <a href="{% url 'descargar_todas_liquidaciones' %}" class="liq-btn liq-btn-download" style="margin-top: 0.25rem;">
+          <i class="fas fa-file-archive"></i> Descargar Todo (ZIP)
+        </a>
+      </div>
     </div>
 
     <!-- Estadísticas -->
     {% if estadisticas %}
-    <div class="grid grid-cols-3 gap-3 md:gap-4 mb-6">
-        <div class="bg-white rounded-lg shadow p-4 text-center">
-            <p class="text-2xl md:text-3xl font-bold text-blue-600">{{ estadisticas.total_liquidaciones }}</p>
-            <p class="text-xs md:text-sm text-gray-500">Total</p>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4 text-center">
-            <p class="text-2xl md:text-3xl font-bold text-green-600">{{ estadisticas.anios_con_liquidaciones }}</p>
-            <p class="text-xs md:text-sm text-gray-500">Años</p>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4 text-center">
-            <p class="text-2xl md:text-3xl font-bold text-purple-600">{{ estadisticas.promedio_por_anio }}</p>
-            <p class="text-xs md:text-sm text-gray-500">Promedio</p>
-        </div>
+    <div class="liq-stat-grid">
+      <div class="liq-stat-box">
+        <span class="liq-stat-value">{{ estadisticas.total_liquidaciones }}</span>
+        <span class="liq-stat-label">Total Liquidaciones</span>
+      </div>
+      <div class="liq-stat-box">
+        <span class="liq-stat-value">{{ estadisticas.anios_con_liquidaciones }}</span>
+        <span class="liq-stat-label">Años Registrados</span>
+      </div>
+      <div class="liq-stat-box">
+        <span class="liq-stat-value">{{ estadisticas.promedio_por_anio }}</span>
+        <span class="liq-stat-label">Promedio Anual</span>
+      </div>
     </div>
     {% endif %}
 
     <!-- Liquidaciones por Año -->
     {% if liquidaciones_por_anio %}
-    <div class="space-y-4">
-        {% for anio, liquidaciones_anio in liquidaciones_por_anio.items %}
-        <div class="bg-white rounded-lg shadow overflow-hidden" data-year="{{ anio }}">
-            <!-- Año Header -->
-            <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex justify-between items-center cursor-pointer hover:bg-gray-100"
-                onclick="toggleYear('{{ anio }}')">
-                <div class="flex items-center">
-                    <i id="icon-{{ anio }}"
-                        class="fas fa-chevron-right text-gray-500 mr-3 transition-transform duration-200"></i>
-                    <span class="font-semibold text-gray-700">Año {{ anio }}</span>
-                    <span class="ml-2 text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">{{ liquidaciones_anio|length }}</span>
-                </div>
-                <a href="{% url 'descargar_liquidaciones_anio' anio %}"
-                    class="text-sm text-blue-600 hover:text-blue-800" onclick="event.stopPropagation()">
-                    <i class="fas fa-download mr-1"></i><span class="hidden sm:inline">Descargar</span>
-                </a>
-            </div>
-
-            <!-- Lista de liquidaciones -->
-            <div id="year-{{ anio }}" class="divide-y divide-gray-100">
-                {% for liquidacion in liquidaciones_anio %}
-                <div class="px-4 py-3 hover:bg-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <!-- Mes -->
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                            <span class="text-blue-600 font-semibold text-sm">{{ liquidacion.mes }}</span>
-                        </div>
-                        <div>
-                            <p class="font-medium text-gray-900">{{ liquidacion.mes_nombre }}</p>
-                            <p class="text-xs text-gray-500">Liquidación {{ liquidacion.anio }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Acciones -->
-                    {% if liquidacion.archivo %}
-                    <div class="flex gap-2 sm:flex-shrink-0">
-                        <a href="{{ liquidacion.archivo.url }}" target="_blank"
-                            class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-700">
-                            <i class="fas fa-eye mr-1"></i>Ver
-                        </a>
-                        <a href="{{ liquidacion.archivo.url }}" download
-                            class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
-                            <i class="fas fa-download mr-1"></i>Descargar
-                        </a>
-                    </div>
-                    {% else %}
-                    <span class="text-sm text-red-500"><i class="fas fa-exclamation-triangle mr-1"></i>No
-                        disponible</span>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
+      {% for anio, liquidaciones_anio in liquidaciones_por_anio.items %}
+      <div class="liq-card liq-year-card">
+        <div class="liq-year-header" onclick="toggleLiqYear('{{ anio }}')">
+          <div class="liq-year-title-container">
+            <i id="liq-icon-{{ anio }}" class="fas fa-chevron-right liq-year-icon {% if forloop.first %}open{% endif %}"></i>
+            <span class="liq-year-title">Año {{ anio }}</span>
+            <span class="liq-year-badge">{{ liquidaciones_anio|length }} mes{% if liquidaciones_anio|length != 1 %}es{% endif %}</span>
+          </div>
+          <a href="{% url 'descargar_liquidaciones_anio' anio %}" class="liq-year-download_all" onclick="event.stopPropagation()">
+            <i class="fas fa-file-archive text-indigo-500"></i> <span class="hidden sm:inline">ZIP Anual</span>
+          </a>
         </div>
-        {% endfor %}
-    </div>
+        
+        <div id="liq-content-{{ anio }}" class="liq-year-content {% if forloop.first %}open{% endif %}">
+          {% for liquidacion in liquidaciones_anio %}
+          <div class="liq-item">
+            <div class="liq-item-info">
+              <div class="liq-month-avatar">
+                {{ liquidacion.mes_nombre|slice:":3" }}
+              </div>
+              <div>
+                <div class="liq-month-name">{{ liquidacion.mes_nombre }}</div>
+                <div class="liq-month-sub">Liquidación correspondiente al mes de {{ liquidacion.mes_nombre|lower }} de {{ liquidacion.anio }}<br>Emitida el {{ liquidacion.fecha_subida|date:"d M Y" }}</div>
+              </div>
+            </div>
+            
+            <div class="liq-actions">
+              {% if liquidacion.archivo %}
+                <a href="{{ liquidacion.archivo.url }}" target="_blank" class="liq-btn liq-btn-view">
+                  <i class="far fa-eye"></i> Ver PDF
+                </a>
+                <a href="{{ liquidacion.archivo.url }}" download class="liq-btn liq-btn-download">
+                  <i class="fas fa-download"></i> Descargar
+                </a>
+              {% else %}
+                <span style="font-size: 0.8rem; font-weight: 700; color: #ef4444; background: #fef2f2; padding: 0.6rem 1rem; border-radius: 0.75rem; border: 1.5px solid #fecaca; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; width: 100%;">
+                  <i class="fas fa-exclamation-triangle"></i> No disponible
+                </span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
     {% else %}
-    <!-- Sin liquidaciones -->
-    <div class="bg-white rounded-lg shadow p-8 text-center">
-        <i class="fas fa-file-invoice-dollar text-gray-300 text-4xl mb-4"></i>
-        <p class="text-gray-500 font-medium">No tienes liquidaciones disponibles</p>
-        <p class="text-gray-400 text-sm mt-1">Las liquidaciones se cargan desde el módulo de administración</p>
-    </div>
+      <div class="liq-empty">
+        <div class="liq-empty-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+        <div class="liq-empty-title">Registros no encontrados</div>
+        <div class="liq-empty-desc">Actualmente no tienes liquidaciones de sueldo cargadas en el sistema.</div>
+      </div>
     {% endif %}
-</div>
-{% endblock %}
 
-{% block extra_js %}
-<script src="{% static 'js/liquidaciones.js' %}"></script>
+  </div>
+</div>
+
+<script>
+  function toggleLiqYear(year) {
+    const content = document.getElementById('liq-content-' + year);
+    const icon = document.getElementById('liq-icon-' + year);
+    
+    if (content.classList.contains('open')) {
+      content.classList.remove('open');
+      icon.classList.remove('open');
+    } else {
+      content.classList.add('open');
+      icon.classList.add('open');
+    }
+  }
+</script>
 {% endblock %}

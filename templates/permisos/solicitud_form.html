@@ -3,287 +3,314 @@
 {% block page_title %}Solicitar Días Administrativos{% endblock %}
 
 {% block content %}
-<div class="p-6 max-w-3xl mx-auto">
-    <!-- Header -->
-    <div class="mb-8">
-        <h2 class="text-3xl font-bold text-gray-900">Solicitar Días Administrativos</h2>
-        <p class="text-gray-600 mt-2">Completa el formulario para solicitar tus días administrativos</p>
-    </div>
+<style>
+  :root {
+    --form-radius: 1.25rem;
+    --form-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+    --input-radius: 0.75rem;
+    --primary-gradient: linear-gradient(135deg, #3b82f6, #2563eb);
+    --primary-glow: 0 4px 15px -3px rgba(37, 99, 235, 0.4);
+  }
 
-    <!-- Información de Saldo -->
-    <div class="{% if user.dias_disponibles < 2 %}bg-red-50 border-red-500
-        {% elif user.dias_disponibles < 4 %}bg-yellow-50 border-yellow-500
-        {% else %}bg-blue-50 border-blue-500{% endif %} border-l-4 p-4 mb-6 rounded-lg">
-        <div class="flex items-center">
-            <i class="fas fa-info-circle text-xl mr-3
-                {% if user.dias_disponibles < 2 %}text-red-500
-                {% elif user.dias_disponibles < 4 %}text-yellow-500
-                {% else %}text-blue-500{% endif %}"></i>
-            <div>
-                <p class="text-sm font-medium
-                    {% if user.dias_disponibles < 2 %}text-red-900
-                    {% elif user.dias_disponibles < 4 %}text-yellow-900
-                    {% else %}text-blue-900{% endif %}">Días Disponibles</p>
-                <p class="text-2xl font-bold
-                    {% if user.dias_disponibles < 2 %}text-red-700
-                    {% elif user.dias_disponibles < 4 %}text-yellow-700
-                    {% else %}text-blue-700{% endif %}">
-                    {{ user.dias_disponibles|floatformat:1 }} de 6.0 días
-                </p>
-            </div>
+  .premium-container {
+    padding: 1.25rem;
+    min-height: 100%;
+    background: #f8f9fc;
+  }
+  @media (min-width: 768px) {
+    .premium-container { padding: 2.5rem; }
+  }
+
+  .premium-header-icon {
+    width: 3.5rem; height: 3.5rem; border-radius: 1rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    color: #2563eb; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid #bfdbfe; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.1);
+    margin-bottom: 1rem;
+  }
+
+  .premium-title { font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.025em; margin: 0; line-height: 1.2; }
+  .premium-subtitle { color: #64748b; font-size: 0.95rem; margin-top: 0.35rem; font-weight: 500; }
+
+  .premium-card {
+    background: #fff; border-radius: var(--form-radius);
+    box-shadow: var(--form-shadow); border: 1px solid #eef0f4;
+    overflow: hidden; margin-top: 1.5rem;
+  }
+  
+  .premium-card-body { padding: 1.5rem; }
+  @media (min-width: 640px) { .premium-card-body { padding: 2.5rem; } }
+
+  .saldo-box {
+    display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem;
+    border-radius: 1rem; margin-bottom: 2rem; border-left: 4px solid;
+  }
+  .saldo-box-ok { background: linear-gradient(to right, #eff6ff, #ffffff); border-left-color: #3b82f6; border: 1px solid #dbeafe; }
+  .saldo-box-warn { background: linear-gradient(to right, #fefce8, #ffffff); border-left-color: #eab308; border: 1px solid #fef08a; }
+  .saldo-box-err { background: linear-gradient(to right, #fef2f2, #ffffff); border-left-color: #ef4444; border: 1px solid #fecaca; }
+
+  .saldo-icon { font-size: 2rem; }
+  .saldo-box-ok .saldo-icon { color: #3b82f6; }
+  .saldo-box-warn .saldo-icon { color: #eab308; }
+  .saldo-box-err .saldo-icon { color: #ef4444; }
+
+  .saldo-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem;}
+  .saldo-value { font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
+  
+  .saldo-box-ok .saldo-label { color: #1d4ed8; } .saldo-box-ok .saldo-value { color: #1e3a8a; }
+  .saldo-box-warn .saldo-label { color: #a16207; } .saldo-box-warn .saldo-value { color: #713f12; }
+  .saldo-box-err .saldo-label { color: #b91c1c; } .saldo-box-err .saldo-value { color: #7f1d1d; }
+
+  /* Forms */
+  .form-group { margin-bottom: 1.5rem; }
+  .form-label { display: block; font-size: 0.9rem; font-weight: 600; color: #334155; margin-bottom: 0.5rem; }
+  .form-label span.optional { color: #94a3b8; font-size: 0.75rem; font-weight: 500; }
+  
+  .form-control, .form-group input:not([type="radio"]):not([type="checkbox"]), .form-group select, .form-group textarea {
+    width: 100%; padding: 0.8rem 1rem; border: 1.5px solid #cbd5e1; border-radius: var(--input-radius);
+    font-size: 0.95rem; color: #1e293b; background: #f8fafc; transition: all 0.2s ease; outline: none; box-shadow: none;
+  }
+  .form-control:focus, .form-group input:not([type="radio"]):not([type="checkbox"]):focus, .form-group select:focus, .form-group textarea:focus {
+    background: #fff; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  }
+
+  .form-help { font-size: 0.8rem; color: #64748b; margin-top: 0.4rem; font-weight: 500; }
+  
+  /* File Upload */
+  .upload-area {
+    border: 2px dashed #cbd5e1; border-radius: var(--input-radius); padding: 2.5rem 2rem;
+    text-align: center; background: #fafbff; transition: all 0.2s ease; cursor: pointer;
+    position: relative; margin-top: 0.5rem;
+  }
+  .upload-area:hover { border-color: #60a5fa; background: #eff6ff; }
+  .upload-icon { font-size: 2.5rem; color: #94a3b8; margin-bottom: 0.75rem; transition: color 0.2s ease; }
+  .upload-area:hover .upload-icon { color: #60a5fa; }
+  .upload-area input[type="file"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  
+  /* Error Message */
+  .error-message { font-size: 0.8rem; color: #ef4444; font-weight: 600; margin-top: 0.4rem; display: flex; align-items: center; gap: 0.3rem; }
+  
+  /* Buttons */
+  .btn-submit {
+    width: 100%; padding: 0.85rem 1.5rem; border-radius: var(--input-radius); border: none;
+    background: var(--primary-gradient); color: #fff; font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s ease; box-shadow: var(--primary-glow);
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  }
+  @media (min-width: 640px) { .btn-submit { width: auto; } }
+  .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -3px rgba(37, 99, 235, 0.5); }
+  
+  .btn-cancel {
+    width: 100%; padding: 0.85rem 1.5rem; border-radius: var(--input-radius);
+    background: #fff; color: #475569; font-size: 1rem; font-weight: 700; border: 1.5px solid #cbd5e1;
+    cursor: pointer; transition: all 0.2s ease;text-align: center; display: inline-flex; justify-content: center; align-items: center; gap: 0.5rem; text-decoration: none;
+  }
+  @media (min-width: 640px) { .btn-cancel { width: auto; } }
+  .btn-cancel:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
+
+  .actions-container {
+    display: flex; flex-direction: column-reverse; gap: 1rem; margin-top: 2rem; border-top: 1px solid #f1f5f9; padding-top: 1.5rem;
+  }
+  @media (min-width: 640px) { .actions-container { flex-direction: row; justify-content: flex-end; } }
+
+  /* Info Box */
+  .info-box { background: #fff; border-radius: var(--form-radius); padding: 1.5rem; margin-top: 1.5rem; border: 1px solid #eef0f4; box-shadow: var(--form-shadow); }
+  .info-title { font-size: 1.05rem; font-weight: 800; color: #1e293b; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+  .info-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem; }
+  @media (min-width: 640px) { .info-list { grid-template-columns: 1fr 1fr; } }
+  .info-item { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.85rem; color: #64748b; font-weight: 500; }
+  .info-item i { color: #10b981; font-size: 1rem; margin-top: 0.1rem; }
+  
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="premium-container">
+  <div style="max-width: 800px; margin: 0 auto;">
+    
+    <div class="premium-header-icon"><i class="fas fa-calendar-plus"></i></div>
+    <h2 class="premium-title">Solicitar Días Administrativos</h2>
+    <p class="premium-subtitle">Completa este formulario para requerir un nuevo permiso administrativo.</p>
+
+    <div class="premium-card">
+      <div class="premium-card-body">
+        
+        <!-- Saldo Panel -->
+        <div class="saldo-box {% if user.dias_disponibles < 2 %}saldo-box-err{% elif user.dias_disponibles < 4 %}saldo-box-warn{% else %}saldo-box-ok{% endif %}">
+          <div class="saldo-icon"><i class="fas fa-wallet"></i></div>
+          <div>
+            <div class="saldo-label">Días Disponibles</div>
+            <div class="saldo-value">{{ user.dias_disponibles|floatformat:1 }} <span style="font-size:0.45em;font-weight:700;color:inherit;opacity:0.6;text-transform:uppercase;letter-spacing:-0.5px;">de 6.0</span></div>
+          </div>
         </div>
-    </div>
 
-    <!-- Formulario -->
-    <div class="bg-white rounded-xl shadow-sm p-8">
         {% if form.non_field_errors %}
-        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-            <div class="flex items-center">
-
-                <div class="text-sm text-red-700">
-                    {{ form.non_field_errors }}
-                </div>
-            </div>
+        <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:0.75rem;padding:1rem;margin-bottom:1.5rem;border-left:4px solid #ef4444;">
+          <div style="font-size:0.85rem;font-weight:600;color:#b91c1c;display:flex;align-items:flex-start;">
+            <i class="fas fa-exclamation-triangle" style="margin-right:0.4rem;margin-top:0.2rem;"></i> 
+            <div>{{ form.non_field_errors }}</div>
+          </div>
         </div>
         {% endif %}
 
-        <form method="post" enctype="multipart/form-data" class="space-y-6">
+        <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
 
-            <!-- Fecha de Inicio -->
-            <div class="form-group">
-                <label for="{{ form.fecha_inicio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                    {{ form.fecha_inicio.label }}
-                </label>
-                {{ form.fecha_inicio }}
-                {% if form.fecha_inicio.errors %}
-                <p class="error-message mt-2">
+            <div style="display:grid;grid-template-columns:1fr;gap:1.5rem;">
+              
+              <div class="form-group" style="margin:0;">
+                  <label for="{{ form.fecha_inicio.id_for_label }}" class="form-label">
+                      {{ form.fecha_inicio.label }}
+                  </label>
+                  {{ form.fecha_inicio }}
+                  {% if form.fecha_inicio.errors %}
+                  <div class="error-message"><i class="fas fa-info-circle"></i> {{ form.fecha_inicio.errors.0 }}</div>
+                  {% endif %}
+                  <div class="form-help">Selecciona un día hábil (lunes a viernes).</div>
+              </div>
 
-                    {{ form.fecha_inicio.errors.0 }}
-                </p>
-                {% endif %}
-                <p class="help-text">Selecciona un día hábil para iniciar tu permiso</p>
+              <div class="form-group" style="margin:0;">
+                  <label for="{{ form.dias_solicitados.id_for_label }}" class="form-label">
+                      {{ form.dias_solicitados.label }}
+                  </label>
+                  {{ form.dias_solicitados }}
+                  {% if form.dias_solicitados.errors %}
+                  <div class="error-message"><i class="fas fa-info-circle"></i> {{ form.dias_solicitados.errors.0 }}</div>
+                  {% endif %}
+                  <div class="form-help">Puedes solicitar desde 0.5 hasta 3.0 días consecutivos.</div>
+              </div>
+
+              <!-- Jornada (Oculta por defecto) -->
+              <div id="jornada-container" class="form-group" style="display: none; margin:0; padding:1.25rem; background:#f8fafc; border-radius:var(--input-radius); border:1px solid #eef0f4;">
+                  <label for="{{ form.jornada.id_for_label }}" class="form-label" style="font-size:0.95rem; margin-bottom:1rem;">
+                      <i class="fas fa-clock text-blue-500 mr-2"></i> {{ form.jornada.label }}
+                  </label>
+                  
+                  <div class="jornada-django-wrapper">
+                      {{ form.jornada }}
+                  </div>
+
+                  {% if form.jornada.errors %}
+                  <div class="error-message" style="margin-top:1rem;"><i class="fas fa-info-circle"></i> {{ form.jornada.errors.0 }}</div>
+                  {% endif %}
+              </div>
+
+              <div class="form-group" style="margin:0;">
+                  <label for="{{ form.observacion.id_for_label }}" class="form-label">
+                      {{ form.observacion.label }} <span class="optional">(Opcional)</span>
+                  </label>
+                  {{ form.observacion }}
+                  {% if form.observacion.errors %}
+                  <div class="error-message"><i class="fas fa-info-circle"></i> {{ form.observacion.errors.0 }}</div>
+                  {% endif %}
+                  <div class="form-help">Describe el motivo o justificación de tu solicitud si es necesario.</div>
+              </div>
+
+              <div class="form-group" style="margin:0;">
+                  <label for="{{ form.archivo_justificacion.id_for_label }}" class="form-label">
+                      {{ form.archivo_justificacion.label }} <span class="optional">(Opcional)</span>
+                  </label>
+                  
+                  <div class="upload-area" id="drop-area">
+                    <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                    <div style="font-weight:700;color:#334155;margin-bottom:0.25rem;">Arrastra un archivo o haz clic para subir</div>
+                    <div style="font-size:0.8rem;color:#64748b;font-weight:500;">Formatos soportados: PDF, JPG, PNG (Max 5MB)</div>
+                    <div id="file-name-display" style="font-weight:700;color:#2563eb;margin-top:0.75rem;font-size:0.9rem;"></div>
+                    {{ form.archivo_justificacion }}
+                  </div>
+
+                  {% if form.archivo_justificacion.errors %}
+                  <div class="error-message"><i class="fas fa-info-circle"></i> {{ form.archivo_justificacion.errors.0 }}</div>
+                  {% endif %}
+              </div>
+
             </div>
 
-            <!-- Días Solicitados -->
-            <div class="form-group">
-                <label for="{{ form.dias_solicitados.id_for_label }}"
-                    class="block text-sm font-medium text-gray-700 mb-2">
-                    {{ form.dias_solicitados.label }}
-                </label>
-                {{ form.dias_solicitados }}
-                {% if form.dias_solicitados.errors %}
-                <p class="error-message mt-2">
-
-                    {{ form.dias_solicitados.errors.0 }}
-                </p>
-                {% endif %}
-                <p class="help-text">Puedes solicitar desde 0.5 hasta 3.0 días</p>
-            </div>
-
-            <!-- Jornada (solo para medio día) -->
-            <div id="jornada-container" class="form-group" style="display: none;">
-                <label for="{{ form.jornada.id_for_label }}"
-                    class="block text-sm font-medium text-gray-700 mb-2">
-                    {{ form.jornada.label }}
-                </label>
-                <div class="space-y-2">
-                    {{ form.jornada }}
-                </div>
-                {% if form.jornada.errors %}
-                <p class="error-message mt-2">
-                    {{ form.jornada.errors.0 }}
-                </p>
-                {% endif %}
-                <p class="help-text">Selecciona si el medio día del permiso es para la mañana (AM) o tarde (PM)</p>
-            </div>
-
-            <!-- Observación -->
-            <div class="form-group">
-                <label for="{{ form.observacion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                    {{ form.observacion.label }}
-                    <span class="text-gray-400 text-xs ml-1">(Opcional)</span>
-                </label>
-                {{ form.observacion }}
-                {% if form.observacion.errors %}
-                <p class="error-message mt-2">
-
-                    {{ form.observacion.errors.0 }}
-                </p>
-                {% endif %}
-                <p class="help-text">Describe el motivo o justificación de tu solicitud</p>
-            </div>
-
-            <!-- Archivo de Justificación -->
-            <div class="form-group">
-                <label for="{{ form.archivo_justificacion.id_for_label }}"
-                    class="block text-sm font-medium text-gray-700 mb-2">
-                    <i class="fas fa-file-upload mr-2 text-orange-500"></i>{{ form.archivo_justificacion.label }}
-                    <span class="text-gray-400 text-xs ml-1">(Opcional)</span>
-                </label>
-                <div
-                    class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-400 transition">
-                    <div class="space-y-1 text-center">
-                        <i class="fas fa-cloud-upload-alt text-gray-400 text-4xl mb-3"></i>
-                        <div class="flex text-sm text-gray-600">
-                            <label for="{{ form.archivo_justificacion.id_for_label }}"
-                                class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none">
-                                <span>Seleccionar archivo</span>
-                                {{ form.archivo_justificacion }}
-                            </label>
-                        </div>
-                        <p class="text-xs text-gray-500">PDF, JPG o PNG hasta 5MB</p>
-                    </div>
-                </div>
-                {% if form.archivo_justificacion.errors %}
-                <p class="error-message mt-2">
-                    <i class="fas fa-exclamation-circle"></i>
-                    {{ form.archivo_justificacion.errors.0 }}
-                </p>
-                {% endif %}
-                <p class="help-text">{{ form.archivo_justificacion.help_text }}</p>
-            </div>
-
-            <!-- Botones -->
-            <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
-                <a href="{% url 'dashboard_funcionario' %}"
-                    class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
-                    <i class="fas fa-times mr-2"></i>Cancelar
+            <div class="actions-container">
+                <a href="{% url 'dashboard_funcionario' %}" class="btn-cancel">
+                    <i class="fas fa-times text-gray-400"></i> Cancelar
                 </a>
-                <button type="submit"
-                    class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                    <i class="fas fa-paper-plane mr-2"></i>Enviar Solicitud
+                <button type="submit" class="btn-submit">
+                    Enviar Solicitud <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
         </form>
+      </div>
     </div>
 
-    <!-- Información Adicional -->
-    <div class="mt-6 bg-gray-50 rounded-xl p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-3">
-            <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>Información Importante
-        </h3>
-        <ul class="space-y-2 text-sm text-gray-600">
-            <li class="flex items-start">
-                <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
-                <span>Las solicitudes deben ser aprobadas por el Director</span>
-            </li>
-            <li class="flex items-start">
-                <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
-                <span>Solo puedes solicitar días en fechas hábiles (lunes a viernes)</span>
-            </li>
-            <li class="flex items-start">
-                <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
-                <span>El documento de respaldo es opcional pero puede ayudar a justificar tu solicitud</span>
-            </li>
-            <li class="flex items-start">
-                <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5"></i>
-                <span>Recibirás una notificación cuando tu solicitud sea procesada</span>
-            </li>
-        </ul>
+    <!-- Info Box -->
+    <div class="info-box">
+      <div class="info-title"><i class="fas fa-lightbulb text-amber-500"></i> Recuerda lo siguiente</div>
+      <ul class="info-list">
+        <li class="info-item"><i class="fas fa-check-circle"></i> Sujeta a evaluación y aprobación del Director.</li>
+        <li class="info-item"><i class="fas fa-check-circle"></i> Solo puedes solicitar días en fechas hábiles (L-V).</li>
+        <li class="info-item"><i class="fas fa-check-circle"></i> El documento de respaldo facilita la justificación técnica.</li>
+        <li class="info-item"><i class="fas fa-check-circle"></i> Recibirás una notificación en el portal al ser procesada.</li>
+      </ul>
     </div>
+
+  </div>
 </div>
 
 <style>
-/* Estilos para los radio buttons de jornada */
-.jornada-radio input[type="radio"] {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    width: 20px;
-    height: 20px;
-    border: 2px solid #d1d5db;
-    border-radius: 50%;
-    margin-right: 8px;
-    position: relative;
-    cursor: pointer;
+/* CSS para arreglar el checkbox/radio renderizado nativamente por Django */
+.jornada-django-wrapper ul {
+  list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; flex-wrap: wrap;
 }
-
-.jornada-radio input[type="radio"]:checked {
-    border-color: #3b82f6;
-    background-color: #3b82f6;
+.jornada-django-wrapper ul li {
+  flex: 1; min-width: 150px;
 }
-
-.jornada-radio input[type="radio"]:checked::after {
-    content: '';
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 8px;
-    height: 8px;
-    background-color: white;
-    border-radius: 50%;
+.jornada-django-wrapper ul li label {
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  padding: 1rem 1.25rem; border: 1.5px solid #cbd5e1; border-radius: var(--input-radius);
+  background: #fff; cursor: pointer; font-weight: 700; font-size: 0.95rem; color: #475569; transition: all 0.2s ease;
+  width: 100%; box-sizing: border-box; text-align: center;
 }
-
-.jornada-radio label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: background-color 0.2s;
+.jornada-django-wrapper ul li label:hover {
+  background: #f8fafc; border-color: #94a3b8; transform: translateY(-1px);
 }
-
-.jornada-radio label:hover {
-    background-color: #f3f4f6;
+.jornada-django-wrapper ul li input[type="radio"] {
+  display: none;
 }
-
-.jornada-radio input[type="radio"]:checked + label {
-    background-color: #eff6ff;
-    border-color: #3b82f6;
+.jornada-django-wrapper ul li label:has(input[type="radio"]:checked) {
+  border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; box-shadow: inset 0 0 0 2px #3b82f6;
 }
 </style>
 
 <script>
     // Mostrar nombre del archivo seleccionado
-    document.getElementById('{{ form.archivo_justificacion.id_for_label }}').addEventListener('change', function (e) {
-        const fileName = e.target.files[0]?.name;
-        if (fileName) {
-            const label = e.target.closest('.space-y-1');
-            const span = label.querySelector('span');
-            span.textContent = fileName;
-            span.classList.add('text-green-600', 'font-semibold');
-        }
-    });
+    const fileInput = document.getElementById('{{ form.archivo_justificacion.id_for_label }}');
+    const dropArea = document.getElementById('drop-area');
+    const fileNameDisplay = document.getElementById('file-name-display');
+
+    if (fileInput) {
+      fileInput.addEventListener('change', function (e) {
+          const fileName = e.target.files[0]?.name;
+          fileNameDisplay.innerHTML = fileName ? `<i class="fas fa-file-alt mr-1"></i> ${fileName}` : '';
+      });
+      
+      if(dropArea) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+          dropArea.addEventListener(eventName, preventDefaults, false)
+        });
+        function preventDefaults (e) { e.preventDefault(); e.stopPropagation(); }
+        ['dragenter', 'dragover'].forEach(eventName => {
+          dropArea.addEventListener(eventName, highlight, false)
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+          dropArea.addEventListener(eventName, unhighlight, false)
+        });
+        function highlight(e) { dropArea.style.borderColor = '#3b82f6'; dropArea.style.backgroundColor = '#eff6ff'; }
+        function unhighlight(e) { dropArea.style.borderColor = '#cbd5e1'; dropArea.style.backgroundColor = '#fafbff'; }
+      }
+    }
 
     // Mostrar/ocultar campo jornada basado en días solicitados
     document.addEventListener('DOMContentLoaded', function() {
         const diasSelect = document.getElementById('{{ form.dias_solicitados.id_for_label }}');
         const jornadaContainer = document.getElementById('jornada-container');
-        const jornadaRadios = document.querySelectorAll('input[name="jornada"]');
-
-        function toggleJornada() {
-            const selectedValue = parseFloat(diasSelect.value);
-            // Mostrar jornada para cualquier valor que termine en .5 (medio día)
-            const esMedioDia = selectedValue % 1 === 0.5;
-            if (esMedioDia) {
-                jornadaContainer.style.display = 'block';
-                // Marcar como requerido
-                jornadaRadios.forEach(radio => {
-                    radio.required = true;
-                    radio.setAttribute('aria-required', 'true');
-                });
-            } else {
-                jornadaContainer.style.display = 'none';
-                // Quitar requerido
-                jornadaRadios.forEach(radio => {
-                    radio.required = false;
-                    radio.removeAttribute('aria-required');
-                });
-            }
-        }
-
-        // Event listener para cambios en el select
-        diasSelect.addEventListener('change', toggleJornada);
-
-        // Verificar estado inicial
-        toggleJornada();
-
-        // Warning de 2 días de anticipación
-        const fechaInicioInput = document.getElementById('{{ form.fecha_inicio.id_for_label }}');
-        function checkAnticipacion() {
-            if(!fechaInicioInput.value) return;
-            // Parsear como fecha local para evitar timezone shifts
+        const checkAnticipacion = function() {
+            const fechaInicioInput = document.getElementById('{{ form.fecha_inicio.id_for_label }}');
+            if(!fechaInicioInput || !fechaInicioInput.value) return;
             const parts = fechaInicioInput.value.split('-');
             if (parts.length !== 3) return;
             const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
@@ -298,21 +325,71 @@
                 if (!warningDiv) {
                     warningDiv = document.createElement('div');
                     warningDiv.id = 'fecha-warning';
-                    warningDiv.className = 'mt-3 p-3 bg-amber-50 rounded-lg text-sm text-amber-800 font-medium shadow-sm flex items-start';
-                    warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-2 mt-0.5 text-amber-500"></i><span><strong>Fuera de plazo:</strong> Estás solicitando este permiso con menos de 2 días de anticipación. Requerirá aprobación especial del director.</span>';
+                    warningDiv.style = "margin-top:1rem; padding:1rem; background:linear-gradient(to right, #fffbeb, #ffffff); border:1px solid #fcd34d; border-left:4px solid #f59e0b; border-radius:var(--input-radius); font-size:0.85rem; color:#b45309; font-weight:600; display:flex; align-items:flex-start; gap:0.6rem; animation:slideDown 0.3s ease;";
+                    warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle" style="margin-top:0.2rem;color:#f59e0b;font-size:1.1rem;"></i><div><strong>Alerta de Anticipación:</strong> Estás solicitando este permiso con menos de 2 días de anticipación. Requerirá la aprobación explícita y especial del director.</div>';
                     fechaInicioInput.parentNode.appendChild(warningDiv);
                 }
             } else {
-                if (warningDiv) {
-                    warningDiv.remove();
-                }
+                if (warningDiv) warningDiv.remove();
+            }
+        };
+
+        if(document.getElementById('{{ form.fecha_inicio.id_for_label }}')) {
+          document.getElementById('{{ form.fecha_inicio.id_for_label }}').addEventListener('change', checkAnticipacion);
+          checkAnticipacion();
+        }
+
+        function toggleJornada() {
+            if(!diasSelect) return;
+            const selectedValue = parseFloat(diasSelect.value);
+            const esMedioDia = selectedValue % 1 === 0.5;
+            const radios = document.querySelectorAll('input[name="jornada"]');
+            
+            if (esMedioDia) {
+                jornadaContainer.style.display = 'block';
+                jornadaContainer.style.animation = 'slideDown 0.3s ease forwards';
+                radios.forEach(radio => radio.setAttribute('required', 'required'));
+            } else {
+                jornadaContainer.style.display = 'none';
+                radios.forEach(radio => {
+                  radio.removeAttribute('required');
+                  radio.checked = false;
+                  // Despachar evento para nuestro polyfill
+                  radio.dispatchEvent(new Event('change'));
+                });
             }
         }
-        
-        if (fechaInicioInput) {
-            fechaInicioInput.addEventListener('change', checkAnticipacion);
-            checkAnticipacion(); // check current value on load
+
+        if (diasSelect) {
+          diasSelect.addEventListener('change', toggleJornada);
+          toggleJornada(); 
         }
+        
+        // JS Fallback para navegadores que no soportan :has()
+        const radioLabels = document.querySelectorAll('.jornada-django-wrapper ul li label');
+        const radios = document.querySelectorAll('.jornada-django-wrapper ul li input');
+        
+        function updateRadiosUI() {
+          radioLabels.forEach(lbl => {
+             const input = lbl.querySelector('input');
+             if(input && input.checked) {
+               lbl.style.borderColor = "#3b82f6";
+               lbl.style.background = "#eff6ff";
+               lbl.style.color = "#1d4ed8";
+               lbl.style.boxShadow = "inset 0 0 0 2px #3b82f6";
+             } else {
+               lbl.style.borderColor = "";
+               lbl.style.background = "";
+               lbl.style.color = "";
+               lbl.style.boxShadow = "";
+             }
+          });
+        }
+        
+        radios.forEach(radio => {
+          radio.addEventListener('change', updateRadiosUI);
+        });
+        updateRadiosUI(); // Inicialización
     });
 </script>
 {% endblock %}

@@ -305,6 +305,7 @@
             {% for licencia in licencias %}
             <tr>
                 <td class="text-center numero">{{ licencia.fecha_inicio|date:"d/m/Y" }}</td>
+                <td class="text-center numero">{{ licencia.fecha_termino|date:"d/m/Y"|default:"-" }}</td>
                 <td class="text-center numero">{{ licencia.dias }}</td>
                 <td class="text-center">{{ licencia.created_by|default:"-" }}</td>
                 <td class="text-center numero">{{ licencia.created_at|date:"d/m/Y H:i" }}</td>

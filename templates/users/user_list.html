@@ -1,390 +1,444 @@
 {% extends 'base.html' %}
 {% load l10n %}
 
-{% block title %}Gestión de Usuarios - FLUX{% endblock %}
 {% block page_title %}Administración de Usuarios{% endblock %}
 
 {% block content %}
-<div class="p-4 sm:p-6 space-y-8">
-    <!-- Header Section -->
-    <div>
-        <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Gestión de Usuarios</h2>
-        <p class="text-sm sm:text-base text-gray-500 mt-1 font-medium">Administra los usuarios, roles y saldos de días administrativos.</p>
-        <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto mt-6">
-            {% if request.user.role == 'ADMIN' %}
-            <div class="relative group/backup">
-                <button
-                    class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-purple-700 shadow-lg shadow-purple-100 transition-all">
-                    <i class="fas fa-shield-alt mr-2"></i> Respaldo
-                </button>
-                <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 invisible group-hover/backup:opacity-100 group-hover/backup:visible transition-all z-50 p-2 space-y-1">
-                    <a href="{% url 'backup_export_users' %}"
-                        class="flex items-center gap-3 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-xl transition-all">
-                        <i class="fas fa-download w-4"></i> Descargar
-                    </a>
-                    <a href="{% url 'backup_restore_users' %}"
-                        class="flex items-center gap-3 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-50 rounded-xl transition-all">
-                        <i class="fas fa-upload w-4"></i> Restaurar
-                    </a>
-                </div>
-            </div>
-            {% endif %}
-            <a href="{% url 'bulk_import_users' %}"
-                class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-green-700 shadow-lg shadow-green-100 transition-all">
-                <i class="fas fa-file-excel mr-2"></i> Importar Excel
-            </a>
-            <form action="{% url 'recalculate_all_balances' %}" method="post" class="w-full sm:w-auto">
-                {% csrf_token %}
-                <button type="submit" onclick="return confirm('¿Estás seguro de que deseas recalcular todos los saldos? Esto sincronizará los días de todos los funcionarios basándose en sus permisos aceptados.')"
-                    class="w-full inline-flex items-center justify-center px-6 py-3 bg-amber-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-amber-600 shadow-lg shadow-amber-100 transition-all">
-                    <i class="fas fa-sync-alt mr-2"></i> Recalcular Saldos
-                </button>
-            </form>
-            <a href="{% url 'user_create' %}"
-                class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all">
-                <i class="fas fa-user-plus mr-2"></i> Crear Usuario
-            </a>
-        </div>
-    </div>
+<style>
+  :root {
+    --usr-radius: 1.25rem;
+    --usr-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+    --input-radius: 0.85rem;
+    --primary-gradient: linear-gradient(135deg, #3b82f6, #2563eb);
+    --primary-glow: 0 4px 15px -3px rgba(37, 99, 235, 0.4);
+  }
 
-    <!-- Search Section -->
-    <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50">
-        <form method="get" class="flex flex-col md:flex-row gap-4">
-            <div class="flex-1 flex items-center bg-gray-50 rounded-2xl focus-within:ring-4 focus-within:ring-blue-50 transition-all overflow-hidden">
-                <div class="pl-4 pr-2 flex items-center text-gray-400 flex-shrink-0 pointer-events-none">
-                    <i class="fas fa-search text-sm"></i>
-                </div>
-                <input type="text" name="search" value="{{ request.GET.search }}"
-                    placeholder="Buscar por nombre, RUN o correo..."
-                    class="flex-1 pr-4 py-4 bg-transparent text-sm font-bold text-gray-700 outline-none">
+  .premium-container {
+    padding: 1.25rem;
+    min-height: 100%;
+    background: #f8f9fc;
+  }
+  @media (min-width: 768px) {
+    .premium-container { padding: 2.5rem; }
+  }
+
+  .premium-header-icon {
+    width: 3.5rem; height: 3.5rem; border-radius: 1rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    color: #2563eb; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid #bfdbfe; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.1);
+    margin-bottom: 1rem;
+  }
+
+  .premium-title { font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.025em; margin: 0; line-height: 1.2; }
+  .premium-subtitle { color: #64748b; font-size: 0.95rem; margin-top: 0.35rem; font-weight: 500; }
+
+  /* Acciones Superiores */
+  .actions-bar {
+    display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .actions-bar { flex-direction: row; flex-wrap: wrap; margin-top: 2rem; align-items: center; justify-content: flex-end;}
+  }
+
+  .btn-action {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    padding: 0.75rem 1.25rem; border-radius: var(--input-radius); border: none;
+    font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
+    text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none; width: 100%;
+  }
+  @media (min-width: 768px) { .btn-action { width: auto; } }
+  
+  .btn-primary { background: var(--primary-gradient); color: #fff; box-shadow: var(--primary-glow); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -3px rgba(37, 99, 235, 0.5); }
+  
+  .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 4px 15px -3px rgba(16, 185, 129, 0.4); }
+  .btn-success:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -3px rgba(16, 185, 129, 0.5); }
+  
+  .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; box-shadow: 0 4px 15px -3px rgba(245, 158, 11, 0.4); }
+  .btn-warning:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -3px rgba(245, 158, 11, 0.5); }
+  
+  .btn-purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff; box-shadow: 0 4px 15px -3px rgba(139, 92, 246, 0.4); }
+  .btn-purple:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -3px rgba(139, 92, 246, 0.5); }
+
+  /* Dropdown Backup */
+  .dropdown-wrap { position: relative; width: 100%; }
+  @media (min-width: 768px) { .dropdown-wrap { width: auto; } }
+  .dropdown-content {
+    position: absolute; top: calc(100% + 0.5rem); right: 0; width: max-content;
+    background: #fff; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    border: 1px solid #eef0f4; padding: 0.5rem; opacity: 0; visibility: hidden;
+    transform: translateY(-10px); transition: all 0.2s; z-index: 50; min-width: 200px;
+  }
+  .dropdown-wrap:hover .dropdown-content { opacity: 1; visibility: visible; transform: translateY(0); }
+  .dropdown-item {
+    display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
+    border-radius: 0.5rem; font-size: 0.8rem; font-weight: 700; color: #475569;
+    text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none; transition: background 0.2s;
+  }
+  .dropdown-item:hover { background: #f8fafc; color: #0f172a; }
+  .dropdown-item.danger:hover { background: #fef2f2; color: #ef4444; }
+
+  /* Panel Búsqueda y Filtros */
+  .search-panel {
+    background: #fff; border-radius: var(--usr-radius); box-shadow: var(--usr-shadow);
+    padding: 1.5rem; margin-top: 1.5rem; border: 1px solid #eef0f4;
+  }
+  .search-input-wrap {
+    display: flex; align-items: center; background: #f8fafc; border: 2px solid #e2e8f0;
+    border-radius: var(--input-radius); padding: 0.5rem 1rem; transition: border-color 0.2s; width: 100%;
+  }
+  .search-input-wrap:focus-within { border-color: #3b82f6; background: #fff; }
+  .search-input-wrap i { color: #94a3b8; font-size: 1.1rem; margin-right: 0.75rem; }
+  .search-input { border: none; background: transparent; outline: none; flex: 1; font-size: 0.95rem; font-weight: 600; color: #334155; padding: 0.4rem 0; width: 100%; }
+
+  .filter-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; align-items: center; }
+  .filter-tags-label { font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-right: 0.5rem; }
+  .tag {
+    padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 700;
+    background: #f1f5f9; color: #475569; text-decoration: none; transition: all 0.2s; border: 1.5px solid transparent;
+  }
+  .tag:hover { background: #e2e8f0; color: #0f172a; }
+  .tag.active { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+
+  /* Importación Exitosa Box */
+  .bulk-box {
+    background: linear-gradient(to right, #f0fdf4, #ffffff); border-radius: var(--usr-radius);
+    border: 1px solid #bbf7d0; border-left: 4px solid #22c55e; padding: 1.5rem; margin-top: 1.5rem;
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.05);
+  }
+  .bulk-title { font-size: 1.25rem; font-weight: 800; color: #166534; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .bulk-table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: #fff; border-radius: 0.75rem; overflow: hidden; border: 1px solid #dcfce7; }
+  .bulk-table th { background: #f0fdf4; padding: 0.75rem; text-align: left; font-size: 0.75rem; font-weight: 800; color: #166534; text-transform: uppercase; }
+  .bulk-table td { padding: 0.75rem; border-top: 1px solid #f0fdf4; font-size: 0.9rem; font-weight: 600; color: #334155; }
+  
+  /* Tabla y Cards de Usuarios */
+  .table-card {
+    background: #fff; border-radius: var(--usr-radius); box-shadow: var(--usr-shadow);
+    border: 1px solid #eef0f4; overflow: visible; margin-top: 1.5rem;
+  }
+
+  /* Vista Desktop (Tabla) */
+  .desktop-table { width: 100%; border-collapse: collapse; display: none; }
+  @media (min-width: 1024px) { .desktop-table { display: table; } }
+  .desktop-table th {
+    padding: 1rem 1.5rem; text-align: left; font-size: 0.75rem; font-weight: 800;
+    color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9; background: #fafbff;
+  }
+  .desktop-table td { padding: 1.25rem 1.5rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; transition: background 0.15s; }
+  .desktop-table tr:last-child td { border-bottom: none; }
+  .desktop-table tbody tr:hover { background: #f8fafc; }
+
+  /* Vista Mobile (Cards) */
+  .mobile-list { display: grid; grid-template-columns: 1fr; gap: 1rem; padding: 1rem; }
+  @media (min-width: 640px) { .mobile-list { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1024px) { .mobile-list { display: none; } }
+
+  .user-card {
+    background: #fff; border-radius: 1rem; border: 1px solid #e2e8f0; padding: 1.25rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); transition: all 0.2s; display: flex; flex-direction: column; gap: 1rem;
+  }
+  .user-card:hover { border-color: #cbd5e1; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+
+  /* Componentes de Usuario */
+  .user-avatar-box { display: flex; align-items: center; gap: 1rem; }
+  .user-avatar {
+    width: 3rem; height: 3rem; border-radius: 0.75rem; background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; float: left;
+    box-shadow: 0 4px 10px rgba(37,99,235,0.2); flex-shrink: 0; text-transform: uppercase;
+  }
+  .user-name { font-size: 1rem; font-weight: 800; color: #0f172a; line-height: 1.2; margin-bottom: 0.15rem; }
+  .user-run { font-size: 0.75rem; font-weight: 700; color: #64748b; }
+
+  .badge { display: inline-flex; padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; align-items: center; justify-content: center;}
+  .badge-role { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .badge-purple { background: #faf5ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+  .badge-pink { background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; }
+  .badge-gray { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+
+  .horario-info { display: flex; flex-direction: column; gap: 0.15rem; }
+  .horario-time { font-size: 0.85rem; font-weight: 800; color: #334155; display: flex; align-items: center; gap: 0.3rem;}
+  .horario-time i { color: #3b82f6; }
+  .horario-tol { font-size: 0.7rem; font-weight: 600; color: #94a3b8; }
+  .horario-none { font-size: 0.75rem; font-weight: 700; color: #ef4444; background: #fef2f2; padding: 0.2rem 0.5rem; border-radius: 0.5rem; display: inline-block; width: max-content; }
+
+  /* Barra de Días */
+  .progress-wrap { width: 100%; min-width: 80px; max-width: 150px; }
+  .progress-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem; font-size: 0.75rem; font-weight: 800; }
+  .progress-val { color: #0f172a; }
+  .progress-bar { width: 100%; height: 0.5rem; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 999px; transition: width 0.5s ease; }
+  .fill-green { background: #22c55e; }
+  .fill-amber { background: #f59e0b; }
+  .fill-red { background: #ef4444; }
+
+  /* Acciones de Fila */
+  .row-actions { display: flex; gap: 0.5rem; align-items: center; justify-content: flex-end; }
+  .btn-icon {
+    width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;
+    background: #f8fafc; color: #64748b; font-size: 0.9rem; transition: all 0.2s; border: 1px solid transparent; text-decoration: none;
+  }
+  .btn-icon:hover { background: #fff; border-color: #cbd5e1; color: #0f172a; transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+  /* Menú Desplegable Filas */
+  .row-menu-wrap { position: relative; }
+  .row-menu-content {
+    position: absolute; right: 0; bottom: calc(100% + 0.25rem); width: max-content;
+    background: #fff; border-radius: 0.75rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    border: 1px solid #eef0f4; padding: 0.4rem; opacity: 0; visibility: hidden;
+    transform: translateY(10px); transition: all 0.2s; z-index: 10;
+  }
+  .row-menu-wrap:hover .row-menu-content { opacity: 1; visibility: visible; transform: translateY(0); }
+  @media (max-width: 1023px) {
+    .row-menu-content { top: calc(100% + 0.25rem); bottom: auto; transform: translateY(-10px); }
+  }
+
+  .row-menu-item {
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.85rem; border-radius: 0.5rem;
+    font-size: 0.75rem; font-weight: 700; color: #475569; text-decoration: none; transition: background 0.2s; width: 100%; box-sizing: border-box; justify-content: flex-start; border: none; background: transparent; cursor: pointer; text-align: left;
+  }
+  .row-menu-item:hover { background: #f1f5f9; color: #0f172a; }
+  .row-menu-item.danger { color: #ef4444; }
+  .row-menu-item.danger:hover { background: #fef2f2; color: #dc2626; }
+</style>
+
+<div class="premium-container">
+  
+  <div style="display:flex; flex-direction:column; gap:1rem; margin-bottom:1.5rem; @media (min-width: 768px){flex-direction:row; justify-content:space-between; align-items:flex-end;}">
+      
+      <!-- Título -->
+      <div>
+        <div class="premium-header-icon"><i class="fas fa-users-cog"></i></div>
+        <h2 class="premium-title">Gestión de Usuarios</h2>
+        <p class="premium-subtitle">Administra los roles, saldos de días y horarios de todo el personal.</p>
+      </div>
+
+      <!-- Botones Principales -->
+      <div class="actions-bar">
+          {% if request.user.role == 'ADMIN' %}
+          <div class="dropdown-wrap">
+              <button class="btn-action btn-purple">
+                  <i class="fas fa-shield-alt"></i> Seguridad <i class="fas fa-chevron-down" style="font-size:0.7em;"></i>
+              </button>
+              <div class="dropdown-content">
+                  <a href="{% url 'backup_export_users' %}" class="dropdown-item"><i class="fas fa-download text-purple-600"></i> Descargar Respaldo</a>
+                  <a href="{% url 'backup_restore_users' %}" class="dropdown-item danger"><i class="fas fa-upload text-red-500"></i> Restaurar Info</a>
+              </div>
+          </div>
+          {% endif %}
+          
+          <a href="{% url 'bulk_import_users' %}" class="btn-action btn-success">
+              <i class="fas fa-file-excel"></i> Importar
+          </a>
+          
+          <form action="{% url 'recalculate_all_balances' %}" method="post" style="margin:0;">
+              {% csrf_token %}
+              <button type="submit" class="btn-action btn-warning" onclick="return confirm('¿Confirma recalcular los saldos de todos los funcionarios según sus permisos vigentes?')">
+                  <i class="fas fa-sync-alt"></i> Sincronizar Saldos
+              </button>
+          </form>
+          
+          <a href="{% url 'user_create' %}" class="btn-action btn-primary">
+              <i class="fas fa-user-plus"></i> Nuevo Usuario
+          </a>
+      </div>
+  </div>
+
+  <!-- Buscador y Filtros -->
+  <div class="search-panel">
+    <form method="get" style="margin:0;">
+        <div style="display:flex; gap:1rem; flex-direction:column; @media (min-width:640px){flex-direction:row;}">
+            <div class="search-input-wrap">
+                <i class="fas fa-search"></i>
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Ingresa RUN, nombre o correo electrónico..." class="search-input">
             </div>
-            <div class="flex flex-col sm:flex-row gap-2">
-                <button type="submit"
-                    class="w-full sm:w-auto px-8 py-4 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-gray-800 transition-all">
-                    Buscar
-                </button>
+            <div style="display:flex; gap:0.5rem; flex-shrink:0;">
+                <button type="submit" class="btn-action" style="background:#0f172a; color:#fff;">Buscar</button>
                 {% if request.GET.search %}
-                <a href="{% url 'user_list' %}"
-                    class="w-full sm:w-auto px-6 py-4 bg-gray-100 text-gray-500 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-gray-200 transition-all flex items-center justify-center">
-                    Limpiar
-                </a>
+                <a href="{% url 'user_list' %}" class="btn-action" style="background:#f1f5f9; color:#475569; padding:0 1rem;"><i class="fas fa-times"></i></a>
                 {% endif %}
             </div>
-        </form>
-    </div>
-
-    <!-- Sorting and Filter Section -->
-    <div class="bg-white p-4 rounded-[2rem] border border-gray-100 shadow-lg">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-2">
-                <span class="text-xs font-black text-gray-400 uppercase tracking-widest">Ordenar por:</span>
-                <div class="flex flex-wrap gap-1">
-                    <a href="?sort=name{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
-                        class="px-3 py-1.5 text-xs font-bold rounded-lg {% if current_sort == 'name' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} transition">
-                        Nombre A-Z
-                    </a>
-                    <a href="?sort=name_desc{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
-                        class="px-3 py-1.5 text-xs font-bold rounded-lg {% if current_sort == 'name_desc' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} transition">
-                        Nombre Z-A
-                    </a>
-                    <a href="?sort=role{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
-                        class="px-3 py-1.5 text-xs font-bold rounded-lg {% if current_sort == 'role' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} transition">
-                        Rol
-                    </a>
-                    <a href="?sort=recent{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
-                        class="px-3 py-1.5 text-xs font-bold rounded-lg {% if current_sort == 'recent' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %} transition">
-                        Más Reciente
-                    </a>
-                </div>
-            </div>
-            <div class="text-xs font-medium text-gray-500">
-                {{ users.count }} usuarios en total
-            </div>
-        </div>
-    </div>
-
-    {% if bulk_passwords %}
-    <!-- Bulk Success Alert -->
-    <div
-        class="bg-green-50 rounded-[2rem] border-2 border-green-100 p-6 md:p-8 animate-in fade-in slide-in-from-top-4 duration-500">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div>
-                <h3 class="text-xl font-black text-green-900 flex items-center gap-3">
-                    <div
-                        class="w-10 h-10 rounded-xl bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-100">
-                        <i class="fas fa-check"></i>
-                    </div>
-                    Importación Exitosa
-                </h3>
-                <p class="text-green-700 font-medium mt-2">Se han generado las siguientes contraseñas temporales.
-                    Cópialas ahora.</p>
-            </div>
-            <button onclick="window.print()"
-                class="text-xs font-black uppercase tracking-widest text-green-600 hover:text-green-700 bg-white px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all">
-                <i class="fas fa-print mr-2"></i> Imprimir lista
-            </button>
         </div>
 
-        <div class="bg-white rounded-3xl shadow-sm border border-green-100 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-green-50/50 border-b border-green-100">
-                        <tr>
-                            <th
-                                class="px-6 py-4 text-left text-[10px] font-black text-green-800 uppercase tracking-widest">
-                                RUN</th>
-                            <th
-                                class="px-6 py-4 text-left text-[10px] font-black text-green-800 uppercase tracking-widest">
-                                Contraseña Temporal</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-green-50">
-                        {% for run, password in bulk_passwords.items %}
-                        <tr class="hover:bg-green-50/30 transition-colors">
-                            <td class="px-6 py-4 text-sm font-bold text-gray-900">{{ run }}</td>
-                            <td class="px-6 py-4">
-                                <code
-                                    class="bg-gray-50 px-3 py-1.5 rounded-lg text-sm font-mono text-green-700 select-all border border-gray-100">{{ password }}</code>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="filter-tags">
+            <span class="filter-tags-label">Ordenar:</span>
+            <a href="?sort=name{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="tag {% if current_sort == 'name' %}active{% endif %}">Nombre A-Z</a>
+            <a href="?sort=role{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="tag {% if current_sort == 'role' %}active{% endif %}">Por Rol</a>
+            <a href="?sort=recent{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="tag {% if current_sort == 'recent' %}active{% endif %}">Recientes</a>
+            <span style="margin-left:auto; font-size:0.75rem; font-weight:800; color:#64748b;">{{ users.count }} Registros</span>
         </div>
-    </div>
-    {% endif %}
+    </form>
+  </div>
 
-    <!-- Directory Content -->
-    <div class="space-y-4">
-        <!-- Desktop Table (Hidden on small screens) -->
-        <div class="hidden lg:block bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 pb-20">
-            <table class="w-full">
-                <thead>
-                    <tr
-                        class="bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                        <th class="px-8 py-5 text-left">Usuario</th>
-                        <th class="px-8 py-5 text-left">Rol / Tipo</th>
-                        <th class="px-8 py-5 text-left">Horario</th>
-                        <th class="px-8 py-5 text-left">Días Disp.</th>
-                        <th class="px-8 py-5 text-right">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50">
-                    {% for user in users %}
-                    <tr class="hover:bg-gray-50/80 transition-all group">
-                        <td class="px-8 py-5">
-                            <div class="flex items-center gap-4">
-                                <div
-                                    class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex-shrink-0 flex items-center justify-center font-black text-lg shadow-lg shadow-blue-100">
-                                    {{ user.first_name.0 }}{{ user.last_name.0 }}
-                                </div>
-                                <div>
-                                    <h3
-                                        class="text-sm font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
-                                        {{ user.get_full_name }}</h3>
-                                    <p class="text-xs text-gray-400 font-medium mt-0.5">{{ user.run }}</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-8 py-5">
-                             <div class="flex flex-col gap-1.5">
-                                 <span class="px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest inline-flex w-fit
-                                     {% if user.funcion %}bg-purple-100 text-purple-700
-                                     {% elif user.tipo_funcionario %}bg-blue-100 text-blue-700
-                                     {% elif user.role == 'DIRECTOR' %}bg-purple-100 text-purple-700
-                                     {% elif user.role == 'SECRETARIA' %}bg-pink-100 text-pink-700
-                                     {% elif user.role == 'ADMIN' %}bg-gray-100 text-gray-700
-                                     {% else %}bg-blue-100 text-blue-700{% endif %}">
-                                     {{ user.get_funcion_display|default:user.get_tipo_funcionario_display|default:user.get_role_display }}
-                                 </span>
-                             </div>
-                        </td>
-                        <td class="px-8 py-5">
-                            {% if user.horario %}
-                            <div class="flex flex-col gap-1">
-                                <span
-                                    class="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 inline-flex w-fit">
-                                    <i class="fas fa-clock mr-1.5"></i> {{ user.horario.hora_entrada|time:"H:i" }}
-                                </span>
-                                <span class="px-1 text-[9px] font-bold text-gray-400">
-                                    Tol: {{ user.horario.tolerancia_minutos }} min
-                                </span>
-                            </div>
-                            {% else %}
-                            <span
-                                class="px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-500 inline-flex w-fit">
-                                <i class="fas fa-exclamation-triangle mr-1"></i> Sin horario
-                            </span>
-                            {% endif %}
-                        </td>
-                        <td class="px-8 py-5">
-                            <div class="flex items-center gap-3">
-                                <div class="w-full min-w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                    <div class="h-full rounded-full 
-                                        {% if user.dias_disponibles > 4 %}bg-green-500
-                                        {% elif user.dias_disponibles >= 2 %}bg-amber-500
-                                        {% else %}bg-red-500{% endif %}"
-                                        style="width:{{ user.dias_disponibles_pct }}%"></div>
-                                </div>
-                                <span class="text-xs font-black text-gray-700">{{ user.dias_disponibles }}</span>
-                            </div>
-                        </td>
-                        <td class="px-8 py-5">
-                            <div class="flex justify-end gap-2">
-                                <div class="relative group/menu">
-                                    <button
-                                        class="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                    <div
-                                        class="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all z-[100] p-2 space-y-1">
-                                        <a href="{% url 'user_edit' user.pk %}"
-                                            class="flex items-center gap-3 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all">
-                                            <i class="fas fa-edit w-4"></i> Editar
-                                        </a>
-                                        <a href="{% url 'reset_user_password' user.pk %}"
-                                            class="flex items-center gap-3 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-50 rounded-xl transition-all">
-                                            <i class="fas fa-key w-4"></i> Reset Clave
-                                        </a>
-                                        <a href="{% url 'admin_change_password' user.pk %}"
-                                            class="flex items-center gap-3 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-green-600 hover:bg-green-50 rounded-xl transition-all">
-                                            <i class="fas fa-lock w-4"></i> Cambiar Clave
-                                        </a>
-                                        {% if request.user.role == 'ADMIN' %}
-                                        <hr class="border-gray-50 my-1">
-                                        <a href="{% url 'user_delete' user.pk %}"
-                                            class="flex items-center gap-3 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-50 rounded-xl transition-all">
-                                            <i class="fas fa-trash-alt w-4"></i> Eliminar
-                                        </a>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="px-8 py-20 text-center">
-                            <div
-                                class="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-gray-200">
-                                <i class="fas fa-users-slash fa-3x"></i>
-                            </div>
-                            <h3 class="text-xl font-black text-gray-900 tracking-tight">No se encontraron usuarios</h3>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+  {% if bulk_passwords %}
+  <div class="bulk-box">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="bulk-title"><i class="fas fa-check-circle"></i> Importación Masiva Exitosa</div>
+          <button onclick="window.print()" class="btn-action" style="background:#fff; color:#166534; border:1px solid #bbf7d0; padding:0.4rem 0.8rem; font-size:0.75rem;"><i class="fas fa-print"></i> Imprimir</button>
+      </div>
+      <p style="font-size:0.85rem; color:#15803d; font-weight:500; margin:0 0 1rem 0;">Se han generado nuevas contraseñas. Por seguridad, no volverán a mostrarse.</p>
+      
+      <table class="bulk-table">
+          <thead>
+              <tr><th>RUN</th><th>Contraseña Temporal Generada</th></tr>
+          </thead>
+          <tbody>
+              {% for run, password in bulk_passwords.items %}
+              <tr>
+                  <td style="font-family:monospace; font-size:0.95rem;">{{ run }}</td>
+                  <td><code style="background:#f0fdf4; padding:0.2rem 0.5rem; border-radius:0.3rem; border:1px solid #bbf7d0;">{{ password }}</code></td>
+              </tr>
+              {% endfor %}
+          </tbody>
+      </table>
+  </div>
+  {% endif %}
 
-        <!-- Mobile & Tablet View (Cards) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:hidden gap-6">
-            {% for user in users %}
-            <div
-                class="bg-white rounded-[2rem] border border-gray-100 shadow-lg shadow-blue-50/50 p-6 flex flex-col gap-4 group hover:border-blue-100 transition-all">
-                <div class="flex items-center gap-4">
-                    <div
-                        class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex-shrink-0 flex items-center justify-center font-black text-xl shadow-lg shadow-blue-100">
-                        {{ user.first_name.0 }}{{ user.last_name.0 }}
-                    </div>
-                    <div class="min-w-0">
-                        <h3
-                            class="text-lg font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors truncate">
-                            {{ user.get_full_name }}</h3>
-                        <p class="text-xs text-gray-400 font-bold mt-1">{{ user.run }}</p>
-                    </div>
-                </div>
+  <div class="table-card">
+      <!-- Desktop Table -->
+      <table class="desktop-table">
+          <thead>
+              <tr>
+                  <th>Usuario</th>
+                  <th>Detalle Laboral</th>
+                  <th>Horario Fijo</th>
+                  <th>Días Admin.</th>
+                  <th style="text-align:right;">Opciones</th>
+              </tr>
+          </thead>
+          <tbody>
+              {% for user in users %}
+              <tr>
+                  <td>
+                      <div class="user-avatar-box">
+                          <div class="user-avatar">{{ user.first_name.0 }}{{ user.last_name.0 }}</div>
+                          <div>
+                              <div class="user-name">{{ user.get_full_name }}</div>
+                              <div class="user-run">{{ user.run }}</div>
+                          </div>
+                      </div>
+                  </td>
+                  <td>
+                      <span class="badge 
+                          {% if user.role == 'DIRECTOR' %}badge-purple
+                          {% elif user.role == 'SECRETARIA' %}badge-pink
+                          {% elif user.role == 'ADMIN' %}badge-gray
+                          {% else %}badge-role{% endif %}">
+                          {{ user.get_funcion_display|default:user.get_tipo_funcionario_display|default:user.get_role_display }}
+                      </span>
+                  </td>
+                  <td>
+                      {% if user.horario %}
+                      <div class="horario-info">
+                          <div class="horario-time"><i class="fas fa-clock"></i> {{ user.horario.hora_entrada|time:"H:i" }}</div>
+                          <div class="horario-tol">Tol: {{ user.horario.tolerancia_minutos }} min</div>
+                      </div>
+                      {% else %}
+                      <div class="horario-none"><i class="fas fa-exclamation-triangle"></i> Sin definir</div>
+                      {% endif %}
+                  </td>
+                  <td>
+                      <div class="progress-wrap">
+                          <div class="progress-header">
+                              <span class="progress-val">{{ user.dias_disponibles }}</span>
+                              <span>de 6.0</span>
+                          </div>
+                          <div class="progress-bar">
+                              <div class="progress-fill {% if user.dias_disponibles > 4 %}fill-green{% elif user.dias_disponibles >= 2 %}fill-amber{% else %}fill-red{% endif %}" 
+                                  style="width:{{ user.dias_disponibles_pct }}%"></div>
+                          </div>
+                      </div>
+                  </td>
+                  <td>
+                      <div class="row-actions">
+                          <a href="{% url 'user_edit' user.pk %}" class="btn-icon" title="Editar Información"><i class="fas fa-edit"></i></a>
+                          
+                          <div class="row-menu-wrap">
+                              <button type="button" class="btn-icon"><i class="fas fa-ellipsis-v"></i></button>
+                              <div class="row-menu-content">
+                                  <a href="{% url 'reset_user_password' user.pk %}" class="row-menu-item"><i class="fas fa-key text-amber-500"></i> Restablecer Clave</a>
+                                  <a href="{% url 'admin_change_password' user.pk %}" class="row-menu-item"><i class="fas fa-lock text-green-500"></i> Asignar Clave Manual</a>
+                                  {% if request.user.role == 'ADMIN' %}
+                                  <hr style="border:none; border-top:1px solid #f1f5f9; margin:0.25rem 0;">
+                                  <a href="{% url 'user_delete' user.pk %}" class="row-menu-item danger"><i class="fas fa-trash-alt"></i> Borrar Sistema</a>
+                                  {% endif %}
+                              </div>
+                          </div>
+                      </div>
+                  </td>
+              </tr>
+              {% empty %}
+              <tr>
+                  <td colspan="5" style="text-align:center; padding:4rem;">
+                      <i class="fas fa-users-slash" style="font-size:3rem; color:#cbd5e1; margin-bottom:1rem;"></i>
+                      <div style="font-size:1.1rem; font-weight:800; color:#334155;">No se han encontrado usuarios</div>
+                  </td>
+              </tr>
+              {% endfor %}
+          </tbody>
+      </table>
 
-                <div class="space-y-3">
-                     <div class="flex flex-wrap gap-2">
-                         <span class="px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest
-                             {% if user.funcion %}bg-purple-100 text-purple-700
-                             {% elif user.tipo_funcionario %}bg-blue-100 text-blue-700
-                             {% elif user.role == 'DIRECTOR' %}bg-purple-100 text-purple-700
-                             {% elif user.role == 'SECRETARIA' %}bg-pink-100 text-pink-700
-                             {% elif user.role == 'ADMIN' %}bg-gray-100 text-gray-700
-                             {% else %}bg-blue-100 text-blue-700{% endif %}">
-                             {{ user.get_funcion_display|default:user.get_tipo_funcionario_display|default:user.get_role_display }}
-                         </span>
-                     </div>
+      <!-- Mobile List -->
+      <div class="mobile-list">
+          {% for user in users %}
+          <div class="user-card">
+              <div class="user-avatar-box">
+                  <div class="user-avatar" style="width:2.5rem; height:2.5rem; font-size:0.9rem;">{{ user.first_name.0 }}{{ user.last_name.0 }}</div>
+                  <div>
+                      <div class="user-name" style="font-size:0.95rem;">{{ user.get_full_name }}</div>
+                      <div class="user-run">{{ user.run }}</div>
+                  </div>
+              </div>
+              
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span class="badge 
+                        {% if user.role == 'DIRECTOR' %}badge-purple
+                        {% elif user.role == 'SECRETARIA' %}badge-pink
+                        {% elif user.role == 'ADMIN' %}badge-gray
+                        {% else %}badge-role{% endif %}">
+                        {{ user.get_funcion_display|default:user.get_tipo_funcionario_display|default:user.get_role_display }}
+                  </span>
+                  {% if user.horario %}
+                  <div class="horario-time" style="font-size:0.75rem;"><i class="fas fa-clock"></i> {{ user.horario.hora_entrada|time:"H:i" }}</div>
+                  {% else %}
+                  <div class="horario-none" style="font-size:0.6rem; padding:0.15rem 0.4rem;">Sin horario</div>
+                  {% endif %}
+              </div>
 
-                    <div class="flex flex-col gap-2">
-                        <div
-                            class="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-400">
-                            <span>Días Administrativos</span>
-                            <span class="text-gray-900">{{ user.dias_disponibles }} Disp.</span>
-                        </div>
-                        <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div class="h-full rounded-full 
-                                {% if user.dias_disponibles > 4 %}bg-green-500
-                                {% elif user.dias_disponibles >= 2 %}bg-amber-500
-                                {% else %}bg-red-500{% endif %}" style="width:{{ user.dias_disponibles_pct }}%">
-                            </div>
-                        </div>
-                    </div>
-                </div>
+              <div>
+                  <div class="progress-wrap" style="max-width:100%;">
+                      <div class="progress-header">
+                          <span style="color:#64748b; font-weight:700;">Días Dispo.</span>
+                          <span class="progress-val" style="font-size:0.85rem;">{{ user.dias_disponibles }} / 6.0</span>
+                      </div>
+                      <div class="progress-bar">
+                          <div class="progress-fill {% if user.dias_disponibles > 4 %}fill-green{% elif user.dias_disponibles >= 2 %}fill-amber{% else %}fill-red{% endif %}" 
+                              style="width:{{ user.dias_disponibles_pct }}%"></div>
+                      </div>
+                  </div>
+              </div>
 
-                <div class="grid grid-cols-2 gap-2 mt-2">
-                    <a href="{% url 'user_edit' user.pk %}"
-                        class="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-600 hover:text-white transition-all">
-                        <i class="fas fa-edit"></i> Editar
-                    </a>
-                    <div class="relative group/mobile-menu">
-                        <button
-                            class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 text-gray-400 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-gray-800 hover:text-white transition-all">
-                            Más <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div
-                            class="absolute right-0 bottom-full mb-2 w-full bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover/mobile-menu:opacity-100 group-hover/mobile-menu:visible transition-all z-50 p-2 space-y-1">
-                            <a href="{% url 'reset_user_password' user.pk %}"
-                                class="flex items-center gap-3 px-3 py-3 text-[10px] font-black uppercase tracking-widest text-amber-600 hover:bg-amber-50 rounded-xl">
-                                <i class="fas fa-key"></i> Reset Clave
-                            </a>
-                            <a href="{% url 'admin_change_password' user.pk %}"
-                                class="flex items-center gap-3 px-3 py-3 text-[10px] font-black uppercase tracking-widest text-green-600 hover:bg-green-50 rounded-xl">
-                                <i class="fas fa-lock"></i> Cambiar Clave
-                            </a>
-                            {% if request.user.role == 'ADMIN' %}
-                            <hr class="border-gray-50 my-1">
-                            <a href="{% url 'user_delete' user.pk %}"
-                                class="flex items-center gap-3 px-3 py-3 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-50 rounded-xl">
-                                <i class="fas fa-trash-alt"></i> Eliminar
-                            </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <div class="py-20 text-center col-span-full">
-                <i class="fas fa-users-slash fa-3x text-gray-200 mb-4"></i>
-                <h3 class="text-lg font-black text-gray-900">No se encontraron usuarios</h3>
-            </div>
-            {% endfor %}
-        </div>
+              <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                  <a href="{% url 'user_edit' user.pk %}" class="btn-action" style="flex:1; background:#f8fafc; color:#3b82f6; border:1px solid #bfdbfe;"><i class="fas fa-edit"></i> Editar</a>
+                  
+                  <div class="row-menu-wrap" style="flex:1;">
+                      <button type="button" class="btn-action" style="width:100%; height:100%; background:#f8fafc; color:#475569; border:1px solid #cbd5e1;">Menú <i class="fas fa-chevron-up" style="margin-left:0.2rem; font-size:0.7em;"></i></button>
+                      <div class="row-menu-content" style="bottom:100%; right:0; width:min-content; min-width:160px; transform:translateY(-5px);">
+                          <a href="{% url 'reset_user_password' user.pk %}" class="row-menu-item"><i class="fas fa-key text-amber-500"></i> Reset Clave</a>
+                          <a href="{% url 'admin_change_password' user.pk %}" class="row-menu-item"><i class="fas fa-lock text-green-500"></i> Asignar Manual</a>
+                          {% if request.user.role == 'ADMIN' %}
+                          <hr style="border:none; border-top:1px solid #f1f5f9; margin:0.25rem 0;">
+                          <a href="{% url 'user_delete' user.pk %}" class="row-menu-item danger"><i class="fas fa-trash-alt"></i> Borrar</a>
+                          {% endif %}
+                      </div>
+                  </div>
+              </div>
+          </div>
+          {% empty %}
+          <div style="text-align:center; padding:2rem; grid-column:1/-1;">No hay usuarios.</div>
+          {% endfor %}
+      </div>
+  </div>
 
-        <!-- Sin paginación - todos los usuarios en una página -->
-    </div>
 </div>
-</div>
-
-<style>
-    /* Add progress bar multiplication workaround if needed or use custom classes */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .animate-in {
-        animation: fadeIn 0.4s ease-out forwards;
-    }
-</style>
 {% endblock %}

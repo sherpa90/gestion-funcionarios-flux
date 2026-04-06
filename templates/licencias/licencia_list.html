@@ -3,20 +3,179 @@
 {% block page_title %}Mis Licencias Médicas{% endblock %}
 
 {% block content %}
-<div class="p-6">
+<style>
+  :root {
+    --lic-radius: 1.25rem;
+    --lic-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+    --input-radius: 0.85rem;
+  }
+
+  .premium-container {
+    padding: 1.25rem;
+    min-height: 100%;
+    background: #f8f9fc;
+  }
+  @media (min-width: 768px) {
+    .premium-container { padding: 2.5rem; }
+  }
+
+  .premium-header-icon {
+    width: 3.5rem; height: 3.5rem; border-radius: 1rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    color: #2563eb; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid #bfdbfe; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.1);
+    margin-bottom: 1rem;
+  }
+
+  .premium-title { font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.025em; margin: 0; line-height: 1.2; }
+  .premium-subtitle { color: #64748b; font-size: 0.95rem; margin-top: 0.35rem; font-weight: 500; }
+
+  /* Filtros */
+  .filter-card {
+    background: #fff; border-radius: var(--lic-radius); box-shadow: var(--lic-shadow);
+    padding: 1.5rem; margin: 1.5rem 0; border: 1px solid #eef0f4;
+  }
+  .filter-grid {
+    display: grid; grid-template-columns: 1fr; gap: 1rem; align-items: end;
+  }
+  @media (min-width: 768px) {
+    .filter-grid { grid-template-columns: 1fr 1fr auto; }
+  }
+  .filter-label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .filter-select {
+    width: 100%; padding: 0.85rem 1rem; border: 1.5px solid #cbd5e1; border-radius: var(--input-radius);
+    font-size: 0.95rem; color: #1e293b; background: #fff; cursor: pointer; transition: all 0.2s;
+  }
+  .filter-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); outline: none; }
+  
+  .filter-btn {
+    width: 100%; padding: 0.85rem 1.5rem; border-radius: var(--input-radius); border: none;
+    background: #cbd5e1; color: #334155; font-size: 0.95rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  }
+  @media (min-width: 768px) { .filter-btn { width: auto; } }
+  .filter-btn:hover { background: #94a3b8; color: #0f172a; }
+
+  /* Estadisticas Principales */
+  .stats-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .stats-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; } }
+  
+  .stat-card {
+    border-radius: var(--lic-radius); padding: 1.5rem; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+  }
+  .stat-card.blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #fff; }
+  .stat-card.green { background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: #fff; }
+  
+  .stat-value { font-size: 2.5rem; font-weight: 800; line-height: 1; }
+  .stat-label { font-size: 0.85rem; font-weight: 600; opacity: 0.9; margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-icon { font-size: 3.5rem; opacity: 0.2; position: absolute; right: -0.5rem; bottom: -0.5rem; transform: rotate(-10deg); }
+  
+  /* Resumen Mensual */
+  .monthly-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 2rem;}
+  @media (min-width: 640px) { .monthly-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem;} }
+  @media (min-width: 1024px) { .monthly-grid { grid-template-columns: repeat(6, 1fr); } }
+  
+  .monthly-card {
+    background: #fff; border: 1.5px solid #e2e8f0; border-radius: 1rem; padding: 1rem; text-align: center;
+    transition: all 0.2s ease;
+  }
+  .monthly-card:hover { border-color: #93c5fd; transform: translateY(-2px); box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.1); background: #f8fafc; }
+  .monthly-name { font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+  .monthly-val { font-size: 1.75rem; font-weight: 800; color: #0f172a; margin: 0.2rem 0; line-height: 1; }
+  .monthly-sub { font-size: 0.7rem; color: #94a3b8; font-weight: 600; }
+
+  /* Lista de Licencias */
+  .list-card {
+    background: #fff; border-radius: var(--lic-radius); box-shadow: var(--lic-shadow);
+    border: 1px solid #eef0f4; overflow: hidden; margin-bottom: 2rem;
+  }
+  .list-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #f1f5f9; background: #fafbff; }
+  .list-title { font-size: 1.1rem; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 0.5rem; }
+
+  .lic-item {
+    display: flex; flex-direction: column; padding: 1.25rem 1.5rem; border-bottom: 1px solid #f1f5f9;
+    gap: 1rem; transition: background 0.15s ease;
+  }
+  @media (min-width: 640px) {
+    .lic-item { flex-direction: row; align-items: center; justify-content: space-between; }
+  }
+  .lic-item:last-child { border-bottom: none; }
+  .lic-item:hover { background: #f8fafc; }
+
+  .lic-info-wrap { display: flex; align-items: center; gap: 1rem; }
+  .lic-days-avatar {
+    width: 3.5rem; height: 3.5rem; border-radius: 0.85rem; flex-shrink: 0;
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    color: #166534; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border: 1.5px solid #86efac; box-shadow: 0 2px 4px rgba(22, 163, 74, 0.1);
+  }
+  .lic-days-num { font-size: 1.25rem; font-weight: 800; line-height: 1; }
+  .lic-days-txt { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8; }
+  
+  .lic-date { font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 0.15rem; }
+  .lic-meta { font-size: 0.75rem; font-weight: 600; color: #64748b; display: flex; flex-direction: column; gap: 0.15rem; }
+  @media (min-width: 640px) {
+    .lic-meta { flex-direction: row; align-items: center; gap: 0.5rem; }
+    .lic-meta span.dot::before { content: "•"; color: #cbd5e1; margin-right: 0.5rem; }
+  }
+
+  .lic-actions { display: flex; width: 100%; top: 0; }
+  @media (min-width: 640px) { .lic-actions { width: auto; } }
+
+  .btn-doc {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    padding: 0.6rem 1.2rem; border-radius: 0.75rem; font-size: 0.85rem; font-weight: 700;
+    transition: all 0.2s ease; cursor: pointer; text-decoration: none; flex: 1;
+    background: #fff; color: #2563eb; border: 1.5px solid #bfdbfe; box-shadow: 0 2px 4px rgba(37,99,235,0.05);
+  }
+  .btn-doc:hover { background: #eff6ff; color: #1d4ed8; border-color: #93c5fd; transform: translateY(-1px); }
+  
+  .badge-no-doc {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.6rem 1.2rem; border-radius: 0.75rem;
+    font-size: 0.8rem; font-weight: 700; flex: 1; text-align: center;
+    background: #f1f5f9; color: #94a3b8; border: 1.5px dashed #cbd5e1;
+  }
+
+  /* Empty State */
+  .empty-state { padding: 3rem 2rem; text-align: center; }
+  .empty-icon { width: 4rem; height: 4rem; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 1.5rem; color: #94a3b8; }
+  .empty-title { font-size: 1.1rem; font-weight: 800; color: #334155; margin-bottom: 0.5rem; }
+
+  /* Historial Anual */
+  .history-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-item:hover { background: #fafbff; }
+  .hist-year { background: #eef2ff; color: #4f46e5; border-radius: 0.5rem; padding: 0.4rem 0.8rem; font-weight: 800; font-size: 0.95rem; }
+  .hist-meta { font-size: 0.85rem; font-weight: 600; color: #64748b; }
+  .hist-total { text-align: right; }
+  .hist-total-val { font-size: 1.5rem; font-weight: 800; color: #0f172a; line-height: 1.1; }
+  .hist-total-lbl { font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+
+</style>
+
+<div class="premium-container">
+  <div style="margin: 0 auto;">
+    
     <!-- Header -->
-    <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-900">Mis Licencias Médicas</h2>
-        <p class="text-gray-600 mt-1">Visualiza tus licencias médicas organizadas por mes y año</p>
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:1rem;">
+      <div>
+        <div class="premium-header-icon"><i class="fas fa-file-medical"></i></div>
+        <h2 class="premium-title">Mis Licencias Médicas</h2>
+        <p class="premium-subtitle">Visualiza el historial completo de tus licencias organizadas por mes y año.</p>
+      </div>
     </div>
 
     <!-- Filtros -->
-    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Filtros</h3>
-        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="filter-card">
+        <form method="get" class="filter-grid">
             <div>
-                <label for="year" class="block text-sm font-medium text-gray-700 mb-2">Año</label>
-                <select name="year" id="year" class="w-full">
+                <label for="year" class="filter-label"><i class="fas fa-calendar-alt text-blue-500"></i> Año</label>
+                <select name="year" id="year" class="filter-select">
                     <option value="">Todos los años</option>
                     {% for year in available_years %}
                     <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
@@ -24,8 +183,8 @@
                 </select>
             </div>
             <div>
-                <label for="month" class="block text-sm font-medium text-gray-700 mb-2">Mes</label>
-                <select name="month" id="month" class="w-full">
+                <label for="month" class="filter-label"><i class="fas fa-filter text-indigo-500"></i> Mes</label>
+                <select name="month" id="month" class="filter-select">
                     <option value="">Todos los meses</option>
                     <option value="1" {% if selected_month == 1 %}selected{% endif %}>Enero</option>
                     <option value="2" {% if selected_month == 2 %}selected{% endif %}>Febrero</option>
@@ -41,157 +200,120 @@
                     <option value="12" {% if selected_month == 12 %}selected{% endif %}>Diciembre</option>
                 </select>
             </div>
-            <div class="flex items-end">
-                <button type="submit"
-                    class="w-full bg-primary-600 text-white px-4 py-2.5 rounded-lg hover:bg-primary-700 transition">
-                    <i class="fas fa-filter mr-2"></i>Filtrar
+            <div>
+                <button type="submit" class="filter-btn">
+                    <i class="fas fa-search"></i> Buscar
                 </button>
             </div>
         </form>
     </div>
 
-    <!-- Estadísticas del Año -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-blue-100 text-sm font-medium">Total Licencias {{ current_year }}</p>
-                    <p class="text-4xl font-bold mt-2">{{ total_licencias_año }}</p>
-                </div>
-                <div class="bg-white bg-opacity-20 rounded-full p-4">
-                    <i class="fas fa-file-medical text-3xl"></i>
-                </div>
+    <!-- Estadísticas Principales -->
+    <div class="stats-grid">
+        <div class="stat-card blue">
+            <i class="fas fa-notes-medical stat-icon"></i>
+            <div>
+                <div class="stat-value">{{ total_licencias_año }}</div>
+                <div class="stat-label">Licencias en {{ current_year }}</div>
             </div>
         </div>
-        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-green-100 text-sm font-medium">Total Días {{ current_year }}</p>
-                    <p class="text-4xl font-bold mt-2">{{ total_dias_año }}</p>
-                </div>
-                <div class="bg-white bg-opacity-20 rounded-full p-4">
-                    <i class="fas fa-calendar-days text-3xl"></i>
-                </div>
+        <div class="stat-card green">
+            <i class="fas fa-calendar-check stat-icon"></i>
+            <div>
+                <div class="stat-value">{{ total_dias_año }}</div>
+                <div class="stat-label">Días Totales en {{ current_year }}</div>
             </div>
         </div>
     </div>
 
-    <!-- Resumen Mensual -->
+    <!-- Resumen Mensual Grilla -->
     {% if stats_por_mes %}
-    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Resumen Mensual {{ current_year }}</h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {% for stat in stats_por_mes %}
-            <div
-                class="bg-gray-50 rounded-lg p-4 text-center border-2 border-gray-200 hover:border-primary-300 transition">
-                <p class="text-xs font-medium text-gray-600 uppercase">{{ stat.month|date:"M" }}</p>
-                <p class="text-2xl font-bold text-gray-900 mt-1">{{ stat.total_dias }}</p>
-                <p class="text-xs text-gray-500 mt-1">{{ stat.total_licencias }} lic.</p>
-            </div>
-            {% endfor %}
+    <h3 class="list-title" style="margin: 0 0 1rem 0.5rem;"><i class="fas fa-chart-line text-indigo-500"></i> Resumen {{ current_year }}</h3>
+    <div class="monthly-grid">
+        {% for stat in stats_por_mes %}
+        <div class="monthly-card">
+            <div class="monthly-name">{{ stat.month|date:"M" }}</div>
+            <div class="monthly-val">{{ stat.total_dias }}</div>
+            <div class="monthly-sub">días &middot; {{ stat.total_licencias }} lic.</div>
         </div>
+        {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Tabla de Licencias -->
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Detalle de Licencias</h3>
+    <!-- Listado de Licencias Cards -->
+    <div class="list-card">
+        <div class="list-header">
+            <h3 class="list-title"><i class="fas fa-list-ul text-blue-500"></i> Detalle de Licencias</h3>
         </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha
-                            Inicio</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Días
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Documento</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Registrado Por</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha
-                            Registro</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for licencia in licencias %}
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <i class="fas fa-calendar text-primary-500 mr-2"></i>
-                                <span class="text-sm font-medium text-gray-900">{{ licencia.fecha_inicio|date:"d/m/Y" }}</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span
-                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-                                {{ licencia.dias }} días
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {% if licencia.archivo %}
-                            <a href="{{ licencia.archivo.url }}" target="_blank"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-100 transition">
-                                <i class="fas fa-file-pdf"></i> Ver documento
-                            </a>
-                            {% else %}
-                            <span class="text-xs text-gray-300 font-medium">Sin archivo</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {% if licencia.created_by %}
-                            {{ licencia.created_by.get_full_name }}
-                            {% else %}
-                            -
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ licencia.created_at|date:"d/m/Y H:i" }}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="px-6 py-12 text-center">
-                            <i class="fas fa-inbox text-gray-300 text-4xl mb-3"></i>
-                            <p class="text-gray-500">No se encontraron licencias médicas</p>
-                            {% if selected_year or selected_month %}
-                            <a href="{% url 'licencia_list' %}"
-                                class="text-primary-600 hover:text-primary-700 text-sm mt-2 inline-block">
-                                Ver todas las licencias
-                            </a>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Resumen Anual -->
-    {% if stats_por_año %}
-    <div class="bg-white rounded-xl shadow-sm p-6 mt-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Resumen Histórico por Año</h3>
-        <div class="space-y-3">
-            {% for stat in stats_por_año %}
-            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                <div class="flex items-center space-x-4">
-                    <div class="bg-primary-100 text-primary-700 rounded-lg px-4 py-2 font-bold">
-                        {{ stat.year|date:"Y" }}
+        <div class="list-body">
+            {% for licencia in licencias %}
+            <div class="lic-item">
+                <div class="lic-info-wrap">
+                    <div class="lic-days-avatar">
+                        <div class="lic-days-num">{{ licencia.dias }}</div>
+                        <div class="lic-days-txt">días</div>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">{{ stat.total_licencias }} licencias</p>
+                        <div class="lic-date">Desde el {{ licencia.fecha_inicio|date:"d M Y" }}</div>
+                        <div class="lic-meta">
+                            <span>Ingresada el {{ licencia.created_at|date:"d/m/Y" }}</span>
+                            <span class="dot">Por: {{ licencia.created_by.get_full_name|default:"Sistema" }}</span>
+                        </div>
                     </div>
                 </div>
-                <div class="text-right">
-                    <p class="text-2xl font-bold text-gray-900">{{ stat.total_dias }}</p>
-                    <p class="text-xs text-gray-500">días totales</p>
+                <div class="lic-actions">
+                    {% if licencia.archivo %}
+                    <a href="{{ licencia.archivo.url }}" target="_blank" class="btn-doc">
+                        <i class="fas fa-file-pdf"></i> Ver Documento
+                    </a>
+                    {% else %}
+                    <div class="badge-no-doc">
+                        <i class="fas fa-unlink"></i> Sin Archivo
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <div class="empty-icon"><i class="fas fa-inbox"></i></div>
+                <div class="empty-title">Sin Resultados</div>
+                <div class="lic-meta" style="justify-content:center;">No se encontraron licencias médicas emitidas.</div>
+                {% if selected_year or selected_month %}
+                <div style="margin-top:1rem;">
+                  <a href="{% url 'licencia_list' %}" class="btn-doc" style="display:inline-flex; width:auto; border-color:#cbd5e1; color:#475569;">
+                      Quitar Filtros
+                  </a>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Resumen Histórico -->
+    {% if stats_por_año %}
+    <div class="list-card" style="max-width: 600px; margin: 0;">
+        <div class="list-header">
+            <h3 class="list-title"><i class="fas fa-history text-purple-500"></i> Resumen Histórico</h3>
+        </div>
+        <div>
+            {% for stat in stats_por_año %}
+            <div class="history-item">
+                <div style="display:flex; align-items:center; gap:1rem;">
+                    <div class="hist-year">{{ stat.year|date:"Y" }}</div>
+                    <div class="hist-meta">{{ stat.total_licencias }} licencia{% if stat.total_licencias != 1 %}s{% endif %} registrada{% if stat.total_licencias != 1 %}s{% endif %}</div>
+                </div>
+                <div class="hist-total">
+                    <div class="hist-total-val">{{ stat.total_dias }}</div>
+                    <div class="hist-total-lbl">Días</div>
                 </div>
             </div>
             {% endfor %}
         </div>
     </div>
     {% endif %}
+
+  </div>
 </div>
+
 {% endblock %}
