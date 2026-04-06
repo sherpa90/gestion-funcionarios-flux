@@ -1002,9 +1002,38 @@ class UserRecalculateBalancesView(LoginRequiredMixin, UserPassesTestMixin, View)
             usuario=request.user,
             tipo='UPDATE',
             accion='Recalcular Saldos Global',
-            descripcion=f'Se recalcularon los saldos de {count} usuarios',
             ip_address=get_client_ip(request)
         )
         
         messages.success(request, f"Se han sincronizado los saldos de {count} usuarios exitosamente.")
+        return redirect('user_list')
+
+
+class UserResetAnioNuevoView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista exclusiva para ADMIN que resetea todos los días a 6.0 al inicio de un nuevo año"""
+    
+    def test_func(self):
+        return self.request.user.role == 'ADMIN'
+        
+    def post(self, request, *args, **kwargs):
+        users = CustomUser.objects.all()
+        count = 0
+        for user in users:
+            # Restablecemos explícitamente a 6.0 y luego recalculamos basado en posibles 
+            # solicitudes ya emitidas durante este mismo nuevo año.
+            user.dias_disponibles = 6.0
+            user.save()
+            user.recalculate_dias_disponibles()
+            count += 1
+            
+        from admin_dashboard.utils import registrar_log, get_client_ip
+        registrar_log(
+            usuario=request.user,
+            tipo='UPDATE',
+            accion='Reset Año Nuevo',
+            descripcion=f'Administrador ejecutó el Reset de Año Nuevo para {count} usuarios',
+            ip_address=get_client_ip(request)
+        )
+        
+        messages.success(request, f"Reinicio Anual Exitoso: Se han restablecido los saldos de {count} usuarios a 6.0 días.")
         return redirect('user_list')

@@ -4,7 +4,7 @@ from .views import (
     BulkUserImportView, download_template, ResetUserPasswordView, ChangeOwnPasswordView,
     AdminChangePasswordView, EmailDirectoryView, CrearGrupoCorreoView, CrearDirectorioTelefonicoView,
     EditarGrupoCorreoView, EliminarGrupoCorreoView, EditarDirectorioTelefonicoView, EliminarDirectorioTelefonicoView,
-    BackupExportUsersView, BackupRestoreUsersView, UserRecalculateBalancesView
+    BackupExportUsersView, BackupRestoreUsersView, UserRecalculateBalancesView, UserResetAnioNuevoView
 )
 
 urlpatterns = [
@@ -27,4 +27,5 @@ urlpatterns = [
     path('respaldo/exportar/', BackupExportUsersView.as_view(), name='backup_export_users'),
     path('respaldo/restaurar/', BackupRestoreUsersView.as_view(), name='backup_restore_users'),
     path('recalcular-saldos/', UserRecalculateBalancesView.as_view(), name='recalculate_all_balances'),
+    path('reset-anio-nuevo/', UserResetAnioNuevoView.as_view(), name='user_reset_anio_nuevo'),
 ]
