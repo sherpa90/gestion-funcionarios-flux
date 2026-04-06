@@ -1,4 +1,5 @@
 from django.views.generic import TemplateView, View
+from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Sum, Q
 from django.http import HttpResponse
@@ -246,6 +247,75 @@ class PDFIndividualView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename=reporte_{functorio.run}.pdf'
+        response.write(result)
+        return response
+
+
+
+class MiReportePDFView(LoginRequiredMixin, View):
+    """Genera el PDF individual del usuario actualmente autenticado."""
+
+    def get(self, request):
+        functorio = request.user
+
+        year = request.GET.get('year', '')
+        mes  = request.GET.get('mes', '')
+        fecha_inicio = request.GET.get('fecha_inicio', '')
+        fecha_fin    = request.GET.get('fecha_fin', '')
+
+        permisos = SolicitudPermiso.objects.filter(
+            usuario=functorio,
+            estado='APROBADO'
+        ).order_by('-fecha_inicio')
+        if year:        permisos = permisos.filter(fecha_inicio__year=year)
+        if mes:         permisos = permisos.filter(fecha_inicio__month=mes)
+        if fecha_inicio:permisos = permisos.filter(fecha_inicio__gte=fecha_inicio)
+        if fecha_fin:   permisos = permisos.filter(fecha_inicio__lte=fecha_fin)
+
+        dias_usados = permisos.aggregate(Sum('dias_solicitados'))['dias_solicitados__sum'] or 0
+
+        licencias = LicenciaMedica.objects.filter(usuario=functorio).order_by('-fecha_inicio')
+        if year:        licencias = licencias.filter(fecha_inicio__year=year)
+        if mes:         licencias = licencias.filter(fecha_inicio__month=mes)
+        if fecha_inicio:licencias = licencias.filter(fecha_inicio__gte=fecha_inicio)
+        if fecha_fin:   licencias = licencias.filter(fecha_inicio__lte=fecha_fin)
+
+        registros_asistencia = RegistroAsistencia.objects.filter(funcionario=functorio)
+        if year:        registros_asistencia = registros_asistencia.filter(fecha__year=year)
+        if mes:         registros_asistencia = registros_asistencia.filter(fecha__month=mes)
+        if fecha_inicio:registros_asistencia = registros_asistencia.filter(fecha__gte=fecha_inicio)
+        if fecha_fin:   registros_asistencia = registros_asistencia.filter(fecha__lte=fecha_fin)
+
+        total_inasistencias = registros_asistencia.filter(estado='AUSENTE').count()
+        total_atrasos       = registros_asistencia.filter(estado='RETRASO').count()
+        total_minutos_retraso = registros_asistencia.filter(estado='RETRASO').aggregate(
+            total=Sum('minutos_retraso'))['total'] or 0
+
+        html_string = render_to_string('reportes/pdf_individual.html', {
+            'functorio': functorio,
+            'cargo': functorio.get_funcion_display() or functorio.get_tipo_funcionario_display() or functorio.get_role_display(),
+            'permisos': permisos,
+            'licencias': licencias,
+            'dias_usados': dias_usados,
+            'total_dias_licencias': licencias.aggregate(Sum('dias'))['dias__sum'] or 0,
+            'total_inasistencias': total_inasistencias,
+            'total_atrasos': total_atrasos,
+            'total_minutos_retraso': total_minutos_retraso,
+            'year': year,
+            'mes': mes,
+            'mes_nombre': {1:'Enero',2:'Febrero',3:'Marzo',4:'Abril',5:'Mayo',6:'Junio',
+                           7:'Julio',8:'Agosto',9:'Septiembre',10:'Octubre',11:'Noviembre',12:'Diciembre'}.get(int(mes) if mes else 0, ''),
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin,
+            'fecha_exportacion': now().strftime('%d/%m/%Y %H:%M'),
+            'director': CustomUser.objects.filter(role='DIRECTOR').first(),
+        })
+
+        html   = HTML(string=html_string)
+        result = html.write_pdf()
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename=mi_reporte_{functorio.run}.pdf'
         response.write(result)
         return response
 
