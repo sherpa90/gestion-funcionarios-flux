@@ -282,7 +282,17 @@
                 <p class="login-subtitle">Gestión Administrativa e Institucional</p>
             </div>
 
-            <!-- Global Errors -->
+            <!-- Global Messages (like warnings for remaining attempts) -->
+            {% if messages %}
+                {% for message in messages %}
+                <div class="error-box" style="{% if message.tags == 'warning' %}background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.3); color:#fcd34d;{% endif %}">
+                    <i class="{% if message.tags == 'warning' %}fas fa-exclamation-circle{% else %}fas fa-info-circle{% endif %}" style="margin-top:0.15rem; font-size:1.1rem;"></i>
+                    <div>{{ message }}</div>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Form Errors -->
             {% if form.errors or form.non_field_errors %}
             <div class="error-box">
                 <i class="fas fa-exclamation-triangle" style="margin-top:0.15rem; font-size:1.1rem;"></i>

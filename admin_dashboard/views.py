@@ -178,9 +178,9 @@ class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             User = get_user_model()
             failure_limit = getattr(settings, 'AXES_FAILURE_LIMIT', 8)
             
-            # Obtener intentos bloqueados o que superan el límite de fallos
+            # Obtener todos los intentos fallidos trackeados por Axes (para que el Admin vea todo)
             blocked_attempts = AccessAttempt.objects.filter(
-                Q(blocked=True) | Q(failures_since_start__gte=failure_limit)
+                failures_since_start__gt=0
             ).order_by('-attempt_time')[:100]
             
             seen_usernames = set()
@@ -197,10 +197,11 @@ class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                     axes_blocked_users.append({
                         'user': user,
                         'username_attempted': username,
-                        'is_axes_blocked': True,
+                        'is_axes_blocked': attempt.failures_since_start >= failure_limit,
                         'blocked_at': attempt.attempt_time,
                         'ip_address': attempt.ip_address,
-                        'attempts': attempt.failures_since_start
+                        'attempts': attempt.failures_since_start,
+                        'limit': failure_limit
                     })
         except Exception:
             pass
@@ -259,7 +260,6 @@ class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         elif action == 'unblock_axes':
             # Desbloquear usuario de Axes
             try:
-                from axes.helpers import clear_lockouts
                 from axes.models import AccessAttempt
                 from django.contrib.auth import get_user_model
                 User = get_user_model()
@@ -276,16 +276,13 @@ class BlockedUsersView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                     description = f'Usuario con correo {username} ha sido desbloqueado de Axes.'
                 
                 if username:
-                    # Buscar y eliminar los intentos de acceso bloqueados para este usuario
-                    AccessAttempt.objects.filter(
-                        username__iexact=username
-                    ).delete()
-                    
-                    # También intentar desbloquear por IP si hay alguna
+                    # Usar el método oficial de Axes 5+ para resetear intentos
                     try:
-                        clear_lockouts(request)
-                    except:
-                        pass
+                        from axes.utils import reset
+                        reset(username=username)
+                    except ImportError:
+                        # Si no existe reset en utils, borrar manualmente el registro
+                        AccessAttempt.objects.filter(username__iexact=username).delete()
                     
                     messages.success(request, description)
                     
