@@ -33,6 +33,18 @@ class CustomLoginView(LoginView):
                     messages.error(self.request, 'Su cuenta ha sido bloqueada permanentemente. Por favor, contacte al administrador.')
             except User.DoesNotExist:
                 pass
+            
+            # Verificar intentos fallidos de Axes
+            try:
+                from axes.models import AccessAttempt
+                limit = getattr(settings, 'AXES_FAILURE_LIMIT', 6)
+                attempt = AccessAttempt.objects.filter(username__iexact=username).first()
+                if attempt and attempt.failures_since_start > 0:
+                    faltan = limit - attempt.failures_since_start
+                    if faltan > 0:
+                        messages.warning(self.request, f"Credenciales incorrectas. Te quedan {faltan} intentos antes del bloqueo de seguridad.")
+            except Exception:
+                pass
                 
         return super().form_invalid(form)
 
