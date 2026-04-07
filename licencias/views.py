@@ -118,7 +118,7 @@ class LicenciaAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     context_object_name = 'licencias'
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR']
 
     def get_queryset(self):
         queryset = LicenciaMedica.objects.select_related('usuario', 'created_by').all()
