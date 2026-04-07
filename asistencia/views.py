@@ -888,7 +888,7 @@ class GestionAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
         # Filtros aplicados
         context['filtros_aplicados'] = {
-            'search': self.request.GET.get('search'),
+            'search': self.request.GET.get('search', ''),
         }
         context['current_sort'] = self.request.GET.get('sort', 'name')
 

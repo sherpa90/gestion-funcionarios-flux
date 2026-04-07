@@ -300,12 +300,15 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-notes-medical fa-fw mr-3"></i><span class="ml-3">Licencias</span>
                     </a>
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     {% if user.role != 'SECRETARIA' %}
                     <a href="{% url 'lista_equipos' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-boxes fa-fw mr-3"></i><span class="ml-3">Equipos</span>
                     </a>
                     {% endif %}
+                    {% endif %}
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     {% if user.role != 'SECRETARIA' %}
                     <a href="{% url 'gestion_fallas' %}"
                         class="sidebar-link flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
@@ -321,10 +324,13 @@
                         {% endif %}
                     </a>
                     {% endif %}
+                    {% endif %}
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'admin_liquidaciones_overview' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-coins fa-fw mr-3"></i><span class="ml-3">Liquidaciones</span>
                     </a>
+                    {% endif %}
                     {% if user.role == 'ADMIN' %}
                     <a href="{% url 'admin_dashboard:system_backup' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
@@ -346,10 +352,12 @@
                     <div class="pt-4 pb-2">
                         <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Asistencia</p>
                     </div>
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'asistencia:gestion_horarios' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-user-clock fa-fw mr-3"></i><span class="ml-3">Horarios</span>
                     </a>
+                    {% endif %}
                     {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'asistencia:carga_horarios' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
@@ -560,12 +568,15 @@
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-notes-medical fa-fw mr-3"></i><span class="ml-3">Licencias</span>
                     </a>
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     {% if user.role != 'SECRETARIA' %}
                     <a href="{% url 'lista_equipos' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-boxes fa-fw mr-3"></i><span class="ml-3">Equipos</span>
                     </a>
                     {% endif %}
+                    {% endif %}
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     {% if user.role != 'SECRETARIA' %}
                     <a href="{% url 'gestion_fallas' %}"
                         class="sidebar-link flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
@@ -581,10 +592,13 @@
                         {% endif %}
                     </a>
                     {% endif %}
+                    {% endif %}
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'admin_liquidaciones_overview' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-coins fa-fw mr-3"></i><span class="ml-3">Liquidaciones</span>
                     </a>
+                    {% endif %}
                     {% if user.role == 'ADMIN' %}
                     <a href="{% url 'admin_dashboard:system_backup' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
@@ -606,10 +620,12 @@
                     <div class="pt-4 pb-2">
                         <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Asistencia</p>
                     </div>
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'asistencia:gestion_horarios' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-user-clock fa-fw mr-3"></i><span class="ml-3">Horarios</span>
                     </a>
+                    {% endif %}
                     {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'asistencia:carga_horarios' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
