@@ -286,10 +286,12 @@
                     <div class="pt-4 pb-2">
                         <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Administración</p>
                     </div>
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'user_list' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-users-cog fa-fw mr-3"></i><span class="ml-3">Usuarios</span>
                     </a>
+                    {% endif %}
                     <a href="{% url 'admin_management' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-calendar-check fa-fw mr-3"></i><span class="ml-3">Permisos</span>
@@ -544,10 +546,12 @@
                     <div class="pt-4 pb-2">
                         <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Administración</p>
                     </div>
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'user_list' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-users-cog fa-fw mr-3"></i><span class="ml-3">Usuarios</span>
                     </a>
+                    {% endif %}
                     <a href="{% url 'admin_management' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-calendar-check fa-fw mr-3"></i><span class="ml-3">Permisos</span>
