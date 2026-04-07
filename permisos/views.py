@@ -88,7 +88,7 @@ class SolicitudBypassView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     success_url = reverse_lazy('solicitud_bypass')
 
     def test_func(self):
-        return self.request.user.role in ['SECRETARIA', 'ADMIN']
+        return self.request.user.role in ['SECRETARIA', 'ADMIN', 'DIRECTOR']
 
     def form_valid(self, form):
         try:

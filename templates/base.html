@@ -273,7 +273,7 @@
                         <i class="fa-solid fa-check-circle fa-fw mr-3"></i><span class="ml-3">Aprobar Solicitudes</span>
                     </a>
                     {% endif %}
-                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' %}
                     <a href="{% url 'solicitud_bypass' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-user-plus fa-fw mr-3"></i><span class="ml-3">Día Adm. para Funcionario</span>
@@ -531,7 +531,7 @@
                         <i class="fa-solid fa-check-circle fa-fw mr-3"></i><span class="ml-3">Aprobar Solicitudes</span>
                     </a>
                     {% endif %}
-                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' %}
                     <a href="{% url 'solicitud_bypass' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-user-plus fa-fw mr-3"></i><span class="ml-3">Día Adm. para Funcionario</span>
