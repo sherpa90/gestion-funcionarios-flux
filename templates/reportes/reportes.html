@@ -139,7 +139,7 @@
     position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
     color: #94a3b8; font-size: .8rem; pointer-events: none;
   }
-  .rep-search-wrap .rep-filter-input { padding-left: 2.25rem; }
+  .rep-search-wrap .rep-filter-input { padding-left: 0.85rem; }
   .rep-filter-label {
     display: block; font-size: .7rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: .05em; color: #94a3b8; margin-bottom: .3rem;
@@ -494,7 +494,6 @@
       <form method="get">
         <div class="rep-filter-grid">
           <div class="rep-search-wrap">
-            <i class="fas fa-search rep-search-icon"></i>
             <input class="rep-filter-input" type="text" name="search" value="{{ filtros.search }}" placeholder="Buscar por nombre o RUN…" autocomplete="off">
           </div>
           <div class="rep-filter-row2">
