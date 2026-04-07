@@ -471,12 +471,12 @@ class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, List
 
         # Filtros aplicados
         context['filtros_aplicados'] = {
-            'usuario': self.request.GET.get('usuario'),
-            'estado': self.request.GET.get('estado'),
-            'fecha_desde': self.request.GET.get('fecha_desde'),
-            'fecha_hasta': self.request.GET.get('fecha_hasta'),
-            'search': self.request.GET.get('search'),
-            'sort': self.request.GET.get('sort', '-created_at'),
+            'usuario': self.request.GET.get('usuario', ''),
+            'estado': self.request.GET.get('estado', ''),
+            'fecha_desde': self.request.GET.get('fecha_desde', ''),
+            'fecha_hasta': self.request.GET.get('fecha_hasta', ''),
+            'search': self.request.GET.get('search', ''),
+            'sort': self.request.GET.get('sort', '-created_at') or '-created_at',
         }
 
         return context
