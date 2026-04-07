@@ -83,7 +83,7 @@
         </div>
         <div class="flex items-center gap-2">
             <label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Orden:</label>
-            <select id="sort-selector" class="text-xs border-gray-200 rounded-lg h-7 w-40" onchange="applySort(this.value)">
+            <select id="sort-selector" class="text-xs border-gray-200 rounded-lg h-7 w-56" onchange="applySort(this.value)">
                 <option value="-created_at" {% if filtros_aplicados.sort == '-created_at' or not filtros_aplicados.sort %}selected{% endif %}>Creación (recientes)</option>
                 <option value="created_at" {% if filtros_aplicados.sort == 'created_at' %}selected{% endif %}>Creación (antiguas)</option>
                 <option value="-fecha_inicio" {% if filtros_aplicados.sort == '-fecha_inicio' %}selected{% endif %}>Permiso (recientes)</option>
