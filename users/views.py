@@ -33,7 +33,7 @@ class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     paginate_by = None  # Sin paginación - mostrar todos los usuarios
     
     def test_func(self):
-        return self.request.user.role in ['SECRETARIA', 'ADMIN']
+        return self.request.user.role in ['SECRETARIA', 'ADMIN', 'DIRECTOR']
     
     def get_queryset(self):
         # Orden por defecto: Más reciente primero

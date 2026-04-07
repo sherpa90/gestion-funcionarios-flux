@@ -282,7 +282,7 @@
                     {% endif %}
 
                     <!-- Administración -->
-                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' %}
                     <div class="pt-4 pb-2">
                         <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Administración</p>
                     </div>
@@ -540,7 +540,7 @@
                     {% endif %}
 
                     <!-- Administración -->
-                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' %}
                     <div class="pt-4 pb-2">
                         <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Administración</p>
                     </div>
