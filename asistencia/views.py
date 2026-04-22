@@ -37,7 +37,7 @@ except ImportError:
     PYPDF_AVAILABLE = False
     pypdf = None
 from .models import HorarioFuncionario, RegistroAsistencia, DiaFestivo, AlegacionAsistencia, AnoEscolar
-from .forms import CargaHorariosForm, HorarioFuncionarioForm, CargaRegistrosAsistenciaForm
+from .forms import CargaHorariosForm, HorarioFuncionarioForm, CargaRegistrosAsistenciaForm, DiaFestivoForm
 from django.shortcuts import get_object_or_404, redirect
 from users.models import CustomUser
 from core.utils import normalize_rut
@@ -1706,8 +1706,8 @@ class CrearDiaFestivoView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     """Vista para crear días festivos"""
 
     model = DiaFestivo
+    form_class = DiaFestivoForm
     template_name = 'asistencia/crear_festivo.html'
-    fields = ['fecha', 'nombre', 'descripcion']
     success_url = reverse_lazy('asistencia:gestion_festivos')
 
     def test_func(self):
