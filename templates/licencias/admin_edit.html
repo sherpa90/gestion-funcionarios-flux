@@ -41,6 +41,17 @@
                     {% endif %}
                 </div>
 
+                <!-- Tipo de Licencia -->
+                <div>
+                    <label for="{{ form.tipo.id_for_label }}" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                        Tipo de Licencia
+                    </label>
+                    {{ form.tipo }}
+                    {% if form.tipo.errors %}
+                    <p class="mt-1 text-xs text-red-500 font-bold">{{ form.tipo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
                 <!-- Fecha Inicio y Días -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>

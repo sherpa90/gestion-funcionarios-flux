@@ -127,6 +127,7 @@ class LicenciaAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         year = self.request.GET.get('year')
         month = self.request.GET.get('month')
         usuario_id = self.request.GET.get('usuario')
+        tipo = self.request.GET.get('tipo')
 
         if year:
             queryset = queryset.filter(fecha_inicio__year=year)
@@ -134,6 +135,8 @@ class LicenciaAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             queryset = queryset.filter(fecha_inicio__month=month)
         if usuario_id:
             queryset = queryset.filter(usuario_id=usuario_id)
+        if tipo:
+            queryset = queryset.filter(tipo=tipo)
 
         return queryset.order_by('-fecha_inicio')
 
@@ -143,10 +146,12 @@ class LicenciaAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         selected_year = self.request.GET.get('year')
         selected_month = self.request.GET.get('month')
         selected_usuario = self.request.GET.get('usuario')
+        selected_tipo = self.request.GET.get('tipo')
 
         context['selected_year'] = int(selected_year) if selected_year else None
         context['selected_month'] = int(selected_month) if selected_month else None
         context['selected_usuario'] = int(selected_usuario) if selected_usuario else None
+        context['selected_tipo'] = selected_tipo if selected_tipo else None
 
         # Años disponibles
         years = LicenciaMedica.objects.dates('fecha_inicio', 'year', order='DESC')

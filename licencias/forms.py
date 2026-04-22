@@ -21,8 +21,12 @@ class LicenciaForm(forms.ModelForm):
     
     class Meta:
         model = LicenciaMedica
-        fields = ['usuario', 'fecha_inicio', 'dias', 'archivo']
+        fields = ['usuario', 'tipo', 'fecha_inicio', 'dias', 'archivo']
         widgets = {
+            'tipo': forms.Select(attrs={
+                'class': 'w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all uppercase tracking-widest',
+                'id': 'id_tipo'
+            }),
             'fecha_inicio': forms.DateInput(attrs={
                 'type': 'date', 
                 'class': 'w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all uppercase tracking-widest'
