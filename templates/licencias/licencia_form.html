@@ -2,7 +2,7 @@
 {% load l10n %}
 
 {% block title %}Subir Licencia - FLUX{% endblock %}
-{% block page_title %}Nueva Licencia Médica{% endblock %}
+{% block page_title %}Nueva Licencia / Permiso{% endblock %}
 
 {% block extra_head %}
 <!-- Tom Select CSS -->
@@ -45,10 +45,9 @@
         <div>
             <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2 sm:gap-3">
                 <i class="fas fa-file-medical text-blue-600"></i>
-                Registro de Licencia
+                Registro de Licencia / Permiso
             </h2>
-            <p class="text-sm sm:text-base text-gray-500 mt-1 font-medium">Ingresa los datos para registrar una ausencia por motivos de
-                salud.</p>
+            <p class="text-sm sm:text-base text-gray-500 mt-1 font-medium">Ingresa los datos para registrar una ausencia por motivos de salud o permiso sin goce de remuneraciones.</p>
         </div>
         <a href="{% url 'licencia_list' %}"
             class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 sm:py-3 bg-white text-gray-400 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-gray-50 border border-gray-100 shadow-sm transition-all text-center">
@@ -95,6 +94,17 @@
                     completo.</p>
             </div>
             {% endif %}
+
+            <!-- Type Selection -->
+            <div class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 space-y-4">
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    Tipo de Licencia
+                </label>
+                {{ form.tipo }}
+                {% if form.tipo.errors %}
+                <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{ form.tipo.errors.0 }}</p>
+                {% endif %}
+            </div>
 
             <!-- Date and Duration -->
             <div
@@ -170,7 +180,7 @@
         <!-- Action Button -->
         <button type="submit"
             class="w-full py-6 bg-gray-900 text-white text-[11px] font-black uppercase tracking-widest rounded-[2rem] hover:bg-blue-600 shadow-2xl transition-all flex items-center justify-center gap-3">
-            <i class="fas fa-save"></i> Ingresar Licencia
+            <i class="fas fa-save"></i> Registrar
         </button>
     </form>
 </div>
