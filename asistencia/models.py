@@ -57,9 +57,7 @@ class DiaFestivo(models.Model):
         return f"{self.fecha} - {self.nombre}"
 
     def clean(self):
-        # Validar que no se creen días festivos en el pasado (opcional)
-        if self.fecha < timezone.now().date():
-            raise ValidationError("No se pueden crear días festivos en fechas pasadas.")
+        pass
 
     @staticmethod
     def es_dia_festivo(fecha):

@@ -1,6 +1,7 @@
 from django import forms
 from datetime import datetime
-from .models import HorarioFuncionario
+from django.core.exceptions import ValidationError
+from .models import HorarioFuncionario, DiaFestivo
 
 class HorarioFuncionarioForm(forms.ModelForm):
     """Formulario para gestionar horarios de funcionarios"""
@@ -39,6 +40,63 @@ class CargaHorariosForm(forms.Form):
             from core.validators import validate_file_upload
             validate_file_upload(archivo)
         return archivo
+
+
+class DiaFestivoForm(forms.ModelForm):
+    """Formulario para crear días festivos"""
+    class Meta:
+        model = DiaFestivo
+        fields = ["fecha", "nombre", "descripcion"]
+        widgets = {
+            "fecha": forms.DateInput(attrs={
+                "type": "date",
+                "class": "mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            }),
+            "nombre": forms.TextInput(attrs={
+                "class": "mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500",
+                "placeholder": "Ej: Día de la Independencia"
+            }),
+            "descripcion": forms.Textarea(attrs={
+                "class": "mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500",
+                "rows": 3,
+                "placeholder": "Descripción opcional del día festivo"
+            }),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha = cleaned_data.get("fecha")
+        if fecha:
+            from django.utils import timezone
+            if fecha < timezone.now().date():
+                raise ValidationError("No se pueden crear días festivos en fechas pasadas.")
+        return cleaned_data
+    """Formulario para crear días festivos"""
+    class Meta:
+        model = DiaFestivo
+        fields = ["fecha", "nombre", "descripcion"]
+        widgets = {
+            "fecha": forms.DateInput(attrs={
+                "type": "date",
+                "class": "mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            }),
+            "nombre": forms.TextInput(attrs={
+                "class": "mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500",
+                "placeholder": "Ej: Día de la Independencia"
+            }),
+            "descripcion": forms.Textarea(attrs={
+                "class": "mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500",
+                "rows": 3,
+                "placeholder": "Descripción opcional del día festivo"
+            }),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha = cleaned_data.get("fecha")
+        if fecha and DiaFestivo.objects.filter(fecha=fecha).exists():
+            raise ValidationError("Ya existe un día festivo registrado en esta fecha.")
+        return cleaned_data
 
 
 class CargaRegistrosAsistenciaForm(forms.Form):
