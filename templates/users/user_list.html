@@ -304,7 +304,7 @@
               <tr>
                   <th>Usuario</th>
                   <th>Detalle Laboral</th>
-                  <th>Horario Fijo</th>
+
                   <th>Días Admin.</th>
                   <th style="text-align:right;">Opciones</th>
               </tr>
@@ -330,16 +330,7 @@
                           {{ user.get_funcion_display|default:user.get_tipo_funcionario_display|default:user.get_role_display }}
                       </span>
                   </td>
-                  <td>
-                      {% if user.horario %}
-                      <div class="horario-info">
-                          <div class="horario-time"><i class="fas fa-clock"></i> {{ user.horario.hora_entrada|time:"H:i" }}</div>
-                          <div class="horario-tol">Tol: {{ user.horario.tolerancia_minutos }} min</div>
-                      </div>
-                      {% else %}
-                      <div class="horario-none"><i class="fas fa-exclamation-triangle"></i> Sin definir</div>
-                      {% endif %}
-                  </td>
+
                   <td>
                       <div class="progress-wrap">
                           <div class="progress-header">
@@ -401,11 +392,7 @@
                         {% else %}badge-role{% endif %}">
                         {{ user.get_funcion_display|default:user.get_tipo_funcionario_display|default:user.get_role_display }}
                   </span>
-                  {% if user.horario %}
-                  <div class="horario-time" style="font-size:0.75rem;"><i class="fas fa-clock"></i> {{ user.horario.hora_entrada|time:"H:i" }}</div>
-                  {% else %}
-                  <div class="horario-none" style="font-size:0.6rem; padding:0.15rem 0.4rem;">Sin horario</div>
-                  {% endif %}
+
               </div>
 
               <div>

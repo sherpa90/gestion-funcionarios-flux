@@ -36,7 +36,7 @@ try:
 except ImportError:
     PYPDF_AVAILABLE = False
     pypdf = None
-from .models import HorarioFuncionario, RegistroAsistencia, DiaFestivo, AlegacionAsistencia, AnoEscolar
+from .models import HorarioFuncionario, RegistroAsistencia, DiaFestivo, AlegacionAsistencia, AnoEscolar, DiaHorario
 from .forms import CargaHorariosForm, HorarioFuncionarioForm, CargaRegistrosAsistenciaForm, DiaFestivoForm
 from django.shortcuts import get_object_or_404, redirect
 from users.models import CustomUser
@@ -586,6 +586,63 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
         
         context['anios_disponibles'] = anios_con_registros
 
+        # Horario asignado
+        horario_actual = HorarioFuncionario.objects.filter(
+            funcionario=self.request.user, activo=True
+        ).first()
+
+        # Generar horario_semanal
+        horario_semanal = []
+        dias_totales = 7 if es_sereno else 5
+        total_minutos_semanales = 0
+
+        DIA_CHOICES_DICT = {
+            0: 'Lunes', 1: 'Martes', 2: 'Miércoles',
+            3: 'Jueves', 4: 'Viernes', 5: 'Sábado', 6: 'Domingo'
+        }
+
+        dias_configurados = {}
+        if horario_actual:
+            for dh in horario_actual.dias.all():
+                dias_configurados[dh.dia_semana] = dh
+
+        for i in range(dias_totales):
+            dia_obj = dias_configurados.get(i)
+            if dia_obj:
+                horas = 0
+                if dia_obj.activo and dia_obj.hora_entrada and dia_obj.hora_salida:
+                    min1 = dia_obj.hora_entrada.hour * 60 + dia_obj.hora_entrada.minute
+                    min2 = dia_obj.hora_salida.hour * 60 + dia_obj.hora_salida.minute
+                    if min2 < min1: min2 += 24 * 60
+                    horas = (min2 - min1) / 60
+                    total_minutos_semanales += (min2 - min1)
+                horario_semanal.append({
+                    'dia_semana': i,
+                    'nombre': DIA_CHOICES_DICT[i],
+                    'activo': dia_obj.activo,
+                    'hora_entrada': dia_obj.hora_entrada.strftime('%H:%M') if dia_obj.hora_entrada else '',
+                    'hora_salida': dia_obj.hora_salida.strftime('%H:%M') if dia_obj.hora_salida else '',
+                    'horas_asignadas': round(horas, 1)
+                })
+            else:
+                horas = 0
+                if horario_actual and horario_actual.hora_entrada:
+                    min1 = horario_actual.hora_entrada.hour * 60 + horario_actual.hora_entrada.minute
+                    min2 = 17 * 60 # Default 17:00
+                    if min2 < min1: min2 += 24 * 60
+                    horas = (min2 - min1) / 60
+                    total_minutos_semanales += (min2 - min1)
+                horario_semanal.append({
+                    'dia_semana': i,
+                    'nombre': DIA_CHOICES_DICT[i],
+                    'activo': True,
+                    'hora_entrada': horario_actual.hora_entrada.strftime('%H:%M') if horario_actual and horario_actual.hora_entrada else '08:00',
+                    'hora_salida': '17:00',
+                    'horas_asignadas': round(horas, 1)
+                })
+
+        total_horas_semanales = f"{total_minutos_semanales // 60}h {total_minutos_semanales % 60}m" if total_minutos_semanales % 60 != 0 else f"{total_minutos_semanales // 60}h"
+
         context.update({
             'registros': registros_list,
             'semanas_calendario': semanas_calendario,
@@ -596,6 +653,8 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             'anio_int': anio_int,
             'today': datetime.now().date(),
             'ano_escolar_activo': AnoEscolar.get_activo(),
+            'horario_semanal': horario_semanal,
+            'total_horas_semanales': total_horas_semanales,
             'estadisticas': {
                 'total_dias': total_dias,
                 'dias_puntuales': dias_puntuales,
@@ -1518,6 +1577,40 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
             funcionario=usuario, activo=True
         ).first()
 
+        # Generar horario_semanal
+        horario_semanal = []
+        es_sereno = usuario.funcion == 'SERENO'
+        dias_totales = 7 if es_sereno else 5
+
+        DIA_CHOICES_DICT = {
+            0: 'Lunes', 1: 'Martes', 2: 'Miércoles',
+            3: 'Jueves', 4: 'Viernes', 5: 'Sábado', 6: 'Domingo'
+        }
+
+        dias_configurados = {}
+        if horario_actual:
+            for dh in horario_actual.dias.all():
+                dias_configurados[dh.dia_semana] = dh
+
+        for i in range(dias_totales):
+            dia_obj = dias_configurados.get(i)
+            if dia_obj:
+                horario_semanal.append({
+                    'dia_semana': i,
+                    'nombre': DIA_CHOICES_DICT[i],
+                    'activo': dia_obj.activo,
+                    'hora_entrada': dia_obj.hora_entrada.strftime('%H:%M') if dia_obj.hora_entrada else '',
+                    'hora_salida': dia_obj.hora_salida.strftime('%H:%M') if dia_obj.hora_salida else ''
+                })
+            else:
+                horario_semanal.append({
+                    'dia_semana': i,
+                    'nombre': DIA_CHOICES_DICT[i],
+                    'activo': True,
+                    'hora_entrada': horario_actual.hora_entrada.strftime('%H:%M') if horario_actual and horario_actual.hora_entrada else '08:00',
+                    'hora_salida': '17:00'
+                })
+
         # Meses para referencia
         context['meses'] = [
             (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'),
@@ -1529,6 +1622,8 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
             'usuario': usuario,
             'registros_por_anio': registros_por_anio,
             'horario_actual': horario_actual,
+            'horario_semanal': horario_semanal,
+            'es_sereno': es_sereno,
             'estadisticas_funcionario': {
                 'total_registros': total_registros,
                 'registros_puntuales': registros_puntuales,
@@ -2050,6 +2145,70 @@ class RecalcularTodaAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View
         return redirect('asistencia:gestion_asistencia')
 
 
+class RecalcularAsistenciaUsuarioView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para recalcular la asistencia de un usuario en particular"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def post(self, request, user_id):
+        usuario = get_object_or_404(CustomUser, id=user_id)
+        mes = request.POST.get('mes')
+        anio = request.POST.get('anio')
+
+        registros = RegistroAsistencia.objects.filter(funcionario=usuario)
+
+        if mes and anio:
+            try:
+                mes = int(mes)
+                anio = int(anio)
+                registros = registros.filter(fecha__month=mes, fecha__year=anio)
+            except ValueError:
+                pass
+
+        if not registros.exists():
+            messages.warning(request, f'No hay registros de asistencia para {usuario.get_full_name()} en ese periodo.')
+            return redirect(f'/asistencia/usuario/{user_id}/')
+
+        registros_actualizados = 0
+
+        for registro in registros:
+            try:
+                horario_actual = HorarioFuncionario.objects.filter(
+                    funcionario=registro.funcionario, activo=True
+                ).first()
+                if horario_actual:
+                    registro.horario_asignado = horario_actual
+            except Exception:
+                pass
+
+            registro.save()
+            registros_actualizados += 1
+
+        # Formatear mes y anio para el redirect y el log si existen
+        texto_periodo = ""
+        url_redirect = f'/asistencia/usuario/{user_id}/'
+        
+        if mes and anio:
+            texto_periodo = f" (Mes {mes}/{anio})"
+            url_redirect += f"?anio={anio}"
+
+        messages.success(
+            request,
+            f'Se recalcularon {registros_actualizados} registros de asistencia para {usuario.get_full_name()}{texto_periodo}.'
+        )
+
+        registrar_log(
+            usuario=request.user,
+            tipo='UPDATE',
+            accion='Recálculo de Asistencia Individual',
+            descripcion=f'Se recalcularon {registros_actualizados} registros para el usuario {usuario.run}{texto_periodo}',
+            ip_address=get_client_ip(request)
+        )
+
+        return redirect(url_redirect)
+
+
 class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
     """Vista para generar reporte individual de asistencia en PDF"""
 
@@ -2503,3 +2662,75 @@ class GestionAnoEscolarView(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
             messages.success(request, f'Año escolar {ano} creado correctamente.')
 
         return redirect('asistencia:gestion_ano_escolar')
+
+class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """API para guardar la configuración del horario semanal de un usuario"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+
+    def post(self, request, user_id):
+        import json
+        from django.http import JsonResponse
+        from django.db import transaction
+
+        try:
+            usuario = get_object_or_404(CustomUser, pk=user_id)
+            data = json.loads(request.body)
+            
+            with transaction.atomic():
+                # Obtener o crear el HorarioFuncionario base
+                horario_base, created = HorarioFuncionario.objects.get_or_create(
+                    funcionario=usuario,
+                    defaults={
+                        'hora_entrada': time(8, 0),
+                        'tolerancia_minutos': 15,
+                        'activo': True
+                    }
+                )
+
+                dias_data = data.get('dias', [])
+                for dia_data in dias_data:
+                    dia_semana = int(dia_data.get('dia_semana'))
+                    activo = bool(dia_data.get('activo', False))
+                    hora_entrada_str = dia_data.get('hora_entrada')
+                    hora_salida_str = dia_data.get('hora_salida')
+
+                    hora_entrada = None
+                    hora_salida = None
+
+                    if activo:
+                        if hora_entrada_str:
+                            try:
+                                h, m = map(int, hora_entrada_str.split(':'))
+                                hora_entrada = time(h, m)
+                            except ValueError:
+                                pass
+                        
+                        if hora_salida_str:
+                            try:
+                                h, m = map(int, hora_salida_str.split(':'))
+                                hora_salida = time(h, m)
+                            except ValueError:
+                                pass
+
+                    DiaHorario.objects.update_or_create(
+                        horario=horario_base,
+                        dia_semana=dia_semana,
+                        defaults={
+                            'activo': activo,
+                            'hora_entrada': hora_entrada,
+                            'hora_salida': hora_salida
+                        }
+                    )
+                
+                # Recalcular todos los registros de asistencia para este usuario
+                # Esto permite que la vista 'mi_asistencia' refleje instantáneamente el nuevo horario
+                for registro in RegistroAsistencia.objects.filter(funcionario=usuario):
+                    registro.save()
+
+            return JsonResponse({'status': 'success', 'message': 'Horario semanal guardado correctamente.'})
+            
+        except Exception as e:
+            logger.error(f"Error guardando horario semanal para {user_id}: {str(e)}")
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)

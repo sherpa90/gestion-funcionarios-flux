@@ -172,45 +172,7 @@
                     </div>
                 </div>
 
-                <!-- Schedule Section -->
-                <div class="px-4 sm:px-6 py-5 sm:py-6 space-y-6 bg-blue-50">
-                    <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider flex items-center">
-                        <i class="fas fa-clock mr-2 text-blue-600"></i>
-                        Horario de Trabajo
-                    </h3>
 
-                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                        <!-- Hora de Entrada -->
-                        <div class="sm:col-span-3">
-                            <label for="{{ form.hora_entrada.id_for_label }}"
-                                class="block text-sm font-medium text-gray-700">
-                                Hora de Entrada
-                            </label>
-                            <div class="mt-1">
-                                {{ form.hora_entrada }}
-                            </div>
-                            {% if form.hora_entrada.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.hora_entrada.errors.0 }}</p>
-                            {% endif %}
-                            <p class="mt-1 text-xs text-gray-500">Predeterminado: 07:45</p>
-                        </div>
-
-                        <!-- Tolerancia -->
-                        <div class="sm:col-span-3">
-                            <label for="{{ form.tolerancia_minutos.id_for_label }}"
-                                class="block text-sm font-medium text-gray-700">
-                                Tolerancia (minutos)
-                            </label>
-                            <div class="mt-1">
-                                {{ form.tolerancia_minutos }}
-                            </div>
-                            {% if form.tolerancia_minutos.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.tolerancia_minutos.errors.0 }}</p>
-                            {% endif %}
-                            <p class="mt-1 text-xs text-gray-500">Predeterminado: 5 minutos</p>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Password Section (only for create) -->
                 {% if not object %}

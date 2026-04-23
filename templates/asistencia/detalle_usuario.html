@@ -28,6 +28,7 @@
                 <h2 class="text-3xl font-bold text-gray-900">Asistencia de {{ usuario.get_full_name }}</h2>
                 <p class="text-gray-600 mt-2">RUT: {{ usuario.run }} • Rol: {{ usuario.get_role_display }}</p>
             </div>
+
         </div>
     </div>
 
@@ -84,31 +85,29 @@
         </div>
     </div>
 
-    <!-- Información del Horario -->
-    {% if horario_actual %}
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <i class="fas fa-clock text-blue-600 mr-2"></i>
-            Horario Asignado
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                <span class="text-sm text-gray-600">Hora de entrada:</span>
-                <span class="text-lg font-semibold text-blue-600">{{ horario_actual.hora_entrada|time:"H:i" }}</span>
-            </div>
-            <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-                <span class="text-sm text-gray-600">Tolerancia:</span>
-                <span class="text-lg font-semibold text-green-600">{{ horario_actual.tolerancia_minutos }} min</span>
-            </div>
-            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <span class="text-sm text-gray-600">Estado:</span>
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if horario_actual.activo %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-                    {% if horario_actual.activo %}Activo{% else %}Inactivo{% endif %}
-                </span>
-            </div>
+    <div x-data="horarioTabs()">
+        <!-- Tab Navigation -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                <button @click="activeTab = 'registros'"
+                    :class="activeTab === 'registros' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap flex py-4 px-1 border-b-2 font-medium text-sm focus:outline-none">
+                    <i class="fas fa-list-ul mt-1 mr-2"></i>
+                    Registros de Asistencia
+                </button>
+                <button @click="activeTab = 'horario'"
+                    :class="activeTab === 'horario' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap flex py-4 px-1 border-b-2 font-medium text-sm focus:outline-none">
+                    <i class="fas fa-calendar-week mt-1 mr-2"></i>
+                    Configuración de Horario Semanal
+                </button>
+            </nav>
         </div>
-    </div>
-    {% endif %}
+
+        <!-- Tab 1: Registros de Asistencia -->
+        <div x-show="activeTab === 'registros'">
+            
+
 
     <!-- Acciones de Administración -->
     {% if user.role in 'ADMIN,SECRETARIA' %}
@@ -156,8 +155,8 @@
             <!-- Registros por Mes -->
             {% for mes_num, datos_mes in datos_anio.registros_por_mes.items %}
             <div class="border-b border-gray-100 last:border-b-0">
-                <div class="px-6 py-4 bg-gray-50 border-l-4 border-blue-500">
-                    <h4 class="text-lg font-medium text-gray-900 flex items-center">
+                <div class="px-6 py-4 bg-gray-50 border-l-4 border-blue-500 flex justify-between items-center flex-wrap gap-4">
+                    <h4 class="text-lg font-medium text-gray-900 flex items-center flex-wrap gap-2">
                         <i class="fas fa-calendar-day text-blue-600 mr-2"></i>
                         {% for mes_info in meses %}
                             {% if mes_info.0 == mes_num %}{{ mes_info.1 }}{% endif %}
@@ -184,6 +183,16 @@
                         </span>
                         {% endif %}
                     </h4>
+                    {% if user.role in 'ADMIN,SECRETARIA' %}
+                    <form method="post" action="{% url 'asistencia:recalcular_asistencia_usuario' user_id=usuario.id %}" onsubmit="return confirm('¿Estás seguro de que deseas recalcular la asistencia de este mes? Esto evaluará nuevamente las marcaciones aplicando las reglas de horario actuales.')" class="m-0">
+                        {% csrf_token %}
+                        <input type="hidden" name="mes" value="{{ mes_num }}">
+                        <input type="hidden" name="anio" value="{{ anio }}">
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 text-sm rounded-lg font-medium shadow-sm transition-colors flex items-center">
+                            <i class="fas fa-sync-alt mr-2"></i> Recalcular Mes
+                        </button>
+                    </form>
+                    {% endif %}
                 </div>
 
                 <!-- Tabla de registros del mes -->
@@ -193,9 +202,10 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entrada</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salida</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entrada (Horario)</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entrada Real</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salida (Horario)</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salida Real</th>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Retraso</th>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                                     {% if user.role in 'ADMIN,SECRETARIA' %}
@@ -206,24 +216,31 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 {% for registro in datos_mes.registros %}
                                 <tr class="hover:bg-gray-50 {% if registro.alegacion %}bg-yellow-50 border-l-4 border-yellow-400{% endif %}">
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {{ registro.fecha|date:"d/m/Y" }}
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 capitalize">
+                                        {{ registro.fecha|date:"l d/m/Y" }}
                                     </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                                        {% if registro.horario_asignado %}
-                                            {{ registro.horario_asignado.hora_entrada|time:"H:i" }}
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                        {% if registro.horario_dia and registro.horario_dia.hora_entrada %}
+                                            {{ registro.horario_dia.hora_entrada|time:"H:i" }}
                                         {% else %}
-                                            <span class="text-gray-400">Sin horario</span>
+                                            -
                                         {% endif %}
                                     </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">
                                         {% if registro.hora_entrada_real %}
                                             {{ registro.hora_entrada_real|time:"H:i" }}
                                         {% else %}
                                             <span class="text-gray-400">-</span>
                                         {% endif %}
                                     </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                        {% if registro.horario_dia and registro.horario_dia.hora_salida %}
+                                            {{ registro.horario_dia.hora_salida|time:"H:i" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">
                                         {% if registro.hora_salida_real %}
                                             {{ registro.hora_salida_real|time:"H:i" }}
                                         {% else %}
@@ -274,6 +291,7 @@
                                     </td>
                                     {% if user.role in 'ADMIN,SECRETARIA' %}
                                     <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                                        {% if registro.pk %}
                                         <form method="post" action="{% url 'asistencia:eliminar_registro' pk=registro.pk %}"
                                               onsubmit="return confirm('¿Estás seguro de que quieres eliminar este registro?')"
                                               class="inline">
@@ -282,6 +300,7 @@
                                                 <i class="fas fa-trash-alt mr-1"></i> Eliminar
                                             </button>
                                         </form>
+                                        {% endif %}
                                     </td>
                                     {% endif %}
                                 </tr>
@@ -323,6 +342,180 @@
             </div>
         </div>
     </div>
+    </div>
     {% endif %}
-</div>
+    </div> <!-- Cierre Tab 1 -->
+
+    <!-- Tab 2: Configuración de Horario Semanal -->
+    <div x-show="activeTab === 'horario'" style="display: none;">
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>
+                    Horario Semanal
+                    {% if es_sereno %}
+                    <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        Sereno (Lun-Dom)
+                    </span>
+                    {% else %}
+                    <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Regular (Lun-Vie)
+                    </span>
+                    {% endif %}
+                </h3>
+                <div class="text-sm font-medium text-gray-700 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+                    Total Horas: <span x-text="totalHorasSemanales" class="text-blue-600 font-bold ml-1"></span>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="space-y-4">
+                    <template x-for="(dia, index) in dias" :key="index">
+                        <div class="flex items-center p-4 bg-gray-50 rounded-xl border transition duration-200"
+                            :class="dia.activo ? 'border-blue-200 bg-white shadow-sm' : 'border-gray-200 opacity-75'">
+                            
+                            <div class="flex-shrink-0 w-32 flex items-center">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="dia.activo" @change="calcularTotal()" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    <span class="ml-3 text-sm font-bold" :class="dia.activo ? 'text-gray-900' : 'text-gray-400'" x-text="dia.nombre"></span>
+                                </label>
+                            </div>
+
+                            <div class="flex-1 flex items-center space-x-6 pl-6 border-l border-gray-200" x-show="dia.activo">
+                                <div class="flex items-center space-x-2">
+                                    <label class="text-xs font-semibold text-gray-500 uppercase">Entrada</label>
+                                    <input type="time" x-model="dia.hora_entrada" @input="calcularTotal()" 
+                                        class="border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                </div>
+                                <i class="fas fa-arrow-right text-gray-300"></i>
+                                <div class="flex items-center space-x-2">
+                                    <label class="text-xs font-semibold text-gray-500 uppercase">Salida</label>
+                                    <input type="time" x-model="dia.hora_salida" @input="calcularTotal()" 
+                                        class="border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                </div>
+                                <div class="ml-auto text-sm font-medium text-gray-500" x-text="calcularHorasDia(dia)"></div>
+                            </div>
+                            
+                            <div class="flex-1 pl-6" x-show="!dia.activo">
+                                <span class="text-sm font-medium text-gray-400 italic">Día Libre / No Laboral</span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="mt-8 flex justify-end">
+                    <button type="button" @click="guardarHorario()" 
+                        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                        <i class="fas fa-save mr-2"></i>
+                        <span x-text="guardando ? 'Guardando...' : 'Guardar Horario'"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div> <!-- Cierre Tab 2 -->
+</div> <!-- Cierre x-data -->
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('horarioTabs', () => ({
+        activeTab: 'registros',
+        guardando: false,
+        totalHorasSemanales: '0h 0m',
+        dias: [],
+        
+        init() {
+            let rawDias = '{{ horario_semanal|escapejs }}';
+            // django templates can output python lists. We need to parse json or use a json filter.
+            // Since we passed a list of dicts, we need to ensure it's json.
+            // Let's use a safe fallback:
+            try {
+                // If the view returns a list of dicts, it's better to pass it as json.
+                // Assuming it's formatted as JS string.
+                // For now, I will use a Django template trick if it's not JSON:
+                // Actually, I need to make sure the view passes json. Let's fix the view to pass json or pass it here.
+                let jsonString = rawDias.replace(/'/g, '"').replace(/True/g, 'true').replace(/False/g, 'false');
+                this.dias = JSON.parse(jsonString);
+            } catch (e) {
+                console.error("Error parsing dias:", e);
+                this.dias = [];
+            }
+            this.calcularTotal();
+        },
+
+        calcularHorasDia(dia) {
+            if (!dia.hora_entrada || !dia.hora_salida) return '0h';
+            let [h1, m1] = dia.hora_entrada.split(':').map(Number);
+            let [h2, m2] = dia.hora_salida.split(':').map(Number);
+            
+            let min1 = h1 * 60 + m1;
+            let min2 = h2 * 60 + m2;
+            
+            if (min2 < min1) {
+                // Turno nocturno
+                min2 += 24 * 60;
+            }
+            
+            let diff = min2 - min1;
+            let h = Math.floor(diff / 60);
+            let m = diff % 60;
+            
+            if (m === 0) return `${h}h`;
+            return `${h}h ${m}m`;
+        },
+
+        calcularTotal() {
+            let totalMinutos = 0;
+            this.dias.forEach(dia => {
+                if (dia.activo && dia.hora_entrada && dia.hora_salida) {
+                    let [h1, m1] = dia.hora_entrada.split(':').map(Number);
+                    let [h2, m2] = dia.hora_salida.split(':').map(Number);
+                    
+                    let min1 = h1 * 60 + m1;
+                    let min2 = h2 * 60 + m2;
+                    
+                    if (min2 < min1) {
+                        min2 += 24 * 60;
+                    }
+                    
+                    totalMinutos += (min2 - min1);
+                }
+            });
+            
+            let h = Math.floor(totalMinutos / 60);
+            let m = totalMinutos % 60;
+            this.totalHorasSemanales = m === 0 ? `${h}h` : `${h}h ${m}m`;
+        },
+
+        async guardarHorario() {
+            if (this.guardando) return;
+            this.guardando = true;
+            
+            try {
+                const response = await fetch("{% url 'asistencia:guardar_horario_semanal' user_id=usuario.id %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ dias: this.dias })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('Horario guardado correctamente');
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Ocurrió un error al guardar el horario.');
+                console.error(error);
+            } finally {
+                this.guardando = false;
+            }
+        }
+    }));
+});
+</script>
 {% endblock %}
