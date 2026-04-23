@@ -27,6 +27,8 @@ from .views import (
     ExportarRetrasosPDFView,
     RecalcularTodaAsistenciaView,
     GestionAnoEscolarView,
+    GuardarHorarioSemanalView,
+    RecalcularAsistenciaUsuarioView,
 )
 
 app_name = 'asistencia'
@@ -38,11 +40,13 @@ urlpatterns = [
     path("horario/crear/<int:funcionario_id>/", CrearHorarioView.as_view(), name="crear_horario"),
     path("horario/editar/<int:pk>/", EditarHorarioView.as_view(), name="editar_horario"),
     path("horario/toggle/<int:pk>/", ToggleHorarioView.as_view(), name="toggle_horario"),
+    path("horario/guardar-semanal/<int:user_id>/", GuardarHorarioSemanalView.as_view(), name="guardar_horario_semanal"),
 
     # Gestión de asistencia
     path("gestion/", GestionAsistenciaView.as_view(), name="gestion_asistencia"),
     path("usuario/<int:user_id>/", DetalleUsuarioAsistenciaView.as_view(), name="detalle_usuario"),
     path("registro/<int:pk>/eliminar/", EliminarRegistroAsistenciaView.as_view(), name="eliminar_registro"),
+    path("usuario/<int:user_id>/recalcular/", RecalcularAsistenciaUsuarioView.as_view(), name="recalcular_asistencia_usuario"),
     path("usuario/<int:user_id>/eliminar-todos/", EliminarTodosRegistrosUsuarioView.as_view(), name="eliminar_todos_registros"),
     path("cargar-registros/", CargaRegistrosAsistenciaView.as_view(), name="carga_registros"),
     path("descargar/", DescargarAsistenciaView.as_view(), name="descargar_asistencia"),

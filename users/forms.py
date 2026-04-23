@@ -12,23 +12,9 @@ class UserCreateForm(forms.ModelForm):
         widget=forms.PasswordInput,
         help_text="Contraseña temporal que se generará"
     )
-    hora_entrada = forms.TimeField(
-        required=False,
-        initial='07:45',
-        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-input'}),
-        help_text="Hora de entrada (ej: 07:45)"
-    )
-    tolerancia_minutos = forms.IntegerField(
-        required=False,
-        initial=5,
-        min_value=0,
-        max_value=60,
-        help_text="Tolerancia en minutos (ej: 5)"
-    )
-    
     class Meta:
         model = CustomUser
-        fields = ['run', 'email', 'first_name', 'last_name', 'role', 'tipo_funcionario', 'funcion', 'hora_entrada', 'tolerancia_minutos']
+        fields = ['run', 'email', 'first_name', 'last_name', 'role', 'tipo_funcionario', 'funcion']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -108,15 +94,11 @@ class UserCreateForm(forms.ModelForm):
             horario, created = HorarioFuncionario.objects.get_or_create(
                 funcionario=user,
                 defaults={
-                    'hora_entrada': self.cleaned_data.get('hora_entrada', '07:45'),
-                    'tolerancia_minutos': self.cleaned_data.get('tolerancia_minutos', 15),
+                    'hora_entrada': '08:00',
+                    'tolerancia_minutos': 15,
                     'activo': True
                 }
             )
-            if not created:
-                horario.hora_entrada = self.cleaned_data.get('hora_entrada', horario.hora_entrada)
-                horario.tolerancia_minutos = self.cleaned_data.get('tolerancia_minutos', horario.tolerancia_minutos)
-                horario.save()
         # Guardar la contraseña generada para mostrarla
         user.generated_password = password if password else temp_password
         return user
@@ -124,36 +106,14 @@ class UserCreateForm(forms.ModelForm):
 
 class UserEditForm(forms.ModelForm):
     """Formulario para editar usuarios - permite editar RUT para ADMIN y SECRETARIA"""
-    hora_entrada = forms.TimeField(
-        required=False,
-        initial='07:45',
-        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-input'}),
-        help_text="Hora de entrada (ej: 07:45)"
-    )
-    tolerancia_minutos = forms.IntegerField(
-        required=False,
-        initial=5,
-        min_value=0,
-        max_value=60,
-        help_text="Tolerancia en minutos (ej: 5)"
-    )
-    
     class Meta:
         model = CustomUser
-        fields = ['run', 'email', 'first_name', 'last_name', 'role', 'tipo_funcionario', 'funcion', 'dias_disponibles', 'hora_entrada', 'tolerancia_minutos']
+        fields = ['run', 'email', 'first_name', 'last_name', 'role', 'tipo_funcionario', 'funcion', 'dias_disponibles']
     
     def __init__(self, *args, **kwargs):
         # Extract editing user to check permissions
         editing_user = kwargs.pop('editing_user', None)
         super().__init__(*args, **kwargs)
-        
-        # Set initial values for schedule fields
-        if self.instance and self.instance.pk:
-            from asistencia.models import HorarioFuncionario
-            horario = HorarioFuncionario.objects.filter(funcionario=self.instance).first()
-            if horario:
-                self.fields['hora_entrada'].initial = horario.hora_entrada
-                self.fields['tolerancia_minutos'].initial = horario.tolerancia_minutos
         
         # Set widgets
         widgets = {
@@ -198,15 +158,11 @@ class UserEditForm(forms.ModelForm):
             horario, created = HorarioFuncionario.objects.get_or_create(
                 funcionario=user,
                 defaults={
-                    'hora_entrada': self.cleaned_data.get('hora_entrada', '07:45'),
-                    'tolerancia_minutos': self.cleaned_data.get('tolerancia_minutos', 15),
+                    'hora_entrada': '08:00',
+                    'tolerancia_minutos': 15,
                     'activo': True
                 }
             )
-            if not created:
-                horario.hora_entrada = self.cleaned_data.get('hora_entrada', horario.hora_entrada)
-                horario.tolerancia_minutos = self.cleaned_data.get('tolerancia_minutos', horario.tolerancia_minutos)
-                horario.save()
         return user
     
     def clean_email(self):

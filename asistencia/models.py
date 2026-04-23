@@ -35,6 +35,49 @@ class HorarioFuncionario(models.Model):
         return f"{self.funcionario.get_full_name()} - {self.hora_entrada}"
 
 
+class DiaHorario(models.Model):
+    """Configuración de horario por día de la semana para un funcionario"""
+    DIA_CHOICES = [
+        (0, 'Lunes'),
+        (1, 'Martes'),
+        (2, 'Miércoles'),
+        (3, 'Jueves'),
+        (4, 'Viernes'),
+        (5, 'Sábado'),
+        (6, 'Domingo'),
+    ]
+
+    horario = models.ForeignKey(
+        HorarioFuncionario,
+        on_delete=models.CASCADE,
+        related_name='dias'
+    )
+    dia_semana = models.IntegerField(choices=DIA_CHOICES)
+    hora_entrada = models.TimeField(
+        null=True, 
+        blank=True,
+        help_text="Hora de entrada para este día"
+    )
+    hora_salida = models.TimeField(
+        null=True, 
+        blank=True,
+        help_text="Hora de salida esperada para este día"
+    )
+    activo = models.BooleanField(
+        default=True,
+        help_text="Indica si el funcionario debe trabajar este día"
+    )
+
+    class Meta:
+        verbose_name = "Día de Horario"
+        verbose_name_plural = "Días de Horario"
+        ordering = ['dia_semana']
+        unique_together = ['horario', 'dia_semana']
+
+    def __str__(self):
+        return f"{self.horario.funcionario.get_full_name()} - {self.get_dia_semana_display()}"
+
+
 class DiaFestivo(models.Model):
     """Días festivos que no cuentan para asistencia"""
     fecha = models.DateField(unique=True, help_text="Fecha del día festivo")
@@ -131,6 +174,7 @@ class RegistroAsistencia(models.Model):
         ("DIA_ADMINISTRATIVO", "Día Administrativo"),
         ("LICENCIA_MEDICA", "Licencia Médica"),
         ("DIA_FESTIVO", "Día Festivo"),
+        ("DIA_LIBRE", "Día Libre"),
         ("SIN_HORARIO", "Sin Horario Asignado"),
     ]
 
@@ -206,14 +250,38 @@ class RegistroAsistencia(models.Model):
     def __str__(self):
         return f"{self.funcionario.get_full_name()} - {self.fecha} - {self.get_estado_display()}"
 
+    @property
+    def horario_dia(self):
+        """Retorna la configuración de horario para el día específico de este registro"""
+        if not self.horario_asignado:
+            return None
+        
+        # En Python, weekday() retorna 0 para Lunes y 6 para Domingo
+        dia_semana = self.fecha.weekday()
+        
+        try:
+            return self.horario_asignado.dias.get(dia_semana=dia_semana)
+        except Exception:
+            return None
+
     def calcular_retraso(self):
-        """Calcula los minutos de retraso basado en el horario asignado"""
+        """Calcula los minutos de retraso basado en el horario asignado para el día específico"""
         if not self.hora_entrada_real or not self.horario_asignado:
             return 0
 
-        # Convertir horas a minutos desde medianoche para comparación precisa
-        minutos_asignados = (self.horario_asignado.hora_entrada.hour * 60 +
-                           self.horario_asignado.hora_entrada.minute)
+        # Intentar obtener el horario específico para el día de la semana
+        dia_semana = self.fecha.weekday()
+        dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana).first()
+
+        if dia_horario:
+            if not dia_horario.activo or not dia_horario.hora_entrada:
+                return 0 # No debería tener retraso en un día libre o sin hora configurada
+            minutos_asignados = dia_horario.hora_entrada.hour * 60 + dia_horario.hora_entrada.minute
+        else:
+            # Fallback al horario general
+            minutos_asignados = (self.horario_asignado.hora_entrada.hour * 60 +
+                               self.horario_asignado.hora_entrada.minute)
+
         minutos_reales = (self.hora_entrada_real.hour * 60 +
                          self.hora_entrada_real.minute)
 
@@ -340,6 +408,8 @@ class RegistroAsistencia(models.Model):
         if not self.horario_asignado:
             return "SIN_HORARIO"
 
+
+
         # Verificar si es día festivo (prioridad máxima)
         if DiaFestivo.es_dia_festivo(self.fecha):
             return "DIA_FESTIVO"
@@ -396,6 +466,22 @@ class RegistroAsistencia(models.Model):
                 else:
                     # Día completo administrativo
                     return "DIA_ADMINISTRATIVO"
+
+        # Verificar si es día libre en su horario semanal
+        dia_semana = self.fecha.weekday()
+        dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana).first()
+        es_dia_activo = True
+        
+        if dia_horario:
+            es_dia_activo = dia_horario.activo
+        else:
+            # Fallback lógico si no tiene configurado el DiaHorario
+            es_sereno = self.funcionario.funcion == 'SERENO'
+            if not es_sereno and dia_semana >= 5:
+                es_dia_activo = False
+
+        if not es_dia_activo and not self.hora_entrada_real:
+            return "DIA_LIBRE"
 
         # Verificar justificación manual
         if self.justificacion_manual:
