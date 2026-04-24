@@ -131,7 +131,7 @@
     <!-- Tabla de Funcionarios -->
     <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
         <div class="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Funcionarios con Atrasos</h3>
+            <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Funcionarios</h3>
             <span class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{{ usuarios_con_stats|length }} funcionarios</span>
         </div>
 
@@ -223,10 +223,7 @@
         {% else %}
         <div class="py-12 text-center">
             <i class="fas fa-users text-gray-200 text-4xl mb-3 block"></i>
-            <p class="text-sm font-bold text-gray-400">No hay funcionarios con registros de asistencia</p>
-            <a href="{% url 'asistencia:carga_registros' %}" class="inline-flex items-center mt-3 text-xs font-bold text-blue-600 hover:text-blue-700">
-                <i class="fas fa-upload mr-1.5"></i>Cargar registros
-            </a>
+            <p class="text-sm font-bold text-gray-400">No se encontraron funcionarios</p>
         </div>
         {% endif %}
     </div>
