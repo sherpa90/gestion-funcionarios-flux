@@ -29,6 +29,9 @@ from .views import (
     GestionAnoEscolarView,
     GuardarHorarioSemanalView,
     RecalcularAsistenciaUsuarioView,
+    GestionHorariosExcepcionalesView,
+    CrearHorarioExcepcionalView,
+    EliminarHorarioExcepcionalView,
 )
 
 app_name = 'asistencia'
@@ -87,4 +90,9 @@ urlpatterns = [
 
     # Recálculo masivo
     path("recalcular-toda/", RecalcularTodaAsistenciaView.as_view(), name="recalcular_toda_asistencia"),
+
+    # Horarios excepcionales
+    path("excepcionales/", GestionHorariosExcepcionalesView.as_view(), name="gestion_excepcionales"),
+    path("excepcionales/crear/", CrearHorarioExcepcionalView.as_view(), name="crear_excepcional"),
+    path("excepcionales/<int:pk>/eliminar/", EliminarHorarioExcepcionalView.as_view(), name="eliminar_excepcional"),
 ]
