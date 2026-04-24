@@ -844,17 +844,14 @@ class GestionAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
 
     def get_queryset(self):
-        # Obtener usuarios que tienen registros de asistencia
-        usuarios_con_asistencia = RegistroAsistencia.objects.values_list('funcionario_id', flat=True).distinct()
-
+        # Obtener todos los usuarios del sistema
         queryset = CustomUser.objects.filter(
-            id__in=usuarios_con_asistencia,
+            is_active=True,
             role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
         )
 
-        # Filtros
+        # Filtros de búsqueda
         search = self.request.GET.get('search')
-
         if search:
             queryset = queryset.filter(
                 Q(first_name__icontains=search) |
@@ -862,7 +859,7 @@ class GestionAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, ListView):
                 Q(run__icontains=search)
             )
 
-        # Aplicar ordenamiento
+        # Ordenamiento — por defecto: nombre ascendente
         sort_by = self.request.GET.get('sort', 'name')
 
         if sort_by == 'name':
@@ -874,11 +871,11 @@ class GestionAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         elif sort_by == 'rut_desc':
             queryset = queryset.order_by('-run')
         elif sort_by == 'role':
-            queryset = queryset.order_by('role', 'last_name', 'first_name')
+            queryset = queryset.order_by('role', 'first_name', 'last_name')
         elif sort_by == 'role_desc':
-            queryset = queryset.order_by('-role', 'last_name', 'first_name')
+            queryset = queryset.order_by('-role', 'first_name', 'last_name')
         else:
-            queryset = queryset.order_by('last_name', 'first_name')
+            queryset = queryset.order_by('first_name', 'last_name')
 
         return queryset
 
