@@ -1,7 +1,40 @@
 from django import forms
 from datetime import datetime
 from django.core.exceptions import ValidationError
-from .models import HorarioFuncionario, DiaFestivo
+from .models import HorarioFuncionario, DiaFestivo, HorarioExcepcional
+
+
+class HorarioExcepcionalForm(forms.ModelForm):
+    """Formulario para crear horarios excepcionales globales"""
+    class Meta:
+        model = HorarioExcepcional
+        fields = ["fecha", "hora_entrada", "hora_salida", "motivo"]
+        widgets = {
+            "fecha": forms.DateInput(attrs={
+                "type": "date",
+                "class": "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            }),
+            "hora_entrada": forms.TimeInput(attrs={
+                "type": "time",
+                "class": "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            }),
+            "hora_salida": forms.TimeInput(attrs={
+                "type": "time",
+                "class": "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            }),
+            "motivo": forms.TextInput(attrs={
+                "class": "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm",
+                "placeholder": "Ej: Corte de agua, Día del Profesor, Emergencia climática..."
+            }),
+        }
+
+    def clean_fecha(self):
+        fecha = self.cleaned_data.get("fecha")
+        if fecha and HorarioExcepcional.objects.filter(fecha=fecha).exists():
+            raise ValidationError("Ya existe un horario excepcional registrado para esta fecha.")
+        return fecha
+
+
 
 class HorarioFuncionarioForm(forms.ModelForm):
     """Formulario para gestionar horarios de funcionarios"""

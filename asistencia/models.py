@@ -108,6 +108,29 @@ class DiaFestivo(models.Model):
         return DiaFestivo.objects.filter(fecha=fecha).exists()
 
 
+class HorarioExcepcional(models.Model):
+    """Horario global que aplica excepcionalmente a todos los funcionarios para una fecha específica"""
+    fecha = models.DateField(unique=True, help_text="Fecha a la que aplica este horario excepcional")
+    hora_entrada = models.TimeField(null=True, blank=True, help_text="Hora de entrada obligatoria (dejar en blanco si no aplica entrada)")
+    hora_salida = models.TimeField(null=True, blank=True, help_text="Hora de salida autorizada (dejar en blanco si no aplica salida)")
+    motivo = models.CharField(max_length=255, help_text="Motivo de este horario excepcional (ej: Día del Profesor, Corte de agua)")
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="horarios_excepcionales_creados"
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Horario Excepcional"
+        verbose_name_plural = "Horarios Excepcionales"
+        ordering = ["-fecha"]
+
+    def __str__(self):
+        return f"{self.fecha} - {self.motivo}"
+
+
 class AlegacionAsistencia(models.Model):
     """Alegaciones de usuarios sobre sus registros de asistencia"""
 
@@ -252,7 +275,16 @@ class RegistroAsistencia(models.Model):
 
     @property
     def horario_dia(self):
-        """Retorna la configuración de horario para el día específico de este registro"""
+        """Retorna la configuración de horario para el día específico de este registro (considerando excepciones)"""
+        # Verificar primero si hay un horario excepcional
+        excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
+        if excepcional:
+            class VirtualHorario:
+                def __init__(self, ex):
+                    self.hora_entrada = ex.hora_entrada
+                    self.hora_salida = ex.hora_salida
+            return VirtualHorario(excepcional)
+
         if not self.horario_asignado:
             return None
         
@@ -265,22 +297,32 @@ class RegistroAsistencia(models.Model):
             return None
 
     def calcular_retraso(self):
-        """Calcula los minutos de retraso basado en el horario asignado para el día específico"""
-        if not self.hora_entrada_real or not self.horario_asignado:
+        """Calcula los minutos de retraso basado en el horario asignado o excepcional"""
+        if not self.hora_entrada_real:
             return 0
 
-        # Intentar obtener el horario específico para el día de la semana
-        dia_semana = self.fecha.weekday()
-        dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana).first()
-
-        if dia_horario:
-            if not dia_horario.activo or not dia_horario.hora_entrada:
-                return 0 # No debería tener retraso en un día libre o sin hora configurada
-            minutos_asignados = dia_horario.hora_entrada.hour * 60 + dia_horario.hora_entrada.minute
+        # Verificar primero horario excepcional
+        excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
+        if excepcional:
+            if not excepcional.hora_entrada:
+                return 0 # Si el excepcional no exige hora de entrada, no hay retraso
+            hora_esperada = excepcional.hora_entrada
         else:
-            # Fallback al horario general
-            minutos_asignados = (self.horario_asignado.hora_entrada.hour * 60 +
-                               self.horario_asignado.hora_entrada.minute)
+            if not self.horario_asignado:
+                return 0
+            # Intentar obtener el horario específico para el día de la semana
+            dia_semana = self.fecha.weekday()
+            dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana).first()
+
+            if dia_horario:
+                if not dia_horario.activo or not dia_horario.hora_entrada:
+                    return 0 # No debería tener retraso en un día libre o sin hora configurada
+                hora_esperada = dia_horario.hora_entrada
+            else:
+                # Fallback al horario general
+                hora_esperada = self.horario_asignado.hora_entrada
+
+        minutos_asignados = hora_esperada.hour * 60 + hora_esperada.minute
 
         minutos_reales = (self.hora_entrada_real.hour * 60 +
                          self.hora_entrada_real.minute)
@@ -288,8 +330,11 @@ class RegistroAsistencia(models.Model):
         # Calcular diferencia en minutos
         diferencia = minutos_reales - minutos_asignados
 
+        # Tolerancia (usar la del horario asignado si existe, sino 15 min por defecto)
+        tolerancia = self.horario_asignado.tolerancia_minutos if self.horario_asignado else 15
+
         # Si llegó dentro de la tolerancia, no cuenta como retraso
-        if diferencia <= self.horario_asignado.tolerancia_minutos:
+        if diferencia <= tolerancia:
             return 0
 
         # Si llegó tarde, devolver los minutos de retraso
@@ -467,18 +512,23 @@ class RegistroAsistencia(models.Model):
                     # Día completo administrativo
                     return "DIA_ADMINISTRATIVO"
 
-        # Verificar si es día libre en su horario semanal
-        dia_semana = self.fecha.weekday()
-        dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana).first()
-        es_dia_activo = True
-        
-        if dia_horario:
-            es_dia_activo = dia_horario.activo
+        # Verificar si hay horario excepcional
+        excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
+        if excepcional:
+            es_dia_activo = True if excepcional.hora_entrada or excepcional.hora_salida else False
         else:
-            # Fallback lógico si no tiene configurado el DiaHorario
-            es_sereno = self.funcionario.funcion == 'SERENO'
-            if not es_sereno and dia_semana >= 5:
-                es_dia_activo = False
+            # Verificar si es día libre en su horario semanal
+            dia_semana = self.fecha.weekday()
+            dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana).first()
+            es_dia_activo = True
+            
+            if dia_horario:
+                es_dia_activo = dia_horario.activo
+            else:
+                # Fallback lógico si no tiene configurado el DiaHorario
+                es_sereno = self.funcionario.funcion == 'SERENO'
+                if not es_sereno and dia_semana >= 5:
+                    es_dia_activo = False
 
         if not es_dia_activo and not self.hora_entrada_real:
             return "DIA_LIBRE"

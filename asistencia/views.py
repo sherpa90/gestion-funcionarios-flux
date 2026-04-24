@@ -36,8 +36,8 @@ try:
 except ImportError:
     PYPDF_AVAILABLE = False
     pypdf = None
-from .models import HorarioFuncionario, RegistroAsistencia, DiaFestivo, AlegacionAsistencia, AnoEscolar, DiaHorario
-from .forms import CargaHorariosForm, HorarioFuncionarioForm, CargaRegistrosAsistenciaForm, DiaFestivoForm
+from .models import HorarioFuncionario, RegistroAsistencia, DiaFestivo, AlegacionAsistencia, AnoEscolar, DiaHorario, HorarioExcepcional
+from .forms import CargaHorariosForm, HorarioFuncionarioForm, CargaRegistrosAsistenciaForm, DiaFestivoForm, HorarioExcepcionalForm
 from django.shortcuts import get_object_or_404, redirect
 from users.models import CustomUser
 from core.utils import normalize_rut
@@ -2734,3 +2734,95 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
         except Exception as e:
             logger.error(f"Error guardando horario semanal para {user_id}: {str(e)}")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+class GestionHorariosExcepcionalesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """Vista para gestionar horarios excepcionales globales del establecimiento"""
+    template_name = 'asistencia/gestion_excepcionales.html'
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['excepcionales'] = HorarioExcepcional.objects.select_related('creado_por').all()
+        context['form'] = HorarioExcepcionalForm()
+        return context
+
+
+class CrearHorarioExcepcionalView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para crear un horario excepcional y recalcular los registros del día afectado"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def post(self, request):
+        form = HorarioExcepcionalForm(request.POST)
+        if form.is_valid():
+            excepcional = form.save(commit=False)
+            excepcional.creado_por = request.user
+            excepcional.save()
+
+            # Recalcular todos los registros de ese día específico
+            registros_del_dia = RegistroAsistencia.objects.filter(fecha=excepcional.fecha)
+            count = 0
+            for registro in registros_del_dia:
+                registro.save()
+                count += 1
+
+            registrar_log(
+                usuario=request.user,
+                tipo='CREATE',
+                accion='Creación de Horario Excepcional',
+                descripcion=f'Se creó horario excepcional para {excepcional.fecha}: {excepcional.motivo}. '
+                            f'Se recalcularon {count} registros.',
+                ip_address=get_client_ip(request)
+            )
+
+            messages.success(
+                request,
+                f'Horario excepcional creado para el {excepcional.fecha.strftime("%d/%m/%Y")}. '
+                f'Se recalcularon {count} registros de asistencia.'
+            )
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{error}')
+
+        return redirect('asistencia:gestion_excepcionales')
+
+
+class EliminarHorarioExcepcionalView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para eliminar un horario excepcional y recalcular los registros del día afectado"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def post(self, request, pk):
+        excepcional = get_object_or_404(HorarioExcepcional, pk=pk)
+        fecha = excepcional.fecha
+        motivo = excepcional.motivo
+        excepcional.delete()
+
+        # Recalcular registros del día ahora que ya no hay excepción
+        registros_del_dia = RegistroAsistencia.objects.filter(fecha=fecha)
+        count = 0
+        for registro in registros_del_dia:
+            registro.save()
+            count += 1
+
+        registrar_log(
+            usuario=request.user,
+            tipo='DELETE',
+            accion='Eliminación de Horario Excepcional',
+            descripcion=f'Se eliminó horario excepcional para {fecha}: {motivo}. '
+                        f'Se recalcularon {count} registros.',
+            ip_address=get_client_ip(request)
+        )
+
+        messages.success(
+            request,
+            f'Horario excepcional del {fecha.strftime("%d/%m/%Y")} eliminado. '
+            f'Se recalcularon {count} registros de asistencia.'
+        )
+        return redirect('asistencia:gestion_excepcionales')
