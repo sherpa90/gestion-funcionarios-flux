@@ -332,19 +332,24 @@
         <div class="px-6 py-12 text-center">
             <i class="fas fa-calendar-times text-gray-300 text-5xl mb-4"></i>
             <p class="text-gray-500 text-lg font-medium">No hay registros de asistencia</p>
-            <p class="text-gray-400 text-sm mt-2">No se encontraron registros para este funcionario</p>
-            <div class="mt-6">
-                <a href="{% url 'asistencia:gestion_asistencia' %}"
+            <p class="text-gray-400 text-sm mt-2">Aún no se han cargado registros para este funcionario</p>
+            <div class="mt-6 flex items-center justify-center gap-3">
+                <button @click="activeTab = 'horario'"
                     class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-calendar-week mr-2"></i>
+                    Configurar Horario Semanal
+                </button>
+                <a href="{% url 'asistencia:gestion_asistencia' %}"
+                    class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
                     <i class="fas fa-arrow-left mr-2"></i>
-                    Volver a la gestión
+                    Volver
                 </a>
             </div>
         </div>
     </div>
-    </div>
     {% endif %}
     </div> <!-- Cierre Tab 1 -->
+
 
     <!-- Tab 2: Configuración de Horario Semanal -->
     <div x-show="activeTab === 'horario'" style="display: none;">
@@ -363,8 +368,11 @@
                     </span>
                     {% endif %}
                 </h3>
-                <div class="text-sm font-medium text-gray-700 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
-                    Total Horas: <span x-text="totalHorasSemanales" class="text-blue-600 font-bold ml-1"></span>
+                <div class="text-sm font-medium text-gray-700 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm flex items-center">
+                    Total Horas: <span x-text="totalHorasSemanales" :class="totalMinutosSemanales > 2640 ? 'text-red-600' : 'text-blue-600'" class="font-bold ml-1"></span>
+                    <template x-if="totalMinutosSemanales > 2640">
+                        <span class="ml-2 text-red-500 text-[10px] font-bold uppercase"><i class="fas fa-exclamation-circle"></i> Excede 44h</span>
+                    </template>
                 </div>
             </div>
             
@@ -406,7 +414,9 @@
 
                 <div class="mt-8 flex justify-end">
                     <button type="button" @click="guardarHorario()" 
-                        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                        :disabled="guardando || totalMinutosSemanales > 2640"
+                        :class="totalMinutosSemanales > 2640 ? 'opacity-50 cursor-not-allowed bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'"
+                        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
                         <i class="fas fa-save mr-2"></i>
                         <span x-text="guardando ? 'Guardando...' : 'Guardar Horario'"></span>
                     </button>
@@ -422,6 +432,7 @@ document.addEventListener('alpine:init', () => {
         activeTab: 'registros',
         guardando: false,
         totalHorasSemanales: '0h 0m',
+        totalMinutosSemanales: 0,
         dias: [],
         
         init() {
@@ -482,6 +493,7 @@ document.addEventListener('alpine:init', () => {
                 }
             });
             
+            this.totalMinutosSemanales = totalMinutos;
             let h = Math.floor(totalMinutos / 60);
             let m = totalMinutos % 60;
             this.totalHorasSemanales = m === 0 ? `${h}h` : `${h}h ${m}m`;
@@ -498,7 +510,10 @@ document.addEventListener('alpine:init', () => {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': '{{ csrf_token }}'
                     },
-                    body: JSON.stringify({ dias: this.dias })
+                    body: JSON.stringify({ 
+                        dias: this.dias,
+                        total_minutos: this.totalMinutosSemanales
+                    })
                 });
                 
                 const result = await response.json();

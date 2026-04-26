@@ -242,9 +242,36 @@
     margin-top: .75rem;
   }
   @media (min-width: 640px) { .rep-exports { margin-top: 0; } }
+
+  /* ─── Custom modal colors ─── */
+  .btn-indigo { background: linear-gradient(135deg, #6366f1, #4f46e5); }
 </style>
 
 <!-- Modals -->
+<div id="modal-horarios" class="rep-overlay" onclick="if(event.target===this)closeModal('horarios')">
+  <div class="rep-modal">
+    <span class="rep-modal-handle"></span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
+      <h3 style="margin:0;display:flex;align-items:center;gap:.5rem;">
+        <span style="background:#eef2ff;color:#4f46e5;border-radius:.5rem;padding:.3rem .5rem;font-size:.85rem;"><i class="fas fa-calendar-week"></i></span>
+        Reporte de Horarios
+      </h3>
+      <button onclick="closeModal('horarios')" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:.25rem;"><i class="fas fa-times"></i></button>
+    </div>
+    <p style="font-size: .85rem; color: #64748b; margin-bottom: 1.25rem;">Selecciona el formato para descargar el horario semanal de todo el personal.</p>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#4ade80,#16a34a); margin-top: 0;"
+          onclick="window.location.href='{% url 'exportar_horarios' %}'; closeModal('horarios')">
+          <i class="fas fa-file-excel"></i> Excel
+        </button>
+        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#f87171,#dc2626); margin-top: 0;"
+          onclick="window.open('{% url 'exportar_horarios_pdf' %}', '_blank'); closeModal('horarios')">
+          <i class="fas fa-file-pdf"></i> PDF
+        </button>
+    </div>
+  </div>
+</div>
 <div id="modal-asistencia" class="rep-overlay" onclick="if(event.target===this)closeModal('asistencia')">
   <div class="rep-modal">
     <span class="rep-modal-handle"></span>
@@ -465,6 +492,10 @@
           <p style="color:#64748b;font-size:.82rem;margin:.3rem 0 0;font-weight:500;">Vista consolidada &middot; Días administrativos y licencias médicas</p>
         </div>
         <div class="rep-exports">
+          <button class="rep-export-btn" onclick="openModal('horarios')"
+            style="background:#eef2ff;color:#4f46e5;border-color:#c7d2fe;">
+            <i class="fas fa-calendar-week"></i> Horarios
+          </button>
           <button class="rep-export-btn" onclick="openModal('asistencia')"
             style="background:#fff1f2;color:#e11d48;border-color:#fecdd3;">
             <i class="fas fa-clipboard-check"></i> Asistencia
@@ -733,6 +764,7 @@
       </div>
       {% endif %}
     </div>
+
 
   </div>
 </div>

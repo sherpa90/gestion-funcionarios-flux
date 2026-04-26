@@ -1600,13 +1600,18 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                     'hora_salida': dia_obj.hora_salida.strftime('%H:%M') if dia_obj.hora_salida else ''
                 })
             else:
+                # Usar valores por defecto si no hay horario configurado para este día
+                hora_entrada_default = '07:55'
+                if horario_actual and horario_actual.hora_entrada:
+                    hora_entrada_default = horario_actual.hora_entrada.strftime('%H:%M')
                 horario_semanal.append({
                     'dia_semana': i,
                     'nombre': DIA_CHOICES_DICT[i],
                     'activo': True,
-                    'hora_entrada': horario_actual.hora_entrada.strftime('%H:%M') if horario_actual and horario_actual.hora_entrada else '08:00',
+                    'hora_entrada': hora_entrada_default,
                     'hora_salida': '17:00'
                 })
+
 
         # Meses para referencia
         context['meses'] = [
@@ -2680,7 +2685,7 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
                 horario_base, created = HorarioFuncionario.objects.get_or_create(
                     funcionario=usuario,
                     defaults={
-                        'hora_entrada': time(8, 0),
+                        'hora_entrada': time(7, 55),
                         'tolerancia_minutos': 15,
                         'activo': True
                     }
@@ -2710,6 +2715,13 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
                                 hora_salida = time(h, m)
                             except ValueError:
                                 pass
+                        
+                    # Validar tope de 44 horas semanales antes de guardar
+                    if data.get('total_minutos', 0) > 44 * 60:
+                         return JsonResponse({
+                             'status': 'error', 
+                             'message': 'No se puede exceder el límite de 44 horas semanales.'
+                         }, status=400)
 
                     DiaHorario.objects.update_or_create(
                         horario=horario_base,

@@ -7,11 +7,12 @@ from django.template.loader import render_to_string
 from weasyprint import HTML
 from permisos.models import SolicitudPermiso
 from licencias.models import LicenciaMedica
-from asistencia.models import RegistroAsistencia
+from asistencia.models import RegistroAsistencia, HorarioFuncionario, DiaHorario
 from users.models import CustomUser
 from core.services import BusinessDayCalculator
 import openpyxl
-from datetime import datetime
+from openpyxl.styles import Font, PatternFill, Alignment
+from datetime import datetime, time
 from django.utils.timezone import now
 
 class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
@@ -21,6 +22,7 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     def test_func(self):
         # Acceso para Director, Secretaria, Admin y Directivos
         return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -701,3 +703,218 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         response['Content-Disposition'] = f'attachment; filename={filename}.xlsx'
         wb.save(response)
         return response
+
+class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Exportar los horarios semanales de todos los funcionarios a Excel"""
+    
+    def test_func(self):
+        return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
+
+    def get(self, request):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Horarios del Personal"
+        
+        # Estilos
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+        alignment = Alignment(horizontal="center", vertical="center")
+        
+        # Encabezados
+        headers = ['N°', 'Funcionario', 'RUN', 'Cargo', 
+                   'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo', 
+                   'Horas Semanales']
+        ws.append(headers)
+        
+        # Aplicar estilos a encabezados
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = alignment
+
+        # Ajustar anchos de columna
+        ws.column_dimensions['B'].width = 35
+        ws.column_dimensions['C'].width = 15
+        ws.column_dimensions['D'].width = 25
+        for col in ['E', 'F', 'G', 'H', 'I', 'J', 'K']:
+            ws.column_dimensions[col].width = 18
+        ws.column_dimensions['L'].width = 18
+
+        # Obtener todos los funcionarios activos
+        funcionarios = CustomUser.objects.filter(
+            is_active=True,
+            role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
+        ).order_by('first_name', 'last_name')
+
+        for i, f in enumerate(funcionarios, 1):
+            horario = getattr(f, 'horario', None)
+            dias_dict = {}
+            total_minutos = 0
+            
+            if horario:
+                for d in horario.dias.all():
+                    if d.activo and d.hora_entrada and d.hora_salida:
+                        dias_dict[d.dia_semana] = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
+                        
+                        # Calcular minutos
+                        h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
+                        h2, m2 = d.hora_salida.hour, d.hora_salida.minute
+                        min1 = h1 * 60 + m1
+                        min2 = h2 * 60 + m2
+                        if min2 < min1: min2 += 24 * 60 # Turno nocturno
+                        total_minutos += (min2 - min1)
+                    else:
+                        dias_dict[d.dia_semana] = "Libre"
+            
+            # Formatear total horas
+            h_total = total_minutos // 60
+            m_total = total_minutos % 60
+            horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
+            if total_minutos == 0: horas_str = "No configurado"
+
+            row = [
+                i,
+                f.get_full_name(),
+                f.run,
+                f.get_funcion_display() or f.get_role_display(),
+                dias_dict.get(0, "Libre"), # Lun
+                dias_dict.get(1, "Libre"), # Mar
+                dias_dict.get(2, "Libre"), # Mié
+                dias_dict.get(3, "Libre"), # Jue
+                dias_dict.get(4, "Libre"), # Vie
+                dias_dict.get(5, "Libre"), # Sáb
+                dias_dict.get(6, "Libre"), # Dom
+                horas_str
+            ]
+            ws.append(row)
+            
+            # Centrar celdas de horarios
+            for cell in ws[ws.max_row][4:]:
+                cell.alignment = alignment
+
+        # Generar archivo
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename=horarios_personal_{datetime.now().strftime("%Y%m%d")}.xlsx'
+        wb.save(response)
+        return response
+
+class ExportarHorariosPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Exportar los horarios semanales de todos los funcionarios a PDF"""
+    
+    def test_func(self):
+        return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
+
+    def get(self, request):
+        # Obtener todos los funcionarios activos
+        funcionarios = CustomUser.objects.filter(
+            is_active=True,
+            role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
+        ).order_by('first_name', 'last_name')
+
+        empleados_data = []
+        DIA_NAMES = {0: 'Lun', 1: 'Mar', 2: 'Mié', 3: 'Jue', 4: 'Vie', 5: 'Sáb', 6: 'Dom'}
+
+        for f in funcionarios:
+            horario = getattr(f, 'horario', None)
+            dias_list = []
+            total_minutos = 0
+            
+            # Inicializar con "Libre"
+            dias_data = {i: "Libre" for i in range(7)}
+            
+            if horario:
+                for d in horario.dias.all():
+                    if d.activo and d.hora_entrada and d.hora_salida:
+                        dias_data[d.dia_semana] = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
+                        
+                        # Calcular minutos
+                        h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
+                        h2, m2 = d.hora_salida.hour, d.hora_salida.minute
+                        min1 = h1 * 60 + m1
+                        min2 = h2 * 60 + m2
+                        if min2 < min1: min2 += 24 * 60
+                        total_minutos += (min2 - min1)
+
+            # Formatear total horas
+            h_total = total_minutos // 60
+            m_total = total_minutos % 60
+            horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
+            if total_minutos == 0: horas_str = "N/C"
+
+            empleados_data.append({
+                'nombre': f.get_full_name(),
+                'run': f.run,
+                'cargo': f.get_funcion_display() or f.get_role_display(),
+                'dias': [dias_data[i] for i in range(7)],
+                'total_horas': horas_str
+            })
+
+        html_string = render_to_string('reportes/pdf_horarios.html', {
+            'empleados_data': empleados_data,
+            'fecha_exportacion': now().strftime('%d/%m/%Y %H:%M'),
+            'director': CustomUser.objects.filter(role='DIRECTOR').first(),
+        })
+
+        html = HTML(string=html_string)
+        result = html.write_pdf()
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename=horarios_personal_{datetime.now().strftime("%Y%m%d")}.pdf'
+        response.write(result)
+        return response
+
+class MiHorarioPDFView(LoginRequiredMixin, View):
+    """Genera el PDF del horario semanal del usuario actualmente autenticado."""
+
+    def get(self, request):
+        f = request.user
+        horario = getattr(f, 'horario', None)
+        total_minutos = 0
+        
+        # Inicializar con "Libre"
+        dias_data = {i: "Libre" for i in range(7)}
+        
+        if horario:
+            for d in horario.dias.all():
+                if d.activo and d.hora_entrada and d.hora_salida:
+                    dias_data[d.dia_semana] = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
+                    
+                    # Calcular minutos
+                    h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
+                    h2, m2 = d.hora_salida.hour, d.hora_salida.minute
+                    min1 = h1 * 60 + m1
+                    min2 = h2 * 60 + m2
+                    if min2 < min1: min2 += 24 * 60
+                    total_minutos += (min2 - min1)
+
+        # Formatear total horas
+        h_total = total_minutos // 60
+        m_total = total_minutos % 60
+        horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
+        if total_minutos == 0: horas_str = "N/C"
+
+        empleado_data = {
+            'nombre': f.get_full_name(),
+            'run': f.run,
+            'cargo': f.get_funcion_display() or f.get_role_display(),
+            'dias': [dias_data[i] for i in range(7)],
+            'total_horas': horas_str
+        }
+
+        html_string = render_to_string('reportes/pdf_horarios.html', {
+            'empleados_data': [empleado_data],
+            'fecha_exportacion': now().strftime('%d/%m/%Y %H:%M'),
+            'director': CustomUser.objects.filter(role='DIRECTOR').first(),
+            'es_individual': True
+        })
+
+        html = HTML(string=html_string)
+        result = html.write_pdf()
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename=mi_horario_{f.run}.pdf'
+        response.write(result)
+        return response
+
+
+
