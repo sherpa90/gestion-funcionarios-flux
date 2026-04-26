@@ -12,18 +12,18 @@ class HorarioExcepcionalForm(forms.ModelForm):
         widgets = {
             "fecha": forms.DateInput(attrs={
                 "type": "date",
-                "class": "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                "class": "mt-1 block w-full h-11 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
             }),
             "hora_entrada": forms.TimeInput(attrs={
                 "type": "time",
-                "class": "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                "class": "mt-1 block w-full h-11 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
             }),
             "hora_salida": forms.TimeInput(attrs={
                 "type": "time",
-                "class": "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                "class": "mt-1 block w-full h-11 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
             }),
             "motivo": forms.TextInput(attrs={
-                "class": "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm",
+                "class": "mt-1 block w-full h-11 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white",
                 "placeholder": "Ej: Corte de agua, Día del Profesor, Emergencia climática..."
             }),
         }
@@ -153,7 +153,7 @@ class CargaRegistrosAsistenciaForm(forms.Form):
         ],
         initial=datetime.now().month,
         widget=forms.Select(attrs={
-            "class": "mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            "class": "mt-1 block w-full h-11 px-4 py-2 border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
         })
     )
 
@@ -161,7 +161,7 @@ class CargaRegistrosAsistenciaForm(forms.Form):
         label="Año",
         initial=datetime.now().year,
         widget=forms.NumberInput(attrs={
-            "class": "mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500",
+            "class": "mt-1 block w-full h-11 px-4 py-2 border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white",
             "min": "2020",
             "max": "2030"
         })

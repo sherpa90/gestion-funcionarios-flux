@@ -10,6 +10,63 @@
         <p class="text-gray-600 mt-2">Sube el archivo Excel con los registros de asistencia del reloj control para procesar automáticamente</p>
     </div>
 
+    <!-- Mensajes y Resultados -->
+    <div class="mb-8">
+        {% if messages %}
+        {% for message in messages %}
+        {% if not resultado %}
+        <div class="mb-4 p-4 rounded-lg flex items-center {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-700{% else %}bg-red-100 text-red-700{% endif %}">
+            {% if message.tags == 'success' %}<i class="fas fa-check-circle mr-2"></i>{% endif %}
+            {{ message }}
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+
+        {% if resultado %}
+        <div class="overflow-hidden rounded-xl border border-gray-200 shadow-sm bg-white">
+            <div class="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Resumen de Importación</h3>
+                <span class="text-xs font-medium text-gray-500">Proceso finalizado</span>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex items-center p-4 bg-emerald-50 rounded-lg border border-emerald-100">
+                    <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white mr-4 shadow-sm">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-emerald-600 uppercase tracking-widest">Registros Procesados</p>
+                        <p class="text-2xl font-black text-emerald-700">{{ resultado.success_count }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center p-4 {% if resultado.error_count > 0 %}bg-rose-50 border-rose-100{% else %}bg-gray-50 border-gray-100{% endif %} rounded-lg border">
+                    <div class="w-10 h-10 {% if resultado.error_count > 0 %}bg-rose-500{% else %}bg-gray-400{% endif %} rounded-full flex items-center justify-center text-white mr-4 shadow-sm">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold {% if resultado.error_count > 0 %}text-rose-600{% else %}text-gray-500{% endif %} uppercase tracking-widest">Errores Detectados</p>
+                        <p class="text-2xl font-black {% if resultado.error_count > 0 %}text-rose-700{% else %}text-gray-600{% endif %}">{{ resultado.error_count }}</p>
+                    </div>
+                </div>
+            </div>
+
+            {% if resultado.errors %}
+            <div class="px-6 py-4 bg-white border-t border-gray-100">
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Detalle de errores (Primeros 10):</p>
+                <ul class="space-y-2">
+                    {% for error in resultado.errors %}
+                    <li class="flex items-start text-sm text-gray-600 bg-gray-50 p-2 rounded border-l-2 border-rose-400">
+                        <i class="fas fa-times-circle text-rose-400 mt-1 mr-2 flex-shrink-0"></i>
+                        <span>{{ error }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
     <!-- Información del Formato -->
     <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-8">
         <div class="flex">
@@ -110,8 +167,8 @@
                     <i class="fas fa-arrow-left mr-2"></i> Volver
                 </a>
                 <button type="submit"
-                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    <i class="fas fa-upload mr-2"></i> Procesar Archivo
+                        class="inline-flex items-center px-6 py-2 border border-transparent shadow-sm text-sm font-bold rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-cog mr-2"></i> Procesar
                 </button>
             </div>
         </form>

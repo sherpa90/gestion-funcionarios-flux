@@ -29,15 +29,25 @@ class PayrollService:
             Usuario encontrado o None
         """
         try:
-            # Normalizar el RUT encontrado
+            # Normalizar el RUT encontrado para la búsqueda
             rut_normalizado = normalize_rut(rut_encontrado)
-            rut_para_comparar = clean_rut_for_matching(rut_normalizado)
-
-            # Buscar usuario comparando RUTs limpios
-            for user in CustomUser.objects.all():
-                user_rut_limpio = clean_rut_for_matching(user.run)
-                if user_rut_limpio == rut_para_comparar:
-                    return user
+            rut_limpio = clean_rut_for_matching(rut_encontrado)
+            
+            # 1. Intento: Búsqueda exacta por RUT normalizado
+            user = CustomUser.objects.filter(run=rut_normalizado).first()
+            if user:
+                return user
+                
+            # 2. Intento: Búsqueda exacta por RUT limpio (solo números y guión)
+            user = CustomUser.objects.filter(run=rut_limpio).first()
+            if user:
+                return user
+                
+            # 3. Intento: Búsqueda por RUT sin guión (solo números)
+            rut_solo_numeros = rut_limpio.replace('-', '')
+            user = CustomUser.objects.filter(run__icontains=rut_solo_numeros).first()
+            if user:
+                return user
 
             return None
 
