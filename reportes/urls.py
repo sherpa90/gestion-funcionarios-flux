@@ -1,5 +1,9 @@
 from django.urls import path
-from .views import ReportesView, PDFIndividualView, PDFColectivoView, ExportarExcelView, ReporteMensualDiasAdministrativosView, ExportarDAEMExcelView, MiReportePDFView
+from .views import (
+    ReportesView, PDFIndividualView, PDFColectivoView, ExportarExcelView, 
+    ReporteMensualDiasAdministrativosView, ExportarDAEMExcelView, MiReportePDFView,
+    ExportarHorariosExcelView, ExportarHorariosPDFView, MiHorarioPDFView
+)
 
 urlpatterns = [
     path('', ReportesView.as_view(), name='reportes'),
@@ -9,4 +13,8 @@ urlpatterns = [
     path('pdf/mensual/dias-administrativos/', ReporteMensualDiasAdministrativosView.as_view(), name='reportes_mensual_dias_administrativos'),
     path('excel/', ExportarExcelView.as_view(), name='reportes_excel'),
     path('daem-excel/', ExportarDAEMExcelView.as_view(), name='reportes_daem_excel'),
+    path('excel/horarios/', ExportarHorariosExcelView.as_view(), name='exportar_horarios'),
+    path('pdf/horarios/', ExportarHorariosPDFView.as_view(), name='exportar_horarios_pdf'),
+    path('pdf/mi-horario/', MiHorarioPDFView.as_view(), name='mi_horario_pdf'),
 ]
+
