@@ -24,13 +24,20 @@ class CargaLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, FormView):
     form_class = CargaLiquidacionesForm
     success_url = '/liquidaciones/carga/'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Recuperar resultado de la sesión si existe
+        if 'carga_resultado' in self.request.session:
+            context['resultado'] = self.request.session.pop('carga_resultado')
+        return context
+
     def test_func(self):
         return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR']
 
     def form_valid(self, form):
         archivo = form.cleaned_data['archivo']
-        mes = form.cleaned_data['mes']
-        anio = form.cleaned_data['anio']
+        mes = int(form.cleaned_data['mes'])
+        anio = int(form.cleaned_data['anio'])
 
         # Obtener lista de RUTs existentes para comparación
         usuarios_existentes = list(CustomUser.objects.values_list('run', flat=True))
@@ -38,43 +45,163 @@ class CargaLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, FormView):
         try:
             logger.info(f"Starting PDF processing for user {self.request.user.get_full_name()}, file: {archivo.name}, month: {mes}, year: {anio}")
 
-            import fitz
+            import pypdf
             try:
+                if hasattr(archivo, 'seek'):
+                    archivo.seek(0)
                 pdf_bytes = archivo.read()
-                pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
-                logger.info(f"PDF loaded successfully. Pages: {len(pdf_document)}")
+                pdf_reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+                total_pages = len(pdf_reader.pages)
+                logger.info(f"PDF loaded successfully with pypdf. Pages: {total_pages}")
             except Exception as e:
-                logger.error(f"PDF read error: {e}")
-                messages.error(self.request, "El archivo PDF está corrupto o no es un archivo PDF válido.")
+                logger.error(f"PDF read error with pypdf: {e}")
+                messages.error(self.request, "El archivo PDF no se pudo leer correctamente.")
                 return self.form_invalid(form)
 
             processed_count = 0
             errors = []
 
-            for page_num in range(len(pdf_document)):
+            for page_num in range(total_pages):
                 try:
-                    page = pdf_document[page_num]
-                    text = page.get_text()
-                    if not text.strip():
-                        logger.warning(f"Page {page_num + 1}: Empty or no text extracted")
+                    page = pdf_reader.pages[page_num]
+                    text = page.extract_text() or ""
+                    text = text.strip()
+                    
+                    # Si pypdf no extrae texto, intentar con pdfminer.six (más robusto)
+                    if not text:
+                        logger.info(f"Page {page_num + 1}: pypdf returned empty text, trying pdfminer")
+                        try:
+                            from pdfminer.high_level import extract_text
+                            from pdfminer.layout import LAParams
+                            
+                            archivo.seek(0)
+                            # Intentar con parámetros más agresivos
+                            laparams = LAParams(
+                                line_margin=0.5,
+                                char_margin=2.0,
+                                word_margin=0.1
+                            )
+                            text = extract_text(
+                                io.BytesIO(pdf_bytes),
+                                page_numbers=[page_num],
+                                laparams=laparams
+                            ).strip()
+                            logger.info(f"Page {page_num + 1}: pdfminer extracted {len(text)} characters")
+                        except Exception as pdfminer_error:
+                            logger.debug(f"Page {page_num + 1}: pdfminer failed: {pdfminer_error}")
+                    
+                    # Si pdfminer falla, intentar con pdfplumber
+                    if not text:
+                        logger.info(f"Page {page_num + 1}: Trying pdfplumber")
+                        try:
+                            import pdfplumber
+                            archivo.seek(0)
+                            with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+                                if page_num < len(pdf.pages):
+                                    page_plumber = pdf.pages[page_num]
+                                    # Intentar diferentes métodos de extracción
+                                    text = page_plumber.extract_text(
+                                        x_tolerance=3,
+                                        y_tolerance=3,
+                                        keep_blank_chars=False
+                                    ) or ""
+                                    # Si aún no hay texto, intentar extraer palabras
+                                    if not text.strip():
+                                        words = page_plumber.extract_words()
+                                        text = " ".join([w.get('text', '') for w in words])
+                                    text = text.strip()
+                                    logger.info(f"Page {page_num + 1}: pdfplumber extracted {len(text)} characters")
+                        except Exception as plumber_error:
+                            logger.debug(f"Page {page_num + 1}: pdfplumber failed: {plumber_error}")
+                    
+                    # Si todo falla, intentar con fitz (PyMuPDF) como último método sin OCR
+                    if not text:
+                        logger.info(f"Page {page_num + 1}: Trying fitz (PyMuPDF)")
+                        try:
+                            import fitz
+                            archivo.seek(0)
+                            pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
+                            if page_num < len(pdf_document):
+                                page_fitz = pdf_document[page_num]
+                                text = page_fitz.get_text().strip()
+                                logger.info(f"Page {page_num + 1}: fitz extracted {len(text)} characters")
+                                pdf_document.close()
+                        except Exception as fitz_error:
+                            logger.warning(f"Page {page_num + 1}: fitz failed: {fitz_error}")
+                    
+                    # Si aún no hay texto, intentar OCR si las dependencias están disponibles
+                    if not text:
+                        logger.info(f"Page {page_num + 1}: All text extraction methods failed, trying OCR")
+                        try:
+                            import fitz
+                            from pdf2image import convert_from_bytes
+                            import pytesseract
+                            from PIL import Image
+                            
+                            # Convertir página a imagen
+                            archivo.seek(0)
+                            pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
+                            if page_num < len(pdf_document):
+                                page = pdf_document[page_num]
+                                # Renderizar a 300 DPI para mejor OCR
+                                zoom = 300 / 72
+                                mat = fitz.Matrix(zoom, zoom)
+                                pix = page.get_pixmap(matrix=mat)
+                                
+                                # Convertir a imagen PIL
+                                img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                                
+                                # Preprocesar imagen: convertir a escala de grises y mejorar contraste
+                                img = img.convert('L')
+                                
+                                # Aplicar OCR
+                                custom_config = r'--oem 3 --psm 6 -l spa'
+                                text = pytesseract.image_to_string(img, config=custom_config)
+                                text = text.strip()
+                                logger.info(f"Page {page_num + 1}: OCR extracted {len(text)} characters")
+                                pdf_document.close()
+                        except ImportError as e:
+                            logger.debug(f"OCR dependencies not available: {e}")
+                        except Exception as ocr_error:
+                            logger.warning(f"Page {page_num + 1}: OCR failed: {ocr_error}")
+
+                    if not text:
+                        logger.warning(f"Page {page_num + 1}: No text extracted after all methods")
+                        errors.append(f"Página {page_num + 1}: No se pudo extraer texto. Verifique el formato del PDF.")
                         continue
 
                     # Buscar RUT en el texto - múltiples formatos posibles
+                    # Agregamos patrones mucho más flexibles para capturar RUTs con espacios o formatos extraños
                     rut_patterns = [
-                        r'(\d{7,8}-[\dKk])',  # 12345678-9
+                        r'(\d{1,2}[\s\.]?\d{3}[\s\.]?\d{3}[\s-]*[\dKk])', # Formato súper flexible (17.639.211-8 o 17 639 211 - 8)
+                        r'(\d{7,8}-[\s]*[\dKk])',  # 12345678-9
                         r'(\d{1,2}\.\d{3}\.\d{3}-[\dKk])',  # 12.345.678-9
                         r'(\d{1,2}\s+\d{3}\s+\d{3}-[\dKk])',  # 12 345 678-9
-                        r'RUT[:\s]*(\d{7,8}-[\dKk])',  # RUT: 12345678-9
-                        r'RUT[:\s]*(\d{1,2}\.\d{3}\.\d{3}-[\dKk])',  # RUT: 12.345.678-9
+                        r'RUT[:\s]*(\d{1,2}[\s\.]?\d{3}[\s\.]?\d{3}[\s-]*[\dKk])', # RUT con etiqueta
                         r'(\d{8,9})',  # 123456789 (sin guión)
                     ]
 
                     rut_encontrado = None
                     for pattern in rut_patterns:
-                        match = re.search(pattern, text)
+                        match = re.search(pattern, text, re.IGNORECASE)
                         if match:
                             rut_encontrado = match.group(1)
                             break
+                    
+                    # Log para depuración si no se encuentra RUT en una página con texto
+                    if not rut_encontrado:
+                        logger.warning(f"Page {page_num + 1}: No RUT found with standard regex. Trying clean search...")
+                        # Intento desesperado: remover espacios y puntos para buscar secuencia de dígitos
+                        # Esto ayuda si el PDF separa los números por bloques o capas
+                        text_limpio = re.sub(r'[\s\.]', '', text)
+                        match_limpio = re.search(r'(\d{7,8}-?[\dKk])', text_limpio, re.IGNORECASE)
+                        if match_limpio:
+                            rut_encontrado = match_limpio.group(1)
+                            logger.info(f"Page {page_num + 1}: Found RUT via clean search: {rut_encontrado}")
+
+                    if not rut_encontrado:
+                        logger.warning(f"Page {page_num + 1}: No RUT found. Text snippet: {text[:100].replace('\\n', ' ')}...")
+                        errors.append(f"Página {page_num + 1}: No se encontró un RUT válido. Verifique que el documento tenga el formato correcto.")
 
                     if rut_encontrado:
                         logger.info(f"Page {page_num + 1}: Found RUT '{rut_encontrado}'")
@@ -130,24 +257,23 @@ class CargaLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, FormView):
                     logger.error(f"Error processing page {page_num + 1}: {e}")
                     errors.append(f"Página {page_num + 1}: Error procesando página ({str(e)})")
 
+            # Guardar resultados para mostrar en el template de forma elegante
+            self.request.session['carga_resultado'] = {
+                'success_count': processed_count,
+                'error_count': len(errors),
+                'errors': errors[:10],  # Mostrar máximo 10 errores de muestra
+                'total_pages': total_pages
+            }
+
             if processed_count > 0:
                 logger.info(f"PDF processing completed successfully. Processed: {processed_count} liquidations")
-                messages.success(self.request, f"Se procesaron correctamente {processed_count} liquidaciones. Las páginas sin RUT válido fueron omitidas.")
-            else:
-                logger.warning("No valid liquidations found in PDF")
-                messages.warning(self.request, "No se encontraron liquidaciones válidas en el archivo. Verifique que los RUTs estén en formato correcto.")
-
-            if errors:
-                logger.warning(f"Processing errors: {len(errors)}")
-                # IMPORTANT: Escape HTML to prevent XSS attacks
-                errors_escaped = ['<br>'.join([escape(str(e)) for e in error.split('<br>')]) for error in errors[:5]]
-                messages.warning(self.request, f"Problemas encontrados: <br>" + "<br>".join(errors_escaped))
-                if len(errors) > 5:
-                    messages.warning(self.request, f"... y {len(errors) - 5} problemas más.")
+                messages.success(self.request, "Proceso de carga finalizado.")
+            elif not errors:
+                messages.warning(self.request, "No se encontraron liquidaciones válidas en el archivo.")
 
         except Exception as e:
             logger.exception(f"Critical error in PDF processing: {e}")
-            messages.error(self.request, "Error interno del servidor al procesar el archivo. Intente nuevamente o contacte al administrador.")
+            messages.error(self.request, "Error interno del servidor al procesar el archivo.")
             return self.form_invalid(form)
 
         return super().form_valid(form)

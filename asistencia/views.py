@@ -957,6 +957,12 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
     form_class = CargaRegistrosAsistenciaForm
     success_url = "/asistencia/gestion/"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if 'carga_resultado' in self.request.session:
+            context['resultado'] = self.request.session.pop('carga_resultado')
+        return context
+
     def test_func(self):
         return self.request.user.role in ['ADMIN', 'SECRETARIA']
 
@@ -969,11 +975,15 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
             # Procesar el archivo
             registros_creados, errores = self.procesar_excel_asistencia(archivo_excel, mes, anio)
 
+            # Guardar resultados para mostrar en el template de forma elegante
+            self.request.session['carga_resultado'] = {
+                'success_count': registros_creados,
+                'error_count': len(errores),
+                'errors': errores[:10],  # Mostrar máximo 10 errores de muestra
+            }
+
             if registros_creados > 0:
-                messages.success(
-                    self.request,
-                    f"Se procesaron correctamente {registros_creados} registros de asistencia."
-                )
+                messages.success(self.request, "Proceso de carga finalizado.")
                 registrar_log(
                     usuario=self.request.user,
                     tipo='IMPORT',
@@ -981,14 +991,8 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
                     descripcion=f'Se cargaron {registros_creados} registros de asistencia desde reloj control',
                     ip_address=get_client_ip(self.request)
                 )
-            else:
+            elif not errores:
                 messages.warning(self.request, "No se encontraron registros válidos para procesar.")
-
-            if errores:
-                for error in errores[:5]:  # Mostrar máximo 5 errores
-                    messages.warning(self.request, error)
-                if len(errores) > 5:
-                    messages.warning(self.request, f"... y {len(errores) - 5} errores más.")
 
         except Exception as e:
             messages.error(self.request, f"Error al procesar el archivo: {str(e)}")
