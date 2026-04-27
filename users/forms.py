@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from .models import CustomUser
 
 
@@ -33,10 +34,21 @@ class UserCreateForm(forms.ModelForm):
     def clean_run(self):
         run = self.cleaned_data.get('run')
         if run:
-            # Validar formato de RUT chileno
-            run = run.upper().replace('.', '').replace('-', '')
-            if not self._validate_rut(run):
+            # Limpiar para validación
+            clean_run = run.upper().replace('.', '').replace('-', '').replace(' ', '')
+            if not self._validate_rut(clean_run):
                 raise ValidationError('El RUN no es válido')
+            
+            # Normalizar al formato oficial (12.345.678-K) para que la validación unique de Django funcione
+            from core.utils import normalize_rut
+            normalized_run = normalize_rut(clean_run)
+            
+            # Verificar si ya existe un usuario con este RUN o este Username
+            username = clean_run
+            if CustomUser.objects.filter(Q(run=normalized_run) | Q(username=username)).exists():
+                raise ValidationError('Ya existe un funcionario registrado con este RUN')
+                
+            return normalized_run
         return run
     
     def _validate_rut(self, rut):

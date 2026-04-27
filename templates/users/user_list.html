@@ -44,62 +44,110 @@
   .btn-action {
     display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
     padding: 0.75rem 1.25rem; border-radius: var(--input-radius); border: none;
-    font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
+    font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none; width: 100%;
+    position: relative; overflow: hidden;
   }
   @media (min-width: 768px) { .btn-action { width: auto; } }
   
-  .btn-primary { background: var(--primary-gradient); color: #fff; box-shadow: var(--primary-glow); }
-  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -3px rgba(37, 99, 235, 0.5); }
+  .btn-sm { padding: 0.5rem 1rem; font-size: 0.7rem; border-radius: 0.65rem; }
+
+  .btn-primary { 
+    background: var(--primary-gradient); color: #fff; 
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+  }
+  .btn-primary:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3); 
+    filter: brightness(1.1);
+  }
   
-  .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 4px 15px -3px rgba(16, 185, 129, 0.4); }
-  .btn-success:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -3px rgba(16, 185, 129, 0.5); }
+  .btn-success { 
+    background: linear-gradient(135deg, #059669, #10b981); color: #fff; 
+    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+  }
+  .btn-success:hover { 
+    transform: translateY(-3px); 
+    box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.4);
+    filter: brightness(1.1);
+  }
   
-  .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; box-shadow: 0 4px 15px -3px rgba(245, 158, 11, 0.4); }
-  .btn-warning:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -3px rgba(245, 158, 11, 0.5); }
+  .btn-warning { 
+    background: linear-gradient(135deg, #d97706, #f59e0b); color: #fff; 
+    box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3);
+  }
+  .btn-warning:hover { 
+    transform: translateY(-3px); 
+    box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.4);
+    filter: brightness(1.1);
+  }
   
-  .btn-purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff; box-shadow: 0 4px 15px -3px rgba(139, 92, 246, 0.4); }
-  .btn-purple:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -3px rgba(139, 92, 246, 0.5); }
+  .btn-purple { 
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6); color: #fff; 
+    box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3);
+  }
+  .btn-purple:hover { 
+    transform: translateY(-3px); 
+    box-shadow: 0 20px 25px -5px rgba(139, 92, 246, 0.4);
+    filter: brightness(1.1);
+  }
+
+  .btn-dark {
+    background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff;
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.3);
+  }
+  .btn-dark:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.4);
+    filter: brightness(1.2);
+  }
 
   /* Dropdown Backup */
   .dropdown-wrap { position: relative; width: 100%; }
   @media (min-width: 768px) { .dropdown-wrap { width: auto; } }
   .dropdown-content {
-    position: absolute; top: calc(100% + 0.5rem); right: 0; width: max-content;
-    background: #fff; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
-    border: 1px solid #eef0f4; padding: 0.5rem; opacity: 0; visibility: hidden;
-    transform: translateY(-10px); transition: all 0.2s; z-index: 50; min-width: 200px;
+    position: absolute; top: calc(100% + 0.75rem); right: 0; width: max-content;
+    background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+    border-radius: 1.25rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+    border: 1px solid rgba(226, 232, 240, 0.8); padding: 0.6rem; opacity: 0; visibility: hidden;
+    transform: translateY(-10px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 50; min-width: 220px;
   }
   .dropdown-wrap:hover .dropdown-content { opacity: 1; visibility: visible; transform: translateY(0); }
   .dropdown-item {
-    display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
-    border-radius: 0.5rem; font-size: 0.8rem; font-weight: 700; color: #475569;
-    text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none; transition: background 0.2s;
+    display: flex; align-items: center; gap: 0.85rem; padding: 0.85rem 1.15rem;
+    border-radius: 0.85rem; font-size: 0.8rem; font-weight: 700; color: #475569;
+    text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none; transition: all 0.2s;
   }
-  .dropdown-item:hover { background: #f8fafc; color: #0f172a; }
+  .dropdown-item:hover { background: #f1f5f9; color: #0f172a; transform: translateX(5px); }
   .dropdown-item.danger:hover { background: #fef2f2; color: #ef4444; }
 
   /* Panel Búsqueda y Filtros */
   .search-panel {
-    background: #fff; border-radius: var(--usr-radius); box-shadow: var(--usr-shadow);
-    padding: 1.5rem; margin-top: 1.5rem; border: 1px solid #eef0f4;
+    background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px);
+    border-radius: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    padding: 1.25rem; margin-top: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.8);
   }
   .search-input-wrap {
-    display: flex; align-items: center; background: #f8fafc; border: 2px solid #e2e8f0;
-    border-radius: var(--input-radius); padding: 0.5rem 1rem; transition: border-color 0.2s; width: 100%;
+    display: flex; align-items: center; background: rgba(248, 250, 252, 0.8); border: 1.5px solid #e2e8f0;
+    border-radius: 0.85rem; padding: 0.4rem 1rem; transition: all 0.3s ease; width: 100%;
+    max-width: 350px;
   }
-  .search-input-wrap:focus-within { border-color: #3b82f6; background: #fff; }
-  .search-input-wrap i { color: #94a3b8; font-size: 1.1rem; margin-right: 0.75rem; }
-  .search-input { border: none; background: transparent; outline: none; flex: 1; font-size: 0.95rem; font-weight: 600; color: #334155; padding: 0.4rem 0; width: 100%; }
+  .search-input-wrap:focus-within { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+  .search-input-wrap i { color: #3b82f6; font-size: 1rem; margin-right: 0.75rem; }
+  .search-input { border: none; background: transparent; outline: none; flex: 1; font-size: 0.9rem; font-weight: 600; color: #1e293b; padding: 0.3rem 0; width: 100%; }
+  .search-input::placeholder { color: #94a3b8; font-weight: 500; }
 
   .filter-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; align-items: center; }
-  .filter-tags-label { font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-right: 0.5rem; }
+  .filter-tags-label { font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-right: 0.5rem; }
   .tag {
-    padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 700;
-    background: #f1f5f9; color: #475569; text-decoration: none; transition: all 0.2s; border: 1.5px solid transparent;
+    padding: 0.45rem 0.9rem; border-radius: 0.75rem; font-size: 0.7rem; font-weight: 800;
+    background: #fff; color: #475569; text-decoration: none; transition: all 0.2s ease; 
+    border: 1px solid #e2e8f0; text-transform: uppercase;
   }
-  .tag:hover { background: #e2e8f0; color: #0f172a; }
-  .tag.active { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+  .tag:hover { background: #f8fafc; border-color: #cbd5e1; color: #0f172a; transform: translateY(-1px); }
+  .tag.active { 
+    background: #eff6ff; color: #2563eb; border-color: #bfdbfe; 
+  }
 
   /* Importación Exitosa Box */
   .bulk-box {
@@ -218,31 +266,35 @@
           {% if request.user.role == 'ADMIN' %}
           <div class="dropdown-wrap">
               <button class="btn-action btn-purple">
-                  <i class="fas fa-shield-alt"></i> Seguridad <i class="fas fa-chevron-down" style="font-size:0.7em;"></i>
+                  <i class="fas fa-shield-alt"></i> Seguridad <i class="fas fa-chevron-down" style="font-size:0.7em; margin-left:0.25rem;"></i>
               </button>
               <div class="dropdown-content">
-                  <a href="{% url 'backup_export_users' %}" class="dropdown-item"><i class="fas fa-download text-purple-600"></i> Descargar Respaldo</a>
-                  <a href="{% url 'backup_restore_users' %}" class="dropdown-item danger"><i class="fas fa-upload text-red-500"></i> Restaurar Info</a>
+                  <a href="{% url 'backup_export_users' %}" class="dropdown-item">
+                      <i class="fas fa-cloud-download-alt text-purple-600"></i> Exportar Respaldo
+                  </a>
+                  <a href="{% url 'backup_restore_users' %}" class="dropdown-item danger">
+                      <i class="fas fa-cloud-upload-alt text-red-500"></i> Restaurar Sistema
+                  </a>
               </div>
           </div>
           {% endif %}
           
           <a href="{% url 'bulk_import_users' %}" class="btn-action btn-success">
-              <i class="fas fa-file-excel"></i> Importar
+              <i class="fas fa-file-import"></i> Importar Excel
           </a>
           
           {% if request.user.role == 'ADMIN' %}
-          <button type="button" class="btn-action" style="background:#0f172a; color:#fff;" onclick="document.getElementById('modal-reset-anual').classList.remove('hidden')">
-              <i class="fas fa-calendar-star"></i> Reset Año Nuevo
+          <button type="button" class="btn-action btn-dark" onclick="document.getElementById('modal-reset-anual').classList.remove('hidden')">
+              <i class="fas fa-history"></i> Reset Anual
           </button>
           {% endif %}
           
           <button type="button" class="btn-action btn-warning" onclick="document.getElementById('modal-sincronizar').classList.remove('hidden')">
-              <i class="fas fa-sync-alt"></i> Sincronizar Saldos
+              <i class="fas fa-sync"></i> Sincronizar
           </button>
           
           <a href="{% url 'user_create' %}" class="btn-action btn-primary">
-              <i class="fas fa-user-plus"></i> Nuevo Usuario
+              <i class="fas fa-plus-circle"></i> Nuevo Usuario
           </a>
       </div>
   </div>
@@ -250,25 +302,48 @@
   <!-- Buscador y Filtros -->
   <div class="search-panel">
     <form method="get" style="margin:0;">
-        <div style="display:flex; gap:1rem; flex-direction:column; @media (min-width:640px){flex-direction:row;}">
+        <div style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+            <!-- Buscador -->
             <div class="search-input-wrap">
                 <i class="fas fa-search"></i>
-                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Ingresa RUN, nombre o correo electrónico..." class="search-input">
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="RUN, nombre o cargo..." class="search-input">
             </div>
-            <div style="display:flex; gap:0.5rem; flex-shrink:0;">
-                <button type="submit" class="btn-action" style="background:#0f172a; color:#fff;">Buscar</button>
+            
+            <!-- Botón Filtrar -->
+            <div style="display:flex; gap:0.4rem; flex-shrink:0;">
+                <button type="submit" class="btn-action btn-dark btn-sm" style="min-width:90px;">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
                 {% if request.GET.search %}
-                <a href="{% url 'user_list' %}" class="btn-action" style="background:#f1f5f9; color:#475569; padding:0 1rem;"><i class="fas fa-times"></i></a>
+                <a href="{% url 'user_list' %}" class="btn-action btn-sm" style="background:#fff; color:#ef4444; border:1px solid #fee2e2; width:auto; padding:0 0.75rem;" title="Limpiar búsqueda">
+                    <i class="fas fa-times"></i>
+                </a>
                 {% endif %}
             </div>
-        </div>
 
-        <div class="filter-tags">
-            <span class="filter-tags-label">Ordenar:</span>
-            <a href="?sort=name{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="tag {% if current_sort == 'name' %}active{% endif %}">Nombre A-Z</a>
-            <a href="?sort=role{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="tag {% if current_sort == 'role' %}active{% endif %}">Por Rol</a>
-            <a href="?sort=recent{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="tag {% if current_sort == 'recent' %}active{% endif %}">Recientes</a>
-            <span style="margin-left:auto; font-size:0.75rem; font-weight:800; color:#64748b;">{{ users.count }} Registros</span>
+            <!-- Separador Visual -->
+            <div style="width:1px; height:24px; background:#e2e8f0; margin:0 0.25rem; display:none; @media (min-width:1024px){display:block;}"></div>
+
+            <!-- Ordenamiento -->
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <span class="filter-tags-label">Ordenar:</span>
+                <a href="?sort=name{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="tag {% if current_sort == 'name' %}active{% endif %}">
+                    <i class="fas fa-sort-alpha-down"></i> Nombre
+                </a>
+                <a href="?sort=role{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="tag {% if current_sort == 'role' %}active{% endif %}">
+                    <i class="fas fa-user-tag"></i> Rol
+                </a>
+                <a href="?sort=recent{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="tag {% if current_sort == 'recent' %}active{% endif %}">
+                    <i class="fas fa-clock"></i> Recientes
+                </a>
+            </div>
+
+            <!-- Contador -->
+            <div style="margin-left:auto; display:flex; align-items:center; gap:0.4rem; background:rgba(241, 245, 249, 0.6); padding:0.4rem 0.85rem; border-radius:0.75rem; border:1px solid #e2e8f0; flex-shrink:0;">
+                <i class="fas fa-users" style="color:#64748b; font-size:0.8rem;"></i>
+                <span style="font-size:0.8rem; font-weight:800; color:#475569;">{{ users.count }}</span>
+                <span style="font-size:0.6rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.025em;">Registros</span>
+            </div>
         </div>
     </form>
   </div>
