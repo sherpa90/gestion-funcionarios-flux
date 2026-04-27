@@ -2,129 +2,192 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reporte Masivo de Atrasos</title>
+    <title>Reporte de Atrasos del Personal</title>
     <style>
         @page {
             size: A4;
             margin: 1.5cm;
         }
         body {
-            font-family: Arial, sans-serif;
-            font-size: 11px;
-            line-height: 1.4;
-            color: #333;
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 10pt;
+            line-height: 1.5;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
         }
         .header {
             text-align: center;
-            margin-bottom: 25px;
-            border-bottom: 3px solid #1a365d;
-            padding-bottom: 12px;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #4F46E5;
         }
         .header h1 {
-            font-size: 18px;
-            color: #1a365d;
-            margin: 0 0 5px 0;
+            margin: 0;
+            color: #1e293b;
+            font-size: 20pt;
+            letter-spacing: -0.025em;
         }
         .header p {
-            font-size: 12px;
-            color: #666;
-            margin: 2px 0;
+            margin: 5px 0 0;
+            color: #64748b;
+            font-size: 11pt;
+            font-weight: 500;
         }
+        
         table {
             width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-            font-size: 10px;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
         }
         th {
-            background-color: #1a365d;
+            background-color: #4F46E5;
             color: white;
-            padding: 8px 10px;
+            font-weight: bold;
+            padding: 12px 10px;
             text-align: left;
-            font-size: 9px;
+            font-size: 9pt;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         th.center {
             text-align: center;
         }
         td {
-            padding: 6px 10px;
-            border-bottom: 1px solid #e5e7eb;
+            padding: 10px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            vertical-align: middle;
         }
-        td.center {
-            text-align: center;
+        td:last-child {
+            border-right: none;
         }
-        td.right {
-            text-align: right;
+        tr:last-child td {
+            border-bottom: none;
         }
         tr:nth-child(even) {
-            background-color: #f8f9fa;
+            background-color: #f8fafc;
         }
-        .min-rojo {
-            color: #dc3545;
+        .center {
+            text-align: center;
+        }
+        .name-cell {
             font-weight: bold;
+            color: #1e293b;
         }
+        .cargo-cell {
+            color: #64748b;
+            font-size: 9pt;
+        }
+        .min-retraso {
+            font-weight: 800;
+            color: #ef4444;
+        }
+        .min-normal {
+            font-weight: 600;
+            color: #f59e0b;
+        }
+        
         .resumen-row {
-            background-color: #1a365d !important;
-            color: white;
+            background-color: #f1f5ff !important;
             font-weight: bold;
         }
         .resumen-row td {
-            border-bottom: none;
-            padding: 10px;
-            font-size: 11px;
+            color: #4F46E5;
+            padding: 15px 10px;
+            font-size: 11pt;
+            border-top: 2px solid #4F46E5;
         }
+        
         .footer {
-            margin-top: 20px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            font-size: 8pt;
+            color: #94a3b8;
             text-align: center;
-            font-size: 8px;
-            color: #999;
-            border-top: 1px solid #ddd;
-            padding-top: 8px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }
+        .signature-section {
+            margin-top: 50px;
+            text-align: center;
+        }
+        .signature-box {
+            display: inline-block;
+            width: 250px;
+        }
+        .signature-line {
+            border-top: 2px solid #1e293b;
+            margin-bottom: 8px;
+        }
+        .signature-name {
+            font-weight: bold;
+            font-size: 10pt;
+            margin: 0;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>{{ titulo }}</h1>
+        <h1>Resumen Mensual de Atrasos</h1>
         <p>{{ nombre_mes }} {{ anio }}</p>
-        <p>Generado: {{ fecha_actual|date:"d/m/Y H:i" }}</p>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th style="width: 5%">N°</th>
-                <th style="width: 14%">RUT</th>
-                <th style="width: 30%">Nombre</th>
+                <th style="width: 8%" class="center">N°</th>
+                <th style="width: 15%">RUT</th>
+                <th style="width: 32%">Funcionario</th>
                 <th style="width: 20%">Cargo</th>
-                <th class="center" style="width: 14%">Días con Atraso</th>
-                <th class="center" style="width: 17%">Total Min. Retraso</th>
+                <th class="center" style="width: 12%">Días</th>
+                <th class="center" style="width: 13%">Total Min.</th>
             </tr>
         </thead>
         <tbody>
             {% for data in usuarios_data %}
             <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ data.usuario.run }}</td>
-                <td>{{ data.usuario.get_full_name }}</td>
-                <td>{{ data.usuario.get_funcion_display|default:data.usuario.get_role_display }}</td>
+                <td class="center">{{ forloop.counter }}</td>
+                <td style="font-size: 9pt;">{{ data.usuario.run }}</td>
+                <td class="name-cell">{{ data.usuario.get_full_name }}</td>
+                <td class="cargo-cell">{{ data.usuario.get_funcion_display|default:data.usuario.get_role_display }}</td>
                 <td class="center">{{ data.dias_atraso }}</td>
-                <td class="center {% if data.total_minutos >= 60 %}min-rojo{% endif %}">{{ data.total_minutos }} min</td>
+                <td class="center {% if data.total_minutos >= 60 %}min-retraso{% else %}min-normal{% endif %}">
+                    {{ data.total_minutos }} min
+                </td>
             </tr>
             {% endfor %}
+            
             {% if usuarios_data %}
             <tr class="resumen-row">
-                <td colspan="4" style="text-align: right;">TOTAL GENERAL</td>
+                <td colspan="4" style="text-align: right;">TOTAL ACUMULADO DEL MES</td>
                 <td class="center">{{ usuarios_data|length }} func.</td>
                 <td class="center">{{ total_general }} min</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="center" style="padding: 30px; color: #94a3b8;">
+                    No se registraron atrasos en este período.
+                </td>
             </tr>
             {% endif %}
         </tbody>
     </table>
 
+    <div class="signature-section">
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <p class="signature-name">Dirección de Establecimiento</p>
+        </div>
+    </div>
+
     <div class="footer">
-        SGPAL - Sistema de Gestión de Permisos y Asistencia Laboral
+        FLUX &middot; Reporte de Asistencia &middot; {{ fecha_actual|date:"d/m/Y" }}
     </div>
 </body>
 </html>

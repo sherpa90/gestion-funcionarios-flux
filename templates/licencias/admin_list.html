@@ -47,6 +47,8 @@
                     <option value="">Todos</option>
                     <option value="LICENCIA" {% if selected_tipo == 'LICENCIA' %}selected{% endif %}>Licencia Médica</option>
                     <option value="PERMISO" {% if selected_tipo == 'PERMISO' %}selected{% endif %}>Permiso sin Goce</option>
+                    <option value="PRENATAL" {% if selected_tipo == 'PRENATAL' %}selected{% endif %}>Licencia Prenatal</option>
+                    <option value="POSTNATAL" {% if selected_tipo == 'POSTNATAL' %}selected{% endif %}>Licencia Postnatal</option>
                 </select>
             </div>
             <div>
@@ -144,11 +146,19 @@
                         <td class="px-5 py-4 whitespace-nowrap">
                             {% if licencia.tipo == 'PERMISO' %}
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-purple-50 text-purple-700">
-                                Permiso sin Goce
+                                {{ licencia.get_tipo_display }}
+                            </span>
+                            {% elif licencia.tipo == 'PRENATAL' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-pink-50 text-pink-700">
+                                {{ licencia.get_tipo_display }}
+                            </span>
+                            {% elif licencia.tipo == 'POSTNATAL' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-indigo-700">
+                                {{ licencia.get_tipo_display }}
                             </span>
                             {% else %}
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700">
-                                Licencia Médica
+                                {{ licencia.get_tipo_display }}
                             </span>
                             {% endif %}
                         </td>

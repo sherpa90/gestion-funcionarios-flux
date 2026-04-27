@@ -256,7 +256,8 @@
                     <div>
                         <div class="lic-date">Desde el {{ licencia.fecha_inicio|date:"d M Y" }}</div>
                         <div class="lic-meta">
-                            <span>Ingresada el {{ licencia.created_at|date:"d/m/Y" }}</span>
+                            <span class="font-black text-blue-600 uppercase tracking-tighter">{{ licencia.get_tipo_display }}</span>
+                            <span class="dot">Ingresada el {{ licencia.created_at|date:"d/m/Y" }}</span>
                             <span class="dot">Por: {{ licencia.created_by.get_full_name|default:"Sistema" }}</span>
                         </div>
                     </div>

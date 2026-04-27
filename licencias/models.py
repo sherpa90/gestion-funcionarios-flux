@@ -5,6 +5,8 @@ class LicenciaMedica(models.Model):
     TIPO_CHOICES = [
         ('LICENCIA', 'Licencia Médica'),
         ('PERMISO', 'Permiso sin Goce de Remuneraciones'),
+        ('PRENATAL', 'Licencia Prenatal'),
+        ('POSTNATAL', 'Licencia Postnatal'),
     ]
     
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='licencias')
