@@ -8,8 +8,10 @@ from django.db.models import Q, Avg, Sum
 from django.http import HttpResponse
 import openpyxl
 from datetime import datetime, time, timedelta
+from django.utils import timezone
 from licencias.models import LicenciaMedica
 from permisos.models import SolicitudPermiso
+from .forms import EditarRegistroAsistenciaForm
 import zipfile
 import io
 import re
@@ -1858,6 +1860,56 @@ class JustificarRegistroView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         messages.success(request, f'Registro justificado correctamente')
         return redirect('asistencia:detalle_usuario', user_id=registro.funcionario.id)
+
+
+class EditarRegistroAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para editar manualmente las horas de entrada/salida de un registro de asistencia (justificar)"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get(self, request, pk):
+        registro = get_object_or_404(RegistroAsistencia, pk=pk)
+        form = EditarRegistroAsistenciaForm()
+        context = {
+            'registro': registro,
+            'form': form,
+        }
+        return render(request, 'asistencia/editar_registro_asistencia.html', context)
+
+    def post(self, request, pk):
+        registro = get_object_or_404(RegistroAsistencia, pk=pk)
+        form = EditarRegistroAsistenciaForm(request.POST)
+
+        if form.is_valid():
+            hora_entrada = form.cleaned_data.get('hora_entrada_real')
+            hora_salida = form.cleaned_data.get('hora_salida_real')
+            justificacion = form.cleaned_data.get('justificacion_manual', '').strip()
+
+            # Actualizar horas si se proporcionaron
+            if hora_entrada:
+                registro.hora_entrada_real = hora_entrada
+            if hora_salida:
+                registro.hora_salida_real = hora_salida
+
+            # Actualizar justificación manual
+            if justificacion:
+                registro.justificacion_manual = justificacion
+                registro.justificado_por = request.user
+                registro.fecha_justificacion = timezone.now()
+
+            # Recalcular el estado automáticamente
+            registro.save()
+
+            messages.success(request, f'Registro actualizado correctamente para {registro.funcionario.get_full_name()}')
+            return redirect('asistencia:detalle_usuario', user_id=registro.funcionario.id)
+        else:
+            # Mostrar el formulario con errores
+            context = {
+                'registro': registro,
+                'form': form,
+            }
+            return render(request, 'asistencia/editar_registro_asistencia.html', context)
 
 
 class EliminarTodosRegistrosUsuarioView(LoginRequiredMixin, UserPassesTestMixin, View):

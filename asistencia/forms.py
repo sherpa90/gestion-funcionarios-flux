@@ -173,3 +173,44 @@ class CargaRegistrosAsistenciaForm(forms.Form):
             from core.validators import validate_file_upload
             validate_file_upload(archivo)
         return archivo
+
+
+class EditarRegistroAsistenciaForm(forms.Form):
+    """Formulario para editar manualmente un registro de asistencia (justificar)"""
+    hora_entrada_real = forms.TimeField(
+        required=False,
+        label="Hora de Entrada",
+        widget=forms.TimeInput(attrs={
+            "type": "time",
+            "class": "mt-1 block w-full h-11 px-4 py-2 border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+        })
+    )
+    hora_salida_real = forms.TimeField(
+        required=False,
+        label="Hora de Salida",
+        widget=forms.TimeInput(attrs={
+            "type": "time",
+            "class": "mt-1 block w-full h-11 px-4 py-2 border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+        })
+    )
+    justificacion_manual = forms.CharField(
+        required=False,
+        label="Justificación",
+        widget=forms.Textarea(attrs={
+            "class": "mt-1 block w-full px-3 py-2 border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm",
+            "rows": 3,
+            "placeholder": "Escriba el motivo de la justificación (ej: llegó tarde por emergencia, se quedó hasta terminar tarea, etc.)"
+        })
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        hora_entrada = cleaned_data.get('hora_entrada_real')
+        hora_salida = cleaned_data.get('hora_salida_real')
+        justificacion = cleaned_data.get('justificacion_manual')
+
+        if not hora_entrada and not hora_salida and not justificacion:
+            raise forms.ValidationError(
+                "Debe ingresar al menos una hora (entrada o salida) o una justificación."
+            )
+        return cleaned_data
