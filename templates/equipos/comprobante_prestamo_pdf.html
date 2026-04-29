@@ -190,7 +190,7 @@
             </tr>
             <tr>
                 <td class="label">Función:</td>
-                <td>{{ funcionario.get_role_display }}</td>
+                <td>{{ funcionario.get_funcion_display|default:funcionario.get_role_display }}</td>
                 <td class="label">Fecha Emisión:</td>
                 <td>{{ fecha|date:"d/m/Y H:i" }}</td>
             </tr>
@@ -240,7 +240,7 @@
                 <td>
                     <div class="signature-line"></div>
                     <div class="signature-name">{{ funcionario.get_full_name }}</div>
-                    <div class="signature-label">{{ funcionario.get_role_display }}</div>
+                    <div class="signature-label">{{ funcionario.get_funcion_display|default:funcionario.get_role_display }}</div>
                 </td>
                 <td>
                     <div class="signature-line"></div>
