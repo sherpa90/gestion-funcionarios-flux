@@ -492,7 +492,9 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                                 registro = RegistroVirtual('DIA_ADMINISTRATIVO')
 
                     # No es falta si hay registro (real o virtual), festivo, o no es día escolar
-                    es_falta_sin_registro = es_pasado and not registro and not es_festivo and es_dia_escolar
+                    # O si la fecha es anterior a su ingreso al establecimiento
+                    es_posterior_a_ingreso = fecha >= self.request.user.date_joined.date()
+                    es_falta_sin_registro = es_pasado and not registro and not es_festivo and es_dia_escolar and es_posterior_a_ingreso
 
                     # Los fines de semana solo aplican para serenos
                     if es_fin_de_semana and not es_sereno:
@@ -1355,7 +1357,7 @@ class CrearHorarioView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     template_name = 'asistencia/crear_horario.html'
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
 
     def dispatch(self, request, *args, **kwargs):
         # Verificar si el funcionario ya tiene un horario
@@ -1395,7 +1397,7 @@ class EditarHorarioView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     template_name = 'asistencia/editar_horario.html'
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
 
     def form_valid(self, form):
         messages.success(self.request, f'Horario actualizado exitosamente para {form.instance.funcionario.get_full_name()}')
@@ -1409,7 +1411,7 @@ class ToggleHorarioView(LoginRequiredMixin, UserPassesTestMixin, View):
     """Vista para activar/desactivar horario"""
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
 
     def post(self, request, pk):
         horario = get_object_or_404(HorarioFuncionario, pk=pk)
@@ -2033,6 +2035,10 @@ class ReporteAsistenciaMensualView(LoginRequiredMixin, UserPassesTestMixin, View
                     func_data['total_atrasos'] += 1
                     func_data['total_minutos_retraso'] += registro.minutos_retraso or 0
                 elif registro.estado == 'AUSENTE':
+                    # Ignorar si es antes de su ingreso
+                    if registro.fecha < funcionario.date_joined.date():
+                        continue
+                        
                     inasistencia_info = {
                         'fecha': registro.fecha,
                         'hora_esperada': registro.horario_asignado.hora_entrada if registro.horario_asignado else None,
@@ -2070,6 +2076,8 @@ class ReporteAsistenciaMensualView(LoginRequiredMixin, UserPassesTestMixin, View
                 if DiaFestivo.objects.filter(fecha=fecha).exists():
                     continue
                 if fecha.weekday() >= 5 and not (funcionario.funcion == 'SERENO' or funcionario.tipo_funcionario == 'SERENO'):
+                    continue
+                if fecha < funcionario.date_joined.date():
                     continue
                 inasistencia_info = {
                     'fecha': fecha,
@@ -2317,6 +2325,10 @@ class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
                     'minutos_retraso': registro.minutos_retraso,
                 })
             elif registro.estado == 'AUSENTE':
+                # Ignorar si es antes de su ingreso
+                if registro.fecha < request.user.date_joined.date():
+                    continue
+                    
                 inasistencias_detalle.append({
                     'fecha': registro.fecha,
                     'hora_esperada': registro.horario_asignado.hora_entrada if registro.horario_asignado else None,
@@ -2356,6 +2368,10 @@ class ReporteAsistenciaIndividualView(LoginRequiredMixin, View):
             dia_semana = fecha.weekday()
             es_fin_de_semana = dia_semana >= 5
             if es_fin_de_semana and not es_sereno:
+                continue
+            
+            # No contar inasistencia si es antes de su ingreso
+            if fecha < request.user.date_joined.date():
                 continue
 
             # Verificar si tiene permiso administrativo aprobado
@@ -2725,7 +2741,7 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
     """API para guardar la configuración del horario semanal de un usuario"""
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
 
     def post(self, request, user_id):
         import json

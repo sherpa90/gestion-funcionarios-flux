@@ -541,6 +541,11 @@ class RegistroAsistencia(models.Model):
             if self.hora_salida_real:
                 # Hay marcación de salida pero no de entrada - no es ausencia
                 return "SIN_MARCACION_ENTRADA"
+            
+            # Si no hay marcación y es anterior a su fecha de ingreso, no es ausente
+            if self.fecha < self.funcionario.date_joined.date():
+                return "SIN_HORARIO"
+                
             return "AUSENTE"
 
         retraso = self.calcular_retraso()

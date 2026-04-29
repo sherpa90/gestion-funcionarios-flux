@@ -110,7 +110,7 @@
 
 
     <!-- Acciones de Administración -->
-    {% if user.role in 'ADMIN,SECRETARIA' %}
+    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
     <div class="bg-white rounded-lg shadow p-6 mb-8">
         <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <i class="fas fa-cogs text-gray-600 mr-2"></i>
@@ -183,7 +183,7 @@
                         </span>
                         {% endif %}
                     </h4>
-                    {% if user.role in 'ADMIN,SECRETARIA' %}
+                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
                     <form method="post" action="{% url 'asistencia:recalcular_asistencia_usuario' user_id=usuario.id %}" onsubmit="return confirm('¿Estás seguro de que deseas recalcular la asistencia de este mes? Esto evaluará nuevamente las marcaciones aplicando las reglas de horario actuales.')" class="m-0">
                         {% csrf_token %}
                         <input type="hidden" name="mes" value="{{ mes_num }}">
@@ -208,7 +208,7 @@
                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salida Real</th>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Retraso</th>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                                    {% if user.role in 'ADMIN,SECRETARIA' %}
+                                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
                                     <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                                     {% endif %}
                                 </tr>
@@ -289,7 +289,7 @@
                                             </span>
                                         {% endif %}
                                     </td>
-                                    {% if user.role in 'ADMIN,SECRETARIA' %}
+                                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
                                     <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
                                         {% if registro.pk %}
                                         <div class="flex space-x-2">
@@ -526,12 +526,30 @@ document.addEventListener('alpine:init', () => {
                 const result = await response.json();
                 
                 if (response.ok) {
-                    alert('Horario guardado correctamente');
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: 'El horario ha sido guardado correctamente.',
+                        icon: 'success',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#3b82f6',
+                        timer: 2000,
+                        timerProgressBar: true
+                    });
                 } else {
-                    alert('Error: ' + result.message);
+                    Swal.fire({
+                        title: 'Error',
+                        text: result.message,
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444'
+                    });
                 }
             } catch (error) {
-                alert('Ocurrió un error al guardar el horario.');
+                Swal.fire({
+                    title: 'Error Inesperado',
+                    text: 'Ocurrió un error al procesar la solicitud.',
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444'
+                });
                 console.error(error);
             } finally {
                 this.guardando = false;
