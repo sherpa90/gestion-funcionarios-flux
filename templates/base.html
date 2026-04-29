@@ -385,11 +385,15 @@
                     </div>
                     <a href="{% url 'mi_reporte_pdf' %}" target="_blank"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-file-pdf fa-fw mr-3 text-red-400"></i><span class="ml-3">Mi Reporte PDF</span>
+                        <i class="fa-solid fa-file-pdf fa-fw mr-3 text-red-400"></i><span class="ml-3">Mis Permisos</span>
                     </a>
                     <a href="{% url 'mi_horario_pdf' %}" target="_blank"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-id-badge fa-fw mr-3 text-blue-400"></i><span class="ml-3">Mi Horario</span>
+                    </a>
+                    <a href="{% url 'reporte_prestamos_pdf' user.id %}" target="_blank"
+                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
+                        <i class="fa-solid fa-laptop fa-fw mr-3 text-indigo-400"></i><span class="ml-3">Mis Préstamos</span>
                     </a>
                     {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
                     <a href="{% url 'admin_dashboard:dashboard' %}"
@@ -647,11 +651,15 @@
                     </div>
                     <a href="{% url 'mi_reporte_pdf' %}" target="_blank"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-file-pdf fa-fw mr-3 text-red-400"></i><span class="ml-3">Mi Reporte PDF</span>
+                        <i class="fa-solid fa-file-pdf fa-fw mr-3 text-red-400"></i><span class="ml-3">Mis Permisos</span>
                     </a>
                     <a href="{% url 'mi_horario_pdf' %}" target="_blank"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-id-badge fa-fw mr-3 text-blue-400"></i><span class="ml-3">Mi Horario</span>
+                    </a>
+                    <a href="{% url 'reporte_prestamos_pdf' user.id %}" target="_blank"
+                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
+                        <i class="fa-solid fa-laptop fa-fw mr-3 text-indigo-400"></i><span class="ml-3">Mis Préstamos</span>
                     </a>
                     {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
                     <a href="{% url 'admin_dashboard:dashboard' %}"

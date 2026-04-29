@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ titulo }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 10pt;
+            line-height: 1.5;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #2563eb;
+        }
+        .header h1 {
+            margin: 0;
+            color: #1e293b;
+            font-size: 18pt;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .section-title {
+            background-color: #f1f5f9;
+            padding: 8px 12px;
+            border-left: 4px solid #2563eb;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 11pt;
+            margin: 20px 0 15px 0;
+        }
+        .funcionario-info {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+        }
+        .funcionario-info table {
+            width: 100%;
+            border: none;
+        }
+        .funcionario-info td {
+            border: none;
+            padding: 4px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #475569;
+            width: 120px;
+        }
+        .legal-text {
+            font-size: 9.5pt;
+            color: #334155;
+            text-align: justify;
+            margin-bottom: 20px;
+            padding: 0 5px;
+        }
+        .equipment-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .equipment-table th {
+            background-color: #334155;
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+            text-align: left;
+            font-size: 8.5pt;
+            text-transform: uppercase;
+        }
+        .equipment-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 9pt;
+        }
+        .equipment-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* History Page Styles */
+        .page-break {
+            page-break-before: always;
+        }
+        .equipment-detail-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+        }
+        .equipment-detail-card h3 {
+            margin-top: 0;
+            color: #2563eb;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+            font-size: 12pt;
+        }
+        .history-item {
+            font-size: 8.5pt;
+            margin-bottom: 6px;
+            padding-left: 10px;
+            border-left: 2px solid #cbd5e1;
+        }
+        .history-date {
+            font-weight: bold;
+            color: #64748b;
+            margin-right: 8px;
+        }
+        .history-type {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 7.5pt;
+            padding: 1px 5px;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        .type-hito { background-color: #dcfce7; color: #166534; }
+        .type-falla { background-color: #fee2e2; color: #991b1b; }
+
+        .signature-section {
+            margin-top: 50px;
+        }
+        .signature-table {
+            width: 100%;
+            border: none;
+        }
+        .signature-table td {
+            border: none;
+            width: 50%;
+            text-align: center;
+            padding-top: 60px;
+        }
+        .signature-line {
+            width: 220px;
+            border-top: 1.5px solid #1e293b;
+            margin: 0 auto;
+            padding-top: 8px;
+        }
+        .signature-name {
+            font-weight: bold;
+            font-size: 9pt;
+        }
+        .signature-label {
+            font-size: 8pt;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            font-size: 8pt;
+            color: #94a3b8;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="font-size: 10pt; color: #64748b; margin-bottom: 5px; font-weight: bold;">Colegio Los Alerces de Puerto Montt</div>
+        <h1>Préstamo Equipamiento Informático</h1>
+    </div>
+
+    <div class="section-title">Información del Funcionario</div>
+    <div class="funcionario-info">
+        <table>
+            <tr>
+                <td class="label">Funcionario:</td>
+                <td>{{ funcionario.get_full_name }}</td>
+                <td class="label">RUN:</td>
+                <td>{{ funcionario.run }}</td>
+            </tr>
+            <tr>
+                <td class="label">Función:</td>
+                <td>{{ funcionario.get_role_display }}</td>
+                <td class="label">Fecha Emisión:</td>
+                <td>{{ fecha|date:"d/m/Y H:i" }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section-title">Términos y Condiciones del Préstamo</div>
+    <div class="legal-text">
+        <p>El presente documento tiene como objetivo servir de respaldo formal para el préstamo de cualquier dispositivo electrónico o informático que el establecimiento asigne a funcionarios.</p>
+        <p>Todo préstamo (incluyendo notebooks, controles remotos, lápices electrónicos o impresoras) se asignará a Docentes y Asistentes de la Educación en la medida que la naturaleza de sus funciones así lo requiera. Cada funcionario mantendrá, en lo posible, el mismo equipamiento. Si en el ejercicio de sus funciones existe un mal uso por parte del funcionario, éste deberá responder con la reparación o devolución de dicho implemento. Si se produce pérdida o robo bajo su custodia, debe dar aviso a Dirección y al encargado de informática, y realizar la denuncia correspondiente con su parte policial.</p>
+        <p>La devolución del equipamiento será por disposición de la Dirección del establecimiento.</p>
+    </div>
+
+    <div class="section-title">Equipamiento Asignado</div>
+    <table class="equipment-table">
+        <thead>
+            <tr>
+                <th>Tipo de Equipo</th>
+                <th>Marca / Modelo</th>
+                <th>N° Inventario</th>
+                <th>N° Serie</th>
+                <th>Fecha Entrega</th>
+                <th>Fecha Devolución</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for prestamo in prestamos %}
+            <tr>
+                <td style="font-weight: bold;">{{ prestamo.equipo.get_tipo_display }}</td>
+                <td>{{ prestamo.equipo.marca }} {{ prestamo.equipo.modelo|default:"" }}</td>
+                <td>#{{ prestamo.equipo.numero_inventario|default:"N/A" }}</td>
+                <td style="font-family: monospace;">{{ prestamo.equipo.numero_serie|default:"N/A" }}</td>
+                <td>{{ prestamo.fecha_asignacion|date:"d/m/Y" }}</td>
+                <td>{{ prestamo.fecha_devolucion|date:"d/m/Y"|default:"____/____/____" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">No se registran equipos activos bajo su cargo.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="signature-section">
+        <table class="signature-table">
+            <tr>
+                <td>
+                    <div class="signature-line"></div>
+                    <div class="signature-name">{{ funcionario.get_full_name }}</div>
+                    <div class="signature-label">{{ funcionario.get_role_display }}</div>
+                </td>
+                <td>
+                    <div class="signature-line"></div>
+                    <div class="signature-name">Encargado de Informática</div>
+                    <div class="signature-label">Establecimiento</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- SEGUNDA HOJA: HISTORIAL Y DETALLES -->
+    {% if prestamos %}
+    <div class="page-break"></div>
+    <div class="header">
+        <div style="font-size: 10pt; color: #64748b; margin-bottom: 5px; font-weight: bold;">Colegio Los Alerces de Puerto Montt</div>
+        <h1>Historial y Estado del Equipamiento</h1>
+    </div>
+    <p style="text-align: center; color: #64748b; font-size: 9pt; margin-top: -15px; margin-bottom: 25px;">Transparencia de estado técnico de los dispositivos entregados</p>
+
+    {% for prestamo in prestamos %}
+    <div class="equipment-detail-card">
+        <h3>{{ prestamo.equipo.get_tipo_display }}: {{ prestamo.equipo.marca }} {{ prestamo.equipo.modelo }}</h3>
+        <p style="font-size: 8.5pt; margin-bottom: 10px;">
+            <strong>Inventario:</strong> {{ prestamo.equipo.numero_inventario|default:"N/A" }} | 
+            <strong>Serie:</strong> {{ prestamo.equipo.numero_serie|default:"N/A" }} |
+            <strong>Estado:</strong> {{ prestamo.equipo.get_estado_display }}
+        </p>
+
+        {% if prestamo.equipo.hitos_recientes or prestamo.equipo.fallas_recientes %}
+            <div style="margin-top: 10px;">
+                <p style="font-weight: bold; font-size: 9pt; border-bottom: 1px solid #f1f5f9; margin-bottom: 8px;">Últimos Eventos y Mantenimientos:</p>
+                
+                {% for hito in prestamo.equipo.hitos_recientes %}
+                <div class="history-item">
+                    <span class="history-date">{{ hito.fecha|date:"d/m/Y" }}</span>
+                    <span class="history-type type-hito">MANTENCIÓN</span>
+                    {{ hito.get_tipo_display }}: {{ hito.descripcion|truncatechars:100 }}
+                </div>
+                {% endfor %}
+
+                {% for falla in prestamo.equipo.fallas_recientes %}
+                <div class="history-item">
+                    <span class="history-date">{{ falla.fecha_reporte|date:"d/m/Y" }}</span>
+                    <span class="history-type type-falla">FALLA</span>
+                    {{ falla.get_estado_display }}: {{ falla.descripcion|truncatechars:100 }}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="font-style: italic; color: #94a3b8; font-size: 8.5pt;">No registra historial de fallas o mantenimientos recientes.</p>
+        {% endif %}
+        
+        {% if prestamo.equipo.observaciones %}
+            <div style="margin-top: 10px; padding: 8px; background-color: #fffbeb; border-radius: 6px; font-size: 8.5pt;">
+                <strong>Observaciones Técnicas:</strong> {{ prestamo.equipo.observaciones }}
+            </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <div style="margin-top: 30px; font-size: 8.5pt; color: #64748b; text-align: center; border: 1px dashed #cbd5e1; padding: 10px; border-radius: 8px;">
+        Este anexo detalla el estado del hardware al momento del préstamo para asegurar que ambas partes coinciden en las condiciones de entrega.
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        FLUX &middot; Certificado de Préstamo Detallado &middot; Página <span class="page-number"></span>
+    </div>
+</body>
+</html>

@@ -13,6 +13,14 @@
         h1 {
             text-align: center;
             color: #333;
+            margin-top: 5px;
+        }
+
+        .header-top {
+            text-align: center;
+            font-size: 10pt;
+            color: #64748b;
+            font-weight: bold;
         }
 
         table {
@@ -50,6 +58,7 @@
 </head>
 
 <body>
+    <div class="header-top">Colegio Los Alerces de Puerto Montt</div>
     <h1>{{ titulo }}</h1>
     <p><strong>Fecha:</strong> {{ fecha|date:"d/m/Y H:i" }}</p>
 

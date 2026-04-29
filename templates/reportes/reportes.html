@@ -591,11 +591,18 @@
               <div style="font-size:.72rem;color:#94a3b8;font-weight:500;margin-top:.05rem;">RUN: {{ empleado.funcionario.run }}</div>
             </div>
           </div>
-          <a href="{% url 'reportes_pdf_individual' empleado.funcionario.id %}?year={{ filtros.year }}&mes={{ filtros.mes }}&search={{ filtros.search }}"
-             target="_blank"
-             style="flex-shrink:0;width:2.25rem;height:2.25rem;border-radius:.6rem;background:#fff1f2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:.85rem;text-decoration:none;border:1.5px solid #fecaca;">
-            <i class="fas fa-file-pdf"></i>
-          </a>
+          <div style="display:flex; gap:.5rem;">
+            <a href="{% url 'reporte_prestamos_pdf' empleado.funcionario.id %}"
+               target="_blank"
+               style="flex-shrink:0;width:2.25rem;height:2.25rem;border-radius:.6rem;background:#eef2ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;font-size:.85rem;text-decoration:none;border:1.5px solid #c7d2fe;">
+              <i class="fas fa-laptop"></i>
+            </a>
+            <a href="{% url 'reportes_pdf_individual' empleado.funcionario.id %}?year={{ filtros.year }}&mes={{ filtros.mes }}&search={{ filtros.search }}"
+               target="_blank"
+               style="flex-shrink:0;width:2.25rem;height:2.25rem;border-radius:.6rem;background:#fff1f2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:.85rem;text-decoration:none;border:1.5px solid #fecaca;">
+              <i class="fas fa-file-pdf"></i>
+            </a>
+          </div>
         </div>
         <div class="emp-stat-grid">
           <div class="emp-stat-box">
@@ -736,12 +743,20 @@
                 {{ empleado.dias_licencias }}
               </td>
               <td style="text-align:right;">
-                <a href="{% url 'reportes_pdf_individual' empleado.funcionario.id %}?year={{ filtros.year }}&mes={{ filtros.mes }}&search={{ filtros.search }}"
-                  target="_blank"
-                  style="display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .75rem;font-size:.75rem;font-weight:600;color:#dc2626;background:#fff1f2;border:1.5px solid #fecaca;border-radius:.6rem;text-decoration:none;transition:background .15s;"
-                  onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fff1f2'">
-                  <i class="fas fa-file-pdf"></i> PDF
-                </a>
+                <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                  <a href="{% url 'reporte_prestamos_pdf' empleado.funcionario.id %}"
+                    target="_blank"
+                    style="display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .75rem;font-size:.75rem;font-weight:600;color:#4f46e5;background:#eef2ff;border:1.5px solid #c7d2fe;border-radius:.6rem;text-decoration:none;transition:background .15s;"
+                    onmouseover="this.style.background='#e0e7ff'" onmouseout="this.style.background='#eef2ff'">
+                    <i class="fas fa-laptop"></i> Préstamos
+                  </a>
+                  <a href="{% url 'reportes_pdf_individual' empleado.funcionario.id %}?year={{ filtros.year }}&mes={{ filtros.mes }}&search={{ filtros.search }}"
+                    target="_blank"
+                    style="display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .75rem;font-size:.75rem;font-weight:600;color:#dc2626;background:#fff1f2;border:1.5px solid #fecaca;border-radius:.6rem;text-decoration:none;transition:background .15s;"
+                    onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fff1f2'">
+                    <i class="fas fa-file-pdf"></i> PDF
+                  </a>
+                </div>
               </td>
             </tr>
             {% empty %}
