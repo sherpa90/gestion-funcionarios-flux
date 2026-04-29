@@ -379,33 +379,51 @@ def reporte_prestamos_pdf(request, usuario_id=None):
 
     if uid:
         funcionario = get_object_or_404(CustomUser, id=uid)
+        # Para el comprobante individual, solo mostramos los préstamos ACTIVOS (los que tiene "a cargo")
         prestamos = PrestamoEquipo.objects.filter(
-            funcionario=funcionario
+            funcionario=funcionario,
+            activo=True
         ).select_related('equipo', 'funcionario').order_by('-fecha_asignacion')
-        titulo = f'Reporte de Equipos - {funcionario.get_full_name()}'
-        filename = f'equipos_{funcionario.last_name}_{datetime.now().strftime("%Y%m%d")}.pdf'
+        
+        # Enriquecer cada préstamo con el historial del equipo
+        from .models import HitoMantenimiento
+        for prestamo in prestamos:
+            equipo = prestamo.equipo
+            equipo.hitos_recientes = HitoMantenimiento.objects.filter(equipo=equipo).order_by('-fecha')[:5]
+            equipo.fallas_recientes = FallaEquipo.objects.filter(equipo=equipo).order_by('-fecha_reporte')[:5]
+
+        titulo = f'Certificado de Préstamo - {funcionario.get_full_name()}'
+        filename = f'prestamo_equipos_{funcionario.last_name}_{datetime.now().strftime("%Y%m%d")}.pdf'
+        
+        # Generar PDF usando el nuevo template de comprobante
+        html_string = render(request, 'equipos/comprobante_prestamo_pdf.html', {
+            'funcionario': funcionario,
+            'prestamos': prestamos,
+            'titulo': titulo,
+            'fecha': timezone.now()
+        }).content.decode('utf-8')
     else:
+        # Reporte General (mantiene el comportamiento anterior)
         prestamos = PrestamoEquipo.objects.select_related('equipo', 'funcionario').all()
         titulo = 'Reporte General de Préstamos de Equipos'
         filename = f'reporte_prestamos_{datetime.now().strftime("%Y%m%d")}.pdf'
 
-    # Agrupar por funcionario
-    prestamos_por_usuario = {}
-    for prestamo in prestamos:
-        key = prestamo.funcionario.id
-        if key not in prestamos_por_usuario:
-            prestamos_por_usuario[key] = {
-                'funcionario': prestamo.funcionario,
-                'prestamos': []
-            }
-        prestamos_por_usuario[key]['prestamos'].append(prestamo)
+        # Agrupar por funcionario
+        prestamos_por_usuario = {}
+        for prestamo in prestamos:
+            key = prestamo.funcionario.id
+            if key not in prestamos_por_usuario:
+                prestamos_por_usuario[key] = {
+                    'funcionario': prestamo.funcionario,
+                    'prestamos': []
+                }
+            prestamos_por_usuario[key]['prestamos'].append(prestamo)
 
-    # Generar PDF
-    html_string = render(request, 'equipos/reporte_prestamos.html', {
-        'prestamos_por_usuario': prestamos_por_usuario,
-        'titulo': titulo,
-        'fecha': timezone.now()
-    }).content.decode('utf-8')
+        html_string = render(request, 'equipos/reporte_prestamos.html', {
+            'prestamos_por_usuario': prestamos_por_usuario,
+            'titulo': titulo,
+            'fecha': timezone.now()
+        }).content.decode('utf-8')
 
     pdf = HTML(string=html_string).write_pdf()
 
