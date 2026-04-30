@@ -70,3 +70,26 @@ class ImportacionUsuarios(models.Model):
         if self.total_registros == 0:
             return 0
         return round((self.exitosos / self.total_registros) * 100, 2)
+
+
+class Efemeride(models.Model):
+    titulo = models.CharField(max_length=255, verbose_name='Actividad o Conmemoración')
+    fecha = models.DateField(verbose_name='Fecha')
+    responsable = models.CharField(max_length=255, blank=True, null=True, verbose_name='Responsable')
+    descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción')
+    
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='efemerides_creadas'
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['fecha']
+        verbose_name = 'Efeméride'
+        verbose_name_plural = 'Efemérides'
+
+    def __str__(self):
+        return f"{self.fecha} - {self.titulo}"

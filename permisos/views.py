@@ -136,6 +136,9 @@ class SolicitudBypassView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         context['mis_ingresos'] = mis_ingresos
         return context
 
+from admin_dashboard.models import Efemeride
+import urllib.parse
+
 class SolicitudListView(LoginRequiredMixin, ListView):
     model = SolicitudPermiso
     template_name = 'permisos/dashboard_funcionario.html'
@@ -148,6 +151,22 @@ class SolicitudListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['dias_disponibles'] = self.request.user.dias_disponibles
         context['dias_totales'] = 6.0  # Total de días administrativos por año
+        
+        # --- Efemérides para el Dashboard del Funcionario ---
+        efemerides = Efemeride.objects.all().order_by('fecha')
+        for efe in efemerides:
+            base_url = "https://www.google.com/calendar/render?action=TEMPLATE"
+            date_start = efe.fecha.strftime('%Y%m%d')
+            date_end = (efe.fecha + timedelta(days=1)).strftime('%Y%m%d')
+            details = f"Responsable: {efe.responsable or 'No especificado'}\n{efe.descripcion or ''}"
+            params = {
+                'text': efe.titulo,
+                'dates': f"{date_start}/{date_end}",
+                'details': details,
+            }
+            efe.google_calendar_url = f"{base_url}&{urllib.parse.urlencode(params)}"
+        context['efemerides'] = efemerides
+        
         return context
 
 class SolicitudDirectorDashboardView(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -203,6 +222,22 @@ class SolicitudDirectorDashboardView(LoginRequiredMixin, UserPassesTestMixin, Li
         
         context['dias_disponibles'] = self.request.user.dias_disponibles
         context['dias_totales'] = getattr(self.request.user, 'dias_totales', 6.0)
+
+        # --- Efemérides para el Dashboard de Gestión ---
+        efemerides = Efemeride.objects.all().order_by('fecha')
+        for efe in efemerides:
+            base_url = "https://www.google.com/calendar/render?action=TEMPLATE"
+            date_start = efe.fecha.strftime('%Y%m%d')
+            date_end = (efe.fecha + timedelta(days=1)).strftime('%Y%m%d')
+            details = f"Responsable: {efe.responsable or 'No especificado'}\n{efe.descripcion or ''}"
+            params = {
+                'text': efe.titulo,
+                'dates': f"{date_start}/{date_end}",
+                'details': details,
+            }
+            efe.google_calendar_url = f"{base_url}&{urllib.parse.urlencode(params)}"
+        context['efemerides'] = efemerides
+
         return context
 
 class SolicitudAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -246,6 +281,21 @@ class SolicitudAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         context['resumen_semanal'] = dias_semana
         context['current_filter'] = self.request.GET.get('status', 'all')
         
+        # --- Efemérides para el Dashboard de Gestión ---
+        efemerides = Efemeride.objects.all().order_by('fecha')
+        for efe in efemerides:
+            base_url = "https://www.google.com/calendar/render?action=TEMPLATE"
+            date_start = efe.fecha.strftime('%Y%m%d')
+            date_end = (efe.fecha + timedelta(days=1)).strftime('%Y%m%d')
+            details = f"Responsable: {efe.responsable or 'No especificado'}\n{efe.descripcion or ''}"
+            params = {
+                'text': efe.titulo,
+                'dates': f"{date_start}/{date_end}",
+                'details': details,
+            }
+            efe.google_calendar_url = f"{base_url}&{urllib.parse.urlencode(params)}"
+        context['efemerides'] = efemerides
+
         return context
 
 class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):

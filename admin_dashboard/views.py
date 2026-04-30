@@ -13,12 +13,16 @@ import shutil
 from django.conf import settings
 from django.core.management import call_command
 from django.core.paginator import Paginator
-from django.http import FileResponse, HttpResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
+from django.views.generic import TemplateView, View, ListView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+import urllib.parse
 
 from users.models import CustomUser
 from permisos.models import SolicitudPermiso
 from licencias.models import LicenciaMedica
-from .models import SystemLog
+from .models import SystemLog, Efemeride
+from .forms import EfemerideForm
 from .utils import registrar_log, get_client_ip
 
 
@@ -597,4 +601,101 @@ class SystemBackupRestoreView(LoginRequiredMixin, UserPassesTestMixin, View):
         except Exception as e:
             messages.error(request, f'💥 Fallo en el despliegue del Respaldo Nacional: {str(e)}')
             return redirect('admin_dashboard:system_backup')
+
+
+# --- Vistas de Efemérides ---
+
+class EfemerideListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Efemeride
+    template_name = 'admin_dashboard/efemerides_list.html'
+    context_object_name = 'efemerides'
+    
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']
+
+    def get_queryset(self):
+        return Efemeride.objects.all().order_by('fecha')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        for efe in context['efemerides']:
+            # Generar URL de Google Calendar
+            base_url = "https://www.google.com/calendar/render?action=TEMPLATE"
+            date_start = efe.fecha.strftime('%Y%m%d')
+            date_end = (efe.fecha + timedelta(days=1)).strftime('%Y%m%d')
+            details = f"Responsable: {efe.responsable or 'No especificado'}\n{efe.descripcion or ''}"
+            params = {
+                'text': efe.titulo,
+                'dates': f"{date_start}/{date_end}",
+                'details': details,
+            }
+            efe.google_calendar_url = f"{base_url}&{urllib.parse.urlencode(params)}"
+        return context
+
+
+class EfemerideCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = Efemeride
+    form_class = EfemerideForm
+    template_name = 'admin_dashboard/efemeride_form.html'
+    success_url = reverse_lazy('admin_dashboard:dashboard') # Redirigir al dashboard pestaña efemérides (se manejará por JS)
+    
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']
+
+    def form_valid(self, form):
+        form.instance.creado_por = self.request.user
+        response = super().form_valid(form)
+        registrar_log(
+            usuario=self.request.user,
+            tipo='CREATE',
+            accion='Creación de Efeméride',
+            descripcion=f'Se creó la efeméride: {self.object.titulo} para el {self.object.fecha}',
+            ip_address=get_client_ip(self.request)
+        )
+        messages.success(self.request, 'Efeméride creada correctamente.')
+        return response
+
+
+class EfemerideUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Efemeride
+    form_class = EfemerideForm
+    template_name = 'admin_dashboard/efemeride_form.html'
+    success_url = reverse_lazy('admin_dashboard:dashboard')
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        registrar_log(
+            usuario=self.request.user,
+            tipo='UPDATE',
+            accion='Actualización de Efeméride',
+            descripcion=f'Se actualizó la efeméride: {self.object.titulo}',
+            ip_address=get_client_ip(self.request)
+        )
+        messages.success(self.request, 'Efeméride actualizada correctamente.')
+        return response
+
+
+class EfemerideDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Efemeride
+    success_url = reverse_lazy('admin_dashboard:dashboard')
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        titulo = self.object.titulo
+        response = super().post(request, *args, **kwargs)
+        registrar_log(
+            usuario=self.request.user,
+            tipo='DELETE',
+            accion='Eliminación de Efeméride',
+            descripcion=f'Se eliminó la efeméride: {titulo}',
+            ip_address=get_client_ip(self.request)
+        )
+        messages.success(self.request, 'Efeméride eliminada correctamente.')
+        return response
 

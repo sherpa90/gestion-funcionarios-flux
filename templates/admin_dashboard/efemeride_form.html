@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if object %}Editar{% else %}Nueva{% endif %} Efeméride | Sistema de Gestión{% endblock %}
+
+{% block content %}
+<div class="p-8 max-w-4xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="flex mb-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+                <a href="{% url 'admin_dashboard:dashboard' %}" class="inline-flex items-center text-xs font-black text-gray-400 hover:text-blue-600 uppercase tracking-widest transition-colors">
+                    <i class="fas fa-home mr-2"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-300 text-[10px] mx-2"></i>
+                    <span class="text-xs font-black text-gray-900 uppercase tracking-widest">{% if object %}Editar{% else %}Nueva{% endif %} Efeméride</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-2xl shadow-gray-200/50 overflow-hidden">
+        <div class="px-10 py-8 border-b border-gray-50 bg-gradient-to-r from-amber-50/50 to-white">
+            <h3 class="text-2xl font-black text-gray-900 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center">
+                    <i class="fas fa-star text-amber-600 text-xl"></i>
+                </div>
+                {% if object %}Editar{% else %}Crear{% endif %} Efeméride
+            </h3>
+            <p class="text-sm font-bold text-gray-400 mt-2 uppercase tracking-wider">Completa los detalles del hito o conmemoración escolar</p>
+        </div>
+
+        <form method="post" class="p-10 space-y-8">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Titulo -->
+                <div class="md:col-span-2 space-y-3">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Actividad o Conmemoración</label>
+                    {{ form.titulo }}
+                    {% if form.titulo.errors %}
+                        <p class="text-red-500 text-[10px] font-bold mt-1 uppercase">{{ form.titulo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Fecha -->
+                <div class="space-y-3">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha del Evento</label>
+                    {{ form.fecha }}
+                    {% if form.fecha.errors %}
+                        <p class="text-red-500 text-[10px] font-bold mt-1 uppercase">{{ form.fecha.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Responsable -->
+                <div class="space-y-3">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Responsable / Departamento</label>
+                    {{ form.responsable }}
+                    {% if form.responsable.errors %}
+                        <p class="text-red-500 text-[10px] font-bold mt-1 uppercase">{{ form.responsable.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Descripcion -->
+                <div class="md:col-span-2 space-y-3">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Descripción (Opcional)</label>
+                    {{ form.descripcion }}
+                    {% if form.descripcion.errors %}
+                        <p class="text-red-500 text-[10px] font-bold mt-1 uppercase">{{ form.descripcion.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="pt-8 border-t border-gray-50 flex flex-col sm:flex-row justify-end gap-4">
+                <a href="{% url 'admin_dashboard:dashboard' %}" class="inline-flex items-center justify-center px-8 py-4 bg-gray-50 text-gray-500 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-gray-100 transition-all">
+                    Cancelar
+                </a>
+                <button type="submit" class="inline-flex items-center justify-center px-10 py-4 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-amber-600 shadow-xl shadow-gray-200 hover:shadow-amber-100 transition-all transform hover:-translate-y-0.5">
+                    <i class="fas fa-save mr-2.5"></i> {% if object %}Guardar Cambios{% else %}Crear Efeméride{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

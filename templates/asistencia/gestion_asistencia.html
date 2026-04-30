@@ -3,192 +3,223 @@
 {% block page_title %}Gestión de Asistencia{% endblock %}
 
 {% block content %}
-<div class="p-3 sm:p-4 lg:p-6">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div>
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Gestión de Asistencia</h2>
-            <p class="text-xs text-gray-500 mt-0.5">Vista administrativa de registros de asistencia</p>
+<div class="p-3 sm:p-4 lg:p-6 max-w-[1600px] mx-auto animate-in">
+    <!-- Header Premium -->
+    <div class="mb-6 sm:mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-50 rounded-full opacity-50 blur-3xl"></div>
+        <div class="relative z-10 flex items-center gap-5">
+            <div class="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+                <i class="fas fa-calendar-check text-white text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight leading-tight">Control de Asistencia</h2>
+                <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                        <i class="fas fa-users mr-1.5 text-[10px]"></i>
+                        {{ estadisticas.total_usuarios }} Funcionarios
+                    </span>
+                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest hidden sm:inline">Administración de Registros</span>
+                </div>
+            </div>
         </div>
-        <div class="flex items-center gap-2">
-            <form method="post" action="{% url 'asistencia:recalcular_toda_asistencia' %}" onsubmit="return confirm('¿Recalcular todos los registros de asistencia? Esto actualizará estados y retrasos según los horarios actuales.')">
+        
+        <div class="relative z-10 flex flex-wrap lg:flex-nowrap gap-3 w-full lg:w-auto">
+            <form method="post" action="{% url 'asistencia:recalcular_toda_asistencia' %}" class="flex-1 lg:flex-none" onsubmit="return confirm('¿Recalcular todos los registros? Esto puede tardar unos segundos.')">
                 {% csrf_token %}
-                <button type="submit"
-                    class="inline-flex items-center px-3 py-2 bg-amber-50 text-amber-700 text-xs font-bold rounded-lg hover:bg-amber-100 transition border border-amber-100">
-                    <i class="fas fa-sync-alt mr-1.5"></i>Recalcular
+                <button type="submit" class="w-full lg:min-w-[160px] h-12 inline-flex items-center justify-center px-6 border border-amber-100 text-[10px] font-black uppercase tracking-widest rounded-xl text-amber-600 bg-amber-50 hover:bg-amber-600 hover:text-white transition-all shadow-sm hover:shadow-amber-100 group">
+                    <i class="fas fa-sync-alt mr-2 group-hover:rotate-180 transition-transform duration-500"></i>
+                    Recalcular
                 </button>
             </form>
             <a href="{% url 'asistencia:gestion_excepcionales' %}"
-               class="inline-flex items-center px-3 py-2 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg hover:bg-indigo-100 transition border border-indigo-100">
-                <i class="fas fa-exclamation-triangle mr-1.5"></i>Excepcionales
+               class="flex-1 lg:min-w-[160px] h-12 inline-flex items-center justify-center px-6 bg-white border border-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm hover:shadow-indigo-100">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Excepcionales
             </a>
             <a href="{% url 'asistencia:carga_registros' %}"
-               class="inline-flex items-center px-3 py-2 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-100 transition border border-emerald-100">
-                <i class="fas fa-upload mr-1.5"></i>Cargar Registros
+               class="flex-1 lg:min-w-[160px] h-12 inline-flex items-center justify-center px-6 bg-gray-900 border border-transparent text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 shadow-xl shadow-gray-200 hover:shadow-blue-200 transition-all transform hover:-translate-y-0.5">
+                <i class="fas fa-cloud-upload-alt mr-2"></i>
+                Cargar Registros
             </a>
         </div>
-
     </div>
 
-    <!-- Stats Inline -->
-    <div class="flex flex-wrap gap-2 mb-4">
-        <div class="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-full px-3 py-1.5">
-            <i class="fas fa-users text-blue-500 text-[10px]"></i>
-            <span class="text-[10px] font-bold text-blue-600 uppercase">Funcionarios</span>
-            <span class="text-sm font-black text-blue-700">{{ estadisticas.total_usuarios }}</span>
+    <!-- Quick Stats Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
+        <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:border-blue-100 transition-all">
+            <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 text-blue-500 group-hover:scale-110 transition-transform">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total Registros</p>
+                <p class="text-base font-black text-gray-900">{{ estadisticas.total_registros }}</p>
+            </div>
         </div>
-        <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5">
-            <i class="fas fa-clipboard-list text-gray-500 text-[10px]"></i>
-            <span class="text-[10px] font-bold text-gray-600 uppercase">Registros</span>
-            <span class="text-sm font-black text-gray-700">{{ estadisticas.total_registros }}</span>
+        <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:border-emerald-100 transition-all">
+            <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0 text-emerald-500 group-hover:scale-110 transition-transform">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Puntuales</p>
+                <p class="text-base font-black text-gray-900">{{ estadisticas.registros_puntuales }}</p>
+            </div>
         </div>
-        <div class="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1.5">
-            <i class="fas fa-check-circle text-emerald-500 text-[10px]"></i>
-            <span class="text-[10px] font-bold text-emerald-600 uppercase">Puntuales</span>
-            <span class="text-sm font-black text-emerald-700">{{ estadisticas.registros_puntuales }}</span>
+        <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:border-rose-100 transition-all">
+            <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center flex-shrink-0 text-rose-500 group-hover:scale-110 transition-transform">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Atrasos</p>
+                <p class="text-base font-black text-gray-900">{{ estadisticas.registros_retraso }}</p>
+            </div>
         </div>
-        <div class="flex items-center gap-2 bg-rose-50 border border-rose-100 rounded-full px-3 py-1.5">
-            <i class="fas fa-clock text-rose-500 text-[10px]"></i>
-            <span class="text-[10px] font-bold text-rose-600 uppercase">Atrasos</span>
-            <span class="text-sm font-black text-rose-700">{{ estadisticas.registros_retraso }}</span>
+        <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:border-indigo-100 transition-all">
+            <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0 text-indigo-500 group-hover:scale-110 transition-transform">
+                <i class="fas fa-percentage"></i>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Puntualidad</p>
+                <p class="text-base font-black text-gray-900">{{ estadisticas.porcentaje_puntualidad }}%</p>
+            </div>
         </div>
-        <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full px-3 py-1.5">
-            <i class="fas fa-percentage text-slate-400 text-[10px]"></i>
-            <span class="text-[10px] font-bold text-slate-500 uppercase">Punt.</span>
-            <span class="text-sm font-black text-slate-700">{{ estadisticas.porcentaje_puntualidad }}%</span>
+        <div class="hidden lg:flex bg-white p-4 rounded-2xl border border-gray-100 shadow-sm items-center gap-4 group hover:border-amber-100 transition-all">
+            <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0 text-amber-500 group-hover:scale-110 transition-transform">
+                <i class="fas fa-calendar-day"></i>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Periodo</p>
+                <p class="text-base font-black text-gray-900">2026</p>
+            </div>
         </div>
     </div>
 
-    <!-- Filtros + Exportación Masiva -->
-    <div class="bg-white shadow-sm rounded-xl border border-gray-100 p-3 mb-4">
-        <div class="flex flex-col sm:flex-row gap-3 items-end">
-            <form method="get" class="flex flex-1 items-end gap-2">
-                <div class="flex-1 min-w-0">
-                    <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Buscar</label>
+    <!-- Filtros y Exportación Glassmorphism -->
+    <div class="mb-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div class="flex flex-col lg:flex-row gap-6 items-end">
+            <!-- Buscador -->
+            <form method="get" class="flex flex-1 w-full gap-2">
+                <div class="relative flex-1 group">
                     <input type="text" name="search" value="{{ filtros_aplicados.search }}"
-                           class="block w-full text-xs border-gray-200 rounded-lg h-9"
-                           placeholder="Nombre, apellido o RUT">
+                           class="block w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 placeholder-gray-400 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
+                           placeholder="Buscar funcionario por nombre o RUT...">
                 </div>
-                <button type="submit" class="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition h-9">
-                    <i class="fas fa-search"></i>
+                <button type="submit" class="px-6 py-3 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-100">
+                    Buscar
                 </button>
                 {% if filtros_aplicados.search %}
-                <a href="{% url 'asistencia:gestion_asistencia' %}" class="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-500 text-xs rounded-lg hover:bg-gray-200 transition h-9">
+                <a href="{% url 'asistencia:gestion_asistencia' %}" class="px-4 py-3 bg-gray-100 text-gray-500 rounded-xl hover:bg-gray-200 transition flex items-center">
                     <i class="fas fa-times"></i>
                 </a>
                 {% endif %}
             </form>
 
-            <!-- Exportación Masiva -->
-            <div class="flex items-center gap-2">
-                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Exportar Atrasos:</span>
-                <form method="get" action="{% url 'asistencia:exportar_retrasos_excel' %}" class="inline" id="export-excel-form">
-                    <select name="mes" class="hidden" id="export-mes-excel">
-                        <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
-                        <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-                        <option value="7">7</option><option value="8">8</option><option value="9">9</option>
-                        <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+            <!-- Exportación Panel -->
+            <div class="w-full lg:w-auto bg-gray-50/50 p-3 rounded-2xl border border-gray-100 flex flex-col sm:flex-row items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Exportar Atrasos:</span>
+                    <select id="mes-selector" class="text-[11px] font-black border-none bg-white rounded-lg h-9 px-3 shadow-sm focus:ring-2 focus:ring-blue-100 transition-all" onchange="updateExportPeriod()">
+                        <option value="1">Enero</option><option value="2">Febrero</option><option value="3" selected>Marzo</option>
+                        <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+                        <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+                        <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
                     </select>
-                    <select name="anio" class="hidden" id="export-anio-excel">
+                    <select id="anio-selector" class="text-[11px] font-black border-none bg-white rounded-lg h-9 px-3 shadow-sm focus:ring-2 focus:ring-blue-100 transition-all" onchange="updateExportPeriod()">
                         <option value="2025">2025</option><option value="2026" selected>2026</option>
                     </select>
-                    <button type="submit" class="inline-flex items-center px-3 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition h-9">
-                        <i class="fas fa-file-excel mr-1.5"></i>Excel
-                    </button>
-                </form>
-                <form method="get" action="{% url 'asistencia:exportar_retrasos_pdf' %}" class="inline" id="export-pdf-form">
-                    <select name="mes" class="hidden" id="export-mes-pdf">
-                        <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option>
-                        <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-                        <option value="7">7</option><option value="8">8</option><option value="9">9</option>
-                        <option value="10">10</option><option value="11">11</option><option value="12">12</option>
-                    </select>
-                    <select name="anio" class="hidden" id="export-anio-pdf">
-                        <option value="2025">2025</option><option value="2026" selected>2026</option>
-                    </select>
-                    <button type="submit" class="inline-flex items-center px-3 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition h-9">
-                        <i class="fas fa-file-pdf mr-1.5"></i>PDF
-                    </button>
-                </form>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <form method="get" action="{% url 'asistencia:exportar_retrasos_excel' %}" class="flex-1 sm:flex-none" id="export-excel-form">
+                        <input type="hidden" name="mes" id="export-mes-excel" value="3">
+                        <input type="hidden" name="anio" id="export-anio-excel" value="2026">
+                        <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100">
+                            <i class="fas fa-file-excel mr-2"></i>Excel
+                        </button>
+                    </form>
+                    <form method="get" action="{% url 'asistencia:exportar_retrasos_pdf' %}" class="flex-1 sm:flex-none" id="export-pdf-form">
+                        <input type="hidden" name="mes" id="export-mes-pdf" value="3">
+                        <input type="hidden" name="anio" id="export-anio-pdf" value="2026">
+                        <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 bg-rose-50 text-rose-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-600 hover:text-white transition-all border border-rose-100">
+                            <i class="fas fa-file-pdf mr-2"></i>PDF
+                        </button>
+                    </form>
+                </div>
             </div>
-        </div>
-
-        <!-- Selector de mes/año para exportación -->
-        <div class="mt-2 flex items-center gap-2">
-            <label class="text-[9px] font-bold text-gray-400 uppercase">Período:</label>
-            <select id="mes-selector" class="text-[11px] border-gray-200 rounded-lg h-9 w-32 px-2 shadow-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all" onchange="updateExportPeriod()">
-                <option value="1">Enero</option><option value="2">Febrero</option><option value="3" selected>Marzo</option>
-                <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
-                <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
-                <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-            </select>
-            <select id="anio-selector" class="text-[11px] border-gray-200 rounded-lg h-9 w-24 px-2 shadow-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all" onchange="updateExportPeriod()">
-                <option value="2025">2025</option><option value="2026" selected>2026</option>
-            </select>
         </div>
     </div>
 
-    <!-- Tabla de Funcionarios -->
-    <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
-        <div class="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
-            <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Funcionarios</h3>
-            <span class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{{ usuarios_con_stats|length }} funcionarios</span>
+    <!-- Lista de Funcionarios -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
+            <div>
+                <h3 class="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fas fa-users text-blue-500"></i>
+                    Base de Funcionarios
+                </h3>
+                <p class="text-[11px] text-gray-400 font-bold mt-0.5 uppercase">{{ usuarios_con_stats|length }} funcionarios registrados</p>
+            </div>
         </div>
 
         {% if usuarios_con_stats %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-50">
-                <thead class="bg-gray-50/50 sticky top-0">
-                    <tr>
-                        <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Funcionario</th>
-                        <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">RUT</th>
-                        <th class="px-3 py-2 text-center text-[9px] font-bold text-gray-400 uppercase tracking-widest">Registros</th>
-                        <th class="px-3 py-2 text-center text-[9px] font-bold text-gray-400 uppercase tracking-widest">Puntualidad</th>
-                        <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Último Registro</th>
-                        <th class="px-3 py-2 text-right text-[9px] font-bold text-gray-400 uppercase tracking-widest">Acciones</th>
+        <!-- Desktop Table -->
+        <div class="hidden md:block overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">
+                        <th class="px-6 py-4 text-left">Funcionario</th>
+                        <th class="px-6 py-4 text-left">RUT</th>
+                        <th class="px-6 py-4 text-center">Registros</th>
+                        <th class="px-6 py-4 text-center">Puntualidad</th>
+                        <th class="px-6 py-4 text-left">Último Acceso</th>
+                        <th class="px-6 py-4 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                     {% for user_stats in usuarios_con_stats %}
-                    <tr class="hover:bg-gray-50/50">
-                        <td class="px-3 py-2">
-                            <div class="flex items-center gap-2">
-                                <div class="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
-                                    <span class="text-[9px] font-black">{{ user_stats.usuario.first_name.0 }}{{ user_stats.usuario.last_name.0 }}</span>
+                    <tr class="group hover:bg-blue-50/30 transition-all duration-300">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-gray-100 border border-gray-100 flex items-center justify-center group-hover:bg-blue-100 group-hover:border-blue-200 transition-all">
+                                    <span class="text-xs font-black text-gray-700 group-hover:text-blue-600">
+                                        {{ user_stats.usuario.first_name.0 }}{{ user_stats.usuario.last_name.0 }}
+                                    </span>
                                 </div>
-                                <div class="min-w-0">
-                                    <div class="text-xs font-bold text-gray-900 truncate">{{ user_stats.usuario.get_full_name }}</div>
-                                    <div class="text-[10px] text-gray-400">{{ user_stats.usuario.get_role_display }}</div>
+                                <div>
+                                    <p class="text-sm font-black text-gray-900">{{ user_stats.usuario.get_full_name }}</p>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ user_stats.usuario.get_role_display }}</p>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-3 py-2 text-xs text-gray-600">{{ user_stats.usuario.run }}</td>
-                        <td class="px-3 py-2 text-center text-xs font-bold text-gray-900">{{ user_stats.total_registros }}</td>
-                        <td class="px-3 py-2 text-center">
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold
-                                {% if user_stats.porcentaje_puntualidad >= 80 %}bg-emerald-50 text-emerald-700{% elif user_stats.porcentaje_puntualidad >= 60 %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">
-                                {{ user_stats.porcentaje_puntualidad }}%
-                            </span>
+                        <td class="px-6 py-4 whitespace-nowrap text-xs font-bold text-gray-600">{{ user_stats.usuario.run }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-black text-gray-900">{{ user_stats.total_registros }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest
+                                    {% if user_stats.porcentaje_puntualidad >= 80 %}bg-green-50 text-green-700 border border-green-100
+                                    {% elif user_stats.porcentaje_puntualidad >= 60 %}bg-amber-50 text-amber-700 border border-amber-100
+                                    {% else %}bg-rose-50 text-rose-700 border border-rose-100{% endif %}">
+                                    {{ user_stats.porcentaje_puntualidad }}%
+                                </span>
+                            </div>
                         </td>
-                        <td class="px-3 py-2 text-xs text-gray-500">
-                            {% if user_stats.ultimo_registro %}{{ user_stats.ultimo_registro|date:"d/m/Y" }}{% else %}-{% endif %}
+                        <td class="px-6 py-4 whitespace-nowrap text-xs font-bold text-gray-400">
+                            {% if user_stats.ultimo_registro %}{{ user_stats.ultimo_registro|date:"d/m/Y" }}{% else %}<span class="text-gray-200">-</span>{% endif %}
                         </td>
-                        <td class="px-3 py-2 text-right">
-                            <div class="flex items-center justify-end gap-1">
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <div class="flex items-center justify-end gap-2">
                                 <a href="{% url 'asistencia:detalle_usuario' user_stats.usuario.id %}"
-                                   class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-lg hover:bg-blue-600 hover:text-white transition">
-                                    <i class="fas fa-eye mr-0.5"></i> Ver
+                                   class="inline-flex items-center px-4 py-2 bg-white border border-gray-100 text-gray-700 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm">
+                                    <i class="fas fa-eye mr-2"></i> Ver Detalle
                                 </a>
-                                <a href="{% url 'asistencia:exportar_retrasos_excel_individual' user_stats.usuario.id %}?mes={{ request.GET.mes|default:'3' }}&anio={{ request.GET.anio|default:'2026' }}"
-                                   class="inline-flex items-center px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-lg hover:bg-emerald-600 hover:text-white transition"
-                                   title="Exportar atrasos a Excel">
-                                    <i class="fas fa-file-excel"></i>
-                                </a>
-                                <a href="{% url 'asistencia:exportar_retrasos_pdf_individual' user_stats.usuario.id %}?mes={{ request.GET.mes|default:'3' }}&anio={{ request.GET.anio|default:'2026' }}"
-                                   class="inline-flex items-center px-2 py-1 bg-rose-50 text-rose-700 text-[10px] font-bold rounded-lg hover:bg-rose-600 hover:text-white transition"
-                                   title="Exportar atrasos a PDF">
-                                    <i class="fas fa-file-pdf"></i>
-                                </a>
+                                <div class="flex gap-1">
+                                    <a href="{% url 'asistencia:exportar_retrasos_excel_individual' user_stats.usuario.id %}?mes={{ request.GET.mes|default:'3' }}&anio={{ request.GET.anio|default:'2026' }}"
+                                       class="w-9 h-9 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all" title="Excel">
+                                        <i class="fas fa-file-excel text-xs"></i>
+                                    </a>
+                                    <a href="{% url 'asistencia:exportar_retrasos_pdf_individual' user_stats.usuario.id %}?mes={{ request.GET.mes|default:'3' }}&anio={{ request.GET.anio|default:'2026' }}"
+                                       class="w-9 h-9 flex items-center justify-center bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all" title="PDF">
+                                        <i class="fas fa-file-pdf text-xs"></i>
+                                    </a>
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -197,23 +228,71 @@
             </table>
         </div>
 
-        {% if is_paginated %}
-        <div class="bg-gray-50/50 px-3 py-2.5 flex items-center justify-between border-t border-gray-100">
-            <div class="text-[10px] font-bold text-gray-400">
-                <span class="text-gray-700">{{ page_obj.number }}</span>/{{ page_obj.paginator.num_pages }}
+        <!-- Mobile Card View -->
+        <div class="md:hidden divide-y divide-gray-50">
+            {% for user_stats in usuarios_con_stats %}
+            <div class="p-4 active:bg-gray-50 transition-colors">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                            <span class="text-xs font-black">{{ user_stats.usuario.first_name.0 }}{{ user_stats.usuario.last_name.0 }}</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-black text-gray-900">{{ user_stats.usuario.get_full_name }}</p>
+                            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{{ user_stats.usuario.run }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] font-black uppercase px-2 py-1 rounded-lg
+                            {% if user_stats.porcentaje_puntualidad >= 80 %}text-green-600 bg-green-50
+                            {% elif user_stats.porcentaje_puntualidad >= 60 %}text-amber-600 bg-amber-50
+                            {% else %}text-rose-600 bg-rose-50{% endif %}">
+                            {{ user_stats.porcentaje_puntualidad }}%
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    <div class="bg-gray-50 p-2 rounded-xl border border-gray-100 text-center">
+                        <p class="text-[8px] font-black text-gray-400 uppercase mb-0.5">Registros</p>
+                        <p class="text-xs font-black text-gray-900">{{ user_stats.total_registros }}</p>
+                    </div>
+                    <div class="bg-gray-50 p-2 rounded-xl border border-gray-100 text-center col-span-2">
+                        <p class="text-[8px] font-black text-gray-400 uppercase mb-0.5">Última Marcación</p>
+                        <p class="text-xs font-black text-gray-900">{% if user_stats.ultimo_registro %}{{ user_stats.ultimo_registro|date:"d/m/Y" }}{% else %}-{% endif %}</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <a href="{% url 'asistencia:detalle_usuario' user_stats.usuario.id %}" class="flex-1 inline-flex items-center justify-center px-4 py-2.5 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl">
+                        <i class="fas fa-eye mr-2"></i> Ver Detalle
+                    </a>
+                    <div class="flex gap-1">
+                        <a href="{% url 'asistencia:exportar_retrasos_excel_individual' user_stats.usuario.id %}?mes=3&anio=2026" class="w-10 h-10 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100">
+                            <i class="fas fa-file-excel"></i>
+                        </a>
+                        <a href="{% url 'asistencia:exportar_retrasos_pdf_individual' user_stats.usuario.id %}?mes=3&anio=2026" class="w-10 h-10 flex items-center justify-center bg-rose-50 text-rose-600 rounded-xl border border-rose-100">
+                            <i class="fas fa-file-pdf"></i>
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="flex items-center space-x-1">
+            {% endfor %}
+        </div>
+
+        {% if is_paginated %}
+        <div class="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            <div class="flex items-center gap-2">
                 {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}"
-                   class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-[10px] rounded-lg hover:bg-gray-50">
-                    <i class="fas fa-chevron-left text-[8px]"></i>
+                <a href="?page={{ page_obj.previous_page_number }}{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}" class="w-9 h-9 flex items-center justify-center bg-white border border-gray-100 text-gray-400 rounded-xl hover:text-blue-600 transition-all">
+                    <i class="fas fa-chevron-left text-[10px]"></i>
                 </a>
                 {% endif %}
-                <span class="inline-flex items-center justify-center w-7 h-7 bg-blue-600 text-white text-[10px] font-black rounded-lg">{{ page_obj.number }}</span>
+                <span class="w-9 h-9 flex items-center justify-center bg-blue-600 text-white text-xs font-black rounded-xl shadow-lg shadow-blue-100">{{ page_obj.number }}</span>
                 {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}"
-                   class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-[10px] rounded-lg hover:bg-gray-50">
-                    <i class="fas fa-chevron-right text-[8px]"></i>
+                <a href="?page={{ page_obj.next_page_number }}{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}" class="w-9 h-9 flex items-center justify-center bg-white border border-gray-100 text-gray-400 rounded-xl hover:text-blue-600 transition-all">
+                    <i class="fas fa-chevron-right text-[10px]"></i>
                 </a>
                 {% endif %}
             </div>
@@ -221,13 +300,29 @@
         {% endif %}
 
         {% else %}
-        <div class="py-12 text-center">
-            <i class="fas fa-users text-gray-200 text-4xl mb-3 block"></i>
-            <p class="text-sm font-bold text-gray-400">No se encontraron funcionarios</p>
+        <div class="px-6 py-20 text-center">
+            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-search text-gray-200 text-3xl"></i>
+            </div>
+            <h4 class="text-lg font-black text-gray-900 uppercase tracking-widest">Sin resultados</h4>
+            <p class="text-sm text-gray-400 mt-2 font-medium max-w-xs mx-auto">No encontramos funcionarios que coincidan con tu búsqueda.</p>
+            <a href="{% url 'asistencia:gestion_asistencia' %}" class="mt-8 inline-block px-6 py-3 bg-white border border-gray-100 text-xs font-black uppercase tracking-widest rounded-xl text-gray-500 hover:bg-gray-50 transition shadow-sm">
+                Limpiar Filtros
+            </a>
         </div>
         {% endif %}
     </div>
 </div>
+
+<style>
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+        animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+</style>
 
 <script>
 function updateExportPeriod() {
