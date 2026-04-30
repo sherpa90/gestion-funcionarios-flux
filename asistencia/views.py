@@ -874,6 +874,16 @@ class GestionAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     context_object_name = 'usuarios'
     paginate_by = 20
 
+    def get_paginate_by(self, queryset):
+        """Permite cambiar dinámicamente el número de elementos por página"""
+        paginate_by = self.request.GET.get('paginate_by', '20')
+        if paginate_by == 'todos':
+            return None  # Sin paginación
+        try:
+            return int(paginate_by)
+        except ValueError:
+            return 20  # Valor por defecto
+
     def test_func(self):
         # Solo administradores, secretarias, directores y directivos pueden ver la gestión
         return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
@@ -975,13 +985,38 @@ class GestionAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, ListView):
                 'ultimo_registro': ultimo_registro.fecha if ultimo_registro else None,
             })
 
+        # Ordenar usuarios con estadísticas
+        sort_by = self.request.GET.get('sort', 'name')
+
+        if sort_by == 'name':
+            usuarios_con_stats.sort(key=lambda x: (x['usuario'].first_name, x['usuario'].last_name))
+        elif sort_by == 'name_desc':
+            usuarios_con_stats.sort(key=lambda x: (x['usuario'].first_name, x['usuario'].last_name), reverse=True)
+        elif sort_by == 'rut':
+            usuarios_con_stats.sort(key=lambda x: x['usuario'].run or '')
+        elif sort_by == 'rut_desc':
+            usuarios_con_stats.sort(key=lambda x: x['usuario'].run or '', reverse=True)
+        elif sort_by == 'registros':
+            usuarios_con_stats.sort(key=lambda x: x['total_registros'])
+        elif sort_by == 'registros_desc':
+            usuarios_con_stats.sort(key=lambda x: x['total_registros'], reverse=True)
+        elif sort_by == 'puntualidad':
+            usuarios_con_stats.sort(key=lambda x: x['porcentaje_puntualidad'])
+        elif sort_by == 'puntualidad_desc':
+            usuarios_con_stats.sort(key=lambda x: x['porcentaje_puntualidad'], reverse=True)
+        elif sort_by == 'ultimo_acceso':
+            usuarios_con_stats.sort(key=lambda x: x['ultimo_registro'] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+        elif sort_by == 'ultimo_acceso_desc':
+            usuarios_con_stats.sort(key=lambda x: x['ultimo_registro'] or datetime.min.replace(tzinfo=timezone.utc))
+
         context['usuarios_con_stats'] = usuarios_con_stats
 
         # Filtros aplicados
         context['filtros_aplicados'] = {
             'search': self.request.GET.get('search', ''),
         }
-        context['current_sort'] = self.request.GET.get('sort', 'name')
+        context['current_sort'] = sort_by
+        context['paginate_by'] = self.request.GET.get('paginate_by', '20')
 
         return context
 

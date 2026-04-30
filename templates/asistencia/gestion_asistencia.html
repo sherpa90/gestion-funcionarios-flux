@@ -157,19 +157,99 @@
                 </h3>
                 <p class="text-[11px] text-gray-400 font-bold mt-0.5 uppercase">{{ usuarios_con_stats|length }} funcionarios registrados</p>
             </div>
+
+            <!-- Selector de paginación -->
+            <div class="flex items-center gap-3">
+                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Mostrar:</span>
+                <form method="get" class="flex items-center gap-2">
+                    <!-- Mantener otros parámetros GET -->
+                    {% for key, value in request.GET.items %}
+                        {% if key != 'paginate_by' and key != 'page' %}
+                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                        {% endif %}
+                    {% endfor %}
+
+                    <select name="paginate_by" onchange="this.form.submit()"
+                            class="text-[10px] font-bold px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 hover:border-blue-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                        <option value="20" {% if request.GET.paginate_by == '20' or not request.GET.paginate_by %}selected{% endif %}>20 por página</option>
+                        <option value="40" {% if request.GET.paginate_by == '40' %}selected{% endif %}>40 por página</option>
+                        <option value="todos" {% if request.GET.paginate_by == 'todos' %}selected{% endif %}>Todos</option>
+                    </select>
+                </form>
+            </div>
         </div>
 
         {% if usuarios_con_stats %}
         <!-- Desktop Table -->
-        <div class="hidden md:block overflow-x-auto">
+        <form method="get" class="hidden md:block overflow-x-auto">
             <table class="min-w-full">
                 <thead>
                     <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">
-                        <th class="px-6 py-4 text-left">Funcionario</th>
-                        <th class="px-6 py-4 text-left">RUT</th>
-                        <th class="px-6 py-4 text-center">Registros</th>
-                        <th class="px-6 py-4 text-center">Puntualidad</th>
-                        <th class="px-6 py-4 text-left">Último Acceso</th>
+                        <th class="px-6 py-4 text-left">
+                            <div class="flex items-center justify-between">
+                                <span>Funcionario</span>
+                                <div class="flex flex-col gap-0.5 ml-3">
+                                    <button type="submit" name="sort" value="name" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
+                                        <i class="fas fa-chevron-up text-[10px]"></i>
+                                    </button>
+                                    <button type="submit" name="sort" value="name_desc" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
+                                        <i class="fas fa-chevron-down text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="px-6 py-4 text-left">
+                            <div class="flex items-center justify-between">
+                                <span>RUT</span>
+                                <div class="flex flex-col gap-0.5 ml-3">
+                                    <button type="submit" name="sort" value="rut" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
+                                        <i class="fas fa-chevron-up text-[10px]"></i>
+                                    </button>
+                                    <button type="submit" name="sort" value="rut_desc" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
+                                        <i class="fas fa-chevron-down text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center">
+                                <span>Registros</span>
+                                <div class="flex flex-col gap-0.5 ml-3">
+                                    <button type="submit" name="sort" value="registros" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
+                                        <i class="fas fa-chevron-up text-[10px]"></i>
+                                    </button>
+                                    <button type="submit" name="sort" value="registros_desc" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
+                                        <i class="fas fa-chevron-down text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center">
+                                <span>Puntualidad</span>
+                                <div class="flex flex-col gap-0.5 ml-3">
+                                    <button type="submit" name="sort" value="puntualidad" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
+                                        <i class="fas fa-chevron-up text-[10px]"></i>
+                                    </button>
+                                    <button type="submit" name="sort" value="puntualidad_desc" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
+                                        <i class="fas fa-chevron-down text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </th>
+                        <th class="px-6 py-4 text-left">
+                            <div class="flex items-center justify-between">
+                                <span>Último Acceso</span>
+                                <div class="flex flex-col gap-0.5 ml-3">
+                                    <button type="submit" name="sort" value="ultimo_acceso" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
+                                        <i class="fas fa-chevron-up text-[10px]"></i>
+                                    </button>
+                                    <button type="submit" name="sort" value="ultimo_acceso_desc" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
+                                        <i class="fas fa-chevron-down text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </th>
                         <th class="px-6 py-4 text-right">Acciones</th>
                     </tr>
                 </thead>
@@ -227,6 +307,7 @@
                 </tbody>
             </table>
         </div>
+        </form>
 
         <!-- Mobile Card View -->
         <div class="md:hidden divide-y divide-gray-50">
@@ -311,6 +392,51 @@
             </a>
         </div>
         {% endif %}
+
+        <!-- Información de paginación -->
+        {% if is_paginated and paginate_by != 'todos' %}
+        <div class="px-6 py-4 bg-gray-50/50 border-t border-gray-100">
+            <div class="flex items-center justify-between">
+                <div class="text-[11px] text-gray-500 font-bold">
+                    Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ paginator.count }} funcionarios
+                    <span class="text-gray-400">(Página {{ page_obj.number }} de {{ paginator.num_pages }})</span>
+                </div>
+
+                <!-- Paginación -->
+                <div class="flex items-center gap-1">
+                    {% if page_obj.has_previous %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}"
+                           class="px-3 py-1.5 text-[10px] font-bold bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all">
+                            <i class="fas fa-chevron-left mr-1"></i>Anterior
+                        </a>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span class="px-3 py-1.5 text-[10px] font-bold bg-blue-600 border border-blue-600 rounded-lg text-white">{{ num }}</span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}"
+                               class="px-3 py-1.5 text-[10px] font-bold bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}"
+                           class="px-3 py-1.5 text-[10px] font-bold bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all">
+                            Siguiente<i class="fas fa-chevron-right ml-1"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% elif request.GET.paginate_by == 'todos' %}
+        <div class="px-6 py-4 bg-gray-50/50 border-t border-gray-100">
+            <div class="text-[11px] text-gray-500 font-bold">
+                Mostrando todos los {{ usuarios_con_stats|length }} funcionarios
+            </div>
+        </div>
+        {% endif %}
+
     </div>
 </div>
 
