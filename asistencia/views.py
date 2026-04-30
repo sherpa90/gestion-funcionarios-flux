@@ -2792,7 +2792,6 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
                     funcionario=usuario,
                     defaults={
                         'hora_entrada': time(7, 55),
-                        'tolerancia_minutos': 15,
                         'activo': True
                     }
                 )
