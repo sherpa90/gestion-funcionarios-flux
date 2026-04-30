@@ -459,6 +459,9 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 self.horario_asignado = None
                 self.alegacion = None
                 self._estado_display = ESTADO_DISPLAY.get(estado, estado)
+            @property
+            def pk(self):
+                return None
             def get_estado_display(self):
                 return self._estado_display
 
@@ -1497,6 +1500,9 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 self.horario_asignado = None
                 self.alegacion = None
                 self._estado_display = ESTADO_DISPLAY.get(estado, estado)
+            @property
+            def pk(self):
+                return None
             def get_estado_display(self):
                 return self._estado_display
 
