@@ -647,6 +647,33 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
 
         total_horas_semanales = f"{total_minutos_semanales // 60}h {total_minutos_semanales % 60}m" if total_minutos_semanales % 60 != 0 else f"{total_minutos_semanales // 60}h"
 
+        # Calcular horas esperadas para el mes completo (según horario configurado)
+        total_minutos_esperados_mes = 0
+        from calendar import Calendar
+        cal = Calendar(firstweekday=0)
+        for semana in cal.monthdayscalendar(anio_int, mes_int):
+            for dia_num in semana:
+                if dia_num != 0:
+                    fecha = datetime(anio_int, mes_int, dia_num).date()
+                    if fecha in festivos:
+                        continue
+                    
+                    dia_semana = fecha.weekday()
+                    if not es_sereno and dia_semana >= 5:
+                        continue
+                        
+                    dia_h = next((d for d in horario_semanal if d['dia_semana'] == dia_semana), None)
+                    if dia_h and dia_h['activo']:
+                        if dia_h['hora_entrada'] and dia_h['hora_salida']:
+                            h1, m1 = map(int, dia_h['hora_entrada'].split(':'))
+                            h2, m2 = map(int, dia_h['hora_salida'].split(':'))
+                            min1 = h1 * 60 + m1
+                            min2 = h2 * 60 + m2
+                            if min2 < min1: min2 += 24 * 60
+                            total_minutos_esperados_mes += (min2 - min1)
+
+        total_horas_esperadas_mes = round(total_minutos_esperados_mes / 60, 1)
+
         context.update({
             'registros': registros_list,
             'semanas_calendario': semanas_calendario,
@@ -671,6 +698,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 'dias_con_tiempo_trabajado': stats['dias_con_tiempo'] or 0,
                 'tiempo_promedio_trabajado': round(stats['tiempo_promedio'] or 0, 0),
                 'total_horas_trabajadas_mes': total_horas_trabajadas_mes,
+                'total_horas_esperadas_mes': total_horas_esperadas_mes,
                 'total_minutos_retraso_mes': total_minutos_retraso_mes,
                 'horas_semanales': horas_semanales,
             }

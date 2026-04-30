@@ -169,6 +169,21 @@
                             {% endif %}
                             <p class="mt-1 text-xs text-gray-500">Por defecto: 6 días</p>
                         </div>
+
+                        <!-- Fecha de Ingreso -->
+                        <div class="sm:col-span-3">
+                            <label for="{{ form.date_joined.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700">
+                                Fecha de Ingreso al Sistema <span class="text-red-500">*</span>
+                            </label>
+                            <div class="mt-1">
+                                {{ form.date_joined }}
+                            </div>
+                            {% if form.date_joined.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.date_joined.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-xs text-gray-500">Útil para sincronizar asistencia retroactiva</p>
+                        </div>
                     </div>
                 </div>
 
