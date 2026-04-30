@@ -217,7 +217,7 @@
                                                     </span>
                                                 {% endif %}
                                             </td>
-                                            {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' and registro.pk %}
+                                            {% if (user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO') and registro.pk %}
                                             <td class="px-4 py-4 whitespace-nowrap text-right">
                                                 <div class="flex items-center justify-end gap-1.5">
                                                     <a href="{% url 'asistencia:editar_registro_asistencia' pk=registro.pk %}"
