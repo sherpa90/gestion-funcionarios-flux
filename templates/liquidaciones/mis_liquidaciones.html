@@ -167,24 +167,6 @@
       </div>
     </div>
 
-    <!-- Estadísticas -->
-    {% if estadisticas %}
-    <div class="liq-stat-grid">
-      <div class="liq-stat-box">
-        <span class="liq-stat-value">{{ estadisticas.total_liquidaciones }}</span>
-        <span class="liq-stat-label">Total Liquidaciones</span>
-      </div>
-      <div class="liq-stat-box">
-        <span class="liq-stat-value">{{ estadisticas.anios_con_liquidaciones }}</span>
-        <span class="liq-stat-label">Años Registrados</span>
-      </div>
-      <div class="liq-stat-box">
-        <span class="liq-stat-value">{{ estadisticas.promedio_por_anio }}</span>
-        <span class="liq-stat-label">Promedio Anual</span>
-      </div>
-    </div>
-    {% endif %}
-
     <!-- Liquidaciones por Año -->
     {% if liquidaciones_por_anio %}
       {% for anio, liquidaciones_anio in liquidaciones_por_anio.items %}
@@ -238,6 +220,24 @@
         <div class="liq-empty-title">Registros no encontrados</div>
         <div class="liq-empty-desc">Actualmente no tienes liquidaciones de sueldo cargadas en el sistema.</div>
       </div>
+    {% endif %}
+
+    <!-- Estadísticas al final -->
+    {% if estadisticas %}
+    <div class="liq-stat-grid" style="margin-top: 3rem;">
+      <div class="liq-stat-box">
+        <span class="liq-stat-value">{{ estadisticas.total_liquidaciones }}</span>
+        <span class="liq-stat-label">Total Liquidaciones</span>
+      </div>
+      <div class="liq-stat-box">
+        <span class="liq-stat-value">{{ estadisticas.anios_con_liquidaciones }}</span>
+        <span class="liq-stat-label">Años Registrados</span>
+      </div>
+      <div class="liq-stat-box">
+        <span class="liq-stat-value">{{ estadisticas.promedio_por_anio }}</span>
+        <span class="liq-stat-label">Promedio Anual</span>
+      </div>
+    </div>
     {% endif %}
 
   </div>
