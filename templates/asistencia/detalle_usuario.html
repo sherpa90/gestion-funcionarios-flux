@@ -33,8 +33,8 @@
                 <div>
                     <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight leading-tight">{{ usuario.get_full_name }}</h2>
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
-                        {{ usuario.run }} <span class="mx-2 text-gray-200">|</span> 
-                        <span class="text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">{{ usuario.get_role_display }}</span>
+                        {{ usuario.run }} <span class="mx-2 text-gray-200">|</span>
+                        <span class="text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">{{ usuario.funcion|default:usuario.get_role_display }}</span>
                     </p>
                 </div>
             </div>
@@ -93,18 +93,13 @@
                             </div>
                         </div>
                     </div>
-                    {% if datos_anio.minutos_retraso_anio > 0 %}
-                    <div class="bg-red-50 px-4 py-2 rounded-xl border border-red-100">
-                        <p class="text-[8px] font-black text-red-400 uppercase mb-0.5">Atraso Total del Año</p>
-                        <p class="text-sm font-black text-red-600">{{ datos_anio.minutos_retraso_anio }} <span class="text-[10px]">minutos</span></p>
-                    </div>
-                    {% endif %}
+
                 </div>
 
                 <!-- Months Content -->
                 <div class="divide-y divide-gray-50">
                     {% for mes_num, datos_mes in datos_anio.registros_por_mes.items %}
-                    <div x-data="{ open: {% if forloop.parentloop.first and forloop.first %}true{% else %}false{% endif %} }" class="group">
+                    <div x-data="{ open: false }" class="group">
                         <div @click="open = !open" 
                              class="px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-blue-50/20 transition-all">
                             <div class="flex items-center gap-4">
@@ -120,10 +115,10 @@
                                     <div class="flex flex-wrap items-center gap-2 mt-1">
                                         <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">{{ datos_mes.total }} marcaciones</span>
                                         {% if datos_mes.retrasos > 0 %}
-                                        <span class="text-[8px] font-black text-amber-500 uppercase bg-amber-50 px-1.5 py-0.5 rounded-lg">{{ datos_mes.retrasos }} atrasos</span>
+                                        <span class="text-xs font-black text-amber-500 uppercase bg-amber-50 px-2 py-1 rounded-lg">{{ datos_mes.retrasos }} atrasos</span>
                                         {% endif %}
                                         {% if datos_mes.minutos_retraso_mes > 0 %}
-                                        <span class="text-[8px] font-black text-red-500 uppercase bg-red-50 px-1.5 py-0.5 rounded-lg">{{ datos_mes.minutos_retraso_mes }} min</span>
+                                        <span class="text-xs font-black text-red-500 uppercase bg-red-50 px-2 py-1 rounded-lg">{{ datos_mes.minutos_retraso_mes }} min</span>
                                         {% endif %}
                                     </div>
                                 </div>
