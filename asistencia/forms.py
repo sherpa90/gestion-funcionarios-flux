@@ -40,17 +40,13 @@ class HorarioFuncionarioForm(forms.ModelForm):
     """Formulario para gestionar horarios de funcionarios"""
     class Meta:
         model = HorarioFuncionario
-        fields = ["hora_entrada", "tolerancia_minutos", "activo"]
+        fields = ["hora_entrada", "activo"]
         widgets = {
             "hora_entrada": forms.TimeInput(attrs={
                 "type": "time",
                 "class": "mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             }),
-            "tolerancia_minutos": forms.NumberInput(attrs={
-                "min": "0",
-                "max": "60",
-                "class": "mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            }),
+
             "activo": forms.CheckboxInput(attrs={
                 "class": "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             }),

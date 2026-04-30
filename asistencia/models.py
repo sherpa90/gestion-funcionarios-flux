@@ -15,10 +15,7 @@ class HorarioFuncionario(models.Model):
     hora_entrada = models.TimeField(
         help_text="Hora de entrada asignada (ej: 08:00:00)"
     )
-    tolerancia_minutos = models.PositiveIntegerField(
-        default=15,
-        help_text="Minutos de tolerancia para considerar puntual"
-    )
+
     activo = models.BooleanField(
         default=True,
         help_text="Si el horario está activo"
@@ -276,7 +273,19 @@ class RegistroAsistencia(models.Model):
     @property
     def horario_dia(self):
         """Retorna la configuración de horario para el día específico de este registro (considerando excepciones)"""
-        # Verificar primero si hay un horario excepcional
+        # PRIORIDAD: Si hay edición manual justificada, usar horario regular (ignorar excepcional)
+        if self.justificado_por:
+            # Usar horario regular cuando hay justificación manual
+            if not self.horario_asignado:
+                return None
+
+            dia_semana = self.fecha.weekday()
+            try:
+                return self.horario_asignado.dias.get(dia_semana=dia_semana)
+            except Exception:
+                return None
+
+        # Si no hay justificación manual, verificar horario excepcional
         excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
         if excepcional:
             class VirtualHorario:
@@ -287,10 +296,10 @@ class RegistroAsistencia(models.Model):
 
         if not self.horario_asignado:
             return None
-        
+
         # En Python, weekday() retorna 0 para Lunes y 6 para Domingo
         dia_semana = self.fecha.weekday()
-        
+
         try:
             return self.horario_asignado.dias.get(dia_semana=dia_semana)
         except Exception:
@@ -301,13 +310,9 @@ class RegistroAsistencia(models.Model):
         if not self.hora_entrada_real:
             return 0
 
-        # Verificar primero horario excepcional
-        excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
-        if excepcional:
-            if not excepcional.hora_entrada:
-                return 0 # Si el excepcional no exige hora de entrada, no hay retraso
-            hora_esperada = excepcional.hora_entrada
-        else:
+        # PRIORIDAD: Si hay edición manual justificada, usar horario regular (ignorar excepcional)
+        if self.justificado_por:
+            # Usar horario regular cuando hay justificación manual
             if not self.horario_asignado:
                 return 0
             # Intentar obtener el horario específico para el día de la semana
@@ -321,6 +326,27 @@ class RegistroAsistencia(models.Model):
             else:
                 # Fallback al horario general
                 hora_esperada = self.horario_asignado.hora_entrada
+        else:
+            # Si no hay justificación manual, verificar horario excepcional
+            excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
+            if excepcional:
+                if not excepcional.hora_entrada:
+                    return 0 # Si el excepcional no exige hora de entrada, no hay retraso
+                hora_esperada = excepcional.hora_entrada
+            else:
+                if not self.horario_asignado:
+                    return 0
+                # Intentar obtener el horario específico para el día de la semana
+                dia_semana = self.fecha.weekday()
+                dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana).first()
+
+                if dia_horario:
+                    if not dia_horario.activo or not dia_horario.hora_entrada:
+                        return 0 # No debería tener retraso en un día libre o sin hora configurada
+                    hora_esperada = dia_horario.hora_entrada
+                else:
+                    # Fallback al horario general
+                    hora_esperada = self.horario_asignado.hora_entrada
 
         minutos_asignados = hora_esperada.hour * 60 + hora_esperada.minute
 
@@ -330,8 +356,8 @@ class RegistroAsistencia(models.Model):
         # Calcular diferencia en minutos
         diferencia = minutos_reales - minutos_asignados
 
-        # Tolerancia (usar la del horario asignado si existe, sino 15 min por defecto)
-        tolerancia = self.horario_asignado.tolerancia_minutos if self.horario_asignado else 15
+        # No hay tolerancia en ningún horario - puntualidad exacta requerida
+        tolerancia = 0
 
         # Si llegó dentro de la tolerancia, no cuenta como retraso
         if diferencia <= tolerancia:
@@ -491,7 +517,7 @@ class RegistroAsistencia(models.Model):
                                 # Hora de referencia para la tarde: 14:00 (2 PM)
                                 minutos_referencia = 14 * 60
                                 diferencia = minutos_reales - minutos_referencia
-                                if diferencia > self.horario_asignado.tolerancia_minutos:
+                                if diferencia > 0:
                                     self.minutos_retraso = max(0, diferencia)
                                 return "MEDIO_DIA"
                             else:

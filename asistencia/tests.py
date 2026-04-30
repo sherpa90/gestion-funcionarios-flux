@@ -31,7 +31,6 @@ class HorarioFuncionarioTest(TestCase):
         horario = HorarioFuncionario.objects.create(
             funcionario=self.user,
             hora_entrada=timezone.datetime.strptime('08:00:00', '%H:%M:%S').time(),
-            tolerancia_minutos=15,
             activo=True
         )
         self.assertEqual(horario.funcionario, self.user)
@@ -63,8 +62,7 @@ class RegistroAsistenciaTest(TestCase):
         )
         self.horario = HorarioFuncionario.objects.create(
             functorio=self.user,
-            hora_entrada=timezone.datetime.strptime('08:00:00', '%H:%M:%S').time(),
-            tolerancia_minutos=15
+            hora_entrada=timezone.datetime.strptime('08:00:00', '%H:%M:%S').time()
         )
     
     def test_crear_registro_asistencia(self):
@@ -85,10 +83,10 @@ class RegistroAsistenciaTest(TestCase):
             functorio=self.user,
             fecha=timezone.now().date(),
             hora_entrada_real=timezone.datetime.strptime('08:10:00', '%H:%M:%S').time(),  # 8:10
-            horario_asignado=self.horario  # 8:00 con 15 min tolerancia
+            horario_asignado=self.horario  # 8:00 sin tolerancia
         )
-        # Llega a las 8:10, tolerancia 15 min = no hay retraso
-        self.assertEqual(registro.calcular_retraso(), 0)
+        # Llega a las 8:10, sin tolerancia = 10 min retraso
+        self.assertEqual(registro.calcular_retraso(), 10)
     
     def test_calcular_retraso_tarde(self):
         """Test retraso cuando llega tarde"""
@@ -96,10 +94,10 @@ class RegistroAsistenciaTest(TestCase):
             functorio=self.user,
             fecha=timezone.now().date(),
             hora_entrada_real=timezone.datetime.strptime('08:30:00', '%H:%M:%S').time(),  # 8:30
-            horario_asignado=self.horario  # 8:00 con 15 min tolerancia
+            horario_asignado=self.horario  # 8:00 sin tolerancia
         )
-        # Llega a las 8:30, retraso = 30 - 15 = 15 min
-        self.assertEqual(registro.calcular_retraso(), 15)
+        # Llega a las 8:30, sin tolerancia = 30 min retraso
+        self.assertEqual(registro.calcular_retraso(), 30)
     
     def test_calcular_tiempo_trabajado(self):
         """Test cálculo de tiempo trabajado"""
