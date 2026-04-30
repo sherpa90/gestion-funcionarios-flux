@@ -569,6 +569,7 @@ class RegistroAsistencia(models.Model):
 
         # Verificar justificación manual
         if self.justificacion_manual:
+            self.minutos_retraso = 0  # Resetear retraso cuando hay justificación
             return "JUSTIFICADO"
 
         if not self.hora_entrada_real:
