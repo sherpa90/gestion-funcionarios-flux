@@ -217,7 +217,8 @@
                                                     </span>
                                                 {% endif %}
                                             </td>
-                                            {% if (user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO') and registro.pk %}
+                                            {% if registro.pk %}
+                                                {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
                                             <td class="px-4 py-4 whitespace-nowrap text-right">
                                                 <div class="flex items-center justify-end gap-1.5">
                                                     <a href="{% url 'asistencia:editar_registro_asistencia' pk=registro.pk %}"
@@ -231,10 +232,11 @@
                                                         <button type="submit" class="w-8 h-8 flex items-center justify-center bg-white border border-gray-100 text-red-300 hover:text-red-600 hover:border-red-200 rounded-lg transition-all">
                                                             <i class="fas fa-trash-alt text-[10px]"></i>
                                                         </button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                            {% endif %}
+                                                     </form>
+                                                 </div>
+                                             </td>
+                                                {% endif %}
+                                             {% endif %}
                                         </tr>
                                         {% endfor %}
                                     </tbody>
