@@ -1,445 +1,404 @@
 {% extends 'base.html' %}
 
-{% block page_title %}Asistencia de {{ usuario.get_full_name }}{% endblock %}
+{% block page_title %}Asistencia - {{ usuario.get_full_name }}{% endblock %}
 
 {% block content %}
-<div class="p-6">
-    <!-- Header con navegación -->
-    <div class="mb-8">
-        <div class="flex items-center justify-between">
-            <div>
-                <nav class="flex mb-4" aria-label="Breadcrumb">
-                    <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                        <li class="inline-flex items-center">
-                            <a href="{% url 'asistencia:gestion_asistencia' %}"
-                                class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                                <i class="fas fa-arrow-left mr-2"></i>
-                                Gestión de Asistencia
-                            </a>
-                        </li>
-                        <li>
-                            <div class="flex items-center">
-                                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                                <span class="text-sm font-medium text-gray-500">{{ usuario.get_full_name }}</span>
-                            </div>
-                        </li>
-                    </ol>
-                </nav>
-                <h2 class="text-3xl font-bold text-gray-900">Asistencia de {{ usuario.get_full_name }}</h2>
-                <p class="text-gray-600 mt-2">RUT: {{ usuario.run }} • Rol: {{ usuario.get_role_display }}</p>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- Estadísticas del Funcionario -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-blue-100 text-sm font-medium uppercase">Total Registros</p>
-                    <p class="text-4xl font-bold mt-2">{{ estadisticas_funcionario.total_registros }}</p>
+<div class="p-3 sm:p-4 lg:p-6 max-w-[1600px] mx-auto animate-in">
+    <!-- Breadcrumb & Header Premium -->
+    <div class="mb-6 sm:mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-50 rounded-full opacity-40 blur-3xl"></div>
+        
+        <div class="relative z-10">
+            <nav class="flex mb-4 bg-gray-50/50 w-fit px-3 py-1.5 rounded-xl border border-gray-100" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                    <li class="inline-flex items-center">
+                        <a href="{% url 'asistencia:gestion_asistencia' %}"
+                            class="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-blue-600 transition-colors">
+                            <i class="fas fa-th-large mr-2"></i> Gestión
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-300 text-[8px] mx-1"></i>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">Detalle Usuario</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+            
+            <div class="flex items-center gap-5">
+                <div class="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-100 flex-shrink-0">
+                    <span class="text-xl font-black text-white">{{ usuario.first_name.0 }}{{ usuario.last_name.0 }}</span>
                 </div>
-                <div class="bg-white/20 rounded-full p-4">
-                    <i class="fas fa-calendar-alt text-3xl"></i>
+                <div>
+                    <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight leading-tight">{{ usuario.get_full_name }}</h2>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
+                        {{ usuario.run }} <span class="mx-2 text-gray-200">|</span> 
+                        <span class="text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">{{ usuario.get_role_display }}</span>
+                    </p>
                 </div>
             </div>
         </div>
 
-        <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-green-100 text-sm font-medium uppercase">Años con Asistencia</p>
-                    <p class="text-4xl font-bold mt-2">{{ estadisticas_funcionario.anios_con_asistencia }}</p>
-                </div>
-                <div class="bg-white/20 rounded-full p-4">
-                    <i class="fas fa-calendar-check text-3xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-purple-100 text-sm font-medium uppercase">Puntualidad</p>
-                    <p class="text-4xl font-bold mt-2">{{ estadisticas_funcionario.porcentaje_puntualidad }}%</p>
-                    <p class="text-purple-100 text-xs mt-1">{{ estadisticas_funcionario.registros_puntuales }}/{{ estadisticas_funcionario.total_registros }} puntuales</p>
-                </div>
-                <div class="bg-white/20 rounded-full p-4">
-                    <i class="fas fa-chart-line text-3xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl shadow-lg p-6 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-red-100 text-sm font-medium uppercase">Atraso Acumulado</p>
-                    <p class="text-4xl font-bold mt-2">{{ estadisticas_funcionario.total_minutos_retraso }} <span class="text-xl">min</span></p>
-                    <p class="text-red-100 text-xs mt-1">{{ estadisticas_funcionario.registros_retraso }} registro{{ estadisticas_funcionario.registros_retraso|pluralize }} con retraso</p>
-                </div>
-                <div class="bg-white/20 rounded-full p-4">
-                    <i class="fas fa-clock text-3xl"></i>
-                </div>
-            </div>
+        <div class="relative z-10 flex gap-3 w-full lg:w-auto">
+            {% if user.role == 'ADMIN' %}
+            <form method="post" action="{% url 'asistencia:eliminar_todos_registros' user_id=usuario.id %}"
+                  onsubmit="return confirm('¿Estás seguro de que quieres eliminar TODOS los registros de asistencia de {{ usuario.get_full_name }}? Esta acción no se puede deshacer.')"
+                  class="flex-1 lg:flex-none">
+                {% csrf_token %}
+                <button type="submit" class="w-full lg:w-auto inline-flex items-center justify-center px-5 py-3 border border-red-100 text-xs font-black uppercase tracking-widest rounded-xl text-red-600 bg-red-50 hover:bg-red-600 hover:text-white transition-all shadow-sm hover:shadow-red-100 group">
+                    <i class="fas fa-trash-alt mr-2.5 group-hover:scale-110 transition-transform"></i>
+                    Borrado Masivo
+                </button>
+            </form>
+            {% endif %}
+            <a href="{% url 'asistencia:gestion_asistencia' %}" class="flex-1 lg:w-auto inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 shadow-xl shadow-gray-200 hover:shadow-blue-200 transition-all transform hover:-translate-y-0.5">
+                <i class="fas fa-arrow-left mr-2.5"></i> Volver
+            </a>
         </div>
     </div>
 
     <div x-data="horarioTabs()">
-        <!-- Tab Navigation -->
-        <div class="border-b border-gray-200 mb-6">
-            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                <button @click="activeTab = 'registros'"
-                    :class="activeTab === 'registros' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                    class="whitespace-nowrap flex py-4 px-1 border-b-2 font-medium text-sm focus:outline-none">
-                    <i class="fas fa-list-ul mt-1 mr-2"></i>
-                    Registros de Asistencia
-                </button>
-                <button @click="activeTab = 'horario'"
-                    :class="activeTab === 'horario' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                    class="whitespace-nowrap flex py-4 px-1 border-b-2 font-medium text-sm focus:outline-none">
-                    <i class="fas fa-calendar-week mt-1 mr-2"></i>
-                    Configuración de Horario Semanal
-                </button>
-            </nav>
+        <!-- Tab Navigation Premium -->
+        <div class="flex p-1.5 bg-white rounded-2xl border border-gray-100 shadow-sm mb-8 w-fit mx-auto sm:mx-0 overflow-x-auto max-w-full">
+            <button @click="activeTab = 'registros'"
+                :class="activeTab === 'registros' ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50'"
+                class="whitespace-nowrap flex items-center px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300">
+                <i class="fas fa-list-ul mr-2.5"></i> Registros de Asistencia
+            </button>
+            <button @click="activeTab = 'horario'"
+                :class="activeTab === 'horario' ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50'"
+                class="whitespace-nowrap flex items-center px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300">
+                <i class="fas fa-calendar-week mr-2.5"></i> Horario Semanal
+            </button>
         </div>
 
         <!-- Tab 1: Registros de Asistencia -->
-        <div x-show="activeTab === 'registros'">
-            
-
-
-    <!-- Acciones de Administración -->
-    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <i class="fas fa-cogs text-gray-600 mr-2"></i>
-            Acciones Administrativas
-        </h3>
-        <div class="flex space-x-4">
-            <form method="post" action="{% url 'asistencia:eliminar_todos_registros' user_id=usuario.id %}"
-                  onsubmit="return confirm('¿Estás seguro de que quieres eliminar TODOS los registros de asistencia de {{ usuario.get_full_name }}? Esta acción no se puede deshacer.')"
-                  class="inline">
-                {% csrf_token %}
-                <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
-                    <i class="fas fa-trash-alt mr-2"></i> Eliminar Todos los Registros
-                </button>
-            </form>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Registros por Año -->
-    {% if registros_por_anio %}
-    <div class="space-y-8">
-        {% for anio, datos_anio in registros_por_anio.items %}
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-                <h3 class="text-xl font-semibold text-gray-900 flex items-center">
-                    <i class="fas fa-calendar text-blue-600 mr-3"></i>
-                    Registros {{ anio }}
-                    <span class="ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                        {{ datos_anio.total_anio }} registro{{ datos_anio.total_anio|pluralize }}
-                    </span>
-                    <span class="ml-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        {{ datos_anio.puntuales_anio }} puntual{{ datos_anio.puntuales_anio|pluralize }}
-                    </span>
-                    {% if datos_anio.minutos_retraso_anio > 0 %}
-                    <span class="ml-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                        <i class="fas fa-clock mr-1"></i> {{ datos_anio.minutos_retraso_anio }} min atraso
-                    </span>
-                    {% endif %}
-                </h3>
-            </div>
-
-            {% for mes_num, datos_mes in datos_anio.registros_por_mes.items %}
-            <div x-data="{ open: {% if forloop.parentloop.first and forloop.first %}true{% else %}false{% endif %} }" 
-                 class="border-b border-gray-100 last:border-b-0">
-                <div @click="open = !open" 
-                     class="px-6 py-4 bg-gray-50 border-l-4 border-blue-500 flex justify-between items-center flex-wrap gap-4 cursor-pointer hover:bg-gray-100 transition-colors">
-                    <h4 class="text-lg font-medium text-gray-900 flex items-center flex-wrap gap-2">
-                        <i class="fas fa-calendar-day text-blue-600 mr-2"></i>
-                        {% for mes_info in meses %}
-                            {% if mes_info.0 == mes_num %}{{ mes_info.1 }}{% endif %}
-                        {% endfor %} {{ anio }}
-                        <span class="ml-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            {{ datos_mes.total }} día{{ datos_mes.total|pluralize }}
-                        </span>
-                        <span class="ml-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {{ datos_mes.puntuales }} puntual{{ datos_mes.puntuales|pluralize }}
-                        </span>
-                        {% if datos_mes.retrasos > 0 %}
-                        <span class="ml-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            {{ datos_mes.retrasos }} retraso{{ datos_mes.retrasos|pluralize }}
-                        </span>
-                        {% endif %}
-                        {% if datos_mes.minutos_retraso_mes > 0 %}
-                        <span class="ml-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            <i class="fas fa-clock mr-1"></i> {{ datos_mes.minutos_retraso_mes }} min atraso
-                        </span>
-                        {% endif %}
-                        {% if datos_mes.ausentes > 0 %}
-                        <span class="ml-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            {{ datos_mes.ausentes }} ausente{{ datos_mes.ausentes|pluralize }}
-                        </span>
-                        {% endif %}
-                    </h4>
-                    <div class="flex items-center space-x-4 ml-auto">
-                        {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
-                        <form method="post" action="{% url 'asistencia:recalcular_asistencia_usuario' user_id=usuario.id %}" onsubmit="return confirm('¿Estás seguro de que deseas recalcular la asistencia de este mes? Esto evaluará nuevamente las marcaciones aplicando las reglas de horario actuales.')" class="m-0">
-                            {% csrf_token %}
-                            <input type="hidden" name="mes" value="{{ mes_num }}">
-                            <input type="hidden" name="anio" value="{{ anio }}">
-                            <button @click.stop type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 text-sm rounded-lg font-medium shadow-sm transition-colors flex items-center">
-                                <i class="fas fa-sync-alt mr-2"></i> Recalcular Mes
-                            </button>
-                        </form>
-                        {% endif %}
-                        <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+        <div x-show="activeTab === 'registros'" class="space-y-6">
+            {% if registros_por_anio %}
+            {% for anio, datos_anio in registros_por_anio.items %}
+            <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                <!-- Year Header -->
+                <div class="px-6 py-5 bg-gray-50/50 border-b border-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+                            <i class="fas fa-calendar-check text-blue-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-black text-gray-900 uppercase tracking-widest">Historial {{ anio }}</h3>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">{{ datos_anio.total_anio }} registros</span>
+                                <span class="w-1 h-1 rounded-full bg-gray-300"></span>
+                                <span class="text-[9px] font-black text-green-600 uppercase tracking-widest">{{ datos_anio.puntuales_anio }} puntuales</span>
+                            </div>
+                        </div>
                     </div>
+                    {% if datos_anio.minutos_retraso_anio > 0 %}
+                    <div class="bg-red-50 px-4 py-2 rounded-xl border border-red-100">
+                        <p class="text-[8px] font-black text-red-400 uppercase mb-0.5">Atraso Total del Año</p>
+                        <p class="text-sm font-black text-red-600">{{ datos_anio.minutos_retraso_anio }} <span class="text-[10px]">minutos</span></p>
+                    </div>
+                    {% endif %}
                 </div>
 
-                <!-- Tabla de registros del mes -->
-                <div x-show="open" 
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0 transform -translate-y-2"
-                     x-transition:enter-end="opacity-100 transform translate-y-0"
-                     class="px-6 pb-4">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entrada (Horario)</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entrada Real</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salida (Horario)</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salida Real</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Retraso</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                                    {% endif %}
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                {% for registro in datos_mes.registros %}
-                                <tr class="hover:bg-gray-50 {% if registro.alegacion %}bg-yellow-50 border-l-4 border-yellow-400{% endif %}">
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 capitalize">
-                                        {{ registro.fecha|date:"l d/m/Y" }}
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                                        {% if registro.horario_dia and registro.horario_dia.hora_entrada %}
-                                            {{ registro.horario_dia.hora_entrada|time:"H:i" }}
-                                        {% else %}
-                                            -
+                <!-- Months Content -->
+                <div class="divide-y divide-gray-50">
+                    {% for mes_num, datos_mes in datos_anio.registros_por_mes.items %}
+                    <div x-data="{ open: {% if forloop.parentloop.first and forloop.first %}true{% else %}false{% endif %} }" class="group">
+                        <div @click="open = !open" 
+                             class="px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-blue-50/20 transition-all">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center transition-all" :class="open ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-100' : 'group-hover:border-blue-200'">
+                                    <span class="text-[10px] font-black" :class="open ? 'text-white' : 'text-gray-400 group-hover:text-blue-500'">
+                                        {% for mes_info in meses %}{% if mes_info.0 == mes_num %}{{ mes_info.1|slice:":3"|upper }}{% endif %}{% endfor %}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-black text-gray-900">
+                                        {% for mes_info in meses %}{% if mes_info.0 == mes_num %}{{ mes_info.1 }}{% endif %}{% endfor %} {{ anio }}
+                                    </h4>
+                                    <div class="flex flex-wrap items-center gap-2 mt-1">
+                                        <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">{{ datos_mes.total }} marcaciones</span>
+                                        {% if datos_mes.retrasos > 0 %}
+                                        <span class="text-[8px] font-black text-amber-500 uppercase bg-amber-50 px-1.5 py-0.5 rounded-lg">{{ datos_mes.retrasos }} atrasos</span>
                                         {% endif %}
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">
-                                        {% if registro.hora_entrada_real %}
-                                            {{ registro.hora_entrada_real|time:"H:i" }}
-                                        {% else %}
-                                            <span class="text-gray-400">-</span>
+                                        {% if datos_mes.minutos_retraso_mes > 0 %}
+                                        <span class="text-[8px] font-black text-red-500 uppercase bg-red-50 px-1.5 py-0.5 rounded-lg">{{ datos_mes.minutos_retraso_mes }} min</span>
                                         {% endif %}
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                                        {% if registro.horario_dia and registro.horario_dia.hora_salida %}
-                                            {{ registro.horario_dia.hora_salida|time:"H:i" }}
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">
-                                        {% if registro.hora_salida_real %}
-                                            {{ registro.hora_salida_real|time:"H:i" }}
-                                        {% else %}
-                                            <span class="text-gray-400">-</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                                        {% if registro.minutos_retraso > 0 %}
-                                            <span class="text-red-600 font-medium">{{ registro.minutos_retraso }} min</span>
-                                        {% else %}
-                                            <span class="text-green-600">0 min</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        {% if registro.estado == 'PUNTUAL' %}
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                <i class="fas fa-check-circle mr-1"></i> Puntual
-                                            </span>
-                                        {% elif registro.estado == 'RETRASO' %}
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                <i class="fas fa-clock mr-1"></i> Retraso
-                                            </span>
-                                        {% elif registro.estado == 'AUSENTE' %}
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                <i class="fas fa-times-circle mr-1"></i> Ausente
-                                            </span>
-                                        {% elif registro.estado == 'SIN_HORARIO' %}
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                <i class="fas fa-exclamation-triangle mr-1"></i> Sin Horario
-                                            </span>
-                                        {% elif registro.estado == 'SIN_MARCACION_ENTRADA' %}
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                                <i class="fas fa-sign-in-alt mr-1"></i> Sin Marcación Entrada
-                                            </span>
-                                        {% elif registro.estado == 'DIA_ADMINISTRATIVO' %}
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                <i class="fas fa-calendar-check mr-1"></i> Día Administrativo
-                                            </span>
-                                        {% elif registro.estado == 'LICENCIA_MEDICA' %}
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                <i class="fas fa-notes-medical mr-1"></i> Licencia Médica
-                                            </span>
-                                        {% else %}
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                <i class="fas fa-info-circle mr-1"></i> {{ registro.get_estado_display }}
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                    {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                                        {% if registro.pk %}
-                                        <div class="flex space-x-2">
-                                            <a href="{% url 'asistencia:editar_registro_asistencia' pk=registro.pk %}"
-                                               class="text-blue-600 hover:text-blue-900 text-sm flex items-center" 
-                                               title="Editar/Justificar registro">
-                                                <i class="fas fa-edit mr-1"></i> Editar
-                                            </a>
-                                            <form method="post" action="{% url 'asistencia:eliminar_registro' pk=registro.pk %}"
-                                                  onsubmit="return confirm('¿Estás seguro de que quieres eliminar este registro?')"
-                                                  class="inline">
-                                                {% csrf_token %}
-                                                <button type="submit" class="text-red-600 hover:text-red-900 text-sm flex items-center">
-                                                    <i class="fas fa-trash-alt mr-1"></i> Eliminar
-                                                </button>
-                                            </form>
-                                        </div>
-                                        {% endif %}
-                                    </td>
-                                    {% endif %}
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                            {% if datos_mes.minutos_retraso_mes > 0 %}
-                            <tfoot>
-                                <tr class="bg-red-50">
-                                    <td colspan="4" class="px-4 py-3 text-sm font-semibold text-red-800 text-right">
-                                        <i class="fas fa-clock mr-1"></i> Acumulado de atraso del mes:
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-red-700">
-                                        {{ datos_mes.minutos_retraso_mes }} min
-                                    </td>
-                                    <td{% if user.role in 'ADMIN,SECRETARIA' %} colspan="2"{% endif %}></td>
-                                </tr>
-                            </tfoot>
-                            {% endif %}
-                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-4">
+                                {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
+                                <form method="post" action="{% url 'asistencia:recalcular_asistencia_usuario' user_id=usuario.id %}" @click.stop class="m-0 hidden sm:block">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="mes" value="{{ mes_num }}">
+                                    <input type="hidden" name="anio" value="{{ anio }}">
+                                    <button type="submit" class="p-2.5 bg-white border border-gray-100 text-gray-400 hover:text-blue-600 hover:border-blue-100 rounded-xl transition-all shadow-sm">
+                                        <i class="fas fa-sync-alt text-xs"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <i class="fas fa-chevron-down text-gray-300 text-[10px] transition-transform duration-300" :class="{ 'rotate-180': open }"></i>
+                            </div>
+                        </div>
+
+                        <!-- Table with modern design -->
+                        <div x-show="open" x-collapse>
+                            <div class="px-4 pb-6 overflow-x-auto">
+                                <table class="min-w-full">
+                                    <thead>
+                                        <tr class="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                                            <th class="px-4 py-3 text-left">Fecha</th>
+                                            <th class="px-4 py-3 text-left">Entrada</th>
+                                            <th class="px-4 py-3 text-left">Salida</th>
+                                            <th class="px-4 py-3 text-left">Atraso</th>
+                                            <th class="px-4 py-3 text-left">Estado</th>
+                                            {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
+                                            <th class="px-4 py-3 text-right">Acciones</th>
+                                            {% endif %}
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-50">
+                                        {% for registro in datos_mes.registros %}
+                                        <tr class="group/row hover:bg-gray-50/50 transition-colors">
+                                            <td class="px-4 py-4 whitespace-nowrap">
+                                                <div class="text-xs font-black text-gray-900 capitalize">{{ registro.fecha|date:"l d" }}</div>
+                                                <div class="text-[10px] font-bold text-gray-400">{{ registro.fecha|date:"M Y" }}</div>
+                                            </td>
+                                            <td class="px-4 py-4 whitespace-nowrap">
+                                                <div class="text-xs font-black text-gray-700">
+                                                    {% if registro.hora_entrada_real %}{{ registro.hora_entrada_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
+                                                </div>
+                                                {% if registro.horario_dia and registro.horario_dia.hora_entrada %}
+                                                <div class="text-[9px] font-bold text-gray-400 uppercase">Teórico: {{ registro.horario_dia.hora_entrada|time:"H:i" }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-4 py-4 whitespace-nowrap">
+                                                <div class="text-xs font-black text-gray-700">
+                                                    {% if registro.hora_salida_real %}{{ registro.hora_salida_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
+                                                </div>
+                                                {% if registro.horario_dia and registro.horario_dia.hora_salida %}
+                                                <div class="text-[9px] font-bold text-gray-400 uppercase">Teórico: {{ registro.horario_dia.hora_salida|time:"H:i" }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-4 py-4 whitespace-nowrap">
+                                                {% if registro.minutos_retraso > 0 %}
+                                                <span class="text-xs font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100">{{ registro.minutos_retraso }} min</span>
+                                                {% else %}
+                                                <span class="text-[10px] font-black text-gray-300">0 min</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-4 py-4 whitespace-nowrap">
+                                                {% if registro.estado == 'PUNTUAL' %}
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-green-50 text-green-700 border border-green-100">
+                                                        <i class="fas fa-check mr-1.5"></i> Puntual
+                                                    </span>
+                                                {% elif registro.estado == 'RETRASO' %}
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-amber-50 text-amber-700 border border-amber-100">
+                                                        <i class="fas fa-clock mr-1.5"></i> Retraso
+                                                    </span>
+                                                {% elif registro.estado == 'AUSENTE' %}
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-red-50 text-red-700 border border-red-100">
+                                                        <i class="fas fa-times mr-1.5"></i> Ausente
+                                                    </span>
+                                                {% elif registro.estado == 'DIA_ADMINISTRATIVO' %}
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-purple-50 text-purple-700 border border-purple-100">
+                                                        <i class="fas fa-id-card mr-1.5"></i> Administrativo
+                                                    </span>
+                                                {% elif registro.estado == 'LICENCIA_MEDICA' %}
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-rose-50 text-rose-700 border border-rose-100">
+                                                        <i class="fas fa-notes-medical mr-1.5"></i> Licencia
+                                                    </span>
+                                                {% else %}
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-gray-50 text-gray-700 border border-gray-100">
+                                                        {{ registro.get_estado_display }}
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
+                                            <td class="px-4 py-4 whitespace-nowrap text-right">
+                                                <div class="flex items-center justify-end gap-1.5">
+                                                    <a href="{% url 'asistencia:editar_registro_asistencia' pk=registro.pk %}"
+                                                       class="w-8 h-8 flex items-center justify-center bg-white border border-gray-100 text-blue-400 hover:text-blue-600 hover:border-blue-200 rounded-lg transition-all"
+                                                       title="Editar Registro">
+                                                        <i class="fas fa-pen text-[10px]"></i>
+                                                    </a>
+                                                    <form method="post" action="{% url 'asistencia:eliminar_registro' pk=registro.pk %}"
+                                                          onsubmit="return confirm('¿Eliminar este registro permanentemente?')" class="m-0">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="w-8 h-8 flex items-center justify-center bg-white border border-gray-100 text-red-300 hover:text-red-600 hover:border-red-200 rounded-lg transition-all">
+                                                            <i class="fas fa-trash-alt text-[10px]"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                            {% endif %}
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
             </div>
             {% endfor %}
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div class="px-6 py-12 text-center">
-            <i class="fas fa-calendar-times text-gray-300 text-5xl mb-4"></i>
-            <p class="text-gray-500 text-lg font-medium">No hay registros de asistencia</p>
-            <p class="text-gray-400 text-sm mt-2">Aún no se han cargado registros para este funcionario</p>
-            <div class="mt-6 flex items-center justify-center gap-3">
-                <button @click="activeTab = 'horario'"
-                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                    <i class="fas fa-calendar-week mr-2"></i>
-                    Configurar Horario Semanal
-                </button>
-                <a href="{% url 'asistencia:gestion_asistencia' %}"
-                    class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
-                    <i class="fas fa-arrow-left mr-2"></i>
-                    Volver
-                </a>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    </div> <!-- Cierre Tab 1 -->
-
-
-    <!-- Tab 2: Configuración de Horario Semanal -->
-    <div x-show="activeTab === 'horario'" style="display: none;">
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                    <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>
-                    Horario Semanal
-                    {% if es_sereno %}
-                    <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                        Sereno (Lun-Dom)
-                    </span>
-                    {% else %}
-                    <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Regular (Lun-Vie)
-                    </span>
-                    {% endif %}
-                </h3>
-                <div class="text-sm font-medium text-gray-700 bg-white px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm flex items-center">
-                    Total Horas: <span x-text="totalHorasSemanales" :class="totalMinutosSemanales > 2640 ? 'text-red-600' : 'text-blue-600'" class="font-bold ml-1"></span>
-                    <template x-if="totalMinutosSemanales > 2640">
-                        <span class="ml-2 text-red-500 text-[10px] font-bold uppercase"><i class="fas fa-exclamation-circle"></i> Excede 44h</span>
-                    </template>
+            {% else %}
+            <div class="bg-white rounded-[40px] border border-gray-100 shadow-sm p-16 text-center">
+                <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-calendar-times text-gray-200 text-3xl"></i>
                 </div>
+                <h4 class="text-lg font-black text-gray-900 uppercase tracking-widest">Sin registros</h4>
+                <p class="text-sm text-gray-400 mt-3 font-medium max-w-xs mx-auto">Aún no se han cargado registros de asistencia para este funcionario.</p>
+                <button @click="activeTab = 'horario'" class="mt-8 px-8 py-4 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-600 transition-all shadow-xl shadow-gray-100">
+                    Configurar Horario
+                </button>
             </div>
-            
-            <div class="p-6">
-                <div class="space-y-4">
+            {% endif %}
+        </div>
+
+        <!-- Tab 2: Configuración de Horario Semanal -->
+        <div x-show="activeTab === 'horario'" style="display: none;">
+            <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-5 bg-gray-50/50 border-b border-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+                            <i class="fas fa-clock text-blue-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-black text-gray-900 uppercase tracking-widest">Configuración Semanal</h3>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-[9px] font-black {% if totalMinutosSemanales > 2640 %}text-red-500{% else %}text-blue-500{% endif %} uppercase tracking-widest">
+                                    Carga actual: <span x-text="totalHorasSemanales"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        {% if es_sereno %}
+                        <span class="px-3 py-1 bg-amber-50 text-amber-700 text-[10px] font-black uppercase rounded-lg border border-amber-100">Régimen Sereno</span>
+                        {% else %}
+                        <span class="px-3 py-1 bg-blue-50 text-blue-700 text-[10px] font-black uppercase rounded-lg border border-blue-100">Régimen Regular</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="p-6 space-y-3">
                     <template x-for="(dia, index) in dias" :key="index">
-                        <div class="flex items-center p-4 bg-gray-50 rounded-xl border transition duration-200"
-                            :class="dia.activo ? 'border-blue-200 bg-white shadow-sm' : 'border-gray-200 opacity-75'">
+                        <div class="group flex flex-col sm:flex-row sm:items-center p-4 rounded-2xl border transition-all duration-300"
+                            :class="dia.activo ? 'bg-white border-blue-100 shadow-sm' : 'bg-gray-50/50 border-gray-50 opacity-60'">
                             
-                            <div class="flex-shrink-0 w-32 flex items-center">
+                            <div class="flex items-center gap-4 w-40">
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" x-model="dia.activo" @change="calcularTotal()" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    <span class="ml-3 text-sm font-bold" :class="dia.activo ? 'text-gray-900' : 'text-gray-400'" x-text="dia.nombre"></span>
+                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                    <span class="ml-3 text-xs font-black uppercase tracking-wider" :class="dia.activo ? 'text-gray-900' : 'text-gray-400'" x-text="dia.nombre"></span>
                                 </label>
                             </div>
 
-                            <div class="flex-1 flex items-center space-x-6 pl-6 border-l border-gray-200" x-show="dia.activo">
-                                <div class="flex items-center space-x-2">
-                                    <label class="text-xs font-semibold text-gray-500 uppercase">Entrada</label>
+                            <div class="flex-1 flex flex-wrap items-center gap-6 mt-4 sm:mt-0 sm:pl-6 sm:border-l border-gray-100" x-show="dia.activo">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Entrada</span>
                                     <input type="time" x-model="dia.hora_entrada" @input="calcularTotal()" 
-                                        class="border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                        class="bg-gray-50 border-none rounded-xl px-3 py-2 text-xs font-black text-gray-900 focus:ring-2 focus:ring-blue-100 transition-all">
                                 </div>
-                                <i class="fas fa-arrow-right text-gray-300"></i>
-                                <div class="flex items-center space-x-2">
-                                    <label class="text-xs font-semibold text-gray-500 uppercase">Salida</label>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Salida</span>
                                     <input type="time" x-model="dia.hora_salida" @input="calcularTotal()" 
-                                        class="border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                        class="bg-gray-50 border-none rounded-xl px-3 py-2 text-xs font-black text-gray-900 focus:ring-2 focus:ring-blue-100 transition-all">
                                 </div>
-                                <div class="ml-auto text-sm font-medium text-gray-500" x-text="calcularHorasDia(dia)"></div>
+                                <div class="ml-auto">
+                                    <span class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg" x-text="calcularHorasDia(dia)"></span>
+                                </div>
                             </div>
                             
-                            <div class="flex-1 pl-6" x-show="!dia.activo">
-                                <span class="text-sm font-medium text-gray-400 italic">Día Libre / No Laboral</span>
+                            <div class="flex-1 flex items-center h-full sm:pl-6 sm:border-l border-gray-50" x-show="!dia.activo">
+                                <span class="text-[10px] font-bold text-gray-400 italic uppercase">Día no laboral</span>
                             </div>
                         </div>
                     </template>
                 </div>
 
-                <div class="mt-8 flex justify-end">
+                <div class="p-6 bg-gray-50/50 border-t border-gray-50 flex justify-end">
                     <button type="button" @click="guardarHorario()" 
                         :disabled="guardando || totalMinutosSemanales > 2640"
-                        :class="totalMinutosSemanales > 2640 ? 'opacity-50 cursor-not-allowed bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'"
-                        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
-                        <i class="fas fa-save mr-2"></i>
-                        <span x-text="guardando ? 'Guardando...' : 'Guardar Horario'"></span>
+                        class="group relative inline-flex items-center justify-center px-8 py-4 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-600 shadow-xl shadow-gray-200 hover:shadow-blue-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-save mr-3 group-hover:scale-110 transition-transform"></i>
+                        <span x-text="guardando ? 'Sincronizando...' : 'Guardar Configuración'"></span>
                     </button>
                 </div>
             </div>
         </div>
-    </div> <!-- Cierre Tab 2 -->
-</div> <!-- Cierre x-data -->
+    </div>
+
+    <!-- Estadísticas del Funcionario al final -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8 mb-8">
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:border-blue-200 transition-all">
+            <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                <i class="fas fa-calendar-alt text-blue-500"></i>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total Registros</p>
+                <p class="text-xl font-black text-gray-900">{{ estadisticas_funcionario.total_registros }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:border-green-200 transition-all">
+            <div class="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                <i class="fas fa-calendar-check text-green-500"></i>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Años Activo</p>
+                <p class="text-xl font-black text-gray-900">{{ estadisticas_funcionario.anios_con_asistencia }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:border-purple-200 transition-all">
+            <div class="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                <i class="fas fa-chart-line text-purple-500"></i>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Puntualidad</p>
+                <div class="flex items-baseline gap-1">
+                    <p class="text-xl font-black text-gray-900">{{ estadisticas_funcionario.porcentaje_puntualidad }}%</p>
+                    <span class="text-[8px] font-bold text-gray-400">{{ estadisticas_funcionario.registros_puntuales }} días</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:border-red-200 transition-all">
+            <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                <i class="fas fa-clock text-red-500"></i>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Atraso Total</p>
+                <div class="flex items-baseline gap-1">
+                    <p class="text-xl font-black text-gray-900">{{ estadisticas_funcionario.total_minutos_retraso }}</p>
+                    <span class="text-[8px] font-bold text-gray-400">minutos</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+        animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    
+    /* Time input customization */
+    input[type="time"]::-webkit-calendar-picker-indicator {
+        background: none;
+        display: none;
+    }
+</style>
 
 <script>
 document.addEventListener('alpine:init', () => {
@@ -452,14 +411,7 @@ document.addEventListener('alpine:init', () => {
         
         init() {
             let rawDias = '{{ horario_semanal|escapejs }}';
-            // django templates can output python lists. We need to parse json or use a json filter.
-            // Since we passed a list of dicts, we need to ensure it's json.
-            // Let's use a safe fallback:
             try {
-                // If the view returns a list of dicts, it's better to pass it as json.
-                // Assuming it's formatted as JS string.
-                // For now, I will use a Django template trick if it's not JSON:
-                // Actually, I need to make sure the view passes json. Let's fix the view to pass json or pass it here.
                 let jsonString = rawDias.replace(/'/g, '"').replace(/True/g, 'true').replace(/False/g, 'false');
                 this.dias = JSON.parse(jsonString);
             } catch (e) {
@@ -478,7 +430,6 @@ document.addEventListener('alpine:init', () => {
             let min2 = h2 * 60 + m2;
             
             if (min2 < min1) {
-                // Turno nocturno
                 min2 += 24 * 60;
             }
             
@@ -535,13 +486,16 @@ document.addEventListener('alpine:init', () => {
                 
                 if (response.ok) {
                     Swal.fire({
-                        title: '¡Éxito!',
-                        text: 'El horario ha sido guardado correctamente.',
+                        title: '¡Sincronizado!',
+                        text: 'El horario semanal ha sido actualizado.',
                         icon: 'success',
-                        confirmButtonText: 'Entendido',
-                        confirmButtonColor: '#3b82f6',
-                        timer: 2000,
-                        timerProgressBar: true
+                        confirmButtonText: 'Genial',
+                        confirmButtonColor: '#111827',
+                        background: '#ffffff',
+                        customClass: {
+                            popup: 'rounded-3xl',
+                            confirmButton: 'rounded-xl font-black uppercase tracking-widest text-xs px-6 py-3'
+                        }
                     });
                 } else {
                     Swal.fire({
@@ -558,7 +512,6 @@ document.addEventListener('alpine:init', () => {
                     icon: 'error',
                     confirmButtonColor: '#ef4444'
                 });
-                console.error(error);
             } finally {
                 this.guardando = false;
             }
