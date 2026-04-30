@@ -450,6 +450,9 @@ class RegistroAsistencia(models.Model):
 
     def determinar_estado(self):
         """Determina el estado basado en la hora de llegada, horario y permisos"""
+        # Resetear retraso por defecto para recalcularlo en cada guardado
+        self.minutos_retraso = 0
+
         if not self.horario_asignado:
             return "SIN_HORARIO"
 
@@ -533,6 +536,11 @@ class RegistroAsistencia(models.Model):
         if not es_dia_activo and not self.hora_entrada_real:
             return "DIA_LIBRE"
 
+        # Calcular retraso base si hay marcación de entrada para que se mantenga actualizado
+        # incluso si el registro está justificado manualmente
+        if self.hora_entrada_real:
+            self.minutos_retraso = self.calcular_retraso()
+
         # Verificar justificación manual
         if self.justificacion_manual:
             return "JUSTIFICADO"
@@ -548,10 +556,7 @@ class RegistroAsistencia(models.Model):
                 
             return "AUSENTE"
 
-        retraso = self.calcular_retraso()
-        self.minutos_retraso = retraso
-
-        if retraso == 0:
+        if self.minutos_retraso == 0:
             return "PUNTUAL"
         else:
             return "RETRASO"

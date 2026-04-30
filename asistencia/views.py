@@ -1524,7 +1524,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
 
             # Agrupar por mes dentro del año
             registros_por_mes = {}
-            meses_con_datos = registros_anio.values_list('fecha__month', flat=True).distinct().order_by('fecha__month')
+            meses_con_datos = registros_anio.values_list('fecha__month', flat=True).distinct().order_by('-fecha__month')
 
             total_minutos_retraso_anio = 0
             for mes in meses_con_datos:
