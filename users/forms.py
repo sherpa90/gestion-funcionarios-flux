@@ -108,7 +108,6 @@ class UserCreateForm(forms.ModelForm):
                 funcionario=user,
                 defaults={
                     'hora_entrada': '08:00',
-                    'tolerancia_minutos': 15,
                     'activo': True
                 }
             )
@@ -173,7 +172,6 @@ class UserEditForm(forms.ModelForm):
                 funcionario=user,
                 defaults={
                     'hora_entrada': '08:00',
-                    'tolerancia_minutos': 15,
                     'activo': True
                 }
             )

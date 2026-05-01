@@ -266,7 +266,6 @@ class BulkUserImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
                     HorarioFuncionario.objects.create(
                         funcionario=user,
                         hora_entrada=time(7, 45),
-                        tolerancia_minutos=15,
                         activo=True
                     )
                     

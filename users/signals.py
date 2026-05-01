@@ -14,7 +14,6 @@ def create_default_horario(sender, instance, created, **kwargs):
             HorarioFuncionario.objects.create(
                 funcionario=instance,
                 hora_entrada=time(7, 45),
-                tolerancia_minutos=5,
                 activo=True
             )
         except Exception as e:

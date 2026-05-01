@@ -48,18 +48,7 @@
                         <p class="mt-1 text-xs text-gray-500">Formato: HH:MM (ej: 08:30)</p>
                     </div>
 
-                    <!-- Tolerancia -->
-                    <div class="sm:col-span-3">
-                        <label for="{{ form.tolerancia_minutos.id_for_label }}"
-                               class="block text-sm font-medium text-gray-700">Tolerancia (minutos)</label>
-                        <div class="mt-1 rounded-md shadow-sm">
-                            {{ form.tolerancia_minutos }}
-                        </div>
-                        {% if form.tolerancia_minutos.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.tolerancia_minutos.errors.0 }}</p>
-                        {% endif %}
-                        <p class="mt-1 text-xs text-gray-500">Minutos de tolerancia para considerar puntual</p>
-                    </div>
+
 
                     <!-- Activo -->
                     <div class="sm:col-span-6">

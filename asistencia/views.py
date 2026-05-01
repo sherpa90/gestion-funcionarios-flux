@@ -752,125 +752,8 @@ class CargaHorariosView(LoginRequiredMixin, UserPassesTestMixin, FormView):
         return super().form_valid(form)
 
     def procesar_excel_asistencia(self, archivo_excel):
-        """Procesa Excel con formato: RUT, Nombre, DD-MM-YYYY HH:MM"""
-        rows = load_data_file(archivo_excel, None, None)
-
-        registros_creados = 0
-        errores = []
-        datos_agrupados = {}  # {(rut, fecha): [hora1, hora2, ...]}
-
-        # Primera pasada: agrupar por (rut, fecha)
-        for row_num, row in enumerate(rows, start=2):
-            if not any(row):
-                continue
-
-            try:
-                if len(row) < 3:
-                    continue
-
-                rut_raw = row[0]
-                if not rut_raw:
-                    errores.append(f"Fila {row_num}: Falta RUT")
-                    continue
-
-                rut_str = str(rut_raw).strip()
-
-                # Formato: RUT, Nombre, "DD-MM-YYYY HH:MM"
-                horario_raw = row[2]
-                horario_str = str(horario_raw).strip()
-
-                # Intentar parsear fecha+hora
-                fecha = None
-                hora = None
-
-                # Formato "DD-MM-YYYY HH:MM"
-                match = re.match(r'^(\d{1,2})-(\d{1,2})-(\d{4})\s+(\d{1,2}):(\d{2})$', horario_str)
-                if match:
-                    dia, mes_num, anio_num = match.groups()[:3]
-                    hora_str, minuto_str = match.groups()[3:]
-                    fecha = datetime(int(anio_num), int(mes_num), int(dia)).date()
-                    hora = time(int(hora_str), int(minuto_str))
-                else:
-                    # Intentar formato datetime de Excel
-                    if isinstance(horario_raw, datetime):
-                        fecha = horario_raw.date()
-                        hora = horario_raw.time()
-                    else:
-                        # Intentar otros formatos comunes
-                        formatos_fecha = ["%d/%m/%Y %H:%M", "%Y-%m-%d %H:%M", "%d-%m-%Y %H:%M:%S"]
-                        for fmt in formatos_fecha:
-                            try:
-                                dt = datetime.strptime(horario_str, fmt)
-                                fecha = dt.date()
-                                hora = dt.time()
-                                break
-                            except ValueError:
-                                continue
-
-                if not fecha or not hora:
-                    errores.append(f"Fila {row_num}: Formato inválido '{horario_str}'")
-                    continue
-
-                key = (rut_str, fecha)
-                if key not in datos_agrupados:
-                    datos_agrupados[key] = []
-                datos_agrupados[key].append(hora)
-
-            except Exception as e:
-                errores.append(f"Fila {row_num}: Error - {str(e)}")
-
-        # Segunda pasada: crear registros
-        for (rut_str, fecha), horas in datos_agrupados.items():
-            try:
-                funcionario = find_user_by_rut(rut_str)
-                if not funcionario:
-                    errores.append(f"RUT {rut_str} no encontrado")
-                    continue
-
-                horas_ordenadas = sorted(horas)
-                hora_entrada = None
-                hora_salida = None
-
-                # Separar horas en bloques para distinguir turnos nocturnos de entradas tempranas:
-                # - madrugada (0-4h): podría ser salida de turno nocturno previo O entrada muy temprana
-                # - mañana (5-11h): entradas diurnas reales (incluye entradas antes de las 7:30)
-                # - tarde (12-23h): salidas diurnas
-                horas_madrugada = [h for h in horas_ordenadas if h.hour < 5]
-                horas_manana    = [h for h in horas_ordenadas if 5 <= h.hour < 12]
-                horas_tarde     = [h for h in horas_ordenadas if h.hour >= 12]
-
-                if horas_manana:
-                    # Hay entrada diurna real → tomar la primera (puede ser antes de las 7:30)
-                    hora_entrada = horas_manana[0]
-                    # Si además hay madrugada, es una salida de turno nocturno previo (no es entrada)
-                else:
-                    # No hay mañana: la madrugada es la entrada real (turno muy temprano)
-                    if horas_madrugada:
-                        hora_entrada = horas_madrugada[0]
-
-                if horas_tarde:
-                    hora_salida = horas_tarde[-1]
-
-                registro, created = RegistroAsistencia.objects.get_or_create(
-                    funcionario=funcionario,
-                    fecha=fecha,
-                    defaults={
-                        'hora_entrada_real': hora_entrada,
-                        'hora_salida_real': hora_salida,
-                        'procesado_por': self.request.user,
-                    }
-                )
-                if not created:
-                    registro.hora_entrada_real = hora_entrada
-                    registro.hora_salida_real = hora_salida
-                    registro.procesado_por = self.request.user
-                    registro.save()
-
-                registros_creados += 1
-
-            except Exception as e:
-                errores.append(f"Error {rut_str} {fecha}: {str(e)}")
-
+        """Procesa Excel de asistencia delegando a la lógica compartida"""
+        registros_creados, errores = procesar_archivo_asistencia_generico(archivo_excel, self.request.user)
         return registros_creados, errores
 
 
@@ -1078,299 +961,218 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
         return super().form_valid(form)
 
     def procesar_excel_asistencia(self, archivo_excel, mes=None, anio=None):
-        """Procesa el archivo Excel de registros del reloj control con soporte para múltiples formatos de fecha y hora.
-        Soporta entradas tempranas (antes de las 7:30 AM) separando madrugada de mañana."""
-        logger.info(f"Iniciando procesamiento de archivo Excel de asistencia. Usuario: {self.request.user.get_full_name()}")
-
-        rows = load_data_file(archivo_excel, mes, anio)
-        logger.info(f"Archivo cargado: {len(rows)} filas encontradas")
-
-        registros_creados = 0
-        errores = []
-        ruts_no_encontrados = 0
-
-        def parse_date(value):
-            """Parse date from various formats"""
-            if not value:
-                return None
-
-            # Si ya es un objeto date/datetime
-            if hasattr(value, 'date'):
-                return value.date()
-            if hasattr(value, 'year'):
-                return value.date()
-
-            # Convertir a string para parsing
-            value_str = str(value).strip()
-
-            # Formatos de fecha comunes (incluyendo con hora para casos donde str() devuelve datetime completo)
-            formatos_fecha = [
-                "%d/%m/%Y",  # 25/12/2024
-                "%d-%m-%Y",  # 25-12-2024
-                "%Y/%m/%d",  # 2024/12/25
-                "%Y-%m-%d",  # 2024-12-25
-                "%m/%d/%Y",  # 12/25/2024
-                "%d/%m/%y",  # 25/12/24
-                "%Y%m%d",    # 20241225
-                "%Y-%m-%d %H:%M:%S", # 2024-12-25 08:30:00 (formato str(datetime))
-                "%d-%m-%Y %H:%M",    # 25-12-2024 08:30
-                "%d/%m/%Y %H:%M",    # 25/12/2024 08:30
-            ]
-
-            for formato in formatos_fecha:
-                try:
-                    return datetime.strptime(value_str, formato).date()
-                except ValueError:
-                    continue
-
-            # Intentar con números seriales de Excel (días desde 1900-01-01)
-            try:
-                if isinstance(value, (int, float)) and value > 40000:  # Fechas de Excel comienzan ~1900
-                    from datetime import timedelta
-                    excel_epoch = datetime(1900, 1, 1)
-                    return (excel_epoch + timedelta(days=int(value) - 2)).date()  # -2 por bug de Excel
-            except:
-                pass
-
-            return None
-
-        def parse_time(value):
-            """Parse time from various formats"""
-            if not value:
-                return None
-
-            # Si ya es un objeto time/datetime
-            if hasattr(value, 'time'):
-                return value.time()
-            if hasattr(value, 'hour') and hasattr(value, 'minute'):
-                return time(value.hour, value.minute, value.second if hasattr(value, 'second') else 0)
-
-            # Convertir a string para parsing
-            value_str = str(value).strip()
-
-            # Formatos de hora comunes
-            formatos_hora = [
-                "%H:%M:%S",  # 08:30:00
-                "%H:%M",     # 08:30
-                "%I:%M:%S %p",  # 08:30:00 AM
-                "%I:%M %p",    # 08:30 AM
-            ]
-
-            for formato in formatos_hora:
-                try:
-                    parsed = datetime.strptime(value_str, formato)
-                    return parsed.time()
-                except ValueError:
-                    continue
-
-            # Intentar con números decimales (horas como 8.5 = 8:30)
-            try:
-                if isinstance(value, (int, float)):
-                    hours = int(value)
-                    minutes = int((value - hours) * 60)
-                    return time(hours, minutes)
-            except:
-                pass
-
-            # Intentar extraer horas y minutos de strings complejos
-            import re
-            match = re.search(r'(\d{1,2}):(\d{2})', value_str)
-            if match:
-                try:
-                    return time(int(match.group(1)), int(match.group(2)))
-                except:
-                    pass
-
-            return None
-
-        # Primero, recolectar todos los datos agrupados por RUT y fecha
-        datos_agrupados = {}  # {(rut, fecha): [hora1, hora2, ...]}
-
-        ruts_unicos_en_archivo = set()
-        ruts_no_encontrados_set = set()
-
-        for row_num, row in enumerate(rows, start=2):
-            if not any(row):  # Skip empty rows
-                continue
-            
-            logger.info(f"Analizando fila {row_num}: {row}")
-
-            try:
-                if len(row) < 3:
-                    errores.append(f"Fila {row_num}: Se requieren al menos 3 columnas (RUT, Nombre, Fecha/Horario)")
-                    continue
-
-                rut_raw = row[0] if len(row) > 0 else None
-                nombre = row[1] if len(row) > 1 else None
-
-                if not rut_raw:
-                    errores.append(f"Fila {row_num}: Falta RUT obligatorio")
-                    continue
-
-                # Convertir RUT a string para procesamiento consistente
-                rut_str = str(rut_raw).strip()
-                ruts_unicos_en_archivo.add(rut_str)
-
-                # Detectar formato y extraer fecha y hora
-                fecha = None
-                hora = None
-
-                if len(row) >= 5:
-                    # Formato extendido: RUT, Nombre, Fecha, Hora_AM, Hora_PM
-                    fecha_raw = row[2] if len(row) > 2 else None
-                    hora_am_raw = row[3] if len(row) > 3 else None
-                    hora_pm_raw = row[4] if len(row) > 4 else None
-
-                    fecha = parse_date(fecha_raw)
-                    if not fecha:
-                        errores.append(f"Fila {row_num}: Fecha inválida '{fecha_raw}'")
-                        continue
-
-                    # Agregar horas AM y PM por separado si existen
-                    if hora_am_raw:
-                        hora_am = parse_time(hora_am_raw)
-                        if hora_am:
-                            key = (rut_str, fecha)
-                            if key not in datos_agrupados:
-                                datos_agrupados[key] = []
-                            datos_agrupados[key].append(hora_am)
-
-                    if hora_pm_raw:
-                        hora_pm = parse_time(hora_pm_raw)
-                        if hora_pm:
-                            key = (rut_str, fecha)
-                            if key not in datos_agrupados:
-                                datos_agrupados[key] = []
-                            datos_agrupados[key].append(hora_pm)
-
-                elif len(row) >= 3:
-                    # Formato original: RUT, Nombre, "DD-MM-YYYY HH:MM"
-                    horario_raw = row[2]
-
-                    # Prioridad: si openpyxl retorna un datetime nativo, extraer directamente
-                    if isinstance(horario_raw, datetime):
-                        fecha = horario_raw.date()
-                        hora = horario_raw.time()
-                        hora = time(hora.hour, hora.minute)  # Normalizar a HH:MM sin segundos
-
-                        if fecha and hora is not None:
-                            key = (rut_str, fecha)
-                            if key not in datos_agrupados:
-                                datos_agrupados[key] = []
-                            datos_agrupados[key].append(hora)
-                        continue
-
-                    horario_str = str(horario_raw).strip()
-
-                    # Intentar extraer fecha y hora del formato "DD-MM-YYYY HH:MM"
-                    fecha_hora_match = re.match(r'^(\d{1,2})-(\d{1,2})-(\d{4})\s+(\d{1,2}):(\d{2})$', horario_str)
-                    if fecha_hora_match:
-                        dia, mes_num, anio_num = fecha_hora_match.groups()[:3]
-                        hora_str, minuto_str = fecha_hora_match.groups()[3:]
-
-                        try:
-                            fecha = datetime(int(anio_num), int(mes_num), int(dia)).date()
-                            hora_int = int(hora_str)
-                            if hora_int == 0:
-                                hora_int = 0
-                            hora = time(hora_int, int(minuto_str))
-                        except ValueError as e:
-                            errores.append(f"Fila {row_num}: Fecha/hora inválida '{horario_str}' - {str(e)}")
-                            continue
-                    else:
-                        # Intentar otros formatos
-                        fecha = parse_date(horario_str)
-                        hora = parse_time(horario_str)
-
-                        if not fecha or not hora:
-                            errores.append(f"Fila {row_num}: Formato de horario inválido '{horario_str}'")
-                            continue
-
-                    # Agregar a datos agrupados
-                    if fecha and hora:
-                        key = (rut_str, fecha)
-                        if key not in datos_agrupados:
-                            datos_agrupados[key] = []
-                        datos_agrupados[key].append(hora)
-
-            except Exception as e:
-                errores.append(f"Fila {row_num}: Error procesando fila - {str(e)}")
-
-        # Ahora procesar los datos agrupados
-        ruts_encontrados = set()
-
-        for (rut_str, fecha), horas in datos_agrupados.items():
-            try:
-                # Buscar funcionario por RUT
-                funcionario = find_user_by_rut(rut_str)
-                if not funcionario:
-                    errores.append(f"RUT {rut_str} no encontrado - omitiendo {len(horas)} registros")
-                    ruts_no_encontrados_set.add(rut_str)
-                    ruts_no_encontrados += len(horas)
-                    continue
-
-                ruts_encontrados.add(rut_str)
-
-                # Ordenar las horas del día
-                horas_ordenadas = sorted(horas)
-                logger.info(f"Procesando {rut_str} para {fecha}: Marcaciones detectadas: {[h.strftime('%H:%M') for h in horas_ordenadas]}")
-
-                # Determinar entrada y salida basándose en las horas.
-                # Bloques del día para distinguir turnos nocturnos de entradas tempranas:
-                # - madrugada (0-4h): podría ser salida de turno nocturno previo O entrada muy temprana
-                # - mañana (5-11h): entradas diurnas reales (incluye entradas antes de las 7:30)
-                # - tarde (12-23h): salidas diurnas
-                hora_entrada = None
-                hora_salida = None
-
-                horas_madrugada = [h for h in horas_ordenadas if h.hour < 5]
-                horas_manana    = [h for h in horas_ordenadas if 5 <= h.hour < 12]
-                horas_tarde     = [h for h in horas_ordenadas if h.hour >= 12]
-
-                if horas_manana:
-                    # Hay entrada diurna real → tomar la primera (puede ser antes de las 7:30)
-                    hora_entrada = horas_manana[0]  # Primera hora de la mañana
-                    # Si además hay madrugada, es una salida de turno nocturno previo
-                else:
-                    # Sin registros de mañana: la madrugada es la entrada real (turno muy temprano)
-                    if horas_madrugada:
-                        hora_entrada = horas_madrugada[0]
-
-                if horas_tarde:
-                    hora_salida = horas_tarde[-1]  # Última hora de la tarde
-
-                # Crear o actualizar registro de asistencia
-                registro, created = RegistroAsistencia.objects.get_or_create(
-                    funcionario=funcionario,
-                    fecha=fecha,
-                    defaults={
-                        'hora_entrada_real': hora_entrada,
-                        'hora_salida_real': hora_salida,
-                        'procesado_por': self.request.user,
-                    }
-                )
-
-                if not created:
-                    # Actualizar si ya existe
-                    registro.hora_entrada_real = hora_entrada
-                    registro.hora_salida_real = hora_salida
-                    registro.procesado_por = self.request.user
-                    registro.save()
-
-                registros_creados += 1
-
-            except Exception as e:
-                errores.append(f"Error procesando {rut_str} fecha {fecha}: {str(e)}")
-
-        # Logging final con resumen detallado
-        logger.info(f"Procesamiento completado: {registros_creados} registros creados/actualizados")
-        logger.info(f"RUTs únicos en archivo: {len(ruts_unicos_en_archivo)}")
-        logger.info(f"RUTs encontrados en BD: {len(ruts_encontrados)} - {sorted(ruts_encontrados) if ruts_encontrados else 'Ninguno'}")
-        logger.info(f"RUTs NO encontrados en BD: {len(ruts_no_encontrados_set)} - {sorted(ruts_no_encontrados_set) if ruts_no_encontrados_set else 'Ninguno'}")
-        logger.info(f"Total filas con RUTs no encontrados: {ruts_no_encontrados}, otros errores: {len(errores) - ruts_no_encontrados}")
-        logger.info("✅ Sistema mejorado: Procesa múltiples marcaciones por día correctamente")
-
+        """Procesa Excel de registros del reloj control delegando a la lógica compartida"""
+        registros_creados, errores = procesar_archivo_asistencia_generico(archivo_excel, self.request.user, mes, anio)
         return registros_creados, errores
+
+
+def procesar_archivo_asistencia_generico(archivo_excel, usuario_procesador, mes=None, anio=None):
+    """
+    Lógica unificada y robusta para procesar archivos de asistencia.
+    Garantiza que registros antes de las 07:30 AM sean capturados correctamente.
+    """
+    import re
+    from datetime import datetime, time, timedelta
+    
+    logger.info(f"Iniciando procesamiento genérico de archivo de asistencia. Usuario: {usuario_procesador.get_full_name()}")
+
+    rows = load_data_file(archivo_excel, mes, anio)
+    logger.info(f"Archivo cargado: {len(rows)} filas encontradas")
+
+    registros_creados = 0
+    errores = []
+    ruts_no_encontrados_count = 0
+    ruts_no_encontrados_set = set()
+    ruts_unicos_en_archivo = set()
+
+    def parse_date(value):
+        if not value: return None
+        if hasattr(value, 'date'): return value.date()
+        if hasattr(value, 'year'): return value.date()
+        
+        value_str = str(value).strip()
+        formatos_fecha = [
+            "%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%m/%d/%Y", "%d/%m/%y", "%Y%m%d",
+            "%Y-%m-%d %H:%M:%S", "%d-%m-%Y %H:%M:%S", "%d/%m/%Y %H:%M:%S",
+            "%Y-%m-%d %H:%M", "%d-%m-%Y %H:%M", "%d/%m/%Y %H:%M",
+        ]
+
+        for formato in formatos_fecha:
+            try:
+                return datetime.strptime(value_str, formato).date()
+            except ValueError:
+                continue
+
+        # Extraer solo fecha si hay tiempo con cualquier separador
+        match = re.search(r'(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})', value_str)
+        if match:
+            try:
+                d, m, y = map(int, match.groups())
+                if y < 100: y += 2000
+                return datetime(y, m, d).date()
+            except: pass
+
+        return None
+
+    def parse_time(value):
+        if not value: return None
+        if hasattr(value, 'time'): return value.time()
+        if hasattr(value, 'hour') and hasattr(value, 'minute'):
+            return time(value.hour, value.minute)
+
+        value_str = str(value).strip().upper()
+        formatos_hora = ["%H:%M:%S", "%H:%M", "%I:%M:%S %P", "%I:%M %P", "%H:%M %P"]
+
+        for formato in formatos_hora:
+            try:
+                # Nota: strptime con %p requiere que el string esté en el mismo case o usar upper()
+                return datetime.strptime(value_str, formato).time()
+            except ValueError:
+                continue
+
+        # Regex robusto para HH:MM (captura 12:57, 07:29, etc.)
+        match = re.search(r'(\d{1,2}):(\d{2})', value_str)
+        if match:
+            try:
+                h, m = map(int, match.groups())
+                # Si viene con PM y no es 12, sumar 12
+                if 'PM' in value_str and h < 12: h += 12
+                # Si viene con AM y es 12 (medianoche), poner 0
+                if 'AM' in value_str and h == 12: h = 0
+                
+                if 0 <= h < 24 and 0 <= m < 60:
+                    return time(h, m)
+            except: pass
+
+        # Excel decimal fraction
+        try:
+            val_float = float(value)
+            if 0 <= val_float < 1:
+                total_seconds = int(val_float * 86400 + 0.5)
+                return time(total_seconds // 3600, (total_seconds % 3600) // 60)
+            elif 1 <= val_float < 24:
+                return time(int(val_float), int((val_float - int(val_float)) * 60))
+        except: pass
+
+        return None
+
+    datos_agrupados = {}  # {(rut, fecha): [hora1, hora2, ...]}
+
+    for row_num, row in enumerate(rows, start=2):
+        if not any(row): continue
+
+        try:
+            rut_raw = row[0]
+            if not rut_raw: continue
+            
+            rut_str = str(rut_raw).strip()
+            ruts_unicos_en_archivo.add(rut_str)
+
+            fecha = None
+            horas_fila = []
+
+            # Detección de formato por número de columnas
+            if len(row) >= 5: # Extendido
+                fecha = parse_date(row[2])
+                for i in range(3, len(row)):
+                    h = parse_time(row[i])
+                    if h: horas_fila.append(h)
+            elif len(row) == 4: # RUT, Nombre, Fecha, Hora
+                fecha = parse_date(row[2])
+                h = parse_time(row[3])
+                if h: horas_fila.append(h)
+            elif len(row) >= 3: # Mixto
+                horario_raw = row[2]
+                if isinstance(horario_raw, datetime):
+                    fecha = horario_raw.date()
+                    horas_fila.append(time(horario_raw.hour, horario_raw.minute))
+                else:
+                    horario_str = str(horario_raw).strip()
+                    # Buscar fecha y hora juntas
+                    match_fh = re.search(r'(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\s+(\d{1,2}):(\d{2})', horario_str)
+                    if match_fh:
+                        try:
+                            d, m, y, hh, mm = map(int, match_fh.groups())
+                            if y < 100: y += 2000
+                            fecha = datetime(y, m, d).date()
+                            
+                            # Manejar AM/PM en el regex combinado
+                            horario_upper = horario_str.upper()
+                            if 'PM' in horario_upper and hh < 12: hh += 12
+                            if 'AM' in horario_upper and hh == 12: hh = 0
+                            
+                            horas_fila.append(time(hh, mm))
+                        except: pass
+                    
+                    if not fecha: fecha = parse_date(horario_str)
+                    if not horas_fila:
+                        h = parse_time(horario_str)
+                        if h: horas_fila.append(h)
+
+            if fecha and horas_fila:
+                key = (rut_str, fecha)
+                if key not in datos_agrupados:
+                    datos_agrupados[key] = []
+                datos_agrupados[key].extend(horas_fila)
+            elif not fecha and row_num > 1:
+                errores.append(f"Fila {row_num}: No se detectó fecha válida.")
+
+        except Exception as e:
+            errores.append(f"Fila {row_num}: {str(e)}")
+
+    # Segunda fase: Creación de registros
+    ruts_encontrados_bd = set()
+    for (rut_str, fecha), horas in datos_agrupados.items():
+        try:
+            funcionario = find_user_by_rut(rut_str)
+            if not funcionario:
+                ruts_no_encontrados_set.add(rut_str)
+                ruts_no_encontrados_count += 1
+                continue
+
+            ruts_encontrados_bd.add(rut_str)
+            horas_ordenadas = sorted(list(set(horas))) # Únicas y ordenadas
+            
+            # Límite de 12:00 para diferenciar entrada de salida (más permisivo para salidas tempranas)
+            hora_entrada = None
+            hora_salida = None
+
+            limite_salida = time(12, 0)
+            manana = [h for h in horas_ordenadas if h < limite_salida]
+            tarde  = [h for h in horas_ordenadas if h >= limite_salida]
+
+            if manana:
+                hora_entrada = manana[0] # La más temprana de la mañana
+            
+            if tarde:
+                hora_salida = tarde[-1] # La más tardía de la tarde
+
+            logger.info(f"Registro {rut_str} - {fecha}: Entrada={hora_entrada}, Salida={hora_salida} (Marcaciones: {horas_ordenadas}, Límite: {limite_salida})")
+
+            registro, created = RegistroAsistencia.objects.get_or_create(
+                funcionario=funcionario,
+                fecha=fecha,
+                defaults={
+                    'hora_entrada_real': hora_entrada,
+                    'hora_salida_real': hora_salida,
+                    'procesado_por': usuario_procesador,
+                }
+            )
+
+            if not created:
+                # Actualizar manteniendo coherencia
+                registro.hora_entrada_real = hora_entrada
+                registro.hora_salida_real = hora_salida
+                registro.procesado_por = usuario_procesador
+                registro.save()
+
+            registros_creados += 1
+
+        except Exception as e:
+            errores.append(f"RUT {rut_str} fecha {fecha}: {str(e)}")
+
+    logger.info(f"Procesamiento finalizado: {registros_creados} registros.")
+    return registros_creados, errores
 
 
 class DescargarAsistenciaView(LoginRequiredMixin, View):
@@ -1551,11 +1353,23 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
             'DIA_ADMINISTRATIVO': 'Día Administrativo',
             'MEDIO_DIA': 'Medio Día Administrativo',
             'LICENCIA_MEDICA': 'Licencia Médica',
+            'AUSENTE': 'Ausente',
+            'FESTIVO': 'Día Festivo',
         }
 
+        # Obtener los días laborales del funcionario para marcar ausencias automáticas
+        horario_semanal = HorarioFuncionario.objects.filter(funcionario=usuario).first()
+        dias_laborales = set()
+        if horario_semanal:
+            # weekday() de python: 0=Lunes...6=Domingo. En nuestro modelo: 0=Lunes...6=Domingo
+            dias_laborales = set(horario_semanal.dias.filter(activo=True).values_list('dia_semana', flat=True))
+        else:
+            # Default: Lunes a Viernes si no hay horario configurado
+            dias_laborales = {0, 1, 2, 3, 4}
+
         class RegistroVirtual:
-            """Registro virtual para días con permiso/licencia sin marcación"""
-            def __init__(self, fecha, estado):
+            """Registro virtual para días con permiso/licencia o ausencias sin marcación"""
+            def __init__(self, fecha, estado, nombre_festivo=None):
                 self.fecha = fecha
                 self.estado = estado
                 self.minutos_retraso = 0
@@ -1564,24 +1378,42 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 self.minutos_trabajados = None
                 self.horario_asignado = None
                 self.alegacion = None
+                self.nombre_festivo = nombre_festivo
                 self._estado_display = ESTADO_DISPLAY.get(estado, estado)
             @property
             def pk(self):
                 return None
             def get_estado_display(self):
+                if self.estado == 'FESTIVO' and self.nombre_festivo:
+                    return f"Festivo: {self.nombre_festivo}"
                 return self._estado_display
 
-        # Consultar permisos y licencias del usuario (una sola vez)
+        # Consultar modelos necesarios
         from permisos.models import SolicitudPermiso
         from licencias.models import LicenciaMedica
+        from .models import DiaFestivo, AnoEscolar
         from datetime import timedelta as td
+        from django.utils import timezone
+
+        hoy = timezone.now().date()
 
         # Agrupar registros por año
         registros_por_anio = {}
-        anios_disponibles = registros_usuario.values_list('fecha__year', flat=True).distinct().order_by('-fecha__year')
+        # Asegurar que vemos al menos el año actual
+        anios_bd = list(registros_usuario.values_list('fecha__year', flat=True).distinct())
+        if hoy.year not in anios_bd:
+            anios_bd.append(hoy.year)
+        
+        anios_disponibles = sorted(list(set(anios_bd)), reverse=True)
 
         for anio in anios_disponibles:
             registros_anio = registros_usuario.filter(fecha__year=anio).order_by('-fecha')
+
+            # Consultar configuración del año escolar
+            ano_escolar = AnoEscolar.objects.filter(ano=anio).first()
+            
+            # Consultar festivos del año
+            festivos = {f.fecha: f.nombre for f in DiaFestivo.objects.filter(fecha__year=anio)}
 
             # Consultar permisos aprobados para este año
             primer_dia_anio = datetime(anio, 1, 1).date()
@@ -1620,61 +1452,89 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 while d <= fin:
                     licencias_por_fecha[d] = licencia
                     d += td(days=1)
-
-            # Agrupar por mes dentro del año
+            
             registros_por_mes = {}
-            meses_con_datos = registros_anio.values_list('fecha__month', flat=True).distinct().order_by('fecha__month')
+            if anio == hoy.year:
+                meses_rango = range(1, hoy.month + 1)
+            else:
+                meses_rango = range(1, 13)
 
             total_minutos_retraso_anio = 0
-            for mes in meses_con_datos:
+            for mes in meses_rango:
                 registros_mes_qs = registros_anio.filter(fecha__month=mes).order_by('fecha')
-                registros_mes_list = list(registros_mes_qs)
-                fechas_con_registro = {r.fecha for r in registros_mes_list}
+                registros_reales_dict = {r.fecha: r for r in registros_mes_qs}
+                
+                registros_mes_final = []
 
-                # Agregar registros virtuales para días con permiso/licencia sin registro
                 primer_dia_mes = datetime(anio, mes, 1).date()
-                ultimo_dia_mes = (primer_dia_mes + td(days=32)).replace(day=1) - td(days=1)
+                if anio == hoy.year and mes == hoy.month:
+                    ultimo_dia_mes = hoy
+                else:
+                    ultimo_dia_mes = (primer_dia_mes + td(days=32)).replace(day=1) - td(days=1)
+                
                 d = primer_dia_mes
                 while d <= ultimo_dia_mes:
-                    if d not in fechas_con_registro:
-                        if d in licencias_por_fecha:
-                            registros_mes_list.append(RegistroVirtual(d, 'LICENCIA_MEDICA'))
+                    en_ano_escolar = True
+                    if ano_escolar:
+                        en_sem1 = ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin
+                        en_sem2 = ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
+                        en_ano_escolar = en_sem1 or en_sem2
+                    
+                    if not en_ano_escolar:
+                        d += td(days=1)
+                        continue
+
+                    if d in registros_reales_dict:
+                        registros_mes_final.append(registros_reales_dict[d])
+                    else:
+                        if d in festivos:
+                            registros_mes_final.append(RegistroVirtual(d, 'FESTIVO', festivos[d]))
+                        elif d in licencias_por_fecha:
+                            registros_mes_final.append(RegistroVirtual(d, 'LICENCIA_MEDICA'))
                         elif d in permisos_por_fecha:
                             permiso = permisos_por_fecha[d]
                             if permiso.dias_solicitados == 0.5:
-                                registros_mes_list.append(RegistroVirtual(d, 'MEDIO_DIA'))
+                                registros_mes_final.append(RegistroVirtual(d, 'MEDIO_DIA'))
                             else:
-                                registros_mes_list.append(RegistroVirtual(d, 'DIA_ADMINISTRATIVO'))
+                                registros_mes_final.append(RegistroVirtual(d, 'DIA_ADMINISTRATIVO'))
+                        elif d.weekday() in dias_laborales:
+                            registros_mes_final.append(RegistroVirtual(d, 'AUSENTE'))
+                    
                     d += td(days=1)
 
-                registros_mes_list.sort(key=lambda r: r.fecha)
+                if registros_mes_final:
+                    registros_mes_final.sort(key=lambda r: r.fecha)
+                    
+                    minutos_retraso_mes = sum(r.minutos_retraso for r in registros_mes_final if hasattr(r, 'minutos_retraso') and r.minutos_retraso > 0)
+                    total_minutos_retraso_anio += minutos_retraso_mes
 
-                minutos_retraso_mes = sum(r.minutos_retraso for r in registros_mes_qs if r.minutos_retraso > 0)
-                total_minutos_retraso_anio += minutos_retraso_mes
+                    retrasos_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'RETRASO')
+                    ausentes_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'AUSENTE')
+                    admin_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'DIA_ADMINISTRATIVO')
+                    licencia_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'LICENCIA_MEDICA')
+                    medio_dia_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'MEDIO_DIA')
 
-                ausentes_mes = sum(1 for r in registros_mes_list if r.estado == 'AUSENTE')
-                admin_mes = sum(1 for r in registros_mes_list if r.estado == 'DIA_ADMINISTRATIVO')
-                licencia_mes = sum(1 for r in registros_mes_list if r.estado == 'LICENCIA_MEDICA')
-                medio_dia_mes = sum(1 for r in registros_mes_list if r.estado == 'MEDIO_DIA')
+                    registros_por_mes[mes] = {
+                        'registros': registros_mes_final,
+                        'nombre': primer_dia_mes.strftime('%B'),
+                        'minutos_retraso_mes': minutos_retraso_mes,
+                        'retrasos': retrasos_mes,
+                        'total': len(registros_mes_final),
+                        'ausentes': ausentes_mes,
+                        'admin': admin_mes,
+                        'licencia': licencia_mes,
+                        'medio_dia': medio_dia_mes,
+                    }
 
-                registros_por_mes[mes] = {
-                    'registros': registros_mes_list,
-                    'total': len(registros_mes_list),
-                    'puntuales': sum(1 for r in registros_mes_list if r.estado == 'PUNTUAL'),
-                    'retrasos': sum(1 for r in registros_mes_list if r.estado == 'RETRASO'),
-                    'ausentes': ausentes_mes,
-                    'admin': admin_mes,
-                    'licencias': licencia_mes,
-                    'medio_dia': medio_dia_mes,
-                    'minutos_retraso_mes': minutos_retraso_mes,
+            if registros_por_mes:
+                registros_por_anio[anio] = {
+                    'registros_por_mes': registros_por_mes,
+                    'total_retraso_anio': total_minutos_retraso_anio,
+                    'total_anio': sum(d['total'] for d in registros_por_mes.values()),
                 }
 
-            registros_por_anio[anio] = {
-                'registros_por_mes': registros_por_mes,
-                'total_anio': registros_anio.count(),
-                'puntuales_anio': registros_anio.filter(estado='PUNTUAL').count(),
-                'minutos_retraso_anio': total_minutos_retraso_anio,
-            }
+        context['registros_por_anio'] = registros_por_anio
+
 
         # Horario asignado
         horario_actual = HorarioFuncionario.objects.filter(

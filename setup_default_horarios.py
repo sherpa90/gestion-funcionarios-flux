@@ -34,7 +34,6 @@ def setup_default_horarios():
                 HorarioFuncionario.objects.create(
                     funcionario=user,
                     hora_entrada=time(7, 45),
-                    tolerancia_minutos=5,
                     activo=True
                 )
                 horarios_creados += 1
@@ -59,8 +58,7 @@ def setup_default_horarios():
     # Mostrar horarios creados
     print("\n=== Horarios Creados ===")
     for horario in HorarioFuncionario.objects.all():
-        print(f"{horario.funcionario.get_full_name()} - {horario.hora_entrada.strftime('%H:%M')} "
-              f"(Tol: {horario.tolerancia_minutos} min) - "
+        print(f"{horario.funcionario.get_full_name()} - {horario.hora_entrada.strftime('%H:%M')} - "
               f"{'Activo' if horario.activo else 'Inactivo'}")
 
 if __name__ == "__main__":
