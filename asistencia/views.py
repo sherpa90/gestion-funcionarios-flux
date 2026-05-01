@@ -1192,6 +1192,8 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
         for row_num, row in enumerate(rows, start=2):
             if not any(row):  # Skip empty rows
                 continue
+            
+            logger.info(f"Analizando fila {row_num}: {row}")
 
             try:
                 if len(row) < 3:
@@ -1311,6 +1313,7 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
 
                 # Ordenar las horas del día
                 horas_ordenadas = sorted(horas)
+                logger.info(f"Procesando {rut_str} para {fecha}: Marcaciones detectadas: {[h.strftime('%H:%M') for h in horas_ordenadas]}")
 
                 # Determinar entrada y salida basándose en las horas.
                 # Bloques del día para distinguir turnos nocturnos de entradas tempranas:
