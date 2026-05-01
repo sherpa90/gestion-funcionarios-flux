@@ -1078,7 +1078,8 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
         return super().form_valid(form)
 
     def procesar_excel_asistencia(self, archivo_excel, mes=None, anio=None):
-        """Procesa el archivo Excel de registros del reloj control con soporte para múltiples formatos de fecha y hora"""
+        """Procesa el archivo Excel de registros del reloj control con soporte para múltiples formatos de fecha y hora.
+        Soporta entradas tempranas (antes de las 7:30 AM) separando madrugada de mañana."""
         logger.info(f"Iniciando procesamiento de archivo Excel de asistencia. Usuario: {self.request.user.get_full_name()}")
 
         rows = load_data_file(archivo_excel, mes, anio)
