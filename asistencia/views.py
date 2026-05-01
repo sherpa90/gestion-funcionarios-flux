@@ -1241,6 +1241,20 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
                 elif len(row) >= 3:
                     # Formato original: RUT, Nombre, "DD-MM-YYYY HH:MM"
                     horario_raw = row[2]
+
+                    # Prioridad: si openpyxl retorna un datetime nativo, extraer directamente
+                    if isinstance(horario_raw, datetime):
+                        fecha = horario_raw.date()
+                        hora = horario_raw.time()
+                        hora = time(hora.hour, hora.minute)  # Normalizar a HH:MM sin segundos
+
+                        if fecha and hora is not None:
+                            key = (rut_str, fecha)
+                            if key not in datos_agrupados:
+                                datos_agrupados[key] = []
+                            datos_agrupados[key].append(hora)
+                        continue
+
                     horario_str = str(horario_raw).strip()
 
                     # Intentar extraer fecha y hora del formato "DD-MM-YYYY HH:MM"
