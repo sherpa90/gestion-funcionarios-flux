@@ -1103,7 +1103,7 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
             # Convertir a string para parsing
             value_str = str(value).strip()
 
-            # Formatos de fecha comunes
+            # Formatos de fecha comunes (incluyendo con hora para casos donde str() devuelve datetime completo)
             formatos_fecha = [
                 "%d/%m/%Y",  # 25/12/2024
                 "%d-%m-%Y",  # 25-12-2024
@@ -1112,6 +1112,9 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
                 "%m/%d/%Y",  # 12/25/2024
                 "%d/%m/%y",  # 25/12/24
                 "%Y%m%d",    # 20241225
+                "%Y-%m-%d %H:%M:%S", # 2024-12-25 08:30:00 (formato str(datetime))
+                "%d-%m-%Y %H:%M",    # 25-12-2024 08:30
+                "%d/%m/%Y %H:%M",    # 25/12/2024 08:30
             ]
 
             for formato in formatos_fecha:
