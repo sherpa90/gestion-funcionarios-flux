@@ -56,7 +56,7 @@ class CargaHorariosForm(forms.Form):
     """Formulario para cargar archivos Excel de horarios"""
     archivo_excel = forms.FileField(
         label="Archivo de Horarios",
-        help_text="Sube el archivo Excel (.xlsx/.xls) o PDF con los horarios de entrada de funcionarios. El archivo debe tener las columnas: RUT, Hora_Entrada, Tolerancia.",
+        help_text="Sube el archivo Excel (.xlsx/.xls) o PDF con los horarios de entrada de funcionarios. El archivo debe tener las columnas: RUT, Hora_Entrada.",
         widget=forms.FileInput(attrs={
             "class": "block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100",
             "accept": ".xlsx,.xls,.pdf"

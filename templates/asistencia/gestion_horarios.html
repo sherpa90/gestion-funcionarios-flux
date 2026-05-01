@@ -71,7 +71,6 @@
                         <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Funcionario</th>
                         <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">RUT</th>
                         <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Horario Entrada</th>
-                        <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tolerancia</th>
                         <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Estado</th>
                         <th class="px-3 py-2 text-right text-[9px] font-bold text-gray-400 uppercase tracking-widest">Acciones</th>
                     </tr>
@@ -93,9 +92,6 @@
                         <td class="px-3 py-2 text-xs text-gray-600">{{ data.funcionario.run }}</td>
                         <td class="px-3 py-2 text-xs text-gray-900 font-mono">
                             {% if data.horario %}{{ data.horario.hora_entrada|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
-                        </td>
-                        <td class="px-3 py-2 text-xs text-gray-600">
-                            {% if data.horario %}{{ data.horario.tolerancia_minutos }} min{% else %}<span class="text-gray-300">-</span>{% endif %}
                         </td>
                         <td class="px-3 py-2">
                             {% if data.horario and data.horario.activo %}
@@ -145,7 +141,7 @@
                         <div class="min-w-0 flex-1">
                             <div class="text-xs font-bold text-gray-900 truncate">{{ data.funcionario.get_full_name }}</div>
                             <div class="text-[10px] text-gray-400">
-                                {% if data.horario %}{{ data.horario.hora_entrada|time:"H:i" }} ({{ data.horario.tolerancia_minutos }}min){% else %}Sin horario{% endif %}
+                                {% if data.horario %}{{ data.horario.hora_entrada|time:"H:i" }}{% else %}Sin horario{% endif %}
                             </div>
                         </div>
                     </div>

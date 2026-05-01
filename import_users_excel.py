@@ -102,7 +102,6 @@ def create_users_and_schedules(users_data):
                 horario = HorarioFuncionario.objects.create(
                     funcionario=user,
                     hora_entrada=time(7, 45),
-                    tolerancia_minutos=15,
                     activo=True
                 )
                 print("Horario creado: {}".format(horario.hora_entrada))

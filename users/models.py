@@ -169,7 +169,6 @@ class CustomUser(AbstractUser):
                     HorarioFuncionario.objects.create(
                         funcionario=self,
                         hora_entrada=time(7, 45),
-                        tolerancia_minutos=5,
                         activo=True
                     )
             except Exception as e:
