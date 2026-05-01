@@ -831,26 +831,25 @@ class CargaHorariosView(LoginRequiredMixin, UserPassesTestMixin, FormView):
                 hora_entrada = None
                 hora_salida = None
 
-                # Separar horas por bloque del día:
-                # - madrugada (0-4 h): salidas de turno nocturno previo
-                # - mañana (5-11 h): entradas diurnas reales (incluye entradas antes de las 7:30)
-                # - tarde (12-23 h): salidas diurnas
+                # Separar horas en bloques para distinguir turnos nocturnos de entradas tempranas:
+                # - madrugada (0-4h): podría ser salida de turno nocturno previo O entrada muy temprana
+                # - mañana (5-11h): entradas diurnas reales (incluye entradas antes de las 7:30)
+                # - tarde (12-23h): salidas diurnas
                 horas_madrugada = [h for h in horas_ordenadas if h.hour < 5]
                 horas_manana    = [h for h in horas_ordenadas if 5 <= h.hour < 12]
                 horas_tarde     = [h for h in horas_ordenadas if h.hour >= 12]
 
                 if horas_manana:
-                    # Hay entrada diurna real → tomar la primera
+                    # Hay entrada diurna real → tomar la primera (puede ser antes de las 7:30)
                     hora_entrada = horas_manana[0]
-                elif len(horas_ordenadas) == 1 and horas_madrugada:
-                    # Solo hay un registro de madrugada: tratar como entrada (turno muy temprano)
-                    hora_entrada = horas_madrugada[0]
+                    # Si además hay madrugada, es una salida de turno nocturno previo (no es entrada)
+                else:
+                    # No hay mañana: la madrugada es la entrada real (turno muy temprano)
+                    if horas_madrugada:
+                        hora_entrada = horas_madrugada[0]
 
                 if horas_tarde:
                     hora_salida = horas_tarde[-1]
-                elif horas_madrugada and not hora_entrada:
-                    # Si no se usó como entrada, es una salida de turno nocturno
-                    hora_salida = horas_madrugada[-1]
 
                 registro, created = RegistroAsistencia.objects.get_or_create(
                     funcionario=funcionario,
@@ -1296,10 +1295,10 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
                 horas_ordenadas = sorted(horas)
 
                 # Determinar entrada y salida basándose en las horas.
-                # Se separa en tres bloques para manejar turnos nocturnos y entradas tempranas:
-                # - madrugada (0-4 h): probables salidas de turno nocturno
-                # - mañana (5-11 h): entradas diurnas reales (incluye entradas antes de las 7:30)
-                # - tarde (12-23 h): salidas diurnas
+                # Bloques del día para distinguir turnos nocturnos de entradas tempranas:
+                # - madrugada (0-4h): podría ser salida de turno nocturno previo O entrada muy temprana
+                # - mañana (5-11h): entradas diurnas reales (incluye entradas antes de las 7:30)
+                # - tarde (12-23h): salidas diurnas
                 hora_entrada = None
                 hora_salida = None
 
@@ -1308,17 +1307,16 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
                 horas_tarde     = [h for h in horas_ordenadas if h.hour >= 12]
 
                 if horas_manana:
-                    # Hay entrada diurna real → tomar la primera
-                    hora_entrada = horas_manana[0]  # Primera hora de la mañana (puede ser antes de las 7:30)
-                elif len(horas_ordenadas) == 1 and horas_madrugada:
-                    # Solo un registro de madrugada: tratar como entrada de turno muy temprano
-                    hora_entrada = horas_madrugada[0]
+                    # Hay entrada diurna real → tomar la primera (puede ser antes de las 7:30)
+                    hora_entrada = horas_manana[0]  # Primera hora de la mañana
+                    # Si además hay madrugada, es una salida de turno nocturno previo
+                else:
+                    # Sin registros de mañana: la madrugada es la entrada real (turno muy temprano)
+                    if horas_madrugada:
+                        hora_entrada = horas_madrugada[0]
 
                 if horas_tarde:
                     hora_salida = horas_tarde[-1]  # Última hora de la tarde
-                elif horas_madrugada and not hora_entrada:
-                    # Si la madrugada no se usó como entrada, es una salida de turno nocturno
-                    hora_salida = horas_madrugada[-1]
 
                 # Crear o actualizar registro de asistencia
                 registro, created = RegistroAsistencia.objects.get_or_create(
