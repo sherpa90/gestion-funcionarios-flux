@@ -99,7 +99,7 @@
             <h3 class="text-lg font-semibold text-gray-900">Seleccionar Archivo Excel</h3>
         </div>
 
-        <form method="post" enctype="multipart/form-data" class="p-6">
+        <form method="post" enctype="multipart/form-data" class="p-6" id="cargaForm">
             {% csrf_token %}
 
             <!-- Campo de Archivo -->
@@ -166,12 +166,29 @@
                    class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     <i class="fas fa-arrow-left mr-2"></i> Volver
                 </a>
-                <button type="submit"
+                <button type="submit" id="submitBtn"
                         class="inline-flex items-center px-6 py-2 border border-transparent shadow-sm text-sm font-bold rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    <i class="fas fa-cog mr-2"></i> Procesar
+                    <i class="fas fa-cog mr-2" id="submitIcon"></i>
+                    <span id="submitText">Procesar</span>
                 </button>
             </div>
         </form>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-sm mx-4 text-center animate-in fade-in duration-300">
+                <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Procesando Registros</h3>
+                <p class="text-gray-600 text-sm mb-4">Analizando archivo y creando registros de asistencia...</p>
+                <div class="flex items-center justify-center space-x-1 text-xs text-gray-500">
+                    <div class="flex space-x-1">
+                        <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                        <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                        <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Ejemplos de Archivos -->
@@ -302,6 +319,43 @@ document.getElementById('id_archivo_excel').addEventListener('change', function(
         // Actualizar el texto del label
         const label = document.querySelector('label[for="id_archivo_excel"]');
         label.innerHTML = `<span>${fileName}</span> <span class="text-gray-500">(${fileSize} MB)</span>`;
+    }
+});
+</script>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('cargaForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitIcon = document.getElementById('submitIcon');
+    const submitText = document.getElementById('submitText');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    form.addEventListener('submit', function(e) {
+        // Mostrar loading overlay
+        loadingOverlay.classList.remove('hidden');
+
+        // Cambiar botón a estado de carga
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        submitBtn.classList.add('bg-gray-500', 'cursor-not-allowed');
+
+        submitIcon.className = 'fas fa-spinner fa-spin mr-2';
+        submitText.textContent = 'Procesando...';
+
+        // El formulario se enviará normalmente
+    });
+
+    // Ocultar loading si hay errores de validación
+    const formErrors = document.querySelectorAll('.text-red-600');
+    if (formErrors.length > 0) {
+        loadingOverlay.classList.add('hidden');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('bg-gray-500', 'cursor-not-allowed');
+        submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        submitIcon.className = 'fas fa-cog mr-2';
+        submitText.textContent = 'Procesar';
     }
 });
 </script>

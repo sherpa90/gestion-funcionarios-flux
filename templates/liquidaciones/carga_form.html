@@ -71,7 +71,7 @@
             </div>
             {% endif %}
 
-            <form method="post" enctype="multipart/form-data" class="space-y-6">
+            <form method="post" enctype="multipart/form-data" class="space-y-6" id="cargaForm">
                 {% csrf_token %}
 
                 <div>
@@ -114,14 +114,69 @@
                 </div>
 
                 <div class="flex justify-end pt-4">
-                    <button type="submit"
+                    <button type="submit" id="submitBtn"
                         class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg focus:outline-none focus:shadow-outline transition duration-150 ease-in-out shadow-md">
-                        <i class="fas fa-cog mr-2"></i> Procesar
+                        <i class="fas fa-cog mr-2" id="submitIcon"></i>
+                        <span id="submitText">Procesar</span>
                     </button>
                 </div>
             </form>
+
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+                <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-sm mx-4 text-center animate-in fade-in duration-300">
+                    <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Procesando Liquidaciones</h3>
+                    <p class="text-gray-600 text-sm mb-4">Analizando archivo PDF y extrayendo información...</p>
+                    <div class="flex items-center justify-center space-x-1 text-xs text-gray-500">
+                        <div class="flex space-x-1">
+                            <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                            <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                            <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('cargaForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitIcon = document.getElementById('submitIcon');
+    const submitText = document.getElementById('submitText');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    form.addEventListener('submit', function(e) {
+        // Mostrar loading overlay
+        loadingOverlay.classList.remove('hidden');
+
+        // Cambiar botón a estado de carga
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        submitBtn.classList.add('bg-gray-500', 'cursor-not-allowed');
+
+        submitIcon.className = 'fas fa-spinner fa-spin mr-2';
+        submitText.textContent = 'Procesando...';
+
+        // El formulario se enviará normalmente
+    });
+
+    // Ocultar loading si hay errores de validación
+    const formErrors = document.querySelectorAll('.text-red-600');
+    if (formErrors.length > 0) {
+        loadingOverlay.classList.add('hidden');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('bg-gray-500', 'cursor-not-allowed');
+        submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        submitIcon.className = 'fas fa-cog mr-2';
+        submitText.textContent = 'Procesar';
+    }
+});
+</script>
 {% endblock %}
