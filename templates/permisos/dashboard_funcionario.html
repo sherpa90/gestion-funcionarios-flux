@@ -306,6 +306,141 @@
       color: #cbd5e1;
       margin-bottom: 1rem;
   }
+
+  /* --- Estilos Efemérides Premium --- */
+  .efe-grid-mobile {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+      padding: 1.25rem;
+  }
+
+  .efe-card {
+      background: white;
+      border-radius: 1.75rem;
+      border: 1px solid #f1f5f9;
+      padding: 1.25rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      position: relative;
+      overflow: hidden;
+  }
+  .efe-card:active { transform: scale(0.98); }
+  .efe-card:hover {
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+      border-color: #fde68a;
+  }
+  
+  .efe-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: #f59e0b; /* amber-500 */
+      opacity: 0.5;
+  }
+
+  .efe-date-badge {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+  }
+  .efe-date-box {
+      width: 3.75rem;
+      height: 3.75rem;
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      border: 1px solid #fde68a;
+      border-radius: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(245, 158, 11, 0.1);
+  }
+  .efe-date-box .month {
+      font-size: 0.7rem;
+      font-weight: 900;
+      color: #b45309;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+  }
+  .efe-date-box .day {
+      font-size: 1.4rem;
+      font-weight: 950;
+      color: #92400e;
+      line-height: 1;
+  }
+
+  .efe-content-header {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+  }
+  .efe-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.3;
+  }
+  .efe-weekday {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: capitalize;
+  }
+
+  .efe-description {
+      font-size: 0.85rem;
+      color: #64748b;
+      line-height: 1.5;
+      padding: 0.75rem;
+      background: #f8fafc;
+      border-radius: 1rem;
+      border: 1px dashed #e2e8f0;
+  }
+
+  .efe-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.25rem;
+  }
+  .efe-resp-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      background: #f1f5f9;
+      color: #475569;
+      border-radius: 99px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+  }
+
+  .efe-actions-mobile {
+      display: flex;
+      gap: 0.5rem;
+  }
+  .efe-icon-btn {
+      width: 2.5rem;
+      height: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.75rem;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+  }
+  .btn-google { background: #eff6ff; color: #2563eb; }
+  .btn-edit-efe { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+  .btn-delete-efe { background: #fff1f2; color: #e11d48; }
+
 </style>
 
 <div class="premium-container" x-data="{ activeTab: 'permisos' }">
@@ -572,32 +707,42 @@
   <div x-show="activeTab === 'efemerides'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
       <div class="flex flex-col gap-8">
           <!-- Listado de Efemérides -->
-          <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-500">
-              <div class="px-6 py-5 border-bottom border-gray-50 flex flex-col md:flex-row md:items-center justify-between bg-amber-50/40 gap-4">
-                  <h3 class="text-base font-black text-gray-900 flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-xl bg-amber-100/50 flex items-center justify-center">
-                          <i class="fas fa-bullhorn text-amber-600 text-lg"></i>
+          <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-500">
+              
+              <!-- Header Responsivo -->
+              <div class="px-6 py-6 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between bg-amber-50/40 gap-6">
+                  <div class="flex items-center gap-4">
+                      <div class="w-12 h-12 rounded-2xl bg-amber-100/60 flex items-center justify-center shadow-sm border border-amber-200/50">
+                          <i class="fas fa-bullhorn text-amber-600 text-xl"></i>
                       </div>
-                      Calendario de Hitos
-                  </h3>
+                      <div>
+                          <h3 class="text-lg font-black text-slate-800 leading-tight">Calendario de Hitos</h3>
+                          <div class="flex items-center gap-2 mt-1">
+                              <span class="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                              <span class="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Próximos Eventos</span>
+                          </div>
+                      </div>
+                  </div>
                   
-                  <div class="flex items-center gap-3">
+                  <div class="flex items-center justify-between sm:justify-end gap-4">
+                      <div class="bg-white/80 backdrop-blur px-4 py-2 rounded-2xl border border-amber-200 shadow-sm">
+                          <span class="text-[11px] font-black text-amber-800 uppercase tracking-tighter mr-2">Total</span>
+                          <span class="text-lg font-black text-amber-600">{{ efemerides|length }}</span>
+                      </div>
                       {% if user.role in 'ADMIN DIRECTOR DIRECTIVO SECRETARIA' %}
-                      <a href="{% url 'admin_dashboard:efemeride_create' %}" class="inline-flex items-center px-4 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-amber-600 transition-all shadow-md">
-                          <i class="fas fa-plus mr-2"></i> Nueva Efeméride
+                      <a href="{% url 'admin_dashboard:efemeride_create' %}" class="inline-flex items-center px-5 py-3 bg-slate-900 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-amber-600 transition-all shadow-lg hover:shadow-amber-500/20 active:scale-95">
+                          <i class="fas fa-plus mr-2"></i> Nuevo
                       </a>
                       {% endif %}
-                      <div class="flex items-center gap-2">
-                          <span class="text-[10px] font-bold text-amber-500 uppercase tracking-widest mr-2">Próximos Eventos</span>
-                          <span class="bg-amber-100 text-amber-700 text-[12px] font-black px-3 py-0.5 rounded-full uppercase">{{ efemerides|length }}</span>
-                      </div>
                   </div>
               </div>
 
-              <div class="overflow-x-auto">
+              {% if efemerides %}
+              <!-- DESKTOP TABLE VIEW (Solo visible en LG+) -->
+              <div class="hidden lg:block overflow-x-auto">
                   <table class="min-w-full">
                       <thead>
-                          <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-bottom border-gray-100 bg-gray-50/30">
+                          <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 bg-gray-50/30">
                               <th class="px-8 py-5 text-left">Actividad / Conmemoración</th>
                               <th class="px-8 py-5 text-left">Fecha</th>
                               <th class="px-8 py-5 text-left">Responsable</th>
@@ -615,7 +760,7 @@
                               </td>
                               <td class="px-8 py-6 whitespace-nowrap">
                                   <div class="flex items-center gap-3">
-                                      <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex flex-col items-center justify-center group-hover:bg-white group-hover:border-amber-100 transition-all">
+                                      <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex flex-col items-center justify-center group-hover:bg-white group-hover:border-amber-100 transition-all shadow-sm">
                                           <span class="text-[9px] font-black text-gray-400 uppercase">{{ efe.fecha|date:"M" }}</span>
                                           <span class="text-sm font-black text-gray-900">{{ efe.fecha|date:"d" }}</span>
                                       </div>
@@ -650,23 +795,76 @@
                                   </div>
                               </td>
                           </tr>
-                          {% empty %}
-                          <tr>
-                              <td colspan="4" class="px-8 py-20 text-center">
-                                  <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                      <i class="fas fa-star text-gray-200 text-3xl"></i>
-                                  </div>
-                                  <h4 class="text-lg font-black text-gray-900 uppercase tracking-widest">Sin Efemérides</h4>
-                                  <p class="text-sm text-gray-400 mt-2 font-medium max-w-xs mx-auto">No hay hitos registrados para mostrar actualmente.</p>
-                              </td>
-                          </tr>
                           {% endfor %}
                       </tbody>
                   </table>
               </div>
+
+              <!-- MOBILE CARDS VIEW (Visible en < LG) -->
+              <div class="block lg:hidden efe-grid-mobile">
+                  {% for efe in efemerides %}
+                  <div class="efe-card">
+                      <div class="efe-date-badge">
+                          <div class="efe-date-box">
+                              <span class="month">{{ efe.fecha|date:"M" }}</span>
+                              <span class="day">{{ efe.fecha|date:"d" }}</span>
+                          </div>
+                          <div class="efe-content-header">
+                              <h4 class="efe-title">{{ efe.titulo }}</h4>
+                              <span class="efe-weekday">{{ efe.fecha|date:"l" }}</span>
+                          </div>
+                      </div>
+
+                      {% if efe.descripcion %}
+                      <div class="efe-description">
+                          {{ efe.descripcion }}
+                      </div>
+                      {% endif %}
+
+                      <div class="efe-footer">
+                          {% if efe.responsable %}
+                          <span class="efe-resp-pill">
+                              <i class="fas fa-user-circle"></i> {{ efe.responsable }}
+                          </span>
+                          {% else %}
+                          <span></span>
+                          {% endif %}
+
+                          <div class="efe-actions-mobile">
+                              <a href="{{ efe.google_calendar_url }}" target="_blank" class="efe-icon-btn btn-google" title="Google Calendar">
+                                  <i class="fab fa-google"></i>
+                              </a>
+                              {% if user.role in 'ADMIN DIRECTOR DIRECTIVO SECRETARIA' %}
+                              <a href="{% url 'admin_dashboard:efemeride_update' efe.id %}" class="efe-icon-btn btn-edit-efe">
+                                  <i class="fas fa-pen"></i>
+                              </a>
+                              <form action="{% url 'admin_dashboard:efemeride_delete' efe.id %}" method="post" onsubmit="return confirm('¿Eliminar?')">
+                                  {% csrf_token %}
+                                  <button type="submit" class="efe-icon-btn btn-delete-efe">
+                                      <i class="fas fa-trash"></i>
+                                  </button>
+                              </form>
+                              {% endif %}
+                          </div>
+                      </div>
+                  </div>
+                  {% endfor %}
+              </div>
+
+              {% else %}
+              <!-- Empty State -->
+              <div class="px-8 py-20 text-center">
+                  <div class="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                      <i class="fas fa-star text-amber-200 text-4xl"></i>
+                  </div>
+                  <h4 class="text-xl font-black text-gray-900 uppercase tracking-widest">Sin Efemérides</h4>
+                  <p class="text-sm text-gray-400 mt-2 font-medium max-w-xs mx-auto">No hay hitos registrados para mostrar actualmente en el calendario escolar.</p>
+              </div>
+              {% endif %}
           </div>
       </div>
   </div>
+
 
 </div>
 {% endblock %}
