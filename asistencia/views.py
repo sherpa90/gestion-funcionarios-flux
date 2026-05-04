@@ -429,6 +429,16 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 licencias_por_fecha[d] = licencia
                 d += td(days=1)
 
+        # Obtener horario actual del usuario para determinar días activos
+        horario_actual = HorarioFuncionario.objects.filter(
+            funcionario=self.request.user, activo=True
+        ).first()
+
+        dias_configurados = {}
+        if horario_actual:
+            for dh in horario_actual.dias.all():
+                dias_configurados[dh.dia_semana] = dh
+
         # Generar estructura de calendario mensual
         cal = Calendar(firstweekday=0)  # Lunes como primer día
         semanas_calendario = []
@@ -609,11 +619,6 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             anios_con_registros = [anio_actual, anio_actual - 1]
         
         context['anios_disponibles'] = anios_con_registros
-
-        # Horario asignado
-        horario_actual = HorarioFuncionario.objects.filter(
-            funcionario=self.request.user, activo=True
-        ).first()
 
         # Generar horario_semanal
         horario_semanal = []
