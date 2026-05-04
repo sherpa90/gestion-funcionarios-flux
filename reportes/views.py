@@ -657,12 +657,45 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                 ""
             ])
 
+        # Pestaña 4: Horarios del Personal
+        ws_horarios = wb.create_sheet(title="Horarios del Personal")
+        ws_horarios.append(['N°', 'Nombre Completo', 'RUN', 'Cargo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+        for col in ['A']:
+            ws_horarios.column_dimensions[col].width = 10
+        for col in ['B', 'C', 'D']:
+            ws_horarios.column_dimensions[col].width = 25
+        for col in ['E', 'F', 'G', 'H', 'I', 'J', 'K']:
+            ws_horarios.column_dimensions[col].width = 15
+
+        from asistencia.models import HorarioFuncionario
+        DIA_CHOICES_DICT = {
+            0: 'Lunes', 1: 'Martes', 2: 'Miércoles',
+            3: 'Jueves', 4: 'Viernes', 5: 'Sábado', 6: 'Domingo'
+        }
+
+        for i, f in enumerate(funcionarios, 1):
+            horario = HorarioFuncionario.objects.filter(funcionario=f, activo=True).first()
+            dias_configurados = {}
+            if horario:
+                for dh in horario.dias.all():
+                    dias_configurados[dh.dia_semana] = dh
+
+            row = [i, f.get_full_name() or f.username, f.run, f.get_funcion_display() or ""]
+            for dia_num in range(7):
+                dia_obj = dias_configurados.get(dia_num)
+                if dia_obj and dia_obj.activo and dia_obj.hora_entrada and dia_obj.hora_salida:
+                    horario_str = f"{dia_obj.hora_entrada.strftime('%H:%M')}-{dia_obj.hora_salida.strftime('%H:%M')}"
+                else:
+                    horario_str = "Libre"
+                row.append(horario_str)
+            ws_horarios.append(row)
+
         # Pestañas estilo (Header en negrita)
         from openpyxl.styles import Font, PatternFill
         header_font = Font(bold=True, color="FFFFFF")
         fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
 
-        for ws in [ws_nomina, ws_permisos, ws_licencias]:
+        for ws in [ws_nomina, ws_permisos, ws_licencias, ws_horarios]:
             for cell in ws[1]:
                 cell.font = header_font
                 cell.fill = fill
