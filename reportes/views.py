@@ -1128,7 +1128,7 @@ class ExportarJustificacionesExcelView(LoginRequiredMixin, UserPassesTestMixin, 
         ws.title = "Justificaciones Aprobadas"
 
         # Headers
-        headers = ['N°', 'Nombre Completo', 'RUN', 'Cargo', 'Fecha', 'Tipo', 'Motivo', 'Estado Alegación', 'Revisado Por']
+        headers = ['N°', 'Nombre Completo', 'RUN', 'Cargo', 'Fecha', 'Tipo', 'Hora de Llegada', 'Estado Alegación', 'Revisado Por', 'Justificación Manual']
         ws.append(headers)
 
         # Column widths
@@ -1141,16 +1141,59 @@ class ExportarJustificacionesExcelView(LoginRequiredMixin, UserPassesTestMixin, 
         ).select_related(
             'registro_asistencia__funcionario',
             'revisado_por'
-        ).order_by('registro_asistencia__fecha', 'registro_asistencia__funcionario__first_name')
+        )
+
+        # Query justificaciones manuales (registros justificados por admin)
+        justificaciones_manuales = RegistroAsistencia.objects.filter(
+            justificado_por__isnull=False
+        ).select_related('funcionario', 'justificado_por')
 
         if year:
             alegaciones = alegaciones.filter(registro_asistencia__fecha__year=year)
+            justificaciones_manuales = justificaciones_manuales.filter(fecha__year=year)
         if mes:
             alegaciones = alegaciones.filter(registro_asistencia__fecha__month=mes)
+            justificaciones_manuales = justificaciones_manuales.filter(fecha__month=mes)
 
-        for i, alegacion in enumerate(alegaciones, 1):
+        # Combinar y ordenar todas las justificaciones
+        todas_justificaciones = []
+
+        # Agregar alegaciones aprobadas
+        for alegacion in alegaciones.order_by('registro_asistencia__fecha', 'registro_asistencia__funcionario__first_name'):
             reg = alegacion.registro_asistencia
             tipo = "Atraso" if reg.estado == 'RETRASO' else "Inasistencia" if reg.estado == 'AUSENTE' else reg.get_estado_display()
+
+            todas_justificaciones.append({
+                'tipo_justificacion': 'alegacion',
+                'registro': reg,
+                'alegacion': alegacion,
+                'tipo': tipo,
+                'hora_llegada': reg.hora_entrada_real.strftime('%H:%M') if reg.hora_entrada_real else '-',
+                'estado': alegacion.get_estado_display(),
+                'revisado_por': alegacion.revisado_por.get_full_name() if alegacion.revisado_por else "",
+                'justificacion_manual': reg.justificacion_manual or ""
+            })
+
+        # Agregar justificaciones manuales
+        for reg in justificaciones_manuales.order_by('fecha', 'funcionario__first_name'):
+            tipo = "Atraso" if reg.estado == 'RETRASO' else "Inasistencia" if reg.estado == 'AUSENTE' else reg.get_estado_display()
+
+            todas_justificaciones.append({
+                'tipo_justificacion': 'manual',
+                'registro': reg,
+                'alegacion': None,
+                'tipo': tipo,
+                'hora_llegada': reg.hora_entrada_real.strftime('%H:%M') if reg.hora_entrada_real else '-',
+                'estado': "Justificado Manualmente",
+                'revisado_por': reg.justificado_por.get_full_name() if reg.justificado_por else "",
+                'justificacion_manual': reg.justificacion_manual or ""
+            })
+
+        # Ordenar todas las justificaciones por fecha y nombre
+        todas_justificaciones.sort(key=lambda x: (x['registro'].fecha, x['registro'].funcionario.first_name))
+
+        for i, just in enumerate(todas_justificaciones, 1):
+            reg = just['registro']
 
             ws.append([
                 i,
@@ -1158,11 +1201,11 @@ class ExportarJustificacionesExcelView(LoginRequiredMixin, UserPassesTestMixin, 
                 reg.funcionario.run,
                 reg.funcionario.get_funcion_display() or "",
                 reg.fecha.strftime("%d-%m-%Y") if reg.fecha else "",
-                tipo,
-                alegacion.motivo[:100] + "..." if len(alegacion.motivo) > 100 else alegacion.motivo,
-                alegacion.get_estado_display(),
-                alegacion.revisado_por.get_full_name() if alegacion.revisado_por else "",
-                reg.justificacion_manual[:100] + "..." if reg.justificacion_manual and len(reg.justificacion_manual) > 100 else reg.justificacion_manual or ""
+                just['tipo'],
+                just['hora_llegada'],
+                just['estado'],
+                just['revisado_por'],
+                just['justificacion_manual'][:100] + "..." if just['justificacion_manual'] and len(just['justificacion_manual']) > 100 else just['justificacion_manual'] or ""
             ])
 
         # Styling
@@ -1200,16 +1243,25 @@ class ExportarJustificacionesPDFView(LoginRequiredMixin, UserPassesTestMixin, Vi
         ).select_related(
             'registro_asistencia__funcionario',
             'revisado_por'
-        ).order_by('registro_asistencia__fecha', 'registro_asistencia__funcionario__first_name')
+        )
+
+        # Query justificaciones manuales (registros justificados por admin)
+        justificaciones_manuales = RegistroAsistencia.objects.filter(
+            justificado_por__isnull=False
+        ).select_related('funcionario', 'justificado_por')
 
         if year:
             alegaciones = alegaciones.filter(registro_asistencia__fecha__year=year)
+            justificaciones_manuales = justificaciones_manuales.filter(fecha__year=year)
         if mes:
             alegaciones = alegaciones.filter(registro_asistencia__fecha__month=mes)
+            justificaciones_manuales = justificaciones_manuales.filter(fecha__month=mes)
 
         # Preparar datos para el template
         justificaciones = []
-        for alegacion in alegaciones:
+
+        # Agregar alegaciones aprobadas
+        for alegacion in alegaciones.order_by('registro_asistencia__fecha', 'registro_asistencia__funcionario__first_name'):
             reg = alegacion.registro_asistencia
             tipo = "Atraso" if reg.estado == 'RETRASO' else "Inasistencia" if reg.estado == 'AUSENTE' else reg.get_estado_display()
 
@@ -1219,11 +1271,30 @@ class ExportarJustificacionesPDFView(LoginRequiredMixin, UserPassesTestMixin, Vi
                 'cargo': reg.funcionario.get_funcion_display() or "",
                 'fecha': reg.fecha.strftime("%d-%m-%Y") if reg.fecha else "",
                 'tipo': tipo,
-                'motivo': alegacion.motivo[:200] + "..." if len(alegacion.motivo) > 200 else alegacion.motivo,
+                'hora_llegada': reg.hora_entrada_real.strftime('%H:%M') if reg.hora_entrada_real else '-',
                 'estado': alegacion.get_estado_display(),
                 'revisado_por': alegacion.revisado_por.get_full_name() if alegacion.revisado_por else "",
                 'justificacion_manual': reg.justificacion_manual[:200] + "..." if reg.justificacion_manual and len(reg.justificacion_manual) > 200 else reg.justificacion_manual or ""
             })
+
+        # Agregar justificaciones manuales
+        for reg in justificaciones_manuales.order_by('fecha', 'funcionario__first_name'):
+            tipo = "Atraso" if reg.estado == 'RETRASO' else "Inasistencia" if reg.estado == 'AUSENTE' else reg.get_estado_display()
+
+            justificaciones.append({
+                'nombre_completo': reg.funcionario.get_full_name() or reg.funcionario.username,
+                'run': reg.funcionario.run,
+                'cargo': reg.funcionario.get_funcion_display() or "",
+                'fecha': reg.fecha.strftime("%d-%m-%Y") if reg.fecha else "",
+                'tipo': tipo,
+                'hora_llegada': reg.hora_entrada_real.strftime('%H:%M') if reg.hora_entrada_real else '-',
+                'estado': "Justificado Manualmente",
+                'revisado_por': reg.justificado_por.get_full_name() if reg.justificado_por else "",
+                'justificacion_manual': reg.justificacion_manual or ""
+            })
+
+        # Ordenar todas las justificaciones por fecha y nombre
+        justificaciones.sort(key=lambda x: (x['fecha'], x['nombre_completo']))
 
         html_string = render_to_string('reportes/pdf_justificaciones.html', {
             'justificaciones': justificaciones,
