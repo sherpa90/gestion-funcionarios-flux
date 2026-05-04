@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Calendario de Hitos {{ year }}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 2cm 2cm;
+            @top-center {
+                content: "Reporte Generado el {{ fecha_exportacion }}";
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 8px;
+                color: #94a3b8;
+            }
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 9px;
+                color: #64748b;
+            }
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            line-height: 1.4;
+            font-size: 11px;
+        }
+        .header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #0f172a;
+            font-size: 22px;
+            margin: 0 0 5px 0;
+            text-transform: uppercase;
+        }
+        .header h2 {
+            color: #475569;
+            font-size: 14px;
+            margin: 0;
+            font-weight: normal;
+        }
+        .header p {
+            color: #64748b;
+            font-size: 10px;
+            margin: 5px 0 0 0;
+        }
+        .summary-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+        .month-section {
+            margin-bottom: 20px;
+        }
+        .month-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #b45309; /* amber-700 */
+            border-bottom: 1px solid #fcd34d; /* amber-300 */
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        th {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-size: 9px;
+            text-transform: uppercase;
+            padding: 8px;
+            text-align: left;
+            border-bottom: 2px solid #cbd5e1;
+        }
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .event-title {
+            font-weight: bold;
+            color: #0f172a;
+            font-size: 12px;
+        }
+        .event-desc {
+            color: #64748b;
+            font-size: 10px;
+            margin-top: 3px;
+        }
+        .empty-state {
+            text-align: center;
+            color: #94a3b8;
+            font-style: italic;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Calendario de Hitos y Efemérides</h1>
+        <h2>{{ establecimiento }} - Año {{ year }}</h2>
+        <p>Generado por: {{ solicitante.get_full_name|default:solicitante.username }}</p>
+    </div>
+
+    <div class="summary-box">
+        <strong>Total de Eventos Registrados ({{ year }}):</strong> {{ total_efemerides }}
+    </div>
+
+    {% if meses_data %}
+        {% for mes in meses_data %}
+        <div class="month-section">
+            <div class="month-title">{{ mes.nombre }}</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%">Fecha</th>
+                        <th style="width: 50%">Actividad / Conmemoración</th>
+                        <th style="width: 25%">Responsable</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for efe in mes.eventos %}
+                    <tr>
+                        <td>
+                            <strong>{{ efe.fecha|date:"d M, Y" }}</strong>
+                            {% if efe.fecha_hasta %}
+                            <br><span style="color: #64748b; font-size: 9px;">al {{ efe.fecha_hasta|date:"d M, Y" }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="event-title">{{ efe.titulo }}</div>
+                            {% if efe.descripcion %}
+                            <div class="event-desc">{{ efe.descripcion }}</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ efe.responsable|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            No hay efemérides ni hitos registrados para el año {{ year }}.
+        </div>
+    {% endif %}
+</body>
+</html>

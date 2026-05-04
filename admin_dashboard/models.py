@@ -1,7 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-
+from datetime import timedelta
+import urllib.parse
 
 class SystemLog(models.Model):
     TIPO_CHOICES = [
@@ -75,6 +76,7 @@ class ImportacionUsuarios(models.Model):
 class Efemeride(models.Model):
     titulo = models.CharField(max_length=255, verbose_name='Actividad o Conmemoración')
     fecha = models.DateField(verbose_name='Fecha')
+    fecha_hasta = models.DateField(verbose_name='Fecha Hasta', null=True, blank=True)
     responsable = models.CharField(max_length=255, blank=True, null=True, verbose_name='Responsable')
     descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción')
     
@@ -92,4 +94,25 @@ class Efemeride(models.Model):
         verbose_name_plural = 'Efemérides'
 
     def __str__(self):
+        if self.fecha_hasta:
+            return f"{self.fecha} al {self.fecha_hasta} - {self.titulo}"
         return f"{self.fecha} - {self.titulo}"
+
+    @property
+    def google_calendar_url(self):
+        base_url = "https://www.google.com/calendar/render?action=TEMPLATE"
+        date_start = self.fecha.strftime('%Y%m%d')
+        
+        if self.fecha_hasta:
+            # Google Calendar end date is exclusive for all-day events
+            date_end = (self.fecha_hasta + timedelta(days=1)).strftime('%Y%m%d')
+        else:
+            date_end = (self.fecha + timedelta(days=1)).strftime('%Y%m%d')
+            
+        details = f"Responsable: {self.responsable or 'No especificado'}\n{self.descripcion or ''}"
+        params = {
+            'text': self.titulo,
+            'dates': f"{date_start}/{date_end}",
+            'details': details,
+        }
+        return f"{base_url}&{urllib.parse.urlencode(params)}"

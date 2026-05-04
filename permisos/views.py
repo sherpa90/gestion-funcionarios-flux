@@ -153,19 +153,25 @@ class SolicitudListView(LoginRequiredMixin, ListView):
         context['dias_totales'] = 6.0  # Total de días administrativos por año
         
         # --- Efemérides para el Dashboard del Funcionario ---
-        efemerides = Efemeride.objects.all().order_by('fecha')
-        for efe in efemerides:
-            base_url = "https://www.google.com/calendar/render?action=TEMPLATE"
-            date_start = efe.fecha.strftime('%Y%m%d')
-            date_end = (efe.fecha + timedelta(days=1)).strftime('%Y%m%d')
-            details = f"Responsable: {efe.responsable or 'No especificado'}\n{efe.descripcion or ''}"
-            params = {
-                'text': efe.titulo,
-                'dates': f"{date_start}/{date_end}",
-                'details': details,
-            }
-            efe.google_calendar_url = f"{base_url}&{urllib.parse.urlencode(params)}"
-        context['efemerides'] = efemerides
+        efe_year_str = self.request.GET.get('efe_year', str(timezone.now().year))
+        try:
+            efe_year = int(efe_year_str)
+        except ValueError:
+            efe_year = timezone.now().year
+            
+        context['efemerides'] = Efemeride.objects.filter(fecha__year=efe_year).order_by('fecha')
+        
+        # Años disponibles para efemérides
+        efe_years = set(Efemeride.objects.dates('fecha', 'year').values_list('fecha__year', flat=True))
+        all_efe_years = sorted(list(efe_years), reverse=True)
+        if not all_efe_years:
+            all_efe_years = [timezone.now().year]
+        if efe_year not in all_efe_years:
+            all_efe_years.append(efe_year)
+            all_efe_years.sort(reverse=True)
+            
+        context['efe_years'] = all_efe_years
+        context['current_efe_year'] = efe_year
         
         return context
 
@@ -224,19 +230,24 @@ class SolicitudDirectorDashboardView(LoginRequiredMixin, UserPassesTestMixin, Li
         context['dias_totales'] = getattr(self.request.user, 'dias_totales', 6.0)
 
         # --- Efemérides para el Dashboard de Gestión ---
-        efemerides = Efemeride.objects.all().order_by('fecha')
-        for efe in efemerides:
-            base_url = "https://www.google.com/calendar/render?action=TEMPLATE"
-            date_start = efe.fecha.strftime('%Y%m%d')
-            date_end = (efe.fecha + timedelta(days=1)).strftime('%Y%m%d')
-            details = f"Responsable: {efe.responsable or 'No especificado'}\n{efe.descripcion or ''}"
-            params = {
-                'text': efe.titulo,
-                'dates': f"{date_start}/{date_end}",
-                'details': details,
-            }
-            efe.google_calendar_url = f"{base_url}&{urllib.parse.urlencode(params)}"
-        context['efemerides'] = efemerides
+        efe_year_str = self.request.GET.get('efe_year', str(timezone.now().year))
+        try:
+            efe_year = int(efe_year_str)
+        except ValueError:
+            efe_year = timezone.now().year
+            
+        context['efemerides'] = Efemeride.objects.filter(fecha__year=efe_year).order_by('fecha')
+        
+        efe_years = set(Efemeride.objects.dates('fecha', 'year').values_list('fecha__year', flat=True))
+        all_efe_years = sorted(list(efe_years), reverse=True)
+        if not all_efe_years:
+            all_efe_years = [timezone.now().year]
+        if efe_year not in all_efe_years:
+            all_efe_years.append(efe_year)
+            all_efe_years.sort(reverse=True)
+            
+        context['efe_years'] = all_efe_years
+        context['current_efe_year'] = efe_year
 
         return context
 
@@ -282,19 +293,24 @@ class SolicitudAdminListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         context['current_filter'] = self.request.GET.get('status', 'all')
         
         # --- Efemérides para el Dashboard de Gestión ---
-        efemerides = Efemeride.objects.all().order_by('fecha')
-        for efe in efemerides:
-            base_url = "https://www.google.com/calendar/render?action=TEMPLATE"
-            date_start = efe.fecha.strftime('%Y%m%d')
-            date_end = (efe.fecha + timedelta(days=1)).strftime('%Y%m%d')
-            details = f"Responsable: {efe.responsable or 'No especificado'}\n{efe.descripcion or ''}"
-            params = {
-                'text': efe.titulo,
-                'dates': f"{date_start}/{date_end}",
-                'details': details,
-            }
-            efe.google_calendar_url = f"{base_url}&{urllib.parse.urlencode(params)}"
-        context['efemerides'] = efemerides
+        efe_year_str = self.request.GET.get('efe_year', str(timezone.now().year))
+        try:
+            efe_year = int(efe_year_str)
+        except ValueError:
+            efe_year = timezone.now().year
+            
+        context['efemerides'] = Efemeride.objects.filter(fecha__year=efe_year).order_by('fecha')
+        
+        efe_years = set(Efemeride.objects.dates('fecha', 'year').values_list('fecha__year', flat=True))
+        all_efe_years = sorted(list(efe_years), reverse=True)
+        if not all_efe_years:
+            all_efe_years = [timezone.now().year]
+        if efe_year not in all_efe_years:
+            all_efe_years.append(efe_year)
+            all_efe_years.sort(reverse=True)
+            
+        context['efe_years'] = all_efe_years
+        context['current_efe_year'] = efe_year
 
         return context
 
@@ -665,3 +681,58 @@ class SolicitudAdminDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
         )
 
         return redirect('admin_management')
+
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML
+from django.utils.timezone import now
+from datetime import datetime
+
+class EfemeridesPDFView(LoginRequiredMixin, View):
+    """Generar PDF del calendario de Efemérides / Hitos para todos los funcionarios"""
+    
+    def get(self, request):
+        year_str = request.GET.get('year', str(datetime.now().year))
+        try:
+            year = int(year_str)
+        except ValueError:
+            year = datetime.now().year
+            
+        efemerides = Efemeride.objects.filter(fecha__year=year).order_by('fecha')
+        
+        # Agrupar efemérides por mes
+        meses_nombres = {
+            1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio',
+            7: 'Julio', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+        }
+        
+        # Estructura para agrupar: [{'mes': 'Marzo', 'eventos': [...]}, ...]
+        efemerides_por_mes = {}
+        for efe in efemerides:
+            mes_num = efe.fecha.month
+            if mes_num not in efemerides_por_mes:
+                efemerides_por_mes[mes_num] = {
+                    'nombre': meses_nombres[mes_num],
+                    'eventos': []
+                }
+            efemerides_por_mes[mes_num]['eventos'].append(efe)
+            
+        lista_meses = [efemerides_por_mes[m] for m in sorted(efemerides_por_mes.keys())]
+
+        html_string = render_to_string('reportes/pdf_efemerides.html', {
+            'year': year,
+            'meses_data': lista_meses,
+            'total_efemerides': efemerides.count(),
+            'fecha_exportacion': now().strftime('%d/%m/%Y %H:%M'),
+            'establecimiento': 'Dirección de Educación Municipal Los Lagos',
+            'solicitante': request.user,
+        })
+
+        html = HTML(string=html_string)
+        result = html.write_pdf()
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename=calendario_hitos_{year}.pdf'
+        response.write(result)
+        return response
+
