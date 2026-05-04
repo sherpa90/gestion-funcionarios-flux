@@ -1161,7 +1161,8 @@ class ExportarJustificacionesExcelView(LoginRequiredMixin, UserPassesTestMixin, 
                 tipo,
                 alegacion.motivo[:100] + "..." if len(alegacion.motivo) > 100 else alegacion.motivo,
                 alegacion.get_estado_display(),
-                alegacion.revisado_por.get_full_name() if alegacion.revisado_por else ""
+                alegacion.revisado_por.get_full_name() if alegacion.revisado_por else "",
+                reg.justificacion_manual[:100] + "..." if reg.justificacion_manual and len(reg.justificacion_manual) > 100 else reg.justificacion_manual or ""
             ])
 
         # Styling
@@ -1220,7 +1221,8 @@ class ExportarJustificacionesPDFView(LoginRequiredMixin, UserPassesTestMixin, Vi
                 'tipo': tipo,
                 'motivo': alegacion.motivo[:200] + "..." if len(alegacion.motivo) > 200 else alegacion.motivo,
                 'estado': alegacion.get_estado_display(),
-                'revisado_por': alegacion.revisado_por.get_full_name() if alegacion.revisado_por else ""
+                'revisado_por': alegacion.revisado_por.get_full_name() if alegacion.revisado_por else "",
+                'justificacion_manual': reg.justificacion_manual[:200] + "..." if reg.justificacion_manual and len(reg.justificacion_manual) > 200 else reg.justificacion_manual or ""
             })
 
         html_string = render_to_string('reportes/pdf_justificaciones.html', {

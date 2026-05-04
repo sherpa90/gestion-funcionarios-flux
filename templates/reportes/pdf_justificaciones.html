@@ -81,42 +81,44 @@
         <p>Fecha de exportación: {{ fecha_exportacion }}</p>
     </div>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>N°</th>
-                <th>Nombre Completo</th>
-                <th>RUN</th>
-                <th>Cargo</th>
-                <th>Fecha</th>
-                <th>Tipo</th>
-                <th>Motivo</th>
-                <th>Estado</th>
-                <th>Revisado Por</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for justificacion in justificaciones %}
-            <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ justificacion.nombre_completo }}</td>
-                <td>{{ justificacion.run }}</td>
-                <td>{{ justificacion.cargo }}</td>
-                <td>{{ justificacion.fecha }}</td>
-                <td>{{ justificacion.tipo }}</td>
-                <td>{{ justificacion.motivo }}</td>
-                <td>{{ justificacion.estado }}</td>
-                <td>{{ justificacion.revisado_por }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="9" style="text-align: center; padding: 20px; color: #64748b;">
-                    No hay justificaciones aprobadas en este período.
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Nombre Completo</th>
+                    <th>RUN</th>
+                    <th>Cargo</th>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Motivo Alegación</th>
+                    <th>Estado</th>
+                    <th>Revisado Por</th>
+                    <th>Justificación Manual</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for justificacion in justificaciones %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ justificacion.nombre_completo }}</td>
+                    <td>{{ justificacion.run }}</td>
+                    <td>{{ justificacion.cargo }}</td>
+                    <td>{{ justificacion.fecha }}</td>
+                    <td>{{ justificacion.tipo }}</td>
+                    <td>{{ justificacion.motivo }}</td>
+                    <td>{{ justificacion.estado }}</td>
+                    <td>{{ justificacion.revisado_por }}</td>
+                    <td>{{ justificacion.justificacion_manual }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" style="text-align: center; padding: 20px; color: #64748b;">
+                        No hay justificaciones aprobadas en este período.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
     <div class="footer">
         <p>Reporte generado por el sistema de gestión de funcionarios</p>
