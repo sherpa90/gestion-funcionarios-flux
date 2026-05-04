@@ -606,10 +606,10 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             
         # Pestaña 2: Permisos Administrativos
         ws_permisos = wb.create_sheet(title="Permisos Administrativos")
-        ws_permisos.append(['N°', 'Funcionario', 'RUN', 'Días Solicitados', 'Fecha Desde', 'Fecha Hasta', 'Fecha Solicitud'])
+        ws_permisos.append(['N°', 'Nombre Completo', 'RUN', 'Cargo', 'Tipo de Permiso Administrativo', 'Fecha de Inicio', 'Fecha de Término', 'Cantidad de Días', 'Observaciones'])
         for col in ['A']:
             ws_permisos.column_dimensions[col].width = 10
-        for col in ['B', 'C', 'D', 'E', 'F', 'G']:
+        for col in ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
             ws_permisos.column_dimensions[col].width = 25
 
         permisos = SolicitudPermiso.objects.filter(estado='APROBADO', usuario__in=funcionarios).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
@@ -623,18 +623,20 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                 i,
                 p.usuario.get_full_name() or p.usuario.username,
                 p.usuario.run,
-                float(p.dias_solicitados),
+                p.usuario.get_funcion_display() or "",
+                "",
                 p.fecha_inicio.strftime("%d-%m-%Y") if p.fecha_inicio else "",
                 p.fecha_termino.strftime("%d-%m-%Y") if p.fecha_termino else "",
-                p.created_at.strftime("%d-%m-%Y") if p.created_at else ""
+                float(p.dias_solicitados),
+                ""
             ])
 
         # Pestaña 3: Licencias Médicas
         ws_licencias = wb.create_sheet(title="Licencias Médicas")
-        ws_licencias.append(['N°', 'Funcionario', 'RUN', 'Tipo de Licencia', 'Días', 'Fecha Desde', 'Fecha Hasta'])
+        ws_licencias.append(['N°', 'Nombre Completo', 'RUN', 'Cargo', 'Fecha Inicio', 'Fecha Término', 'Cantidad de Días', 'Observaciones'])
         for col in ['A']:
             ws_licencias.column_dimensions[col].width = 10
-        for col in ['B', 'C', 'D', 'E', 'F', 'G']:
+        for col in ['B', 'C', 'D', 'E', 'F', 'G', 'H']:
             ws_licencias.column_dimensions[col].width = 25
 
         licencias = LicenciaMedica.objects.filter(usuario__in=funcionarios).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
@@ -648,39 +650,11 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                 i,
                 lic.usuario.get_full_name() or lic.usuario.username,
                 lic.usuario.run,
-                "Licencia Médica",
-                lic.dias,
+                lic.usuario.get_funcion_display() or "",
                 lic.fecha_inicio.strftime("%d-%m-%Y") if lic.fecha_inicio else "",
-                lic.fecha_termino.strftime("%d-%m-%Y") if lic.fecha_termino else ""
-            ])
-
-        # Pestaña 4: Asistencia (Inasistencias y Atrasos)
-        ws_asistencia = wb.create_sheet(title="Asistencia")
-        ws_asistencia.append(['N°', 'Funcionario', 'RUN', 'Inasistencias', 'Atrasos', 'Min. Retraso Total'])
-        for col in ['A']:
-            ws_asistencia.column_dimensions[col].width = 10
-        for col in ['B', 'C']:
-            ws_asistencia.column_dimensions[col].width = 30
-        for col in ['D', 'E', 'F']:
-            ws_asistencia.column_dimensions[col].width = 20
-
-        for i, f in enumerate(funcionarios, 1):
-            registros = RegistroAsistencia.objects.filter(funcionario=f)
-            if year:
-                registros = registros.filter(fecha__year=year)
-            if mes:
-                registros = registros.filter(fecha__month=mes)
-            total_inasistencias = registros.filter(estado='AUSENTE').count()
-            total_atrasos = registros.filter(estado='RETRASO').count()
-            total_minutos_retraso = registros.filter(estado='RETRASO').aggregate(
-                total=Sum('minutos_retraso'))['total'] or 0
-            ws_asistencia.append([
-                i,
-                f.get_full_name() or f.username,
-                f.run,
-                total_inasistencias,
-                total_atrasos,
-                total_minutos_retraso
+                lic.fecha_termino.strftime("%d-%m-%Y") if lic.fecha_termino else "",
+                lic.dias,
+                ""
             ])
 
         # Pestañas estilo (Header en negrita)
@@ -688,7 +662,7 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         header_font = Font(bold=True, color="FFFFFF")
         fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
 
-        for ws in [ws_nomina, ws_permisos, ws_licencias, ws_asistencia]:
+        for ws in [ws_nomina, ws_permisos, ws_licencias]:
             for cell in ws[1]:
                 cell.font = header_font
                 cell.fill = fill
