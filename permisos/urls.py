@@ -3,7 +3,7 @@ from .views import (
     SolicitudCreateView, SolicitudListView, SolicitudDirectorDashboardView,
     SolicitudAdminListView, SolicitudActionView, SolicitudBypassView,
     SolicitudAdminManagementView, SolicitudAdminEditView, SolicitudAdminDeleteView,
-    SolicitudCancelView
+    SolicitudCancelView, EfemeridesPDFView
 )
 
 urlpatterns = [
@@ -17,4 +17,5 @@ urlpatterns = [
     path('admin/editar/<int:pk>/', SolicitudAdminEditView.as_view(), name='admin_edit_solicitud'),
     path('admin/eliminar/<int:pk>/', SolicitudAdminDeleteView.as_view(), name='admin_delete_solicitud'),
     path('accion/<int:pk>/<str:action>/', SolicitudActionView.as_view(), name='solicitud_action'),
+    path('efemerides/pdf/', EfemeridesPDFView.as_view(), name='efemerides_pdf'),
 ]

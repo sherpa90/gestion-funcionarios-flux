@@ -9,7 +9,7 @@
     <nav class="flex mb-8" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 md:space-x-3">
             <li class="inline-flex items-center">
-                <a href="{% url 'admin_dashboard:dashboard' %}" class="inline-flex items-center text-xs font-black text-gray-400 hover:text-blue-600 uppercase tracking-widest transition-colors">
+                <a href="{% url 'dashboard_funcionario' %}?tab=efemerides" class="inline-flex items-center text-xs font-black text-gray-400 hover:text-blue-600 uppercase tracking-widest transition-colors">
                     <i class="fas fa-home mr-2"></i> Dashboard
                 </a>
             </li>
@@ -49,15 +49,24 @@
 
                 <!-- Fecha -->
                 <div class="space-y-3">
-                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha del Evento</label>
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha de Inicio</label>
                     {{ form.fecha }}
                     {% if form.fecha.errors %}
                         <p class="text-red-500 text-[10px] font-bold mt-1 uppercase">{{ form.fecha.errors.0 }}</p>
                     {% endif %}
                 </div>
 
-                <!-- Responsable -->
+                <!-- Fecha Hasta -->
                 <div class="space-y-3">
+                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha de Término (Opcional)</label>
+                    {{ form.fecha_hasta }}
+                    {% if form.fecha_hasta.errors %}
+                        <p class="text-red-500 text-[10px] font-bold mt-1 uppercase">{{ form.fecha_hasta.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Responsable -->
+                <div class="md:col-span-2 space-y-3">
                     <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Responsable / Departamento</label>
                     {{ form.responsable }}
                     {% if form.responsable.errors %}
@@ -77,7 +86,7 @@
 
             <!-- Actions -->
             <div class="pt-8 border-t border-gray-50 flex flex-col sm:flex-row justify-end gap-4">
-                <a href="{% url 'admin_dashboard:dashboard' %}" class="inline-flex items-center justify-center px-8 py-4 bg-gray-50 text-gray-500 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-gray-100 transition-all">
+                <a href="{% url 'dashboard_funcionario' %}?tab=efemerides" class="inline-flex items-center justify-center px-8 py-4 bg-gray-50 text-gray-500 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-gray-100 transition-all">
                     Cancelar
                 </a>
                 <button type="submit" class="inline-flex items-center justify-center px-10 py-4 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-amber-600 shadow-xl shadow-gray-200 hover:shadow-amber-100 transition-all transform hover:-translate-y-0.5">

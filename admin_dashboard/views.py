@@ -637,7 +637,10 @@ class EfemerideCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Efemeride
     form_class = EfemerideForm
     template_name = 'admin_dashboard/efemeride_form.html'
-    success_url = reverse_lazy('admin_dashboard:dashboard') # Redirigir al dashboard pestaña efemérides (se manejará por JS)
+    def get_success_url(self):
+        from django.urls import reverse
+        return f"{reverse('dashboard_funcionario')}?tab=efemerides"
+
     
     def test_func(self):
         return self.request.user.role in ['ADMIN', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']
@@ -660,7 +663,10 @@ class EfemerideUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Efemeride
     form_class = EfemerideForm
     template_name = 'admin_dashboard/efemeride_form.html'
-    success_url = reverse_lazy('admin_dashboard:dashboard')
+    def get_success_url(self):
+        from django.urls import reverse
+        return f"{reverse('dashboard_funcionario')}?tab=efemerides"
+
 
     def test_func(self):
         return self.request.user.role in ['ADMIN', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']
@@ -680,7 +686,10 @@ class EfemerideUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 class EfemerideDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Efemeride
-    success_url = reverse_lazy('admin_dashboard:dashboard')
+    def get_success_url(self):
+        from django.urls import reverse
+        return f"{reverse('dashboard_funcionario')}?tab=efemerides"
+
 
     def test_func(self):
         return self.request.user.role in ['ADMIN', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']
