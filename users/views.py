@@ -148,6 +148,14 @@ class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         return self.request.user.role in ['SECRETARIA', 'ADMIN']
     
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        # Prevent SECRETARIA from editing ADMIN or DIRECTOR profiles
+        if self.request.user.role == 'SECRETARIA' and obj.role in ['ADMIN', 'DIRECTOR']:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("No tienes permisos para editar este tipo de usuario.")
+        return obj
+    
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         # Pass the editing user to the form
