@@ -143,6 +143,15 @@ class UserEditForm(forms.ModelForm):
             if field_name in self.fields:
                 self.fields[field_name].widget.attrs.update({'class': widget.attrs.get('class', '')})
         
+        # Limit role choices for SECRETARIA to prevent privilege escalation
+        if editing_user and editing_user.role == 'SECRETARIA':
+            allowed_roles = [
+                ('FUNCIONARIO', 'Funcionario'),
+                ('SECRETARIA', 'Secretaria/o'),
+                ('DIRECTIVO', 'Directivo'),
+            ]
+            self.fields['role'].choices = allowed_roles
+        
         # Set initial value for run field
         if self.instance and self.instance.pk:
             self.fields['run'].initial = self.instance.run
