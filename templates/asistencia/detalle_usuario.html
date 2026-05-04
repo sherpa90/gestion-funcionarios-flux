@@ -206,6 +206,10 @@
                                                     <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-rose-50 text-rose-700 border border-rose-100">
                                                         <i class="fas fa-notes-medical mr-1.5"></i> Licencia
                                                     </span>
+                                                {% elif registro.estado == 'SIN_DATA' %}
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-gray-50 text-gray-400 border border-gray-100 italic">
+                                                        <i class="fas fa-minus-circle mr-1.5"></i> Sin Datos
+                                                    </span>
                                                 {% else %}
                                                     <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-gray-50 text-gray-700 border border-gray-100">
                                                         {{ registro.get_estado_display }}
