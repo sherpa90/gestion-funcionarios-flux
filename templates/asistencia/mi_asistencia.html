@@ -297,8 +297,10 @@
                                 <div class="text-[9px] font-bold text-gray-500 mt-1">
                                     <i class="fas fa-bed text-[7px] mr-0.5"></i>Día Libre
                                 </div>
-                                {% elif reg.estado == 'SIN_HORARIO' %}
-                                <div class="text-[8px] text-gray-300 mt-1">Sin horario</div>
+                                {% elif reg.estado == 'SIN_DATA' %}
+                                <div class="text-[9px] font-bold text-gray-400 mt-1 italic">
+                                    <i class="fas fa-minus-circle text-[7px] mr-0.5"></i>Sin Datos
+                                </div>
                                 {% endif %}
                             {% elif not dia.es_dia_escolar %}
                             <div class="text-[9px] font-bold text-gray-400 mt-1">
@@ -421,6 +423,8 @@
                                 <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-blue-100 text-blue-700">Just.</span>
                                 {% elif reg.estado == 'SIN_MARCACION_ENTRADA' %}
                                 <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-orange-100 text-orange-700">Sin E.</span>
+                                {% elif reg.estado == 'SIN_DATA' %}
+                                 <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-gray-100 text-gray-400 italic">S/D</span>
                                 {% endif %}
                             {% elif dia.es_falta_sin_registro %}
                                 <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-red-200 text-red-800 animate-pulse">FALTA</span>

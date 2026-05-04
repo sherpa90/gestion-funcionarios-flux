@@ -445,6 +445,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             'DIA_ADMINISTRATIVO': 'Día Administrativo',
             'MEDIO_DIA': 'Medio Día Administrativo',
             'LICENCIA_MEDICA': 'Licencia Médica',
+            'SIN_DATA': 'Sin Datos',
         }
 
         class RegistroVirtual:
@@ -497,6 +498,9 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                     # No es falta si hay registro (real o virtual), festivo, o no es día escolar
                     # O si la fecha es anterior a su ingreso al establecimiento
                     es_posterior_a_ingreso = fecha >= self.request.user.date_joined.date()
+                    if not es_posterior_a_ingreso and not registro:
+                        registro = RegistroVirtual('SIN_DATA')
+                        
                     es_falta_sin_registro = es_pasado and not registro and not es_festivo and es_dia_escolar and es_posterior_a_ingreso
 
                     # Los fines de semana solo aplican para serenos
@@ -546,7 +550,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             if dia and dia.get('es_falta_sin_registro')
         )
         stats = {
-            'total': len(todos_registros),
+            'total': sum(1 for r in todos_registros if r.estado != 'SIN_DATA'),
             'puntuales': sum(1 for r in todos_registros if r.estado == 'PUNTUAL'),
             'retraso': sum(1 for r in todos_registros if r.estado == 'RETRASO'),
             'ausente': sum(1 for r in todos_registros if r.estado == 'AUSENTE') + faltas_sin_registro,
@@ -1355,6 +1359,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
             'LICENCIA_MEDICA': 'Licencia Médica',
             'AUSENTE': 'Ausente',
             'FESTIVO': 'Día Festivo',
+            'SIN_DATA': 'Sin Datos',
         }
 
         # Obtener los días laborales del funcionario para marcar ausencias automáticas
@@ -1406,6 +1411,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
         
         anios_disponibles = sorted(list(set(anios_bd)), reverse=True)
 
+        es_sereno = usuario.funcion == 'SERENO'
         for anio in anios_disponibles:
             registros_anio = registros_usuario.filter(fecha__year=anio).order_by('-fecha')
 
@@ -1480,6 +1486,10 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                         en_sem2 = ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
                         en_ano_escolar = en_sem1 or en_sem2
                     
+                    if not es_sereno and d.weekday() >= 5 and d not in registros_reales_dict:
+                        d += td(days=1)
+                        continue
+
                     if not en_ano_escolar:
                         d += td(days=1)
                         continue
@@ -1498,7 +1508,10 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                             else:
                                 registros_mes_final.append(RegistroVirtual(d, 'DIA_ADMINISTRATIVO'))
                         elif d.weekday() in dias_laborales:
-                            registros_mes_final.append(RegistroVirtual(d, 'AUSENTE'))
+                            if d >= usuario.date_joined.date():
+                                registros_mes_final.append(RegistroVirtual(d, 'AUSENTE'))
+                            else:
+                                registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
                     
                     d += td(days=1)
 
@@ -1519,7 +1532,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                         'nombre': primer_dia_mes.strftime('%B'),
                         'minutos_retraso_mes': minutos_retraso_mes,
                         'retrasos': retrasos_mes,
-                        'total': len(registros_mes_final),
+                        'total': sum(1 for r in registros_mes_final if getattr(r, 'estado', None) != 'SIN_DATA'),
                         'ausentes': ausentes_mes,
                         'admin': admin_mes,
                         'licencia': licencia_mes,
@@ -1543,7 +1556,6 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
 
         # Generar horario_semanal
         horario_semanal = []
-        es_sereno = usuario.funcion == 'SERENO'
         dias_totales = 7 if es_sereno else 5
 
         DIA_CHOICES_DICT = {

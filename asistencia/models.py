@@ -194,8 +194,8 @@ class RegistroAsistencia(models.Model):
         ("DIA_ADMINISTRATIVO", "Día Administrativo"),
         ("LICENCIA_MEDICA", "Licencia Médica"),
         ("DIA_FESTIVO", "Día Festivo"),
-        ("DIA_LIBRE", "Día Libre"),
         ("SIN_HORARIO", "Sin Horario Asignado"),
+        ("SIN_DATA", "Sin Datos"),
     ]
 
     funcionario = models.ForeignKey(
@@ -579,7 +579,7 @@ class RegistroAsistencia(models.Model):
             
             # Si no hay marcación y es anterior a su fecha de ingreso, no es ausente
             if self.fecha < self.funcionario.date_joined.date():
-                return "SIN_HORARIO"
+                return "SIN_DATA"
                 
             return "AUSENTE"
 
