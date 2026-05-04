@@ -446,6 +446,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             'MEDIO_DIA': 'Medio Día Administrativo',
             'LICENCIA_MEDICA': 'Licencia Médica',
             'SIN_DATA': 'Sin Datos',
+            'DIA_LIBRE': 'Día Libre',
         }
 
         class RegistroVirtual:
@@ -482,6 +483,13 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                     es_hoy = fecha == today
                     es_dia_escolar = AnoEscolar.es_dia_escolar(fecha)
 
+                    # Determinar si el día es activo en el horario
+                    dia_activo = False
+                    if horario_actual:
+                        dia_obj = dias_configurados.get(dia_semana)
+                        if dia_obj and dia_obj.activo:
+                            dia_activo = True
+
                     # Crear registro virtual si hay permiso/licencia
                     # Reemplaza registros AUSENTE retroactivamente
                     if fecha in licencias_por_fecha:
@@ -500,8 +508,12 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                     es_posterior_a_ingreso = fecha >= self.request.user.date_joined.date()
                     if not es_posterior_a_ingreso and not registro:
                         registro = RegistroVirtual('SIN_DATA')
-                        
-                    es_falta_sin_registro = es_pasado and not registro and not es_festivo and es_dia_escolar and es_posterior_a_ingreso
+
+                    # Si no hay registro y es día no activo en horario, marcar como día libre
+                    if not registro and not es_festivo and es_dia_escolar and es_posterior_a_ingreso and not dia_activo:
+                        registro = RegistroVirtual('DIA_LIBRE')
+
+                    es_falta_sin_registro = es_pasado and not registro and not es_festivo and es_dia_escolar and es_posterior_a_ingreso and dia_activo
 
                     # Los fines de semana solo aplican para serenos
                     if es_fin_de_semana and not es_sereno:
@@ -557,6 +569,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             'medio_dia': sum(1 for r in todos_registros if r.estado == 'MEDIO_DIA'),
             'admin': sum(1 for r in todos_registros if r.estado == 'DIA_ADMINISTRATIVO'),
             'licencia': sum(1 for r in todos_registros if r.estado == 'LICENCIA_MEDICA'),
+            'libre': sum(1 for r in todos_registros if r.estado == 'DIA_LIBRE'),
             'sin_marcacion': sum(1 for r in todos_registros if r.estado == 'SIN_MARCACION_ENTRADA'),
             'dias_con_tiempo': sum(1 for r in registros_list if r.minutos_trabajados is not None),
             'tiempo_promedio': (sum(r.minutos_trabajados for r in registros_list if r.minutos_trabajados is not None) / max(1, sum(1 for r in registros_list if r.minutos_trabajados is not None))),
@@ -701,6 +714,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 'dias_medio_dia': stats['medio_dia'] or 0,
                 'dias_admin': stats['admin'] or 0,
                 'dias_licencia': stats['licencia'] or 0,
+                'dias_libre': stats['libre'] or 0,
                 'porcentaje_puntualidad': round((dias_puntuales / total_dias * 100) if total_dias > 0 else 0, 1),
                 'dias_con_tiempo_trabajado': stats['dias_con_tiempo'] or 0,
                 'tiempo_promedio_trabajado': round(stats['tiempo_promedio'] or 0, 0),
