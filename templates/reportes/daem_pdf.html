@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte DAEM</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 1cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 8pt;
+            color: #1e293b;
+            line-height: 1.3;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #4F46E5;
+        }
+        .title {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            font-size: 10pt;
+            color: #64748b;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 4px 6px;
+            text-align: left;
+        }
+        th {
+            background-color: #4F46E5;
+            color: white;
+            font-weight: bold;
+            font-size: 7pt;
+        }
+        .section-title {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #4F46E5;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #4F46E5;
+            page-break-before: always;
+        }
+        .section-title:first-of-type {
+            page-break-before: avoid;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 7pt;
+            color: #64748b;
+        }
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">REPORTE DAEM</div>
+        {% if mes and year %}
+        <div class="subtitle">Período: {{ mes|date:"F" }} {{ year }}</div>
+        {% elif year %}
+        <div class="subtitle">Año: {{ year }}</div>
+        {% else %}
+        <div class="subtitle">Sin filtro de período</div>
+        {% endif %}
+        <div class="subtitle">Fecha de exportación: {{ fecha_exportacion }}</div>
+    </div>
+
+    <!-- Nómina -->
+    <div class="section-title">Nómina del Personal</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 8%;">N°</th>
+                <th style="width: 42%;">Funcionario</th>
+                <th style="width: 25%;">RUN</th>
+                <th style="width: 25%;">Cargo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in nomina_data %}
+            <tr>
+                <td class="text-center">{{ item.numero }}</td>
+                <td>{{ item.nombre }}</td>
+                <td>{{ item.run }}</td>
+                <td>{{ item.cargo }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Permisos Administrativos -->
+    <div class="section-title">Permisos Administrativos</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 6%;">N°</th>
+                <th style="width: 20%;">Nombre Completo</th>
+                <th style="width: 12%;">RUN</th>
+                <th style="width: 15%;">Cargo</th>
+                <th style="width: 15%;">Tipo de Permiso</th>
+                <th style="width: 10%;">Fecha Inicio</th>
+                <th style="width: 10%;">Fecha Término</th>
+                <th style="width: 6%;">Días</th>
+                <th style="width: 6%;">Obs.</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in permisos_data %}
+            <tr>
+                <td class="text-center">{{ item.numero }}</td>
+                <td>{{ item.nombre }}</td>
+                <td>{{ item.run }}</td>
+                <td>{{ item.cargo }}</td>
+                <td>{{ item.tipo_permiso }}</td>
+                <td class="text-center">{{ item.fecha_inicio }}</td>
+                <td class="text-center">{{ item.fecha_termino }}</td>
+                <td class="text-center">{{ item.cantidad_dias }}</td>
+                <td>{{ item.observaciones }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Licencias Médicas -->
+    <div class="section-title">Licencias Médicas</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 6%;">N°</th>
+                <th style="width: 25%;">Nombre Completo</th>
+                <th style="width: 12%;">RUN</th>
+                <th style="width: 15%;">Cargo</th>
+                <th style="width: 10%;">Fecha Inicio</th>
+                <th style="width: 10%;">Fecha Término</th>
+                <th style="width: 6%;">Días</th>
+                <th style="width: 16%;">Observaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in licencias_data %}
+            <tr>
+                <td class="text-center">{{ item.numero }}</td>
+                <td>{{ item.nombre }}</td>
+                <td>{{ item.run }}</td>
+                <td>{{ item.cargo }}</td>
+                <td class="text-center">{{ item.fecha_inicio }}</td>
+                <td class="text-center">{{ item.fecha_termino }}</td>
+                <td class="text-center">{{ item.cantidad_dias }}</td>
+                <td>{{ item.observaciones }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Horarios del Personal -->
+    <div class="section-title">Horarios del Personal</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%;">N°</th>
+                <th style="width: 20%;">Nombre Completo</th>
+                <th style="width: 10%;">RUN</th>
+                <th style="width: 15%;">Cargo</th>
+                <th style="width: 8%;">Lunes</th>
+                <th style="width: 8%;">Martes</th>
+                <th style="width: 8%;">Miércoles</th>
+                <th style="width: 8%;">Jueves</th>
+                <th style="width: 8%;">Viernes</th>
+                <th style="width: 8%;">Sábado</th>
+                <th style="width: 8%;">Domingo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in horarios_data %}
+            <tr>
+                <td class="text-center">{{ item.numero }}</td>
+                <td>{{ item.nombre }}</td>
+                <td>{{ item.run }}</td>
+                <td>{{ item.cargo }}</td>
+                <td class="text-center">{{ item.lunes }}</td>
+                <td class="text-center">{{ item.martes }}</td>
+                <td class="text-center">{{ item.miércoles }}</td>
+                <td class="text-center">{{ item.jueves }}</td>
+                <td class="text-center">{{ item.viernes }}</td>
+                <td class="text-center">{{ item.sábado }}</td>
+                <td class="text-center">{{ item.domingo }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Reporte generado por el sistema de gestión de funcionarios - {{ fecha_exportacion }}
+    </div>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Justificaciones Aprobadas</title>
+    <style>
+        @page {
+            size: landscape;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 9pt;
+            color: #1e293b;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #4F46E5;
+        }
+        .header h1 {
+            margin: 0;
+            color: #1e293b;
+            font-size: 18pt;
+            letter-spacing: -0.025em;
+        }
+        .header p {
+            margin: 5px 0 0;
+            color: #64748b;
+            font-size: 10pt;
+            font-weight: 500;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table th {
+            background-color: #4F46E5;
+            color: white;
+            padding: 8px 6px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 8pt;
+            border: 1px solid #e2e8f0;
+        }
+        .table td {
+            padding: 6px;
+            border: 1px solid #e2e8f0;
+            font-size: 8pt;
+        }
+        .table tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 8pt;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Justificaciones Aprobadas</h1>
+        {% if year and mes %}
+        <p>Período: {{ mes|date:"F" }} {{ year }}</p>
+        {% elif year %}
+        <p>Año: {{ year }}</p>
+        {% else %}
+        <p>Todas las justificaciones</p>
+        {% endif %}
+        <p>Fecha de exportación: {{ fecha_exportacion }}</p>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Nombre Completo</th>
+                <th>RUN</th>
+                <th>Cargo</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Motivo</th>
+                <th>Estado</th>
+                <th>Revisado Por</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for justificacion in justificaciones %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ justificacion.nombre_completo }}</td>
+                <td>{{ justificacion.run }}</td>
+                <td>{{ justificacion.cargo }}</td>
+                <td>{{ justificacion.fecha }}</td>
+                <td>{{ justificacion.tipo }}</td>
+                <td>{{ justificacion.motivo }}</td>
+                <td>{{ justificacion.estado }}</td>
+                <td>{{ justificacion.revisado_por }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 20px; color: #64748b;">
+                    No hay justificaciones aprobadas en este período.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Reporte generado por el sistema de gestión de funcionarios</p>
+    </div>
+</body>
+</html>

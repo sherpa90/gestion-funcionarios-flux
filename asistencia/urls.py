@@ -33,6 +33,7 @@ from .views import (
     GestionHorariosExcepcionalesView,
     CrearHorarioExcepcionalView,
     EliminarHorarioExcepcionalView,
+    ReporteAsistenciaMensualExcelView,
 )
 
 app_name = 'asistencia'
@@ -65,6 +66,8 @@ urlpatterns = [
     # Reportes PDF
     path("reporte-mensual/", ReporteAsistenciaMensualView.as_view(), name="reporte_asistencia_mensual"),
     path("reporte-mensual/<int:anio>/<int:mes>/", ReporteAsistenciaMensualView.as_view(), name="reporte_asistencia_mensual_params"),
+    path("reporte-mensual-excel/", ReporteAsistenciaMensualExcelView.as_view(), name="reporte_asistencia_mensual_excel"),
+    path("reporte-mensual-excel/<int:anio>/<int:mes>/", ReporteAsistenciaMensualExcelView.as_view(), name="reporte_asistencia_mensual_excel_params"),
     path("reporte-individual/<int:anio>/<int:mes>/", ReporteAsistenciaIndividualView.as_view(), name="reporte_asistencia_individual"),
 
     # Alegaciones

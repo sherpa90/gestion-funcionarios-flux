@@ -1995,7 +1995,7 @@ class ReporteAsistenciaMensualView(LoginRequiredMixin, UserPassesTestMixin, View
                 registros_por_funcionario[func_id] = []
             registros_por_funcionario[func_id].append(registro)
 
-        # Procesar cada funcionario y solo incluir aquellos con atrasos o inasistencias
+        # Procesar cada funcionario y solo incluir aquellos con atrasos o inasistencias sin justificar
         funcionarios_lista = []
         for funcionario in todos_funcionarios:
             func_id = funcionario.id
@@ -2006,7 +2006,6 @@ class ReporteAsistenciaMensualView(LoginRequiredMixin, UserPassesTestMixin, View
                 'funcionario': funcionario,
                 'atrasos': [],
                 'inasistencias': [],
-                'justificados': [],
                 'tiene_registros': len(registros_funcionario) > 0,
                 'total_atrasos': 0,
                 'total_minutos_retraso': 0,
@@ -2036,22 +2035,7 @@ class ReporteAsistenciaMensualView(LoginRequiredMixin, UserPassesTestMixin, View
                     }
                     func_data['inasistencias'].append(inasistencia_info)
                     func_data['total_inasistencias_sin_justificar'] += 1
-                elif registro.estado in ('JUSTIFICADO', 'DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA'):
-                    if registro.estado == 'DIA_ADMINISTRATIVO':
-                        tipo_just = 'dia_administrativo'
-                        detalle = 'Día administrativo aprobado'
-                    elif registro.estado == 'LICENCIA_MEDICA':
-                        tipo_just = 'licencia'
-                        detalle = 'Licencia médica'
-                    else:
-                        tipo_just = 'permiso' if registro.tiene_permiso_aprobado() else 'licencia' if registro.tiene_licencia_medica() else 'otro'
-                        detalle = 'Ausencia justificada'
-                    justificado_info = {
-                        'fecha': registro.fecha,
-                        'tipo': tipo_just,
-                        'detalle': detalle,
-                    }
-                    func_data['justificados'].append(justificado_info)
+                # Ignorar registros justificados - solo mostrar injustificados
 
             # Detectar días sin registro que son inasistencias
             fechas_con_registro = {r.fecha for r in registros_funcionario}
@@ -2077,12 +2061,11 @@ class ReporteAsistenciaMensualView(LoginRequiredMixin, UserPassesTestMixin, View
                 func_data['inasistencias'].append(inasistencia_info)
                 func_data['total_inasistencias_sin_justificar'] += 1
 
-            # Solo incluir funcionarios que tienen atrasos, inasistencias o justificaciones
-            if func_data['atrasos'] or func_data['inasistencias'] or func_data['justificados']:
-                # Ordenar todas las listas por fecha
+            # Solo incluir funcionarios que tienen atrasos o inasistencias sin justificar
+            if func_data['atrasos'] or func_data['inasistencias']:
+                # Ordenar listas por fecha
                 func_data['atrasos'].sort(key=lambda x: x['fecha'])
                 func_data['inasistencias'].sort(key=lambda x: x['fecha'])
-                func_data['justificados'].sort(key=lambda x: x['fecha'])
                 funcionarios_lista.append(func_data)
 
         # Nombre del mes
@@ -2896,3 +2879,175 @@ class EliminarHorarioExcepcionalView(LoginRequiredMixin, UserPassesTestMixin, Vi
             f'Se recalcularon {count} registros de asistencia.'
         )
         return redirect('asistencia:gestion_excepcionales')
+
+
+class ReporteAsistenciaMensualExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para generar reporte mensual de asistencia en Excel"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get(self, request, anio=None, mes=None):
+        import calendar as cal
+        # Si no se pasan como parámetros de URL, obtener de GET
+        if not anio or not mes or anio == '0':
+            anio_str = request.GET.get('anio')
+            mes_str = request.GET.get('mes')
+
+            if anio_str and mes_str:
+                try:
+                    anio = int(anio_str)
+                    mes = int(mes_str)
+                except ValueError:
+                    from django.contrib import messages
+                    messages.error(request, 'Los valores de mes y año deben ser números válidos.')
+                    return redirect(reverse('asistencia:gestion_asistencia'))
+            else:
+                from django.contrib import messages
+                messages.error(request, 'Debe seleccionar mes y año para generar el reporte.')
+                return redirect(reverse('asistencia:gestion_asistencia'))
+
+        # Obtener todos los funcionarios que deben tener asistencia
+        from users.models import CustomUser
+        todos_funcionarios = CustomUser.objects.filter(
+            role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
+        ).order_by('last_name', 'first_name')
+
+        # Obtener datos del mes
+        registros_mes = RegistroAsistencia.objects.filter(
+            fecha__year=anio,
+            fecha__month=mes
+        ).select_related('funcionario', 'horario_asignado')
+
+        # Crear mapa de registros por funcionario
+        registros_por_funcionario = {}
+        for registro in registros_mes:
+            func_id = registro.funcionario.id
+            if func_id not in registros_por_funcionario:
+                registros_por_funcionario[func_id] = []
+            registros_por_funcionario[func_id].append(registro)
+
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = f"Asistencia {mes:02d}-{anio}"
+
+        # Encabezados
+        headers = ['Nombre Completo', 'RUN', 'Cargo', 'Fecha', 'Tipo', 'Detalle', 'Total Atrasos', 'Min. Retraso', 'Inasistencias']
+        ws.append(headers)
+
+        # Column widths
+        ws.column_dimensions['A'].width = 25
+        ws.column_dimensions['B'].width = 15
+        ws.column_dimensions['C'].width = 20
+        ws.column_dimensions['D'].width = 12
+        ws.column_dimensions['E'].width = 15
+        ws.column_dimensions['F'].width = 30
+        ws.column_dimensions['G'].width = 12
+        ws.column_dimensions['H'].width = 12
+        ws.column_dimensions['I'].width = 15
+
+        # Procesar cada funcionario
+        for funcionario in todos_funcionarios:
+            func_id = funcionario.id
+            registros_funcionario = registros_por_funcionario.get(func_id, [])
+
+            # Inicializar datos del funcionario
+            atrasos = []
+            inasistencias = []
+            total_atrasos = 0
+            total_minutos_retraso = 0
+            total_inasistencias = 0
+
+            # Procesar registros del funcionario
+            for registro in registros_funcionario:
+                if registro.estado == 'RETRASO':
+                    atraso_info = {
+                        'fecha': registro.fecha,
+                        'hora_entrada': registro.hora_entrada_real,
+                        'minutos_retraso': registro.minutos_retraso,
+                    }
+                    atrasos.append(atraso_info)
+                    total_atrasos += 1
+                    total_minutos_retraso += registro.minutos_retraso or 0
+                elif registro.estado == 'AUSENTE':
+                    # Ignorar si es antes de su ingreso
+                    if registro.fecha < funcionario.date_joined.date():
+                        continue
+
+                    inasistencia_info = {
+                        'fecha': registro.fecha,
+                        'hora_esperada': registro.horario_asignado.hora_entrada if registro.horario_asignado else None,
+                    }
+                    inasistencias.append(inasistencia_info)
+                    total_inasistencias += 1
+
+            # Detectar días sin registro que son inasistencias
+            fechas_con_registro = {r.fecha for r in registros_funcionario}
+            today = datetime.now().date()
+            num_dias = cal.monthrange(anio, mes)[0]
+            for dia in range(1, num_dias + 1):
+                fecha = datetime(anio, mes, dia).date()
+                if fecha >= today:
+                    continue
+                if fecha in fechas_con_registro:
+                    continue
+                if DiaFestivo.objects.filter(fecha=fecha).exists():
+                    continue
+                if fecha.weekday() >= 5 and not (funcionario.funcion == 'SERENO' or funcionario.tipo_funcionario == 'SERENO'):
+                    continue
+                if fecha < funcionario.date_joined.date():
+                    continue
+                inasistencia_info = {
+                    'fecha': fecha,
+                    'hora_esperada': None,
+                }
+                inasistencias.append(inasistencia_info)
+                total_inasistencias += 1
+
+            # Solo incluir si tiene atrasos o inasistencias
+            if atrasos or inasistencias:
+                # Agregar filas para atrasos
+                for atraso in atrasos:
+                    ws.append([
+                        funcionario.get_full_name(),
+                        funcionario.run,
+                        funcionario.get_funcion_display() or "",
+                        atraso['fecha'].strftime("%d/%m/%Y"),
+                        "Atraso",
+                        f"{atraso['hora_entrada'].strftime('%H:%M') if atraso['hora_entrada'] else '-'} - {atraso['minutos_retraso']} min retraso",
+                        total_atrasos,
+                        total_minutos_retraso,
+                        total_inasistencias
+                    ])
+
+                # Agregar filas para inasistencias
+                for inasistencia in inasistencias:
+                    ws.append([
+                        funcionario.get_full_name(),
+                        funcionario.run,
+                        funcionario.get_funcion_display() or "",
+                        inasistencia['fecha'].strftime("%d/%m/%Y"),
+                        "Inasistencia",
+                        f"Sin justificar - Hora esperada: {inasistencia['hora_esperada'].strftime('%H:%M') if inasistencia['hora_esperada'] else '-'}",
+                        total_atrasos,
+                        total_minutos_retraso,
+                        total_inasistencias
+                    ])
+
+        # Styling
+        header_font = Font(bold=True, color="FFFFFF")
+        fill = PatternFill(start_color="DC3545", end_color="DC3545", fill_type="solid")
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = fill
+
+        # Crear respuesta HTTP
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        filename = f'reporte_atrasos_inasistencias_{anio}_{mes:02d}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        wb.save(response)
+        return response

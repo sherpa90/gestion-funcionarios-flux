@@ -305,10 +305,16 @@
         <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
       </select>
     </div>
-    <button class="rep-modal-btn" style="background:linear-gradient(135deg,#f43f5e,#e11d48);"
-      onclick="window.open('/asistencia/reporte-mensual/'+document.getElementById('m-asistencia-year').value+'/'+document.getElementById('m-asistencia-mes').value+'/', '_blank'); closeModal('asistencia')">
-      <i class="fas fa-external-link-alt"></i> Generar Reporte
-    </button>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#16a34a,#15803d); margin-top: 0;"
+          onclick="window.location.href='{% url 'asistencia:reporte_asistencia_mensual_excel' %}?anio='+document.getElementById('m-asistencia-year').value+'&mes='+document.getElementById('m-asistencia-mes').value; closeModal('asistencia')">
+          <i class="fas fa-file-excel"></i> Excel
+        </button>
+        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#dc2626,#b91c1c); margin-top: 0;"
+          onclick="window.open('/asistencia/reporte-mensual/'+document.getElementById('m-asistencia-year').value+'/'+document.getElementById('m-asistencia-mes').value+'/', '_blank'); closeModal('asistencia')">
+          <i class="fas fa-file-pdf"></i> PDF
+        </button>
+    </div>
   </div>
 </div>
 
@@ -347,10 +353,16 @@
         <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
       </select>
     </div>
-    <button class="rep-modal-btn" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);"
-      onclick="window.open('{% url 'reportes_mensual_dias_administrativos' %}?year='+document.getElementById('m-mensual-year').value+'&mes='+document.getElementById('m-mensual-mes').value, '_blank'); closeModal('mensual')">
-      <i class="fas fa-external-link-alt"></i> Generar Reporte
-    </button>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#16a34a,#15803d); margin-top: 0;"
+          onclick="window.location.href='{% url 'reportes_mensual_dias_administrativos_excel' %}?year='+document.getElementById('m-mensual-year').value+'&mes='+document.getElementById('m-mensual-mes').value; closeModal('mensual')">
+          <i class="fas fa-file-excel"></i> Excel
+        </button>
+        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#7c3aed,#5b21b6); margin-top: 0;"
+          onclick="window.open('{% url 'reportes_mensual_dias_administrativos' %}?year='+document.getElementById('m-mensual-year').value+'&mes='+document.getElementById('m-mensual-mes').value, '_blank'); closeModal('mensual')">
+          <i class="fas fa-file-pdf"></i> PDF
+        </button>
+    </div>
   </div>
 </div>
 
@@ -389,10 +401,16 @@
         <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
       </select>
     </div>
-    <button class="rep-modal-btn" style="background:linear-gradient(135deg,#38bdf8,#0284c7);"
-      onclick="window.location.href='{% url 'reportes_daem_excel' %}?year='+document.getElementById('m-daem-year').value+'&mes='+document.getElementById('m-daem-mes').value; closeModal('daem')">
-      <i class="fas fa-download"></i> Descargar Excel DAEM
-    </button>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#16a34a,#15803d); margin-top: 0;"
+          onclick="window.location.href='{% url 'reportes_daem_excel' %}?year='+document.getElementById('m-daem-year').value+'&mes='+document.getElementById('m-daem-mes').value; closeModal('daem')">
+          <i class="fas fa-file-excel"></i> Excel
+        </button>
+        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#0284c7,#0369a1); margin-top: 0;"
+          onclick="window.open('{% url 'reportes_daem_pdf' %}?year='+document.getElementById('m-daem-year').value+'&mes='+document.getElementById('m-daem-mes').value, '_blank'); closeModal('daem')">
+          <i class="fas fa-file-pdf"></i> PDF
+        </button>
+    </div>
   </div>
 </div>
 
@@ -480,6 +498,54 @@
   </div>
 </div>
 
+<div id="modal-justificaciones" class="rep-overlay" onclick="if(event.target===this)closeModal('justificaciones')">
+  <div class="rep-modal">
+    <span class="rep-modal-handle"></span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
+      <h3 style="margin:0;display:flex;align-items:center;gap:.5rem;">
+        <span style="background:#fef3c7;color:#92400e;border-radius:.5rem;padding:.3rem .5rem;font-size:.85rem;"><i class="fas fa-check-circle"></i></span>
+        Justificaciones Aprobadas
+      </h3>
+      <button onclick="closeModal('justificaciones')" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:.25rem;"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="rep-form-group">
+      <label>Año</label>
+      <select id="m-justificaciones-year">
+        <option value="">— Todos —</option>
+        {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="rep-form-group">
+      <label>Mes</label>
+      <select id="m-justificaciones-mes">
+        <option value="">— Todos —</option>
+        <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
+        <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
+        <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
+        <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
+        <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
+        <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
+        <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
+        <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
+        <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
+        <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
+        <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
+        <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
+      </select>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#16a34a,#15803d); margin-top: 0;"
+          onclick="window.location.href='{% url 'reportes_justificaciones_excel' %}?year='+document.getElementById('m-justificaciones-year').value+'&mes='+document.getElementById('m-justificaciones-mes').value; closeModal('justificaciones')">
+          <i class="fas fa-file-excel"></i> Excel
+        </button>
+        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#dc2626,#b91c1c); margin-top: 0;"
+          onclick="window.open('{% url 'reportes_justificaciones_pdf' %}?year='+document.getElementById('m-justificaciones-year').value+'&mes='+document.getElementById('m-justificaciones-mes').value, '_blank'); closeModal('justificaciones')">
+          <i class="fas fa-file-pdf"></i> PDF
+        </button>
+    </div>
+  </div>
+</div>
+
 <!-- Main page -->
 <div class="rep-page">
   <div style="max-width:1200px;margin:0 auto;">
@@ -515,6 +581,10 @@
           <button class="rep-export-btn" onclick="openModal('pdf')"
             style="background:#fff1f2;color:#dc2626;border-color:#fecaca;">
             <i class="fas fa-file-pdf"></i> PDF
+          </button>
+          <button class="rep-export-btn" onclick="openModal('justificaciones')"
+            style="background:#fef3c7;color:#92400e;border-color:#fcd34d;">
+            <i class="fas fa-check-circle"></i> Justificaciones
           </button>
         </div>
       </div>

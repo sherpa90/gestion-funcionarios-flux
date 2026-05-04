@@ -1,8 +1,10 @@
 from django.urls import path
 from .views import (
-    ReportesView, PDFIndividualView, PDFColectivoView, ExportarExcelView, 
-    ReporteMensualDiasAdministrativosView, ExportarDAEMExcelView, MiReportePDFView,
-    ExportarHorariosExcelView, ExportarHorariosPDFView, MiHorarioPDFView
+    ReportesView, PDFIndividualView, PDFColectivoView, ExportarExcelView,
+    ReporteMensualDiasAdministrativosView, ReporteMensualDiasAdministrativosExcelView,
+    ExportarDAEMExcelView, ExportarDAEMPDFView, MiReportePDFView,
+    ExportarHorariosExcelView, ExportarHorariosPDFView, MiHorarioPDFView,
+    ExportarJustificacionesExcelView, ExportarJustificacionesPDFView
 )
 
 urlpatterns = [
@@ -11,10 +13,14 @@ urlpatterns = [
     path('pdf/individual/<int:usuario_id>/', PDFIndividualView.as_view(), name='reportes_pdf_individual'),
     path('pdf/colectivo/', PDFColectivoView.as_view(), name='reportes_pdf_colectivo'),
     path('pdf/mensual/dias-administrativos/', ReporteMensualDiasAdministrativosView.as_view(), name='reportes_mensual_dias_administrativos'),
+    path('excel/mensual/dias-administrativos/', ReporteMensualDiasAdministrativosExcelView.as_view(), name='reportes_mensual_dias_administrativos_excel'),
     path('excel/', ExportarExcelView.as_view(), name='reportes_excel'),
     path('daem-excel/', ExportarDAEMExcelView.as_view(), name='reportes_daem_excel'),
+    path('daem-pdf/', ExportarDAEMPDFView.as_view(), name='reportes_daem_pdf'),
     path('excel/horarios/', ExportarHorariosExcelView.as_view(), name='exportar_horarios'),
     path('pdf/horarios/', ExportarHorariosPDFView.as_view(), name='exportar_horarios_pdf'),
     path('pdf/mi-horario/', MiHorarioPDFView.as_view(), name='mi_horario_pdf'),
+    path('excel/justificaciones/', ExportarJustificacionesExcelView.as_view(), name='reportes_justificaciones_excel'),
+    path('pdf/justificaciones/', ExportarJustificacionesPDFView.as_view(), name='reportes_justificaciones_pdf'),
 ]
 

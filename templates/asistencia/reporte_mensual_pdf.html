@@ -21,6 +21,7 @@
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 10px;
+            color: #dc3545;
         }
         .subtitle {
             font-size: 14px;
@@ -53,9 +54,7 @@
         .tipo-inasistencia {
             background-color: #f8d7da;
         }
-        .tipo-justificado {
-            background-color: #d4edda;
-        }
+
         .resumen-funcionario {
             background-color: #e9ecef;
             font-weight: bold;
@@ -79,18 +78,7 @@
             background-color: #dc3545;
             color: #fff;
         }
-        .badge-justificado {
-            background-color: #28a745;
-            color: #fff;
-        }
-        .badge-admin {
-            background-color: #6f42c1;
-            color: #fff;
-        }
-        .badge-licencia {
-            background-color: #fd7e14;
-            color: #fff;
-        }
+
         .footer {
             margin-top: 30px;
             text-align: center;
@@ -117,7 +105,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="title" style="margin-top: 20px;">INFORME ASISTENCIA LABORAL</div>
+        <div class="title" style="margin-top: 20px;">INFORME ATRASOS E INASISTENCIAS SIN JUSTIFICAR</div>
 
         <div class="info">
             <strong>Establecimiento:</strong> Colegio Los Alerces Puerto Montt
@@ -179,24 +167,6 @@
                     <td class="text-center">Inasistencia sin justificar - No registró asistencia</td>
                 </tr>
                 {% endfor %}
-                {% for justificado in data.justificados %}
-                <tr class="tipo-justificado">
-                    <td>{{ data.funcionario.get_full_name }}</td>
-                    <td>{{ data.funcionario.run }}</td>
-                    <td style="text-align: center;">{{ justificado.fecha|date:"d/m/Y" }}</td>
-                    <td class="text-center">-</td>
-                    <td class="text-center">
-                        {% if justificado.tipo == 'dia_administrativo' %}
-                            <span class="badge badge-admin">Día Admin.</span>
-                        {% elif justificado.tipo == 'licencia' %}
-                            <span class="badge badge-licencia">Licencia Médica</span>
-                        {% else %}
-                            <span class="badge badge-justificado">Justificado</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-center">{{ justificado.detalle }}</td>
-                </tr>
-                {% endfor %}
 
                 <!-- Resumen del funcionario -->
                 <tr class="resumen-funcionario">
@@ -204,14 +174,13 @@
                     <td colspan="4" class="text-center">
                         Atrasos: <strong>{{ data.total_atrasos }}</strong> |
                         Min. Retraso: <strong>{{ data.total_minutos_retraso }} min</strong> |
-                        Inasistencias sin Justificar: <strong>{{ data.total_inasistencias_sin_justificar }}</strong> |
-                        Justificados: <strong>{{ data.justificados|length }}</strong>
+                        Inasistencias sin Justificar: <strong>{{ data.total_inasistencias_sin_justificar }}</strong>
                     </td>
                 </tr>
             {% empty %}
                 <tr>
                     <td colspan="6" class="text-center" style="font-style: italic; padding: 20px;">
-                        No se registraron novedades de asistencia en el período seleccionado
+                        No se registraron atrasos o inasistencias sin justificar en el período seleccionado
                     </td>
                 </tr>
             {% endfor %}

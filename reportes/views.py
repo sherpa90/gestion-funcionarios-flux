@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from weasyprint import HTML
 from permisos.models import SolicitudPermiso
 from licencias.models import LicenciaMedica
-from asistencia.models import RegistroAsistencia, HorarioFuncionario, DiaHorario
+from asistencia.models import RegistroAsistencia, HorarioFuncionario, DiaHorario, AlegacionAsistencia
 from users.models import CustomUser
 from core.services import BusinessDayCalculator
 import openpyxl
@@ -579,6 +579,79 @@ class ReporteMensualDiasAdministrativosView(LoginRequiredMixin, UserPassesTestMi
         response.write(result)
         return response
 
+
+class ReporteMensualDiasAdministrativosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Generar Excel mensual de resumen de días administrativos"""
+
+    def test_func(self):
+        return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
+
+    def get(self, request):
+        # Obtener parámetros
+        year = request.GET.get('year', str(datetime.now().year))
+        mes = request.GET.get('mes', str(datetime.now().month))
+
+        try:
+            year = int(year)
+            mes = int(mes)
+        except ValueError:
+            year = datetime.now().year
+            mes = datetime.now().month
+
+        # Obtener todos los permisos aprobados del mes
+        permisos = SolicitudPermiso.objects.filter(
+            estado='APROBADO',
+            fecha_inicio__year=year,
+            fecha_inicio__month=mes
+        ).select_related('usuario').order_by('fecha_inicio', 'created_at')
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = f"Días Administrativos {mes:02d}-{year}"
+
+        # Encabezados
+        headers = ['N°', 'Nombre Completo', 'RUN', 'Cargo', 'Días Solicitados', 'Días Disponibles', 'Fecha Desde', 'Fecha Hasta', 'Fecha Solicitud']
+        ws.append(headers)
+
+        # Column widths
+        ws.column_dimensions['A'].width = 8
+        ws.column_dimensions['B'].width = 25
+        ws.column_dimensions['C'].width = 15
+        ws.column_dimensions['D'].width = 20
+        ws.column_dimensions['E'].width = 15
+        ws.column_dimensions['F'].width = 15
+        ws.column_dimensions['G'].width = 12
+        ws.column_dimensions['H'].width = 12
+        ws.column_dimensions['I'].width = 15
+
+        for i, permiso in enumerate(permisos, 1):
+            ws.append([
+                i,
+                permiso.usuario.get_full_name() or permiso.usuario.username,
+                permiso.usuario.run,
+                permiso.usuario.get_funcion_display() or permiso.usuario.get_tipo_funcionario_display() or permiso.usuario.get_role_display(),
+                permiso.dias_solicitados,
+                permiso.usuario.dias_disponibles if permiso.usuario.dias_disponibles else 0,
+                permiso.fecha_inicio.strftime("%d/%m/%Y") if permiso.fecha_inicio else "",
+                permiso.fecha_termino.strftime("%d/%m/%Y") if permiso.fecha_termino else "",
+                permiso.created_at.strftime("%d/%m/%Y") if permiso.created_at else ""
+            ])
+
+        # Styling
+        header_font = Font(bold=True, color="FFFFFF")
+        fill = PatternFill(start_color="7C3AED", end_color="7C3AED", fill_type="solid")
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = fill
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        filename = f'reporte_dias_administrativos_{year}_{mes:02d}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        wb.save(response)
+        return response
+
+
 class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
     """Exportar reporte DAEM a Excel (Multi-pestaña)"""
     
@@ -710,6 +783,122 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         response['Content-Disposition'] = f'attachment; filename={filename}.xlsx'
         wb.save(response)
         return response
+
+
+class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Exportar reporte DAEM a PDF"""
+
+    def test_func(self):
+        return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
+
+    def get(self, request):
+        year = request.GET.get('year', '')
+        mes = request.GET.get('mes', '')
+
+        # Obtener funcionarios
+        funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name', 'last_name')
+
+        # Preparar datos
+        nomina_data = []
+        for i, f in enumerate(funcionarios, 1):
+            nomina_data.append({
+                'numero': i,
+                'nombre': f.get_full_name() or f.username,
+                'run': f.run,
+                'cargo': f.get_funcion_display() or ""
+            })
+
+        permisos_data = []
+        permisos = SolicitudPermiso.objects.filter(estado='APROBADO', usuario__in=funcionarios).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
+        if year:
+            permisos = permisos.filter(fecha_inicio__year=year)
+        if mes:
+            permisos = permisos.filter(fecha_inicio__month=mes)
+
+        for i, p in enumerate(permisos, 1):
+            permisos_data.append({
+                'numero': i,
+                'nombre': p.usuario.get_full_name() or p.usuario.username,
+                'run': p.usuario.run,
+                'cargo': p.usuario.get_funcion_display() or "",
+                'tipo_permiso': "",
+                'fecha_inicio': p.fecha_inicio.strftime("%d-%m-%Y") if p.fecha_inicio else "",
+                'fecha_termino': p.fecha_termino.strftime("%d-%m-%Y") if p.fecha_termino else "",
+                'cantidad_dias': float(p.dias_solicitados),
+                'observaciones': ""
+            })
+
+        licencias_data = []
+        licencias = LicenciaMedica.objects.filter(usuario__in=funcionarios).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
+        if year:
+            licencias = licencias.filter(fecha_inicio__year=year)
+        if mes:
+            licencias = licencias.filter(fecha_inicio__month=mes)
+
+        for i, lic in enumerate(licencias, 1):
+            licencias_data.append({
+                'numero': i,
+                'nombre': lic.usuario.get_full_name() or lic.usuario.username,
+                'run': lic.usuario.run,
+                'cargo': lic.usuario.get_funcion_display() or "",
+                'fecha_inicio': lic.fecha_inicio.strftime("%d-%m-%Y") if lic.fecha_inicio else "",
+                'fecha_termino': lic.fecha_termino.strftime("%d-%m-%Y") if lic.fecha_termino else "",
+                'cantidad_dias': lic.dias,
+                'observaciones': ""
+            })
+
+        # Horarios
+        from asistencia.models import HorarioFuncionario, DiaHorario
+        DIA_CHOICES_DICT = {
+            0: 'Lunes', 1: 'Martes', 2: 'Miércoles',
+            3: 'Jueves', 4: 'Viernes', 5: 'Sábado', 6: 'Domingo'
+        }
+
+        horarios_data = []
+        for i, f in enumerate(funcionarios, 1):
+            horario = HorarioFuncionario.objects.filter(funcionario=f, activo=True).first()
+            dias_configurados = {}
+            if horario:
+                for dh in horario.dias.all():
+                    dias_configurados[dh.dia_semana] = dh
+
+            row = {
+                'numero': i,
+                'nombre': f.get_full_name() or f.username,
+                'run': f.run,
+                'cargo': f.get_funcion_display() or "",
+            }
+            for dia_num in range(7):
+                dia_obj = dias_configurados.get(dia_num)
+                if dia_obj and dia_obj.activo and dia_obj.hora_entrada and dia_obj.hora_salida:
+                    horario_str = f"{dia_obj.hora_entrada.strftime('%H:%M')}-{dia_obj.hora_salida.strftime('%H:%M')}"
+                else:
+                    horario_str = "Libre"
+                row[DIA_CHOICES_DICT[dia_num].lower()] = horario_str
+            horarios_data.append(row)
+
+        # Render PDF
+        html_string = render_to_string('reportes/daem_pdf.html', {
+            'nomina_data': nomina_data,
+            'permisos_data': permisos_data,
+            'licencias_data': licencias_data,
+            'horarios_data': horarios_data,
+            'year': year,
+            'mes': mes,
+            'fecha_exportacion': now().strftime('%d/%m/%Y %H:%M'),
+        })
+
+        html = HTML(string=html_string)
+        result = html.write_pdf()
+
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"reporte_daem"
+        if mes and year:
+            filename += f"_{mes}_{year}"
+        response['Content-Disposition'] = f'inline; filename={filename}.pdf'
+        response.write(result)
+        return response
+
 
 class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
     """Exportar los horarios semanales de todos los funcionarios a Excel"""
@@ -920,6 +1109,137 @@ class MiHorarioPDFView(LoginRequiredMixin, View):
 
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename=mi_horario_{f.run}.pdf'
+        response.write(result)
+        return response
+
+
+class ExportarJustificacionesExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Exportar Excel con justificaciones aprobadas"""
+
+    def test_func(self):
+        return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
+
+    def get(self, request):
+        year = request.GET.get('year', '')
+        mes = request.GET.get('mes', '')
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Justificaciones Aprobadas"
+
+        # Headers
+        headers = ['N°', 'Nombre Completo', 'RUN', 'Cargo', 'Fecha', 'Tipo', 'Motivo', 'Estado Alegación', 'Revisado Por']
+        ws.append(headers)
+
+        # Column widths
+        for col, width in [('A', 10), ('B', 25), ('C', 15), ('D', 20), ('E', 15), ('F', 15), ('G', 30), ('H', 20), ('I', 25)]:
+            ws.column_dimensions[col].width = width
+
+        # Query alegaciones aprobadas
+        alegaciones = AlegacionAsistencia.objects.filter(
+            estado='APROBADA'
+        ).select_related(
+            'registro_asistencia__funcionario',
+            'revisado_por'
+        ).order_by('registro_asistencia__fecha', 'registro_asistencia__funcionario__first_name')
+
+        if year:
+            alegaciones = alegaciones.filter(registro_asistencia__fecha__year=year)
+        if mes:
+            alegaciones = alegaciones.filter(registro_asistencia__fecha__month=mes)
+
+        for i, alegacion in enumerate(alegaciones, 1):
+            reg = alegacion.registro_asistencia
+            tipo = "Atraso" if reg.estado == 'RETRASO' else "Inasistencia" if reg.estado == 'AUSENTE' else reg.get_estado_display()
+
+            ws.append([
+                i,
+                reg.funcionario.get_full_name() or reg.funcionario.username,
+                reg.funcionario.run,
+                reg.funcionario.get_funcion_display() or "",
+                reg.fecha.strftime("%d-%m-%Y") if reg.fecha else "",
+                tipo,
+                alegacion.motivo[:100] + "..." if len(alegacion.motivo) > 100 else alegacion.motivo,
+                alegacion.get_estado_display(),
+                alegacion.revisado_por.get_full_name() if alegacion.revisado_por else ""
+            ])
+
+        # Styling
+        header_font = Font(bold=True, color="FFFFFF")
+        fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = fill
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        filename = f"justificaciones_aprobadas"
+        if mes and year:
+            filename += f"_{mes}_{year}"
+        elif year:
+            filename += f"_{year}"
+        response['Content-Disposition'] = f'attachment; filename={filename}.xlsx'
+
+        wb.save(response)
+        return response
+
+
+class ExportarJustificacionesPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Exportar PDF con justificaciones aprobadas"""
+
+    def test_func(self):
+        return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
+
+    def get(self, request):
+        year = request.GET.get('year', '')
+        mes = request.GET.get('mes', '')
+
+        # Query alegaciones aprobadas
+        alegaciones = AlegacionAsistencia.objects.filter(
+            estado='APROBADA'
+        ).select_related(
+            'registro_asistencia__funcionario',
+            'revisado_por'
+        ).order_by('registro_asistencia__fecha', 'registro_asistencia__funcionario__first_name')
+
+        if year:
+            alegaciones = alegaciones.filter(registro_asistencia__fecha__year=year)
+        if mes:
+            alegaciones = alegaciones.filter(registro_asistencia__fecha__month=mes)
+
+        # Preparar datos para el template
+        justificaciones = []
+        for alegacion in alegaciones:
+            reg = alegacion.registro_asistencia
+            tipo = "Atraso" if reg.estado == 'RETRASO' else "Inasistencia" if reg.estado == 'AUSENTE' else reg.get_estado_display()
+
+            justificaciones.append({
+                'nombre_completo': reg.funcionario.get_full_name() or reg.funcionario.username,
+                'run': reg.funcionario.run,
+                'cargo': reg.funcionario.get_funcion_display() or "",
+                'fecha': reg.fecha.strftime("%d-%m-%Y") if reg.fecha else "",
+                'tipo': tipo,
+                'motivo': alegacion.motivo[:200] + "..." if len(alegacion.motivo) > 200 else alegacion.motivo,
+                'estado': alegacion.get_estado_display(),
+                'revisado_por': alegacion.revisado_por.get_full_name() if alegacion.revisado_por else ""
+            })
+
+        html_string = render_to_string('reportes/pdf_justificaciones.html', {
+            'justificaciones': justificaciones,
+            'fecha_exportacion': now().strftime('%d/%m/%Y %H:%M'),
+            'year': year,
+            'mes': mes
+        })
+
+        html = HTML(string=html_string)
+        result = html.write_pdf()
+
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"justificaciones_aprobadas"
+        if mes and year:
+            filename += f"_{mes}_{year}"
+        elif year:
+            filename += f"_{year}"
+        response['Content-Disposition'] = f'inline; filename={filename}.pdf'
         response.write(result)
         return response
 
