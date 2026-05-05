@@ -33,6 +33,10 @@ from .views import (
     GestionHorariosExcepcionalesView,
     CrearHorarioExcepcionalView,
     EliminarHorarioExcepcionalView,
+    ReporteAsistenciaAdministrativaView,
+    ReporteAsistenciaAdministrativaExcelView,
+    ReporteDAEM3View,
+    ReporteDAEM3ExcelView,
     ReporteAsistenciaMensualExcelView,
 )
 
@@ -66,6 +70,11 @@ urlpatterns = [
     # Reportes PDF
     path("reporte-mensual/", ReporteAsistenciaMensualView.as_view(), name="reporte_asistencia_mensual"),
     path("reporte-mensual/<int:anio>/<int:mes>/", ReporteAsistenciaMensualView.as_view(), name="reporte_asistencia_mensual_params"),
+    path("reporte-administrativo/", ReporteAsistenciaAdministrativaView.as_view(), name="reporte_asistencia_administrativo"),
+    path("reporte-administrativo/<int:anio>/<int:mes>/", ReporteAsistenciaAdministrativaView.as_view(), name="reporte_asistencia_administrativo_params"),
+    path("reporte-administrativo-excel/", ReporteAsistenciaAdministrativaExcelView.as_view(), name="reporte_asistencia_administrativo_excel"),
+    path("reporte-daem3/", ReporteDAEM3View.as_view(), name="reporte_daem3"),
+    path("reporte-daem3-excel/", ReporteDAEM3ExcelView.as_view(), name="reporte_daem3_excel"),
     path("reporte-mensual-excel/", ReporteAsistenciaMensualExcelView.as_view(), name="reporte_asistencia_mensual_excel"),
     path("reporte-mensual-excel/<int:anio>/<int:mes>/", ReporteAsistenciaMensualExcelView.as_view(), name="reporte_asistencia_mensual_excel_params"),
     path("reporte-individual/<int:anio>/<int:mes>/", ReporteAsistenciaIndividualView.as_view(), name="reporte_asistencia_individual"),

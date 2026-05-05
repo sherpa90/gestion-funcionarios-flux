@@ -98,6 +98,22 @@
             background-color: #343a40;
             color: #fff;
         }
+        .firma-director {
+            margin-top: 40px;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+        .firma-linea {
+            border-top: 1px solid #000;
+            width: 200px;
+            margin: 0 auto 5px;
+            position: relative;
+        }
+        .firma-texto {
+            font-size: 10pt;
+            font-weight: bold;
+            margin-top: 5px;
+        }
         .page-break {
             page-break-before: always;
         }
@@ -186,6 +202,11 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <div class="firma-director">
+        <div class="firma-linea"></div>
+        <div class="firma-texto">Firma y Timbre Director</div>
+    </div>
 
     <div class="footer">
         Reporte generado el {{ fecha_actual|date:"d/m/Y" }} a las {{ fecha_actual|time:"H:i" }}

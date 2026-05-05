@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de Asistencia Laboral</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .subtitle {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .info {
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        .tipo-funcionario {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #1e40af;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 6px 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .firma-director {
+            margin-top: 40px;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+        .firma-linea {
+            border-top: 1px solid #000;
+            width: 200px;
+            margin: 0 auto 5px;
+            position: relative;
+        }
+        .firma-texto {
+            font-size: 10pt;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 7pt;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">INFORME DE ASISTENCIA LABORAL</div>
+
+        <div class="info">
+            <strong>Establecimiento:</strong> Colegio Los Alerces
+        </div>
+        <div class="info">
+            <strong>Mes de Informe:</strong> {{ nombre_mes }} {{ anio }}
+        </div>
+        <div class="tipo-funcionario">
+            {{ tipo_descripcion }}
+        </div>
+    </div>
+
+    <!-- Detalle por funcionario -->
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 8%;">N°</th>
+                <th style="width: 42%;">Nombre y Apellidos</th>
+                <th style="width: 20%;">RUN</th>
+                <th style="width: 15%;">Atrasos</th>
+                <th style="width: 15%;">Inasistencias</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for empleado in empleados_data %}
+            <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td>{{ empleado.nombre_completo }}</td>
+                <td>{{ empleado.run }}</td>
+                <td class="text-center">{{ empleado.atrasos }} min</td>
+                <td class="text-center">{{ empleado.inasistencias }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="firma-director">
+        <div class="firma-linea"></div>
+        <div class="firma-texto">Firma y Timbre Director</div>
+    </div>
+
+    <div class="footer">
+        Reporte generado el {{ fecha_actual|date:"d/m/Y" }} a las {{ fecha_actual|time:"H:i" }}
+    </div>
+</body>
+</html>

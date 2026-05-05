@@ -2881,6 +2881,410 @@ class EliminarHorarioExcepcionalView(LoginRequiredMixin, UserPassesTestMixin, Vi
         return redirect('asistencia:gestion_excepcionales')
 
 
+class ReporteAsistenciaAdministrativaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para generar reporte administrativo de asistencia (días administrativos)"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get(self, request, anio=None, mes=None):
+        import calendar as cal
+        # Si no se pasan como parámetros de URL, obtener de GET
+        if not anio or not mes or anio == '0':
+            anio_str = request.GET.get('anio')
+            mes_str = request.GET.get('mes')
+
+            if anio_str and mes_str:
+                try:
+                    anio = int(anio_str)
+                    mes = int(mes_str)
+                except ValueError:
+                    from django.contrib import messages
+                    messages.error(request, 'Los valores de mes y año deben ser números válidos.')
+                    return redirect(reverse('asistencia:gestion_asistencia'))
+            else:
+                from django.contrib import messages
+                messages.error(request, 'Debe seleccionar mes y año para generar el reporte.')
+                return redirect(reverse('asistencia:gestion_asistencia'))
+
+        # Obtener permisos administrativos del mes
+        from permisos.models import SolicitudPermiso
+        permisos = SolicitudPermiso.objects.filter(
+            estado='APROBADO',
+            fecha_inicio__year=anio,
+            fecha_inicio__month=mes
+        ).select_related('usuario').order_by('usuario__last_name', 'usuario__first_name')
+
+        # Preparar datos
+        empleados_data = []
+        for permiso in permisos:
+            empleados_data.append({
+                'funcionario': permiso.usuario.get_full_name() or permiso.usuario.username,
+                'run': permiso.usuario.run,
+                'establecimiento': 'Colegio Los Alerces',
+                'dias_solicitados': permiso.dias_solicitados,
+                'dias_disponibles': permiso.usuario.dias_disponibles if permiso.usuario.dias_disponibles else 0,
+                'fecha_desde': permiso.fecha_inicio,
+                'fecha_hasta': permiso.fecha_termino,
+            })
+
+        # Renderizar template HTML para PDF
+        html_content = render_to_string('asistencia/reporte_administrativo_pdf.html', {
+            'empleados_data': empleados_data,
+            'anio': anio,
+            'mes': mes,
+            'mes_nombre': {1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'}.get(mes, ''),
+            'fecha_actual': datetime.now(),
+        })
+
+        # Generar PDF
+        pdf_file = HTML(string=html_content).write_pdf()
+
+        # Crear respuesta HTTP
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        filename = f'reporte_administrativo_{anio}_{mes:02d}.pdf'
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+
+        return response
+
+
+class ReporteAsistenciaAdministrativaExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para generar reporte administrativo de asistencia en Excel"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get(self, request):
+        year = request.GET.get('year', '')
+        mes = request.GET.get('mes', '')
+
+        # Obtener permisos administrativos
+        from permisos.models import SolicitudPermiso
+        permisos = SolicitudPermiso.objects.filter(
+            estado='APROBADO'
+        ).select_related('usuario').order_by('usuario__last_name', 'usuario__first_name')
+
+        if year:
+            permisos = permisos.filter(fecha_inicio__year=year)
+        if mes:
+            permisos = permisos.filter(fecha_inicio__month=mes)
+
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = f"Administrativo {mes}-{year}" if mes and year else "Administrativo"
+
+        # Headers
+        headers = ['N°', 'Funcionario', 'RUN', 'Establecimiento', 'Días Solicitados', 'Días Disponibles', 'Fecha Desde', 'Fecha Hasta']
+        ws.append(headers)
+
+        # Column widths
+        ws.column_dimensions['A'].width = 8
+        ws.column_dimensions['B'].width = 30
+        ws.column_dimensions['C'].width = 15
+        ws.column_dimensions['D'].width = 25
+        ws.column_dimensions['E'].width = 15
+        ws.column_dimensions['F'].width = 15
+        ws.column_dimensions['G'].width = 12
+        ws.column_dimensions['H'].width = 12
+
+        for i, permiso in enumerate(permisos, 1):
+            ws.append([
+                i,
+                permiso.usuario.get_full_name() or permiso.usuario.username,
+                permiso.usuario.run,
+                'Colegio Los Alerces',
+                permiso.dias_solicitados,
+                permiso.usuario.dias_disponibles if permiso.usuario.dias_disponibles else 0,
+                permiso.fecha_inicio.strftime("%d/%m/%Y") if permiso.fecha_inicio else "",
+                permiso.fecha_termino.strftime("%d/%m/%Y") if permiso.fecha_termino else "",
+            ])
+
+        # Styling
+        header_font = Font(bold=True, color="FFFFFF")
+        fill = PatternFill(start_color="1F77B4", end_color="1F77B4", fill_type="solid")
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = fill
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        filename = f"reporte_administrativo"
+        if mes and year:
+            filename += f"_{mes}_{year}"
+        elif year:
+            filename += f"_{year}"
+        response['Content-Disposition'] = f'attachment; filename={filename}.xlsx'
+
+        wb.save(response)
+        return response
+
+
+class ReporteDAEM3View(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para generar reporte DAEM3 (asistencia laboral por tipo de funcionario)"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get(self, request, anio=None, mes=None):
+        import calendar as cal
+        # Si no se pasan como parámetros de URL, obtener de GET
+        if not anio or not mes or anio == '0':
+            anio_str = request.GET.get('year', '') or request.GET.get('anio', '')
+            mes_str = request.GET.get('mes')
+            tipo = request.GET.get('tipo', 'DOCENTE')  # DOCENTE o ASISTENTE
+
+            if anio_str and mes_str:
+                try:
+                    anio = int(anio_str)
+                    mes = int(mes_str)
+                except ValueError:
+                    from django.contrib import messages
+                    messages.error(request, 'Los valores de mes y año deben ser números válidos.')
+                    return redirect(reverse('asistencia:gestion_asistencia'))
+            else:
+                from django.contrib import messages
+                messages.error(request, 'Debe seleccionar mes y año para generar el reporte.')
+                return redirect(reverse('asistencia:gestion_asistencia'))
+        else:
+            tipo = request.GET.get('tipo', 'DOCENTE')
+
+        # Obtener funcionarios del tipo especificado
+        from users.models import CustomUser
+        if tipo == 'DOCENTE':
+            funcionarios = CustomUser.objects.filter(
+                role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN'],
+                tipo_funcionario='DOCENTE'
+            ).order_by('last_name', 'first_name')
+            tipo_descripcion = "Docentes"
+        else:  # ASISTENTE
+            funcionarios = CustomUser.objects.filter(
+                role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN'],
+                tipo_funcionario='ASISTENTE'
+            ).order_by('last_name', 'first_name')
+            tipo_descripcion = "Asistentes De La Educación"
+
+        # Obtener datos del mes
+        registros_mes = RegistroAsistencia.objects.filter(
+            fecha__year=anio,
+            fecha__month=mes,
+            funcionario__in=funcionarios
+        ).select_related('funcionario')
+
+        # Crear mapa de registros por funcionario
+        registros_por_funcionario = {}
+        for registro in registros_mes:
+            func_id = registro.funcionario.id
+            if func_id not in registros_por_funcionario:
+                registros_por_funcionario[func_id] = []
+            registros_por_funcionario[func_id].append(registro)
+
+        # Procesar cada funcionario
+        empleados_data = []
+        for funcionario in funcionarios:
+            func_id = funcionario.id
+            registros_funcionario = registros_por_funcionario.get(func_id, [])
+
+            atrasos_total = 0
+            inasistencias_injustificadas = 0
+
+            # Procesar registros del funcionario
+            for registro in registros_funcionario:
+                if registro.estado == 'RETRASO':
+                    atrasos_total += registro.minutos_retraso or 0
+                elif registro.estado == 'AUSENTE':
+                    # Solo contar inasistencias injustificadas (no permisos, licencias, etc.)
+                    if registro.fecha < funcionario.date_joined.date():
+                        continue
+                    inasistencias_injustificadas += 1
+
+            # Detectar días sin registro que son inasistencias injustificadas
+            fechas_con_registro = {r.fecha for r in registros_funcionario}
+            today = datetime.now().date()
+            num_dias = cal.monthrange(anio, mes)[0]
+            for dia in range(1, num_dias + 1):
+                fecha = datetime(anio, mes, dia).date()
+                if fecha >= today:
+                    continue
+                if fecha in fechas_con_registro:
+                    continue
+                if DiaFestivo.objects.filter(fecha=fecha).exists():
+                    continue
+                if fecha.weekday() >= 5 and not (funcionario.funcion == 'SERENO' or funcionario.tipo_funcionario == 'SERENO'):
+                    continue
+                if fecha < funcionario.date_joined.date():
+                    continue
+                inasistencias_injustificadas += 1
+
+            # Solo incluir si tiene registros o ausencias
+            if registros_funcionario or inasistencias_injustificadas > 0:
+                empleados_data.append({
+                    'nombre_completo': funcionario.get_full_name() or funcionario.username,
+                    'run': funcionario.run,
+                    'atrasos': atrasos_total,
+                    'inasistencias': inasistencias_injustificadas,
+                })
+
+        # Nombre del mes
+        meses = [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+        ]
+        nombre_mes = meses[mes - 1]
+
+        # Renderizar template HTML para PDF
+        html_content = render_to_string('asistencia/reporte_daem3_pdf.html', {
+            'empleados_data': empleados_data,
+            'anio': anio,
+            'mes': mes,
+            'nombre_mes': nombre_mes,
+            'tipo_descripcion': tipo_descripcion,
+            'fecha_actual': datetime.now(),
+        })
+
+        # Generar PDF
+        pdf_file = HTML(string=html_content).write_pdf()
+
+        # Crear respuesta HTTP
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        filename = f'informe_asistencia_laboral_{tipo_descripcion.lower().replace(" ", "_")}_{anio}_{mes:02d}.pdf'
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+
+        return response
+
+
+class ReporteDAEM3ExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para generar reporte DAEM3 en Excel"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get(self, request):
+        year = request.GET.get('year', '') or request.GET.get('anio', '')
+        mes = request.GET.get('mes', '')
+        tipo = request.GET.get('tipo', 'DOCENTE')
+
+        # Obtener funcionarios del tipo especificado
+        from users.models import CustomUser
+        if tipo == 'DOCENTE':
+            funcionarios = CustomUser.objects.filter(
+                role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN'],
+                tipo_funcionario='DOCENTE'
+            ).order_by('last_name', 'first_name')
+            tipo_descripcion = "Docentes"
+        else:  # ASISTENTE
+            funcionarios = CustomUser.objects.filter(
+                role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN'],
+                tipo_funcionario='ASISTENTE'
+            ).order_by('last_name', 'first_name')
+            tipo_descripcion = "Asistentes de la Educación"
+
+        # Obtener datos del mes
+        registros_mes = RegistroAsistencia.objects.filter(
+            fecha__year=year,
+            fecha__month=mes,
+            funcionario__in=funcionarios
+        ).select_related('funcionario')
+
+        # Crear mapa de registros por funcionario
+        registros_por_funcionario = {}
+        for registro in registros_mes:
+            func_id = registro.funcionario.id
+            if func_id not in registros_por_funcionario:
+                registros_por_funcionario[func_id] = []
+            registros_por_funcionario[func_id].append(registro)
+
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = f"Informe Asistencia {tipo_descripcion}"
+
+        # Headers
+        headers = ['N°', 'Nombre y Apellidos', 'RUN', 'Atrasos (min)', 'Inasistencias']
+        ws.append(headers)
+
+        # Column widths
+        ws.column_dimensions['A'].width = 8
+        ws.column_dimensions['B'].width = 35
+        ws.column_dimensions['C'].width = 15
+        ws.column_dimensions['D'].width = 15
+        ws.column_dimensions['E'].width = 15
+
+        # Procesar cada funcionario
+        empleados_data = []
+        for funcionario in funcionarios:
+            func_id = funcionario.id
+            registros_funcionario = registros_por_funcionario.get(func_id, [])
+
+            atrasos_total = 0
+            inasistencias_injustificadas = 0
+
+            # Procesar registros del funcionario
+            for registro in registros_funcionario:
+                if registro.estado == 'RETRASO':
+                    atrasos_total += registro.minutos_retraso or 0
+                elif registro.estado == 'AUSENTE':
+                    # Solo contar inasistencias injustificadas
+                    if registro.fecha < funcionario.date_joined.date():
+                        continue
+                    inasistencias_injustificadas += 1
+
+            # Detectar días sin registro que son inasistencias injustificadas
+            import calendar as cal
+            fechas_con_registro = {r.fecha for r in registros_funcionario}
+            today = datetime.now().date()
+            num_dias = cal.monthrange(int(year), int(mes))[0]
+            for dia in range(1, num_dias + 1):
+                fecha = datetime(int(year), int(mes), dia).date()
+                if fecha >= today:
+                    continue
+                if fecha in fechas_con_registro:
+                    continue
+                if DiaFestivo.objects.filter(fecha=fecha).exists():
+                    continue
+                if fecha.weekday() >= 5 and not (funcionario.funcion == 'SERENO' or funcionario.tipo_funcionario == 'SERENO'):
+                    continue
+                if fecha < funcionario.date_joined.date():
+                    continue
+                inasistencias_injustificadas += 1
+
+            # Solo incluir si tiene registros o ausencias
+            if registros_funcionario or inasistencias_injustificadas > 0:
+                empleados_data.append({
+                    'nombre_completo': funcionario.get_full_name() or funcionario.username,
+                    'run': funcionario.run,
+                    'atrasos': atrasos_total,
+                    'inasistencias': inasistencias_injustificadas,
+                })
+
+        # Agregar datos a Excel
+        for i, empleado in enumerate(empleados_data, 1):
+            ws.append([
+                i,
+                empleado['nombre_completo'],
+                empleado['run'],
+                empleado['atrasos'],
+                empleado['inasistencias']
+            ])
+
+        # Styling
+        header_font = Font(bold=True, color="FFFFFF")
+        fill = PatternFill(start_color="1F77B4", end_color="1F77B4", fill_type="solid")
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = fill
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        filename = f"informe_asistencia_laboral_{tipo_descripcion.lower().replace(' ', '_')}_{year}_{mes}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename={filename}'
+
+        wb.save(response)
+        return response
+
+
 class ReporteAsistenciaMensualExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
     """Vista para generar reporte mensual de asistencia en Excel"""
 
