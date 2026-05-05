@@ -303,7 +303,1664 @@ class GestionHorariosView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
         # Obtener todos los usuarios del sistema
         funcionarios = CustomUser.objects.filter(
             role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
-        ).order_by('first_name')
+        ).order_by('first_name', 'last_name')
+
+        if search:
+            from django.db.models import Q
+            funcionarios = funcionarios.filter(
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search) |
+                Q(run__icontains=search)
+            )
+
+        # Agrupar todos los horarios activos en un diccionario (O(1) lookup)
+        horarios_dict = {
+            h.funcionario_id: h 
+            for h in HorarioFuncionario.objects.filter(activo=True)
+        }
+
+        # Preparar datos con horarios
+        funcionarios_data = []
+        con_horario = 0
+        sin_horario = 0
+
+        for func in funcionarios:
+            horario = horarios_dict.get(func.id)
+            tiene_horario = horario is not None
+            funcionarios_data.append({
+                'funcionario': func,
+                'horario': horario,
+                'tiene_horario': tiene_horario,
+            })
+
+            if tiene_horario:
+                con_horario += 1
+            else:
+                sin_horario += 1
+
+        context['funcionarios_data'] = funcionarios_data
+        context['total_con_horario'] = con_horario
+        context['total_sin_horario'] = sin_horario
+        context['search'] = search
+        return context
+
+
+class MiAsistenciaView(LoginRequiredMixin, TemplateView):
+    """Vista para que usuarios vean su propia asistencia (todos los roles pueden ver la suya)"""
+    template_name = 'asistencia/mi_asistencia.html'
+
+    def get_context_data(self, **kwargs):
+        from django.db.models import Count, Sum, Avg, Q
+        from calendar import Calendar
+        context = super().get_context_data(**kwargs)
+
+        # Obtener parámetros de filtro
+        mes = self.request.GET.get('mes')
+        anio = self.request.GET.get('anio')
+
+        if not mes or not anio:
+            now = datetime.now()
+            mes = str(now.month)
+            anio = str(now.year)
+
+        mes_int = int(mes)
+        anio_int = int(anio)
+
+        # Determinar si el funcionario es sereno
+        es_sereno = self.request.user.funcion == 'SERENO'
+
+        # Filtrar registros del usuario actual con select_related optimizado
+        registros_qs = RegistroAsistencia.objects.filter(
+            funcionario=self.request.user,
+            fecha__year=anio,
+            fecha__month=mes
+        ).select_related('horario_asignado')
+
+        # Indexar registros por fecha para acceso rápido
+        registros_por_fecha = {}
+        for registro in registros_qs:
+            if registro.minutos_trabajados:
+                registro.horas_trabajadas = round(registro.minutos_trabajados / 60, 1)
+            else:
+                registro.horas_trabajadas = None
+            registro.detalle_permiso = None
+            registros_por_fecha[registro.fecha] = registro
+
+        # Consultar permisos administrativos aprobados para este mes
+        from permisos.models import SolicitudPermiso
+        from licencias.models import LicenciaMedica
+        from datetime import timedelta as td
+
+        primer_dia_mes = datetime(anio_int, mes_int, 1).date()
+        ultimo_dia_mes = (primer_dia_mes + td(days=32)).replace(day=1) - td(days=1)
+
+        permisos_qs = SolicitudPermiso.objects.filter(
+            usuario=self.request.user,
+            estado='APROBADO',
+            fecha_inicio__lte=ultimo_dia_mes
+        ).filter(
+            Q(fecha_termino__gte=primer_dia_mes) | Q(fecha_termino__isnull=True)
+        )
+
+        # Construir dict de permisos por fecha
+        permisos_por_fecha = {}
+        for permiso in permisos_qs:
+            inicio = max(permiso.fecha_inicio, primer_dia_mes)
+            fin = permiso.fecha_termino or ultimo_dia_mes
+            fin = min(fin, ultimo_dia_mes)
+            d = inicio
+            while d <= fin:
+                permisos_por_fecha[d] = permiso
+                d += td(days=1)
+
+        # Consultar licencias médicas para este mes
+        licencias_qs = LicenciaMedica.objects.filter(
+            usuario=self.request.user,
+            fecha_inicio__lte=ultimo_dia_mes
+        )
+
+        licencias_por_fecha = {}
+        for licencia in licencias_qs:
+            fin_lic = licencia.fecha_inicio + td(days=licencia.dias - 1)
+            inicio = max(licencia.fecha_inicio, primer_dia_mes)
+            fin = min(fin_lic, ultimo_dia_mes)
+            d = inicio
+            while d <= fin:
+                licencias_por_fecha[d] = licencia
+                d += td(days=1)
+
+        # Generar estructura de calendario mensual
+        cal = Calendar(firstweekday=0)  # Lunes como primer día
+        semanas_calendario = []
+
+        # Obtener días festivos del mes
+        festivos = set(
+            DiaFestivo.objects.filter(
+                fecha__year=anio_int,
+                fecha__month=mes_int
+            ).values_list('fecha', flat=True)
+        )
+
+        ESTADO_DISPLAY = {
+            'DIA_ADMINISTRATIVO': 'Día Administrativo',
+            'MEDIO_DIA': 'Medio Día Administrativo',
+            'LICENCIA_MEDICA': 'Licencia Médica',
+            'SIN_DATA': 'Sin Datos',
+        }
+
+        class RegistroVirtual:
+            """Registro virtual para días con permiso/licencia sin marcación"""
+            def __init__(self, estado):
+                self.estado = estado
+                self.minutos_retraso = 0
+                self.hora_entrada_real = None
+                self.hora_salida_real = None
+                self.minutos_trabajados = None
+                self.horas_trabajadas = None
+                self.horario_asignado = None
+                self.alegacion = None
+                self._estado_display = ESTADO_DISPLAY.get(estado, estado)
+            @property
+            def pk(self):
+                return None
+            def get_estado_display(self):
+                return self._estado_display
+
+        for semana in cal.monthdayscalendar(anio_int, mes_int):
+            dias_semana = []
+            for dia_num in semana:
+                if dia_num == 0:
+                    dias_semana.append(None)
+                else:
+                    fecha = datetime(anio_int, mes_int, dia_num).date()
+                    dia_semana = fecha.weekday()  # 0=Lunes, 6=Domingo
+                    es_fin_de_semana = dia_semana >= 5
+                    es_festivo = fecha in festivos
+                    registro = registros_por_fecha.get(fecha)
+                    today = datetime.now().date()
+                    es_pasado = fecha < today
+                    es_hoy = fecha == today
+                    es_dia_escolar = AnoEscolar.es_dia_escolar(fecha)
+
+                    # Crear registro virtual si hay permiso/licencia
+                    # Reemplaza registros AUSENTE retroactivamente
+                    if fecha in licencias_por_fecha:
+                        if not registro or registro.estado == 'AUSENTE':
+                            registro = RegistroVirtual('LICENCIA_MEDICA')
+                    elif fecha in permisos_por_fecha:
+                        permiso = permisos_por_fecha[fecha]
+                        if not registro or registro.estado == 'AUSENTE':
+                            if permiso.dias_solicitados == 0.5:
+                                registro = RegistroVirtual('MEDIO_DIA')
+                            else:
+                                registro = RegistroVirtual('DIA_ADMINISTRATIVO')
+
+                    # No es falta si hay registro (real o virtual), festivo, o no es día escolar
+                    # O si la fecha es anterior a su ingreso al establecimiento
+                    es_posterior_a_ingreso = fecha >= self.request.user.date_joined.date()
+                    if not es_posterior_a_ingreso and not registro:
+                        registro = RegistroVirtual('SIN_DATA')
+                        
+                    es_falta_sin_registro = es_pasado and not registro and not es_festivo and es_dia_escolar and es_posterior_a_ingreso
+
+                    # Los fines de semana solo aplican para serenos
+                    if es_fin_de_semana and not es_sereno:
+                        dias_semana.append({
+                            'dia': dia_num,
+                            'fecha': fecha,
+                            'es_fin_de_semana': True,
+                            'es_festivo': es_festivo,
+                            'es_sereno': False,
+                            'registro': None,
+                            'es_laboral': False,
+                            'es_hoy': es_hoy,
+                            'es_falta_sin_registro': False,
+                            'es_dia_escolar': es_dia_escolar,
+                        })
+                        continue
+
+                    dias_semana.append({
+                        'dia': dia_num,
+                        'fecha': fecha,
+                        'es_fin_de_semana': es_fin_de_semana,
+                        'es_festivo': es_festivo,
+                        'es_sereno': es_sereno,
+                        'registro': registro,
+                        'es_laboral': True,
+                        'es_hoy': es_hoy,
+                        'es_falta_sin_registro': es_falta_sin_registro,
+                        'es_dia_escolar': es_dia_escolar,
+                    })
+            semanas_calendario.append(dias_semana)
+
+        # Estadísticas del período
+        registros_list = list(registros_por_fecha.values())
+
+        # Incluir registros virtuales (permisos/licencias sin marcación)
+        registros_virtuales = []
+        for semana in semanas_calendario:
+            for dia in semana:
+                if dia and dia.get('registro') and isinstance(dia['registro'], RegistroVirtual):
+                    registros_virtuales.append(dia['registro'])
+
+        todos_registros = registros_list + registros_virtuales
+
+        faltas_sin_registro = sum(
+            1 for semana in semanas_calendario for dia in semana
+            if dia and dia.get('es_falta_sin_registro')
+        )
+        stats = {
+            'total': sum(1 for r in todos_registros if r.estado != 'SIN_DATA'),
+            'puntuales': sum(1 for r in todos_registros if r.estado == 'PUNTUAL'),
+            'retraso': sum(1 for r in todos_registros if r.estado == 'RETRASO'),
+            'ausente': sum(1 for r in todos_registros if r.estado == 'AUSENTE') + faltas_sin_registro,
+            'medio_dia': sum(1 for r in todos_registros if r.estado == 'MEDIO_DIA'),
+            'admin': sum(1 for r in todos_registros if r.estado == 'DIA_ADMINISTRATIVO'),
+            'licencia': sum(1 for r in todos_registros if r.estado == 'LICENCIA_MEDICA'),
+            'sin_marcacion': sum(1 for r in todos_registros if r.estado == 'SIN_MARCACION_ENTRADA'),
+            'dias_con_tiempo': sum(1 for r in registros_list if r.minutos_trabajados is not None),
+            'tiempo_promedio': (sum(r.minutos_trabajados for r in registros_list if r.minutos_trabajados is not None) / max(1, sum(1 for r in registros_list if r.minutos_trabajados is not None))),
+            'total_minutos_trabajados': sum(r.minutos_trabajados or 0 for r in registros_list),
+            'total_minutos_retraso': sum(r.minutos_retraso for r in registros_list if r.minutos_retraso > 0),
+        }
+
+        total_dias = stats['total'] or 0
+        dias_puntuales = stats['puntuales'] or 0
+        total_minutos_retraso_mes = stats['total_minutos_retraso'] or 0
+        total_horas_trabajadas_mes = round((stats['total_minutos_trabajados'] or 0) / 60, 1)
+
+        # Horas semanales
+        horas_semanales = {}
+        for i, semana in enumerate(semanas_calendario):
+            minutos_semana = 0
+            for d in semana:
+                if d and d['registro'] and d['registro'].minutos_trabajados:
+                    minutos_semana += d['registro'].minutos_trabajados
+            if minutos_semana > 0:
+                horas_semanales[f"Semana {i + 1}"] = round(minutos_semana / 60, 1)
+
+        # Meses y años disponibles
+        context['meses'] = [
+            (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'),
+            (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'),
+            (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
+        ]
+        anios_con_registros = list(RegistroAsistencia.objects.filter(
+            funcionario=self.request.user
+        ).values_list('fecha__year', flat=True).distinct().order_by('-fecha__year'))
+        
+        # Si no hay registros, mostrar años por defecto (actual y anterior)
+        if not anios_con_registros:
+            from datetime import datetime as dt
+            anio_actual = dt.now().year
+            anios_con_registros = [anio_actual, anio_actual - 1]
+        
+        context['anios_disponibles'] = anios_con_registros
+
+        # Horario asignado
+        horario_actual = HorarioFuncionario.objects.filter(
+            funcionario=self.request.user, activo=True
+        ).first()
+
+        # Generar horario_semanal
+        horario_semanal = []
+        dias_totales = 7 if es_sereno else 5
+        total_minutos_semanales = 0
+
+        DIA_CHOICES_DICT = {
+            0: 'Lunes', 1: 'Martes', 2: 'Miércoles',
+            3: 'Jueves', 4: 'Viernes', 5: 'Sábado', 6: 'Domingo'
+        }
+
+        dias_configurados = {}
+        if horario_actual:
+            for dh in horario_actual.dias.all():
+                dias_configurados[dh.dia_semana] = dh
+
+        for i in range(dias_totales):
+            dia_obj = dias_configurados.get(i)
+            if dia_obj:
+                horas = 0
+                if dia_obj.activo and dia_obj.hora_entrada and dia_obj.hora_salida:
+                    min1 = dia_obj.hora_entrada.hour * 60 + dia_obj.hora_entrada.minute
+                    min2 = dia_obj.hora_salida.hour * 60 + dia_obj.hora_salida.minute
+                    if min2 < min1: min2 += 24 * 60
+                    horas = (min2 - min1) / 60
+                    total_minutos_semanales += (min2 - min1)
+                horario_semanal.append({
+                    'dia_semana': i,
+                    'nombre': DIA_CHOICES_DICT[i],
+                    'activo': dia_obj.activo,
+                    'hora_entrada': dia_obj.hora_entrada.strftime('%H:%M') if dia_obj.hora_entrada else '',
+                    'hora_salida': dia_obj.hora_salida.strftime('%H:%M') if dia_obj.hora_salida else '',
+                    'horas_asignadas': round(horas, 1)
+                })
+            else:
+                horas = 0
+                if horario_actual and horario_actual.hora_entrada:
+                    min1 = horario_actual.hora_entrada.hour * 60 + horario_actual.hora_entrada.minute
+                    min2 = 17 * 60 # Default 17:00
+                    if min2 < min1: min2 += 24 * 60
+                    horas = (min2 - min1) / 60
+                    total_minutos_semanales += (min2 - min1)
+                horario_semanal.append({
+                    'dia_semana': i,
+                    'nombre': DIA_CHOICES_DICT[i],
+                    'activo': True,
+                    'hora_entrada': horario_actual.hora_entrada.strftime('%H:%M') if horario_actual and horario_actual.hora_entrada else '08:00',
+                    'hora_salida': '17:00',
+                    'horas_asignadas': round(horas, 1)
+                })
+
+        total_horas_semanales = f"{total_minutos_semanales // 60}h {total_minutos_semanales % 60}m" if total_minutos_semanales % 60 != 0 else f"{total_minutos_semanales // 60}h"
+
+        # Calcular horas esperadas para el mes completo (según horario configurado)
+        total_minutos_esperados_mes = 0
+        from calendar import Calendar
+        cal = Calendar(firstweekday=0)
+        for semana in cal.monthdayscalendar(anio_int, mes_int):
+            for dia_num in semana:
+                if dia_num != 0:
+                    fecha = datetime(anio_int, mes_int, dia_num).date()
+                    if fecha in festivos:
+                        continue
+                    
+                    dia_semana = fecha.weekday()
+                    if not es_sereno and dia_semana >= 5:
+                        continue
+                        
+                    dia_h = next((d for d in horario_semanal if d['dia_semana'] == dia_semana), None)
+                    if dia_h and dia_h['activo']:
+                        if dia_h['hora_entrada'] and dia_h['hora_salida']:
+                            h1, m1 = map(int, dia_h['hora_entrada'].split(':'))
+                            h2, m2 = map(int, dia_h['hora_salida'].split(':'))
+                            min1 = h1 * 60 + m1
+                            min2 = h2 * 60 + m2
+                            if min2 < min1: min2 += 24 * 60
+                            total_minutos_esperados_mes += (min2 - min1)
+
+        total_horas_esperadas_mes = round(total_minutos_esperados_mes / 60, 1)
+
+        context.update({
+            'registros': registros_list,
+            'semanas_calendario': semanas_calendario,
+            'es_sereno': es_sereno,
+            'mes': mes,
+            'mes_int': mes_int,
+            'anio': anio,
+            'anio_int': anio_int,
+            'today': datetime.now().date(),
+            'ano_escolar_activo': AnoEscolar.get_activo(),
+            'horario_semanal': horario_semanal,
+            'total_horas_semanales': total_horas_semanales,
+            'estadisticas': {
+                'total_dias': total_dias,
+                'dias_puntuales': dias_puntuales,
+                'dias_retraso': stats['retraso'] or 0,
+                'dias_ausente': stats['ausente'] or 0,
+                'dias_medio_dia': stats['medio_dia'] or 0,
+                'dias_admin': stats['admin'] or 0,
+                'dias_licencia': stats['licencia'] or 0,
+                'porcentaje_puntualidad': round((dias_puntuales / total_dias * 100) if total_dias > 0 else 0, 1),
+                'dias_con_tiempo_trabajado': stats['dias_con_tiempo'] or 0,
+                'tiempo_promedio_trabajado': round(stats['tiempo_promedio'] or 0, 0),
+                'total_horas_trabajadas_mes': total_horas_trabajadas_mes,
+                'total_horas_esperadas_mes': total_horas_esperadas_mes,
+                'total_minutos_retraso_mes': total_minutos_retraso_mes,
+                'horas_semanales': horas_semanales,
+            }
+        })
+
+        return context
+
+class CargaHorariosView(LoginRequiredMixin, UserPassesTestMixin, FormView):
+    """Vista para cargar archivos Excel de registros de asistencia (marcaciones)"""
+    template_name = "asistencia/carga_horarios.html"
+    form_class = CargaHorariosForm
+    success_url = "/asistencia/cargar-horarios/"
+
+    def test_func(self):
+        return self.request.user.role in ["ADMIN", "SECRETARIA"]
+
+    def form_valid(self, form):
+        archivo_excel = form.cleaned_data["archivo_excel"]
+
+        try:
+            registros_creados, errores = self.procesar_excel_asistencia(archivo_excel)
+
+            if registros_creados > 0:
+                messages.success(
+                    self.request,
+                    f"Se procesaron correctamente {registros_creados} registros de asistencia."
+                )
+                registrar_log(
+                    usuario=self.request.user,
+                    tipo='IMPORT',
+                    accion='Carga Masiva de Asistencia',
+                    descripcion=f'Se cargaron {registros_creados} registros desde Excel',
+                    ip_address=get_client_ip(self.request)
+                )
+            else:
+                messages.warning(self.request, "No se encontraron registros válidos para procesar.")
+
+            if errores:
+                for error in errores[:8]:
+                    messages.warning(self.request, error)
+                if len(errores) > 8:
+                    messages.warning(self.request, f"... y {len(errores) - 8} errores más.")
+
+        except Exception as e:
+            messages.error(self.request, f"Error al procesar el archivo: {str(e)}")
+            return self.form_invalid(form)
+
+        return super().form_valid(form)
+
+    def procesar_excel_asistencia(self, archivo_excel):
+        """Procesa Excel de asistencia delegando a la lógica compartida"""
+        registros_creados, errores = procesar_archivo_asistencia_generico(archivo_excel, self.request.user)
+        return registros_creados, errores
+
+
+class GestionAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Vista administrativa para gestionar usuarios con asistencia (similar a gestion_liquidaciones pero mostrando usuarios)"""
+    model = CustomUser
+    template_name = 'asistencia/gestion_asistencia.html'
+    context_object_name = 'usuarios'
+    paginate_by = 20
+
+    def get_paginate_by(self, queryset):
+        """Permite cambiar dinámicamente el número de elementos por página"""
+        paginate_by = self.request.GET.get('paginate_by', '20')
+        if paginate_by == 'todos':
+            return None  # Sin paginación
+        try:
+            return int(paginate_by)
+        except ValueError:
+            return 20  # Valor por defecto
+
+    def test_func(self):
+        # Solo administradores, secretarias, directores y directivos pueden ver la gestión
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get_queryset(self):
+        # Obtener todos los usuarios del sistema
+        queryset = CustomUser.objects.filter(
+            is_active=True,
+            role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
+        )
+
+        # Filtros de búsqueda
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search) |
+                Q(run__icontains=search)
+            )
+
+        # Ordenamiento — por defecto: nombre ascendente
+        sort_by = self.request.GET.get('sort', 'name')
+
+        if sort_by == 'name':
+            queryset = queryset.order_by('first_name', 'last_name')
+        elif sort_by == 'name_desc':
+            queryset = queryset.order_by('-first_name', '-last_name')
+        elif sort_by == 'rut':
+            queryset = queryset.order_by('run')
+        elif sort_by == 'rut_desc':
+            queryset = queryset.order_by('-run')
+        elif sort_by == 'role':
+            queryset = queryset.order_by('role', 'first_name', 'last_name')
+        elif sort_by == 'role_desc':
+            queryset = queryset.order_by('-role', 'first_name', 'last_name')
+        else:
+            queryset = queryset.order_by('first_name', 'last_name')
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        from django.db.models import Count, Q
+        context = super().get_context_data(**kwargs)
+
+        # Estadísticas generales - UNA sola query
+        stats = RegistroAsistencia.objects.aggregate(
+            total_registros=Count('id'),
+            registros_puntuales=Count('id', filter=Q(estado='PUNTUAL')),
+            registros_retraso=Count('id', filter=Q(estado='RETRASO')),
+            registros_ausentes=Count('id', filter=Q(estado='AUSENTE')),
+            total_usuarios=Count('funcionario_id', distinct=True),
+        )
+
+        context['estadisticas'] = {
+            'total_usuarios': stats['total_usuarios'] or 0,
+            'total_registros': stats['total_registros'] or 0,
+            'registros_puntuales': stats['registros_puntuales'] or 0,
+            'registros_retraso': stats['registros_retraso'] or 0,
+            'registros_ausentes': stats['registros_ausentes'] or 0,
+            'porcentaje_puntualidad': round(
+                (stats['registros_puntuales'] / stats['total_registros'] * 100)
+                if stats['total_registros'] > 0 else 0, 1
+            )
+        }
+
+        # Obtener registros de una sola consulta (bulk mapping) en lugar de N queries
+        usuario_ids = [u.id for u in context['usuarios']]
+        registros_totales = RegistroAsistencia.objects.filter(funcionario_id__in=usuario_ids)
+        
+        # Mapear estadísticas por usuario
+        stats_por_usuario = {}
+        for r in registros_totales:
+            uid = r.funcionario_id
+            if uid not in stats_por_usuario:
+                stats_por_usuario[uid] = {'total': 0, 'puntuales': 0, 'ultimo_registro': None}
+            
+            stats_por_usuario[uid]['total'] += 1
+            if r.estado == 'PUNTUAL':
+                stats_por_usuario[uid]['puntuales'] += 1
+            
+            if not stats_por_usuario[uid]['ultimo_registro'] or r.fecha > stats_por_usuario[uid]['ultimo_registro'].fecha:
+                stats_por_usuario[uid]['ultimo_registro'] = r
+        
+
+        # Para cada usuario, agregar estadísticas pre-calculadas
+        usuarios_con_stats = []
+        for usuario in context['usuarios']:
+            user_stats = stats_por_usuario.get(usuario.id, {'total': 0, 'puntuales': 0, 'ultimo_registro': None})
+            
+            total_registros_usuario = user_stats['total']
+            registros_puntuales_usuario = user_stats['puntuales']
+            ultimo_registro = user_stats['ultimo_registro']
+
+            usuarios_con_stats.append({
+                'usuario': usuario,
+                'total_registros': total_registros_usuario,
+                'registros_puntuales': registros_puntuales_usuario,
+                'porcentaje_puntualidad': round((registros_puntuales_usuario / total_registros_usuario * 100) if total_registros_usuario > 0 else 0, 1),
+                'ultimo_registro': ultimo_registro.fecha if ultimo_registro else None,
+            })
+
+        # Ordenar usuarios con estadísticas
+        sort_by = self.request.GET.get('sort', 'name')
+
+        if sort_by == 'name':
+            usuarios_con_stats.sort(key=lambda x: (x['usuario'].first_name, x['usuario'].last_name))
+        elif sort_by == 'name_desc':
+            usuarios_con_stats.sort(key=lambda x: (x['usuario'].first_name, x['usuario'].last_name), reverse=True)
+        elif sort_by == 'rut':
+            usuarios_con_stats.sort(key=lambda x: x['usuario'].run or '')
+        elif sort_by == 'rut_desc':
+            usuarios_con_stats.sort(key=lambda x: x['usuario'].run or '', reverse=True)
+        elif sort_by == 'registros':
+            usuarios_con_stats.sort(key=lambda x: x['total_registros'])
+        elif sort_by == 'registros_desc':
+            usuarios_con_stats.sort(key=lambda x: x['total_registros'], reverse=True)
+        elif sort_by == 'puntualidad':
+            usuarios_con_stats.sort(key=lambda x: x['porcentaje_puntualidad'])
+        elif sort_by == 'puntualidad_desc':
+            usuarios_con_stats.sort(key=lambda x: x['porcentaje_puntualidad'], reverse=True)
+        elif sort_by == 'ultimo_acceso':
+            usuarios_con_stats.sort(key=lambda x: x['ultimo_registro'] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+        elif sort_by == 'ultimo_acceso_desc':
+            usuarios_con_stats.sort(key=lambda x: x['ultimo_registro'] or datetime.min.replace(tzinfo=timezone.utc))
+
+        context['usuarios_con_stats'] = usuarios_con_stats
+
+        # Filtros aplicados
+        context['filtros_aplicados'] = {
+            'search': self.request.GET.get('search', ''),
+        }
+        context['current_sort'] = sort_by
+        context['paginate_by'] = self.request.GET.get('paginate_by', '20')
+
+        return context
+
+
+class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, FormView):
+    """Vista para cargar registros de asistencia desde vouchers del reloj control"""
+    template_name = "asistencia/carga_registros.html"
+    form_class = CargaRegistrosAsistenciaForm
+    success_url = "/asistencia/gestion/"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if 'carga_resultado' in self.request.session:
+            context['resultado'] = self.request.session.pop('carga_resultado')
+        return context
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+
+    def form_valid(self, form):
+        archivo_excel = form.cleaned_data["archivo_excel"]
+        mes = form.cleaned_data.get("mes")
+        anio = form.cleaned_data.get("anio")
+
+        try:
+            # Procesar el archivo
+            registros_creados, errores = self.procesar_excel_asistencia(archivo_excel, mes, anio)
+
+            # Guardar resultados para mostrar en el template de forma elegante
+            self.request.session['carga_resultado'] = {
+                'success_count': registros_creados,
+                'error_count': len(errores),
+                'errors': errores[:10],  # Mostrar máximo 10 errores de muestra
+            }
+
+            if registros_creados > 0:
+                messages.success(self.request, "Proceso de carga finalizado.")
+                registrar_log(
+                    usuario=self.request.user,
+                    tipo='IMPORT',
+                    accion='Carga Masiva de Asistencia',
+                    descripcion=f'Se cargaron {registros_creados} registros de asistencia desde reloj control',
+                    ip_address=get_client_ip(self.request)
+                )
+            elif not errores:
+                messages.warning(self.request, "No se encontraron registros válidos para procesar.")
+
+        except Exception as e:
+            messages.error(self.request, f"Error al procesar el archivo: {str(e)}")
+            return self.form_invalid(form)
+
+        return super().form_valid(form)
+
+    def procesar_excel_asistencia(self, archivo_excel, mes=None, anio=None):
+        """Procesa Excel de registros del reloj control delegando a la lógica compartida"""
+        registros_creados, errores = procesar_archivo_asistencia_generico(archivo_excel, self.request.user, mes, anio)
+        return registros_creados, errores
+
+
+def procesar_archivo_asistencia_generico(archivo_excel, usuario_procesador, mes=None, anio=None):
+    """
+    Lógica unificada y robusta para procesar archivos de asistencia.
+    Garantiza que registros antes de las 07:30 AM sean capturados correctamente.
+    """
+    import re
+    from datetime import datetime, time, timedelta
+    
+    logger.info(f"Iniciando procesamiento genérico de archivo de asistencia. Usuario: {usuario_procesador.get_full_name()}")
+
+    rows = load_data_file(archivo_excel, mes, anio)
+    logger.info(f"Archivo cargado: {len(rows)} filas encontradas")
+
+    registros_creados = 0
+    errores = []
+    ruts_no_encontrados_count = 0
+    ruts_no_encontrados_set = set()
+    ruts_unicos_en_archivo = set()
+
+    def parse_date(value):
+        if not value: return None
+        if hasattr(value, 'date'): return value.date()
+        if hasattr(value, 'year'): return value.date()
+        
+        value_str = str(value).strip()
+        formatos_fecha = [
+            "%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%m/%d/%Y", "%d/%m/%y", "%Y%m%d",
+            "%Y-%m-%d %H:%M:%S", "%d-%m-%Y %H:%M:%S", "%d/%m/%Y %H:%M:%S",
+            "%Y-%m-%d %H:%M", "%d-%m-%Y %H:%M", "%d/%m/%Y %H:%M",
+        ]
+
+        for formato in formatos_fecha:
+            try:
+                return datetime.strptime(value_str, formato).date()
+            except ValueError:
+                continue
+
+        # Extraer solo fecha si hay tiempo con cualquier separador
+        match = re.search(r'(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})', value_str)
+        if match:
+            try:
+                d, m, y = map(int, match.groups())
+                if y < 100: y += 2000
+                return datetime(y, m, d).date()
+            except: pass
+
+        return None
+
+    def parse_time(value):
+        if not value: return None
+        if hasattr(value, 'time'): return value.time()
+        if hasattr(value, 'hour') and hasattr(value, 'minute'):
+            return time(value.hour, value.minute)
+
+        value_str = str(value).strip().upper()
+        formatos_hora = ["%H:%M:%S", "%H:%M", "%I:%M:%S %P", "%I:%M %P", "%H:%M %P"]
+
+        for formato in formatos_hora:
+            try:
+                # Nota: strptime con %p requiere que el string esté en el mismo case o usar upper()
+                return datetime.strptime(value_str, formato).time()
+            except ValueError:
+                continue
+
+        # Regex robusto para HH:MM (captura 12:57, 07:29, etc.)
+        match = re.search(r'(\d{1,2}):(\d{2})', value_str)
+        if match:
+            try:
+                h, m = map(int, match.groups())
+                # Si viene con PM y no es 12, sumar 12
+                if 'PM' in value_str and h < 12: h += 12
+                # Si viene con AM y es 12 (medianoche), poner 0
+                if 'AM' in value_str and h == 12: h = 0
+                
+                if 0 <= h < 24 and 0 <= m < 60:
+                    return time(h, m)
+            except: pass
+
+        # Excel decimal fraction
+        try:
+            val_float = float(value)
+            if 0 <= val_float < 1:
+                total_seconds = int(val_float * 86400 + 0.5)
+                return time(total_seconds // 3600, (total_seconds % 3600) // 60)
+            elif 1 <= val_float < 24:
+                return time(int(val_float), int((val_float - int(val_float)) * 60))
+        except: pass
+
+        return None
+
+    datos_agrupados = {}  # {(rut, fecha): [hora1, hora2, ...]}
+
+    for row_num, row in enumerate(rows, start=2):
+        if not any(row): continue
+
+        try:
+            rut_raw = row[0]
+            if not rut_raw: continue
+            
+            rut_str = str(rut_raw).strip()
+            ruts_unicos_en_archivo.add(rut_str)
+
+            fecha = None
+            horas_fila = []
+
+            # Detección de formato por número de columnas
+            if len(row) >= 5: # Extendido
+                fecha = parse_date(row[2])
+                for i in range(3, len(row)):
+                    h = parse_time(row[i])
+                    if h: horas_fila.append(h)
+            elif len(row) == 4: # RUT, Nombre, Fecha, Hora
+                fecha = parse_date(row[2])
+                h = parse_time(row[3])
+                if h: horas_fila.append(h)
+            elif len(row) >= 3: # Mixto
+                horario_raw = row[2]
+                if isinstance(horario_raw, datetime):
+                    fecha = horario_raw.date()
+                    horas_fila.append(time(horario_raw.hour, horario_raw.minute))
+                else:
+                    horario_str = str(horario_raw).strip()
+                    # Buscar fecha y hora juntas
+                    match_fh = re.search(r'(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\s+(\d{1,2}):(\d{2})', horario_str)
+                    if match_fh:
+                        try:
+                            d, m, y, hh, mm = map(int, match_fh.groups())
+                            if y < 100: y += 2000
+                            fecha = datetime(y, m, d).date()
+                            
+                            # Manejar AM/PM en el regex combinado
+                            horario_upper = horario_str.upper()
+                            if 'PM' in horario_upper and hh < 12: hh += 12
+                            if 'AM' in horario_upper and hh == 12: hh = 0
+                            
+                            horas_fila.append(time(hh, mm))
+                        except: pass
+                    
+                    if not fecha: fecha = parse_date(horario_str)
+                    if not horas_fila:
+                        h = parse_time(horario_str)
+                        if h: horas_fila.append(h)
+
+            if fecha and horas_fila:
+                key = (rut_str, fecha)
+                if key not in datos_agrupados:
+                    datos_agrupados[key] = []
+                datos_agrupados[key].extend(horas_fila)
+            elif not fecha and row_num > 1:
+                errores.append(f"Fila {row_num}: No se detectó fecha válida.")
+
+        except Exception as e:
+            errores.append(f"Fila {row_num}: {str(e)}")
+
+    # Segunda fase: Creación de registros
+    ruts_encontrados_bd = set()
+    for (rut_str, fecha), horas in datos_agrupados.items():
+        try:
+            funcionario = find_user_by_rut(rut_str)
+            if not funcionario:
+                ruts_no_encontrados_set.add(rut_str)
+                ruts_no_encontrados_count += 1
+                continue
+
+            ruts_encontrados_bd.add(rut_str)
+            horas_ordenadas = sorted(list(set(horas))) # Únicas y ordenadas
+            
+            # Límite de 12:00 para diferenciar entrada de salida (más permisivo para salidas tempranas)
+            hora_entrada = None
+            hora_salida = None
+
+            limite_salida = time(12, 0)
+            manana = [h for h in horas_ordenadas if h < limite_salida]
+            tarde  = [h for h in horas_ordenadas if h >= limite_salida]
+
+            if manana:
+                hora_entrada = manana[0] # La más temprana de la mañana
+            
+            if tarde:
+                hora_salida = tarde[-1] # La más tardía de la tarde
+
+            logger.info(f"Registro {rut_str} - {fecha}: Entrada={hora_entrada}, Salida={hora_salida} (Marcaciones: {horas_ordenadas}, Límite: {limite_salida})")
+
+            registro, created = RegistroAsistencia.objects.get_or_create(
+                funcionario=funcionario,
+                fecha=fecha,
+                defaults={
+                    'hora_entrada_real': hora_entrada,
+                    'hora_salida_real': hora_salida,
+                    'procesado_por': usuario_procesador,
+                }
+            )
+
+            if not created:
+                # Actualizar manteniendo coherencia
+                registro.hora_entrada_real = hora_entrada
+                registro.hora_salida_real = hora_salida
+                registro.procesado_por = usuario_procesador
+                registro.save()
+
+            registros_creados += 1
+
+        except Exception as e:
+            errores.append(f"RUT {rut_str} fecha {fecha}: {str(e)}")
+
+    logger.info(f"Procesamiento finalizado: {registros_creados} registros.")
+    return registros_creados, errores
+
+
+class DescargarAsistenciaView(LoginRequiredMixin, View):
+    """Vista para descargar registros de asistencia como Excel"""
+
+    def get(self, request):
+        # Obtener parámetros de filtro
+        usuario_id = request.GET.get('usuario')
+        anio = request.GET.get('anio')
+        mes = request.GET.get('mes')
+        estado = request.GET.get('estado')
+
+        # Filtrar registros
+        queryset = RegistroAsistencia.objects.select_related('funcionario', 'horario_asignado')
+
+        if usuario_id:
+            queryset = queryset.filter(funcionario_id=usuario_id)
+        if anio:
+            queryset = queryset.filter(fecha__year=anio)
+        if mes:
+            queryset = queryset.filter(fecha__month=mes)
+        if estado:
+            queryset = queryset.filter(estado=estado)
+
+        registros = queryset.order_by('fecha', 'funcionario__last_name')
+
+        # Crear archivo Excel
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Registros de Asistencia"
+
+        # Headers
+        headers = [
+            'Fecha', 'RUT', 'Nombre Completo', 'Rol',
+            'Hora Estipulada', 'Hora Entrada Real', 'Hora Salida Real',
+            'Minutos Retraso', 'Minutos Trabajados', 'Estado'
+        ]
+        for col_num, header in enumerate(headers, 1):
+            ws.cell(row=1, column=col_num, value=header)
+
+        # Datos
+        for row_num, registro in enumerate(registros, 2):
+            ws.cell(row=row_num, column=1, value=registro.fecha.strftime('%Y-%m-%d'))
+            ws.cell(row=row_num, column=2, value=registro.funcionario.run)
+            ws.cell(row=row_num, column=3, value=registro.funcionario.get_full_name())
+            ws.cell(row=row_num, column=4, value=registro.funcionario.get_role_display())
+
+            if registro.horario_asignado:
+                ws.cell(row=row_num, column=5, value=registro.horario_asignado.hora_entrada.strftime('%H:%M:%S'))
+            else:
+                ws.cell(row=row_num, column=5, value='Sin horario')
+
+            if registro.hora_entrada_real:
+                ws.cell(row=row_num, column=6, value=registro.hora_entrada_real.strftime('%H:%M:%S'))
+            else:
+                ws.cell(row=row_num, column=6, value='')
+
+            if registro.hora_salida_real:
+                ws.cell(row=row_num, column=7, value=registro.hora_salida_real.strftime('%H:%M:%S'))
+            else:
+                ws.cell(row=row_num, column=7, value='')
+
+            ws.cell(row=row_num, column=8, value=registro.minutos_retraso)
+            ws.cell(row=row_num, column=9, value=registro.minutos_trabajados or '')
+            ws.cell(row=row_num, column=10, value=registro.get_estado_display())
+
+        # Crear respuesta HTTP
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        filename = f"registros_asistencia_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename={filename}'
+
+        wb.save(response)
+        return response
+
+
+class CrearHorarioView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """Vista para crear horario manualmente para un funcionario"""
+    model = HorarioFuncionario
+    form_class = HorarioFuncionarioForm
+    template_name = 'asistencia/crear_horario.html'
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def dispatch(self, request, *args, **kwargs):
+        # Verificar si el funcionario ya tiene un horario
+        funcionario_id = self.kwargs.get('funcionario_id')
+        if funcionario_id:
+            existing_horario = HorarioFuncionario.objects.filter(funcionario_id=funcionario_id).first()
+            if existing_horario:
+                messages.warning(
+                    request,
+                    f'El funcionario ya tiene un horario asignado. Use la opción "Editar" para modificarlo.'
+                )
+                return redirect('asistencia:editar_horario', pk=existing_horario.pk)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        funcionario_id = self.kwargs.get('funcionario_id')
+        if funcionario_id:
+            context['funcionario'] = get_object_or_404(CustomUser, pk=funcionario_id)
+        return context
+
+    def form_valid(self, form):
+        funcionario_id = self.kwargs.get('funcionario_id')
+        if funcionario_id:
+            form.instance.funcionario_id = funcionario_id
+        messages.success(self.request, f'Horario creado exitosamente para {form.instance.funcionario.get_full_name()}')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('asistencia:gestion_horarios')
+
+
+class EditarHorarioView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """Vista para editar horario de un funcionario"""
+    model = HorarioFuncionario
+    form_class = HorarioFuncionarioForm
+    template_name = 'asistencia/editar_horario.html'
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Horario actualizado exitosamente para {form.instance.funcionario.get_full_name()}')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('asistencia:gestion_horarios')
+
+
+class ToggleHorarioView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para activar/desactivar horario"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def post(self, request, pk):
+        horario = get_object_or_404(HorarioFuncionario, pk=pk)
+        horario.activo = not horario.activo
+        horario.save()
+
+        estado = "activado" if horario.activo else "desactivado"
+        messages.success(request, f'Horario {estado} exitosamente para {horario.funcionario.get_full_name()}')
+
+        return redirect('asistencia:gestion_horarios')
+
+
+class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """Vista detallada de asistencia de un usuario específico organizada por año"""
+    template_name = 'asistencia/detalle_usuario.html'
+
+    def test_func(self):
+        # Solo administradores, secretarias, directores y directivos pueden ver detalles
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Obtener el usuario
+        user_id = self.kwargs.get('user_id')
+        usuario = get_object_or_404(CustomUser, pk=user_id)
+
+        # Obtener todos los registros del usuario
+        registros_usuario = RegistroAsistencia.objects.filter(
+            funcionario=usuario
+        ).select_related('horario_asignado', 'procesado_por').order_by('-fecha')
+
+        # Estadísticas generales del usuario
+        total_registros = registros_usuario.count()
+        registros_puntuales = registros_usuario.filter(estado='PUNTUAL').count()
+        registros_retraso = registros_usuario.filter(estado='RETRASO').count()
+        registros_ausentes = registros_usuario.filter(estado='AUSENTE').count()
+        total_minutos_retraso = sum(r.minutos_retraso for r in registros_usuario if r.minutos_retraso > 0)
+
+        ESTADO_DISPLAY = {
+            'DIA_ADMINISTRATIVO': 'Día Administrativo',
+            'MEDIO_DIA': 'Medio Día Administrativo',
+            'LICENCIA_MEDICA': 'Licencia Médica',
+            'AUSENTE': 'Ausente',
+            'FESTIVO': 'Día Festivo',
+            'SIN_DATA': 'Sin Datos',
+        }
+
+        # Obtener los días laborales del funcionario para marcar ausencias automáticas
+        horario_semanal = HorarioFuncionario.objects.filter(funcionario=usuario).first()
+        dias_laborales = set()
+        if horario_semanal:
+            # weekday() de python: 0=Lunes...6=Domingo. En nuestro modelo: 0=Lunes...6=Domingo
+            dias_laborales = set(horario_semanal.dias.filter(activo=True).values_list('dia_semana', flat=True))
+        else:
+            # Default: Lunes a Viernes si no hay horario configurado
+            dias_laborales = {0, 1, 2, 3, 4}
+
+        class RegistroVirtual:
+            """Registro virtual para días con permiso/licencia o ausencias sin marcación"""
+            def __init__(self, fecha, estado, nombre_festivo=None):
+                self.fecha = fecha
+                self.estado = estado
+                self.minutos_retraso = 0
+                self.hora_entrada_real = None
+                self.hora_salida_real = None
+                self.minutos_trabajados = None
+                self.horario_asignado = None
+                self.alegacion = None
+                self.nombre_festivo = nombre_festivo
+                self._estado_display = ESTADO_DISPLAY.get(estado, estado)
+            @property
+            def pk(self):
+                return None
+            def get_estado_display(self):
+                if self.estado == 'FESTIVO' and self.nombre_festivo:
+                    return f"Festivo: {self.nombre_festivo}"
+                return self._estado_display
+
+        # Consultar modelos necesarios
+        from permisos.models import SolicitudPermiso
+        from licencias.models import LicenciaMedica
+        from .models import DiaFestivo, AnoEscolar
+        from datetime import timedelta as td
+        from django.utils import timezone
+
+        hoy = timezone.now().date()
+
+        # Agrupar registros por año
+        registros_por_anio = {}
+        # Asegurar que vemos al menos el año actual
+        anios_bd = list(registros_usuario.values_list('fecha__year', flat=True).distinct())
+        if hoy.year not in anios_bd:
+            anios_bd.append(hoy.year)
+        
+        anios_disponibles = sorted(list(set(anios_bd)), reverse=True)
+
+        es_sereno = usuario.funcion == 'SERENO'
+        for anio in anios_disponibles:
+            registros_anio = registros_usuario.filter(fecha__year=anio).order_by('-fecha')
+
+            # Consultar configuración del año escolar
+            ano_escolar = AnoEscolar.objects.filter(ano=anio).first()
+            
+            # Consultar festivos del año
+            festivos = {f.fecha: f.nombre for f in DiaFestivo.objects.filter(fecha__year=anio)}
+
+            # Consultar permisos aprobados para este año
+            primer_dia_anio = datetime(anio, 1, 1).date()
+            ultimo_dia_anio = datetime(anio, 12, 31).date()
+
+            permisos_qs = SolicitudPermiso.objects.filter(
+                usuario=usuario,
+                estado='APROBADO',
+                fecha_inicio__lte=ultimo_dia_anio
+            ).filter(
+                Q(fecha_termino__gte=primer_dia_anio) | Q(fecha_termino__isnull=True)
+            )
+
+            permisos_por_fecha = {}
+            for permiso in permisos_qs:
+                inicio = max(permiso.fecha_inicio, primer_dia_anio)
+                fin = permiso.fecha_termino or ultimo_dia_anio
+                fin = min(fin, ultimo_dia_anio)
+                d = inicio
+                while d <= fin:
+                    permisos_por_fecha[d] = permiso
+                    d += td(days=1)
+
+            # Consultar licencias médicas para este año
+            licencias_qs = LicenciaMedica.objects.filter(
+                usuario=usuario,
+                fecha_inicio__lte=ultimo_dia_anio
+            )
+
+            licencias_por_fecha = {}
+            for licencia in licencias_qs:
+                fin_lic = licencia.fecha_inicio + td(days=licencia.dias - 1)
+                inicio = max(licencia.fecha_inicio, primer_dia_anio)
+                fin = min(fin_lic, ultimo_dia_anio)
+                d = inicio
+                while d <= fin:
+                    licencias_por_fecha[d] = licencia
+                    d += td(days=1)
+            
+            registros_por_mes = {}
+            if anio == hoy.year:
+                meses_rango = range(1, hoy.month + 1)
+            else:
+                meses_rango = range(1, 13)
+
+            total_minutos_retraso_anio = 0
+            for mes in meses_rango:
+                registros_mes_qs = registros_anio.filter(fecha__month=mes).order_by('fecha')
+                registros_reales_dict = {r.fecha: r for r in registros_mes_qs}
+                
+                registros_mes_final = []
+
+                primer_dia_mes = datetime(anio, mes, 1).date()
+                if anio == hoy.year and mes == hoy.month:
+                    ultimo_dia_mes = hoy
+                else:
+                    ultimo_dia_mes = (primer_dia_mes + td(days=32)).replace(day=1) - td(days=1)
+                
+                d = primer_dia_mes
+                while d <= ultimo_dia_mes:
+                    en_ano_escolar = True
+                    if ano_escolar:
+                        en_sem1 = ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin
+                        en_sem2 = ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
+                        en_ano_escolar = en_sem1 or en_sem2
+                    
+                    if not es_sereno and d.weekday() >= 5 and d not in registros_reales_dict:
+                        d += td(days=1)
+                        continue
+
+                    if not en_ano_escolar:
+                        d += td(days=1)
+                        continue
+
+                    if d in registros_reales_dict:
+                        registros_mes_final.append(registros_reales_dict[d])
+                    else:
+                        if d in festivos:
+                            registros_mes_final.append(RegistroVirtual(d, 'FESTIVO', festivos[d]))
+                        elif d in licencias_por_fecha:
+                            registros_mes_final.append(RegistroVirtual(d, 'LICENCIA_MEDICA'))
+                        elif d in permisos_por_fecha:
+                            permiso = permisos_por_fecha[d]
+                            if permiso.dias_solicitados == 0.5:
+                                registros_mes_final.append(RegistroVirtual(d, 'MEDIO_DIA'))
+                            else:
+                                registros_mes_final.append(RegistroVirtual(d, 'DIA_ADMINISTRATIVO'))
+                        elif d.weekday() in dias_laborales:
+                            if d >= usuario.date_joined.date():
+                                registros_mes_final.append(RegistroVirtual(d, 'AUSENTE'))
+                            else:
+                                registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
+                    
+                    d += td(days=1)
+
+                if registros_mes_final:
+                    registros_mes_final.sort(key=lambda r: r.fecha)
+                    
+                    minutos_retraso_mes = sum(r.minutos_retraso for r in registros_mes_final if hasattr(r, 'minutos_retraso') and r.minutos_retraso > 0)
+                    total_minutos_retraso_anio += minutos_retraso_mes
+
+                    retrasos_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'RETRASO')
+                    ausentes_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'AUSENTE')
+                    admin_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'DIA_ADMINISTRATIVO')
+                    licencia_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'LICENCIA_MEDICA')
+                    medio_dia_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'MEDIO_DIA')
+
+                    registros_por_mes[mes] = {
+                        'registros': registros_mes_final,
+                        'nombre': primer_dia_mes.strftime('%B'),
+                        'minutos_retraso_mes': minutos_retraso_mes,
+                        'retrasos': retrasos_mes,
+                        'total': sum(1 for r in registros_mes_final if getattr(r, 'estado', None) != 'SIN_DATA'),
+                        'ausentes': ausentes_mes,
+                        'admin': admin_mes,
+                        'licencia': licencia_mes,
+                        'medio_dia': medio_dia_mes,
+                    }
+
+            if registros_por_mes:
+                registros_por_anio[anio] = {
+                    'registros_por_mes': registros_por_mes,
+                    'total_retraso_anio': total_minutos_retraso_anio,
+                    'total_anio': sum(d['total'] for d in registros_por_mes.values()),
+                }
+
+        context['registros_por_anio'] = registros_por_anio
+
+
+        # Horario asignado
+        horario_actual = HorarioFuncionario.objects.filter(
+            funcionario=usuario, activo=True
+        ).first()
+
+        # Generar horario_semanal
+        horario_semanal = []
+        dias_totales = 7 if es_sereno else 5
+
+        DIA_CHOICES_DICT = {
+            0: 'Lunes', 1: 'Martes', 2: 'Miércoles',
+            3: 'Jueves', 4: 'Viernes', 5: 'Sábado', 6: 'Domingo'
+        }
+
+        dias_configurados = {}
+        if horario_actual:
+            for dh in horario_actual.dias.all():
+                dias_configurados[dh.dia_semana] = dh
+
+        for i in range(dias_totales):
+            dia_obj = dias_configurados.get(i)
+            if dia_obj:
+                horario_semanal.append({
+                    'dia_semana': i,
+                    'nombre': DIA_CHOICES_DICT[i],
+                    'activo': dia_obj.activo,
+                    'hora_entrada': dia_obj.hora_entrada.strftime('%H:%M') if dia_obj.hora_entrada else '',
+                    'hora_salida': dia_obj.hora_salida.strftime('%H:%M') if dia_obj.hora_salida else ''
+                })
+            else:
+                # Usar valores por defecto si no hay horario configurado para este día
+                hora_entrada_default = '07:55'
+                if horario_actual and horario_actual.hora_entrada:
+                    hora_entrada_default = horario_actual.hora_entrada.strftime('%H:%M')
+                horario_semanal.append({
+                    'dia_semana': i,
+                    'nombre': DIA_CHOICES_DICT[i],
+                    'activo': True,
+                    'hora_entrada': hora_entrada_default,
+                    'hora_salida': '17:00'
+                })
+
+
+        # Meses para referencia
+        context['meses'] = [
+            (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'),
+            (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'),
+            (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
+        ]
+
+        context.update({
+            'usuario': usuario,
+            'registros_por_anio': registros_por_anio,
+            'horario_actual': horario_actual,
+            'horario_semanal': horario_semanal,
+            'es_sereno': es_sereno,
+            'estadisticas_funcionario': {
+                'total_registros': total_registros,
+                'registros_puntuales': registros_puntuales,
+                'registros_retraso': registros_retraso,
+                'registros_ausentes': registros_ausentes,
+                'total_minutos_retraso': total_minutos_retraso,
+                'anios_con_asistencia': len(anios_disponibles),
+                'promedio_por_anio': round(total_registros / len(anios_disponibles), 1) if anios_disponibles else 0,
+                'porcentaje_puntualidad': round((registros_puntuales / total_registros * 100) if total_registros > 0 else 0, 1),
+            }
+        })
+
+        return context
+
+
+class EliminarRegistroAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para eliminar un registro específico de asistencia"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+
+    def post(self, request, pk):
+        registro = get_object_or_404(RegistroAsistencia, pk=pk)
+        usuario = registro.funcionario
+        registro.delete()
+
+        messages.success(request, f'Registro de asistencia del {registro.fecha} eliminado exitosamente para {usuario.get_full_name()}')
+        return redirect('asistencia:detalle_usuario', user_id=usuario.id)
+
+
+class CrearAlegacionView(LoginRequiredMixin, View):
+    """Vista para que usuarios creen alegaciones sobre sus registros de asistencia"""
+
+    def post(self, request):
+        registro_id = request.POST.get('registro_id')
+        motivo = request.POST.get('motivo')
+        evidencia = request.FILES.get('evidencia')
+
+        if not registro_id or not motivo:
+            messages.error(request, 'Datos incompletos para la alegación')
+            return redirect('asistencia:mi_asistencia')
+
+        try:
+            registro = RegistroAsistencia.objects.get(
+                id=registro_id,
+                funcionario=request.user
+            )
+
+            # Verificar que el registro permita alegaciones
+            if registro.estado not in ['RETRASO', 'AUSENTE']:
+                messages.error(request, 'Solo se pueden alegar registros con retraso o ausencia')
+                return redirect('asistencia:mi_asistencia')
+
+            # Verificar que no exista ya una alegación
+            if hasattr(registro, 'alegacion'):
+                messages.error(request, 'Ya existe una alegación para este registro')
+                return redirect('asistencia:mi_asistencia')
+
+            # Crear la alegación
+            AlegacionAsistencia.objects.create(
+                registro_asistencia=registro,
+                motivo=motivo,
+                evidencia=evidencia
+            )
+
+            messages.success(request, 'Alegación enviada correctamente. Será revisada por un administrador.')
+            return redirect('asistencia:mi_asistencia')
+
+        except RegistroAsistencia.DoesNotExist:
+            messages.error(request, 'Registro no encontrado')
+            return redirect('asistencia:mi_asistencia')
+        except Exception as e:
+            messages.error(request, f'Error al crear la alegación: {str(e)}')
+            return redirect('asistencia:mi_asistencia')
+
+
+class GestionAlegacionesView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Vista para que administradores gestionen alegaciones"""
+
+    model = AlegacionAsistencia
+    template_name = 'asistencia/gestion_alegaciones.html'
+    context_object_name = 'alegaciones'
+    paginate_by = 20
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get_queryset(self):
+        queryset = AlegacionAsistencia.objects.select_related(
+            'registro_asistencia__funcionario',
+            'revisado_por'
+        ).order_by('-fecha_alegacion')
+
+        # Filtros
+        estado = self.request.GET.get('estado')
+        usuario = self.request.GET.get('usuario')
+
+        if estado:
+            queryset = queryset.filter(estado=estado)
+        if usuario:
+            queryset = queryset.filter(registro_asistencia__funcionario__run__icontains=usuario)
+
+        return queryset
+
+
+class RevisarAlegacionView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para revisar y responder alegaciones"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def post(self, request, pk=0):
+        alegacion_id = request.POST.get('alegacion_id')
+        if alegacion_id:
+            pk = alegacion_id
+
+        alegacion = get_object_or_404(AlegacionAsistencia, pk=pk)
+
+        accion = request.POST.get('accion')
+        respuesta = request.POST.get('respuesta', '')
+
+        if accion not in ['aprobar', 'rechazar']:
+            messages.error(request, 'Acción no válida')
+            return redirect('asistencia:gestion_alegaciones')
+
+        if not respuesta.strip():
+            messages.error(request, 'Debe proporcionar una respuesta')
+            return redirect('asistencia:gestion_alegaciones')
+
+        # Actualizar alegación
+        alegacion.estado = 'APROBADA' if accion == 'aprobar' else 'RECHAZADA'
+        alegacion.respuesta_admin = respuesta
+        alegacion.revisado_por = request.user
+        alegacion.fecha_revision = timezone.now()
+        alegacion.save()
+        
+        registrar_log(
+            usuario=request.user,
+            tipo='APPROVE' if accion == 'aprobar' else 'RECHAZADA',
+            accion='Revisión de Alegación',
+            descripcion=f'Se {alegacion.get_estado_display()} la alegación de {alegacion.funcionario.get_full_name()}',
+            ip_address=get_client_ip(request)
+        )
+
+        # Si se aprueba, cambiar el estado del registro a JUSTIFICADO
+        if accion == 'aprobar':
+            registro = alegacion.registro_asistencia
+            registro.estado = 'JUSTIFICADO'
+            registro.justificacion_manual = f'Aprobada alegación: {respuesta}'
+            registro.justificado_por = request.user
+            registro.fecha_justificacion = timezone.now()
+            registro.save()
+
+        estado_texto = 'aprobada' if accion == 'aprobar' else 'rechazada'
+        messages.success(request, f'Alegación {estado_texto} correctamente')
+        return redirect('asistencia:gestion_alegaciones')
+
+
+class GestionDiasFestivosView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Vista para gestionar días festivos"""
+
+    model = DiaFestivo
+    template_name = 'asistencia/gestion_festivos.html'
+    context_object_name = 'dias_festivos'
+    paginate_by = 20
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get_queryset(self):
+        return DiaFestivo.objects.order_by('-fecha')
+
+
+class CrearDiaFestivoView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """Vista para crear días festivos"""
+
+    model = DiaFestivo
+    form_class = DiaFestivoForm
+    template_name = 'asistencia/crear_festivo.html'
+    success_url = reverse_lazy('asistencia:gestion_festivos')
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def form_valid(self, form):
+        form.instance.creado_por = self.request.user
+        messages.success(self.request, f'Día festivo "{form.instance.nombre}" creado correctamente')
+        return super().form_valid(form)
+
+
+class EliminarDiaFestivoView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para eliminar días festivos"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def post(self, request, pk):
+        festivo = get_object_or_404(DiaFestivo, pk=pk)
+        nombre = festivo.nombre
+        festivo.delete()
+
+        messages.success(request, f'Día festivo "{nombre}" eliminado correctamente')
+        return redirect('asistencia:gestion_festivos')
+
+
+class JustificarRegistroView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para justificar manualmente registros de asistencia"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def post(self, request, pk):
+        registro = get_object_or_404(RegistroAsistencia, pk=pk)
+        justificacion = request.POST.get('justificacion', '').strip()
+
+        if not justificacion:
+            messages.error(request, 'Debe proporcionar una justificación')
+            return redirect('asistencia:detalle_usuario', user_id=registro.funcionario.id)
+
+        # Justificar el registro
+        registro.estado = 'JUSTIFICADO'
+        registro.justificacion_manual = justificacion
+        registro.justificado_por = request.user
+        registro.fecha_justificacion = timezone.now()
+        registro.save()
+
+        messages.success(request, f'Registro justificado correctamente')
+        return redirect('asistencia:detalle_usuario', user_id=registro.funcionario.id)
+
+
+class EditarRegistroAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para editar manualmente las horas de entrada/salida de un registro de asistencia (justificar)"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get(self, request, pk):
+        registro = get_object_or_404(RegistroAsistencia, pk=pk)
+        form = EditarRegistroAsistenciaForm()
+        context = {
+            'registro': registro,
+            'form': form,
+        }
+        return render(request, 'asistencia/editar_registro_asistencia.html', context)
+
+    def post(self, request, pk):
+        registro = get_object_or_404(RegistroAsistencia, pk=pk)
+        form = EditarRegistroAsistenciaForm(request.POST)
+
+        if form.is_valid():
+            hora_entrada = form.cleaned_data.get('hora_entrada_real')
+            hora_salida = form.cleaned_data.get('hora_salida_real')
+            justificacion = form.cleaned_data.get('justificacion_manual', '').strip()
+
+            # Actualizar horas si se proporcionaron
+            if hora_entrada:
+                registro.hora_entrada_real = hora_entrada
+            if hora_salida:
+                registro.hora_salida_real = hora_salida
+
+            # Actualizar justificación manual
+            if justificacion:
+                registro.justificacion_manual = justificacion
+                registro.justificado_por = request.user
+                registro.fecha_justificacion = timezone.now()
+
+            # Recalcular el estado automáticamente
+            registro.save()
+
+            messages.success(request, f'Registro actualizado correctamente para {registro.funcionario.get_full_name()}')
+            return redirect('asistencia:detalle_usuario', user_id=registro.funcionario.id)
+        else:
+            # Mostrar el formulario con errores
+            context = {
+                'registro': registro,
+                'form': form,
+            }
+            return render(request, 'asistencia/editar_registro_asistencia.html', context)
+
+
+class EliminarTodosRegistrosUsuarioView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para eliminar todos los registros de asistencia de un usuario"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+
+    def post(self, request, user_id):
+        usuario = get_object_or_404(CustomUser, pk=user_id)
+
+        # Contar registros antes de eliminar
+        count = RegistroAsistencia.objects.filter(funcionario=usuario).count()
+
+        # Eliminar todos los registros
+        RegistroAsistencia.objects.filter(funcionario=usuario).delete()
+
+        messages.success(request, f'Se eliminaron {count} registros de asistencia para {usuario.get_full_name()}')
+        return redirect('asistencia:detalle_usuario', user_id=usuario.id)
+
+
+class EliminarTodasAsistenciasView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para eliminar TODOS los registros de asistencia de todos los funcionarios"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+
+    def post(self, request):
+        # Verificar confirmación doble
+        confirmacion = request.POST.get('confirmacion')
+        if confirmacion != 'ELIMINAR_TODO':
+            messages.error(request, 'Confirmación incorrecta. No se realizó la eliminación.')
+            return redirect('asistencia:gestion_asistencia')
+
+        # Contar registros antes de eliminar
+        total_registros = RegistroAsistencia.objects.count()
+        total_funcionarios = RegistroAsistencia.objects.values('funcionario').distinct().count()
+
+        # Eliminar todos los registros
+        RegistroAsistencia.objects.all().delete()
+
+        messages.success(
+            request,
+            f'Se eliminaron {total_registros} registros de asistencia de {total_funcionarios} funcionarios.'
+        )
+        return redirect('asistencia:gestion_asistencia')
+
+
+class ReporteAsistenciaMensualView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para generar reporte mensual de asistencia en PDF (solo para roles autorizados)"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get(self, request, anio=None, mes=None):
+        import calendar as cal
+        # Si no se pasan como parámetros de URL, obtener de GET
+        if not anio or not mes or anio == '0':
+            anio_str = request.GET.get('anio')
+            mes_str = request.GET.get('mes')
+
+            if anio_str and mes_str:
+                try:
+                    anio = int(anio_str)
+                    mes = int(mes_str)
+                except ValueError:
+                    from django.contrib import messages
+                    messages.error(request, 'Los valores de mes y año deben ser números válidos.')
+                    return redirect(reverse('asistencia:gestion_asistencia'))
+            else:
+                from django.contrib import messages
+                messages.error(request, 'Debe seleccionar mes y año para generar el reporte.')
+                return redirect(reverse('asistencia:gestion_asistencia'))
+        # Obtener todos los funcionarios que deben tener asistencia
+        from users.models import CustomUser
+        todos_funcionarios = CustomUser.objects.filter(
+            role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
+        ).order_by('last_name', 'first_name')
 
         # Obtener datos del mes
         registros_mes = RegistroAsistencia.objects.filter(
@@ -319,7 +1976,7 @@ class GestionHorariosView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
                 registros_por_funcionario[func_id] = []
             registros_por_funcionario[func_id].append(registro)
 
-        # Procesar cada funcionario y solo incluir aquellos con atrasos o inasistencias sin justificar
+        # Procesar cada funcionario y solo incluir aquellos con atrasos o inasistencias
         funcionarios_lista = []
         for funcionario in todos_funcionarios:
             func_id = funcionario.id
@@ -330,6 +1987,7 @@ class GestionHorariosView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
                 'funcionario': funcionario,
                 'atrasos': [],
                 'inasistencias': [],
+                'justificados': [],
                 'tiene_registros': len(registros_funcionario) > 0,
                 'total_atrasos': 0,
                 'total_minutos_retraso': 0,
@@ -359,7 +2017,22 @@ class GestionHorariosView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
                     }
                     func_data['inasistencias'].append(inasistencia_info)
                     func_data['total_inasistencias_sin_justificar'] += 1
-                # Ignorar registros justificados - solo mostrar injustificados
+                elif registro.estado in ('JUSTIFICADO', 'DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA'):
+                    if registro.estado == 'DIA_ADMINISTRATIVO':
+                        tipo_just = 'dia_administrativo'
+                        detalle = 'Día administrativo aprobado'
+                    elif registro.estado == 'LICENCIA_MEDICA':
+                        tipo_just = 'licencia'
+                        detalle = 'Licencia médica'
+                    else:
+                        tipo_just = 'permiso' if registro.tiene_permiso_aprobado() else 'licencia' if registro.tiene_licencia_medica() else 'otro'
+                        detalle = 'Ausencia justificada'
+                    justificado_info = {
+                        'fecha': registro.fecha,
+                        'tipo': tipo_just,
+                        'detalle': detalle,
+                    }
+                    func_data['justificados'].append(justificado_info)
 
             # Detectar días sin registro que son inasistencias
             fechas_con_registro = {r.fecha for r in registros_funcionario}
@@ -385,11 +2058,12 @@ class GestionHorariosView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
                 func_data['inasistencias'].append(inasistencia_info)
                 func_data['total_inasistencias_sin_justificar'] += 1
 
-            # Solo incluir funcionarios que tienen atrasos o inasistencias sin justificar
-            if func_data['atrasos'] or func_data['inasistencias']:
-                # Ordenar listas por fecha
+            # Solo incluir funcionarios que tienen atrasos, inasistencias o justificaciones
+            if func_data['atrasos'] or func_data['inasistencias'] or func_data['justificados']:
+                # Ordenar todas las listas por fecha
                 func_data['atrasos'].sort(key=lambda x: x['fecha'])
                 func_data['inasistencias'].sort(key=lambda x: x['fecha'])
+                func_data['justificados'].sort(key=lambda x: x['fecha'])
                 funcionarios_lista.append(func_data)
 
         # Nombre del mes
@@ -1203,579 +2877,3 @@ class EliminarHorarioExcepcionalView(LoginRequiredMixin, UserPassesTestMixin, Vi
             f'Se recalcularon {count} registros de asistencia.'
         )
         return redirect('asistencia:gestion_excepcionales')
-
-
-class ReporteAsistenciaAdministrativaView(LoginRequiredMixin, UserPassesTestMixin, View):
-    """Vista para generar reporte administrativo de asistencia (días administrativos)"""
-
-    def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
-
-    def get(self, request, anio=None, mes=None):
-        import calendar as cal
-        # Si no se pasan como parámetros de URL, obtener de GET
-        if not anio or not mes or anio == '0':
-            anio_str = request.GET.get('anio')
-            mes_str = request.GET.get('mes')
-
-            if anio_str and mes_str:
-                try:
-                    anio = int(anio_str)
-                    mes = int(mes_str)
-                except ValueError:
-                    from django.contrib import messages
-                    messages.error(request, 'Los valores de mes y año deben ser números válidos.')
-                    return redirect(reverse('asistencia:gestion_asistencia'))
-            else:
-                from django.contrib import messages
-                messages.error(request, 'Debe seleccionar mes y año para generar el reporte.')
-                return redirect(reverse('asistencia:gestion_asistencia'))
-
-        # Obtener permisos administrativos del mes
-        from permisos.models import SolicitudPermiso
-        permisos = SolicitudPermiso.objects.filter(
-            estado='APROBADO',
-            fecha_inicio__year=anio,
-            fecha_inicio__month=mes
-        ).select_related('usuario').order_by('usuario__last_name', 'usuario__first_name')
-
-        # Preparar datos
-        empleados_data = []
-        for permiso in permisos:
-            empleados_data.append({
-                'funcionario': permiso.usuario.get_full_name() or permiso.usuario.username,
-                'run': permiso.usuario.run,
-                'establecimiento': 'Colegio Los Alerces',
-                'dias_solicitados': permiso.dias_solicitados,
-                'dias_disponibles': permiso.usuario.dias_disponibles if permiso.usuario.dias_disponibles else 0,
-                'fecha_desde': permiso.fecha_inicio,
-                'fecha_hasta': permiso.fecha_termino,
-            })
-
-        # Renderizar template HTML para PDF
-        html_content = render_to_string('asistencia/reporte_administrativo_pdf.html', {
-            'empleados_data': empleados_data,
-            'anio': anio,
-            'mes': mes,
-            'mes_nombre': {1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'}.get(mes, ''),
-            'fecha_actual': datetime.now(),
-        })
-
-        # Generar PDF
-        pdf_file = HTML(string=html_content).write_pdf()
-
-        # Crear respuesta HTTP
-        response = HttpResponse(pdf_file, content_type='application/pdf')
-        filename = f'reporte_administrativo_{anio}_{mes:02d}.pdf'
-        response['Content-Disposition'] = f'inline; filename="{filename}"'
-
-        return response
-
-
-class ReporteAsistenciaAdministrativaExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
-    """Vista para generar reporte administrativo de asistencia en Excel"""
-
-    def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
-
-    def get(self, request):
-        year = request.GET.get('year', '')
-        mes = request.GET.get('mes', '')
-
-        # Obtener permisos administrativos
-        from permisos.models import SolicitudPermiso
-        permisos = SolicitudPermiso.objects.filter(
-            estado='APROBADO'
-        ).select_related('usuario').order_by('usuario__last_name', 'usuario__first_name')
-
-        if year:
-            permisos = permisos.filter(fecha_inicio__year=year)
-        if mes:
-            permisos = permisos.filter(fecha_inicio__month=mes)
-
-        import openpyxl
-        from openpyxl.styles import Font, PatternFill
-
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = f"Administrativo {mes}-{year}" if mes and year else "Administrativo"
-
-        # Headers
-        headers = ['N°', 'Funcionario', 'RUN', 'Establecimiento', 'Días Solicitados', 'Días Disponibles', 'Fecha Desde', 'Fecha Hasta']
-        ws.append(headers)
-
-        # Column widths
-        ws.column_dimensions['A'].width = 8
-        ws.column_dimensions['B'].width = 30
-        ws.column_dimensions['C'].width = 15
-        ws.column_dimensions['D'].width = 25
-        ws.column_dimensions['E'].width = 15
-        ws.column_dimensions['F'].width = 15
-        ws.column_dimensions['G'].width = 12
-        ws.column_dimensions['H'].width = 12
-
-        for i, permiso in enumerate(permisos, 1):
-            ws.append([
-                i,
-                permiso.usuario.get_full_name() or permiso.usuario.username,
-                permiso.usuario.run,
-                'Colegio Los Alerces',
-                permiso.dias_solicitados,
-                permiso.usuario.dias_disponibles if permiso.usuario.dias_disponibles else 0,
-                permiso.fecha_inicio.strftime("%d/%m/%Y") if permiso.fecha_inicio else "",
-                permiso.fecha_termino.strftime("%d/%m/%Y") if permiso.fecha_termino else "",
-            ])
-
-        # Styling
-        header_font = Font(bold=True, color="FFFFFF")
-        fill = PatternFill(start_color="1F77B4", end_color="1F77B4", fill_type="solid")
-        for cell in ws[1]:
-            cell.font = header_font
-            cell.fill = fill
-
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        filename = f"reporte_administrativo"
-        if mes and year:
-            filename += f"_{mes}_{year}"
-        elif year:
-            filename += f"_{year}"
-        response['Content-Disposition'] = f'attachment; filename={filename}.xlsx'
-
-        wb.save(response)
-        return response
-
-
-class ReporteDAEM3View(LoginRequiredMixin, UserPassesTestMixin, View):
-    """Vista para generar reporte DAEM3 (asistencia laboral por tipo de funcionario)"""
-
-    def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
-
-    def get(self, request, anio=None, mes=None):
-        import calendar as cal
-        # Si no se pasan como parámetros de URL, obtener de GET
-        if not anio or not mes or anio == '0':
-            anio_str = request.GET.get('year', '') or request.GET.get('anio', '')
-            mes_str = request.GET.get('mes')
-            tipo = request.GET.get('tipo', 'DOCENTE')  # DOCENTE o ASISTENTE
-
-            if anio_str and mes_str:
-                try:
-                    anio = int(anio_str)
-                    mes = int(mes_str)
-                except ValueError:
-                    from django.contrib import messages
-                    messages.error(request, 'Los valores de mes y año deben ser números válidos.')
-                    return redirect(reverse('asistencia:gestion_asistencia'))
-            else:
-                from django.contrib import messages
-                messages.error(request, 'Debe seleccionar mes y año para generar el reporte.')
-                return redirect(reverse('asistencia:gestion_asistencia'))
-        else:
-            tipo = request.GET.get('tipo', 'DOCENTE')
-
-        # Obtener funcionarios del tipo especificado
-        from users.models import CustomUser
-        if tipo == 'DOCENTE':
-            funcionarios = CustomUser.objects.filter(
-                role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN'],
-                tipo_funcionario='DOCENTE'
-            ).order_by('first_name')
-            tipo_descripcion = "Docentes"
-        else:  # ASISTENTE
-            funcionarios = CustomUser.objects.filter(
-                role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN'],
-                tipo_funcionario='ASISTENTE'
-            ).order_by('first_name')
-            tipo_descripcion = "Asistentes De La Educación"
-
-        # Obtener datos del mes
-        registros_mes = RegistroAsistencia.objects.filter(
-            fecha__year=anio,
-            fecha__month=mes,
-            funcionario__in=funcionarios
-        ).select_related('funcionario')
-
-        # Crear mapa de registros por funcionario
-        registros_por_funcionario = {}
-        for registro in registros_mes:
-            func_id = registro.funcionario.id
-            if func_id not in registros_por_funcionario:
-                registros_por_funcionario[func_id] = []
-            registros_por_funcionario[func_id].append(registro)
-
-        # Procesar cada funcionario
-        empleados_data = []
-        for funcionario in funcionarios:
-            func_id = funcionario.id
-            registros_funcionario = registros_por_funcionario.get(func_id, [])
-
-            atrasos_total = 0
-            inasistencias_injustificadas = 0
-
-            # Procesar registros del funcionario
-            for registro in registros_funcionario:
-                if registro.estado == 'RETRASO':
-                    atrasos_total += registro.minutos_retraso or 0
-                elif registro.estado == 'AUSENTE':
-                    # Solo contar inasistencias injustificadas (no permisos, licencias, etc.)
-                    if registro.fecha < funcionario.date_joined.date():
-                        continue
-                    inasistencias_injustificadas += 1
-
-            # Detectar días sin registro que son inasistencias injustificadas
-            fechas_con_registro = {r.fecha for r in registros_funcionario}
-            today = datetime.now().date()
-            num_dias = cal.monthrange(anio, mes)[0]
-            for dia in range(1, num_dias + 1):
-                fecha = datetime(anio, mes, dia).date()
-                if fecha >= today:
-                    continue
-                if fecha in fechas_con_registro:
-                    continue
-                if DiaFestivo.objects.filter(fecha=fecha).exists():
-                    continue
-                if fecha.weekday() >= 5 and not (funcionario.funcion == 'SERENO' or funcionario.tipo_funcionario == 'SERENO'):
-                    continue
-                if fecha < funcionario.date_joined.date():
-                    continue
-                inasistencias_injustificadas += 1
-
-            # Solo incluir si tiene registros o ausencias
-            if registros_funcionario or inasistencias_injustificadas > 0:
-                empleados_data.append({
-                    'nombre_completo': funcionario.get_full_name() or funcionario.username,
-                    'run': funcionario.run,
-                    'atrasos': atrasos_total,
-                    'inasistencias': inasistencias_injustificadas,
-                })
-
-        # Nombre del mes
-        meses = [
-            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-        ]
-        nombre_mes = meses[mes - 1]
-
-        # Renderizar template HTML para PDF
-        html_content = render_to_string('asistencia/reporte_daem3_pdf.html', {
-            'empleados_data': empleados_data,
-            'anio': anio,
-            'mes': mes,
-            'nombre_mes': nombre_mes,
-            'tipo_descripcion': tipo_descripcion,
-            'fecha_actual': datetime.now(),
-        })
-
-        # Generar PDF
-        pdf_file = HTML(string=html_content).write_pdf()
-
-        # Crear respuesta HTTP
-        response = HttpResponse(pdf_file, content_type='application/pdf')
-        filename = f'informe_asistencia_laboral_{tipo_descripcion.lower().replace(" ", "_")}_{anio}_{mes:02d}.pdf'
-        response['Content-Disposition'] = f'inline; filename="{filename}"'
-
-        return response
-
-
-class ReporteDAEM3ExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
-    """Vista para generar reporte DAEM3 en Excel"""
-
-    def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
-
-    def get(self, request):
-        year = request.GET.get('year', '') or request.GET.get('anio', '')
-        mes = request.GET.get('mes', '')
-        tipo = request.GET.get('tipo', 'DOCENTE')
-
-        # Obtener funcionarios del tipo especificado
-        from users.models import CustomUser
-        if tipo == 'DOCENTE':
-            funcionarios = CustomUser.objects.filter(
-                role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN'],
-                tipo_funcionario='DOCENTE'
-            ).order_by('first_name')
-            tipo_descripcion = "Docentes"
-        else:  # ASISTENTE
-            funcionarios = CustomUser.objects.filter(
-                role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN'],
-                tipo_funcionario='ASISTENTE'
-            ).order_by('first_name')
-            tipo_descripcion = "Asistentes de la Educación"
-
-        # Obtener datos del mes
-        registros_mes = RegistroAsistencia.objects.filter(
-            fecha__year=year,
-            fecha__month=mes,
-            funcionario__in=funcionarios
-        ).select_related('funcionario')
-
-        # Crear mapa de registros por funcionario
-        registros_por_funcionario = {}
-        for registro in registros_mes:
-            func_id = registro.funcionario.id
-            if func_id not in registros_por_funcionario:
-                registros_por_funcionario[func_id] = []
-            registros_por_funcionario[func_id].append(registro)
-
-        import openpyxl
-        from openpyxl.styles import Font, PatternFill
-
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = f"Informe Asistencia {tipo_descripcion}"
-
-        # Headers
-        headers = ['N°', 'Nombre y Apellidos', 'RUN', 'Atrasos (min)', 'Inasistencias']
-        ws.append(headers)
-
-        # Column widths
-        ws.column_dimensions['A'].width = 8
-        ws.column_dimensions['B'].width = 35
-        ws.column_dimensions['C'].width = 15
-        ws.column_dimensions['D'].width = 15
-        ws.column_dimensions['E'].width = 15
-
-        # Procesar cada funcionario
-        empleados_data = []
-        for funcionario in funcionarios:
-            func_id = funcionario.id
-            registros_funcionario = registros_por_funcionario.get(func_id, [])
-
-            atrasos_total = 0
-            inasistencias_injustificadas = 0
-
-            # Procesar registros del funcionario
-            for registro in registros_funcionario:
-                if registro.estado == 'RETRASO':
-                    atrasos_total += registro.minutos_retraso or 0
-                elif registro.estado == 'AUSENTE':
-                    # Solo contar inasistencias injustificadas
-                    if registro.fecha < funcionario.date_joined.date():
-                        continue
-                    inasistencias_injustificadas += 1
-
-            # Detectar días sin registro que son inasistencias injustificadas
-            import calendar as cal
-            fechas_con_registro = {r.fecha for r in registros_funcionario}
-            today = datetime.now().date()
-            num_dias = cal.monthrange(int(year), int(mes))[0]
-            for dia in range(1, num_dias + 1):
-                fecha = datetime(int(year), int(mes), dia).date()
-                if fecha >= today:
-                    continue
-                if fecha in fechas_con_registro:
-                    continue
-                if DiaFestivo.objects.filter(fecha=fecha).exists():
-                    continue
-                if fecha.weekday() >= 5 and not (funcionario.funcion == 'SERENO' or funcionario.tipo_funcionario == 'SERENO'):
-                    continue
-                if fecha < funcionario.date_joined.date():
-                    continue
-                inasistencias_injustificadas += 1
-
-            # Solo incluir si tiene registros o ausencias
-            if registros_funcionario or inasistencias_injustificadas > 0:
-                empleados_data.append({
-                    'nombre_completo': funcionario.get_full_name() or funcionario.username,
-                    'run': funcionario.run,
-                    'atrasos': atrasos_total,
-                    'inasistencias': inasistencias_injustificadas,
-                })
-
-        # Agregar datos a Excel
-        for i, empleado in enumerate(empleados_data, 1):
-            ws.append([
-                i,
-                empleado['nombre_completo'],
-                empleado['run'],
-                empleado['atrasos'],
-                empleado['inasistencias']
-            ])
-
-        # Styling
-        header_font = Font(bold=True, color="FFFFFF")
-        fill = PatternFill(start_color="1F77B4", end_color="1F77B4", fill_type="solid")
-        for cell in ws[1]:
-            cell.font = header_font
-            cell.fill = fill
-
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        filename = f"informe_asistencia_laboral_{tipo_descripcion.lower().replace(' ', '_')}_{year}_{mes}.xlsx"
-        response['Content-Disposition'] = f'attachment; filename={filename}'
-
-        wb.save(response)
-        return response
-
-
-class ReporteAsistenciaMensualExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
-    """Vista para generar reporte mensual de asistencia en Excel"""
-
-    def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
-
-    def get(self, request, anio=None, mes=None):
-        import calendar as cal
-        # Si no se pasan como parámetros de URL, obtener de GET
-        if not anio or not mes or anio == '0':
-            anio_str = request.GET.get('anio')
-            mes_str = request.GET.get('mes')
-
-            if anio_str and mes_str:
-                try:
-                    anio = int(anio_str)
-                    mes = int(mes_str)
-                except ValueError:
-                    from django.contrib import messages
-                    messages.error(request, 'Los valores de mes y año deben ser números válidos.')
-                    return redirect(reverse('asistencia:gestion_asistencia'))
-            else:
-                from django.contrib import messages
-                messages.error(request, 'Debe seleccionar mes y año para generar el reporte.')
-                return redirect(reverse('asistencia:gestion_asistencia'))
-
-        # Obtener todos los funcionarios que deben tener asistencia
-        from users.models import CustomUser
-        todos_funcionarios = CustomUser.objects.filter(
-            role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
-        ).order_by('last_name', 'first_name')
-
-        # Obtener datos del mes
-        registros_mes = RegistroAsistencia.objects.filter(
-            fecha__year=anio,
-            fecha__month=mes
-        ).select_related('funcionario', 'horario_asignado')
-
-        # Crear mapa de registros por funcionario
-        registros_por_funcionario = {}
-        for registro in registros_mes:
-            func_id = registro.funcionario.id
-            if func_id not in registros_por_funcionario:
-                registros_por_funcionario[func_id] = []
-            registros_por_funcionario[func_id].append(registro)
-
-        import openpyxl
-        from openpyxl.styles import Font, PatternFill
-
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = f"Asistencia {mes:02d}-{anio}"
-
-        # Encabezados
-        headers = ['Nombre Completo', 'RUN', 'Cargo', 'Fecha', 'Tipo', 'Detalle', 'Total Atrasos', 'Min. Retraso', 'Inasistencias']
-        ws.append(headers)
-
-        # Column widths
-        ws.column_dimensions['A'].width = 25
-        ws.column_dimensions['B'].width = 15
-        ws.column_dimensions['C'].width = 20
-        ws.column_dimensions['D'].width = 12
-        ws.column_dimensions['E'].width = 15
-        ws.column_dimensions['F'].width = 30
-        ws.column_dimensions['G'].width = 12
-        ws.column_dimensions['H'].width = 12
-        ws.column_dimensions['I'].width = 15
-
-        # Procesar cada funcionario
-        for funcionario in todos_funcionarios:
-            func_id = funcionario.id
-            registros_funcionario = registros_por_funcionario.get(func_id, [])
-
-            # Inicializar datos del funcionario
-            atrasos = []
-            inasistencias = []
-            total_atrasos = 0
-            total_minutos_retraso = 0
-            total_inasistencias = 0
-
-            # Procesar registros del funcionario
-            for registro in registros_funcionario:
-                if registro.estado == 'RETRASO':
-                    atraso_info = {
-                        'fecha': registro.fecha,
-                        'hora_entrada': registro.hora_entrada_real,
-                        'minutos_retraso': registro.minutos_retraso,
-                    }
-                    atrasos.append(atraso_info)
-                    total_atrasos += 1
-                    total_minutos_retraso += registro.minutos_retraso or 0
-                elif registro.estado == 'AUSENTE':
-                    # Ignorar si es antes de su ingreso
-                    if registro.fecha < funcionario.date_joined.date():
-                        continue
-
-                    inasistencia_info = {
-                        'fecha': registro.fecha,
-                        'hora_esperada': registro.horario_asignado.hora_entrada if registro.horario_asignado else None,
-                    }
-                    inasistencias.append(inasistencia_info)
-                    total_inasistencias += 1
-
-            # Detectar días sin registro que son inasistencias
-            fechas_con_registro = {r.fecha for r in registros_funcionario}
-            today = datetime.now().date()
-            num_dias = cal.monthrange(anio, mes)[0]
-            for dia in range(1, num_dias + 1):
-                fecha = datetime(anio, mes, dia).date()
-                if fecha >= today:
-                    continue
-                if fecha in fechas_con_registro:
-                    continue
-                if DiaFestivo.objects.filter(fecha=fecha).exists():
-                    continue
-                if fecha.weekday() >= 5 and not (funcionario.funcion == 'SERENO' or funcionario.tipo_funcionario == 'SERENO'):
-                    continue
-                if fecha < funcionario.date_joined.date():
-                    continue
-                inasistencia_info = {
-                    'fecha': fecha,
-                    'hora_esperada': None,
-                }
-                inasistencias.append(inasistencia_info)
-                total_inasistencias += 1
-
-            # Solo incluir si tiene atrasos o inasistencias
-            if atrasos or inasistencias:
-                # Agregar filas para atrasos
-                for atraso in atrasos:
-                    ws.append([
-                        funcionario.get_full_name(),
-                        funcionario.run,
-                        funcionario.get_funcion_display() or "",
-                        atraso['fecha'].strftime("%d/%m/%Y"),
-                        "Atraso",
-                        f"{atraso['hora_entrada'].strftime('%H:%M') if atraso['hora_entrada'] else '-'} - {atraso['minutos_retraso']} min retraso",
-                        total_atrasos,
-                        total_minutos_retraso,
-                        total_inasistencias
-                    ])
-
-                # Agregar filas para inasistencias
-                for inasistencia in inasistencias:
-                    ws.append([
-                        funcionario.get_full_name(),
-                        funcionario.run,
-                        funcionario.get_funcion_display() or "",
-                        inasistencia['fecha'].strftime("%d/%m/%Y"),
-                        "Inasistencia",
-                        f"Sin justificar - Hora esperada: {inasistencia['hora_esperada'].strftime('%H:%M') if inasistencia['hora_esperada'] else '-'}",
-                        total_atrasos,
-                        total_minutos_retraso,
-                        total_inasistencias
-                    ])
-
-        # Styling
-        header_font = Font(bold=True, color="FFFFFF")
-        fill = PatternFill(start_color="DC3545", end_color="DC3545", fill_type="solid")
-        for cell in ws[1]:
-            cell.font = header_font
-            cell.fill = fill
-
-        # Crear respuesta HTTP
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        filename = f'reporte_atrasos_inasistencias_{anio}_{mes:02d}.xlsx'
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-
-        wb.save(response)
-        return response
