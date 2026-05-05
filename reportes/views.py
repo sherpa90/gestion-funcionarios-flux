@@ -673,7 +673,7 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         for col in ['B', 'C', 'D']:
             ws_nomina.column_dimensions[col].width = 30
 
-        funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name', 'last_name')
+        funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name')
         for i, f in enumerate(funcionarios, 1):
             ws_nomina.append([i, f.get_full_name() or f.username, f.run, f.get_funcion_display() or ""])
             
@@ -796,7 +796,7 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
         mes = request.GET.get('mes', '')
 
         # Obtener funcionarios
-        funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name', 'last_name')
+        funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name')
 
         # Preparar datos
         nomina_data = []
