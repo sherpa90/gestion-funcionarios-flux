@@ -670,9 +670,16 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Formato regular DAEM (permisos administrativos)
         wb = openpyxl.Workbook()
 
-        # Pestaña 1: Nómina
+        # Pestaña 1: Nómina Funcionarios
         ws_nomina = wb.active
-        ws_nomina.title = "Nómina"
+        ws_nomina.title = "Nomina Funcionarios"
+
+        # Agregar encabezado
+        ws_nomina.append(['N°', 'Nombre Completo', 'RUN', 'Cargo'])
+        for col in ['A']:
+            ws_nomina.column_dimensions[col].width = 10
+        for col in ['B', 'C', 'D']:
+            ws_nomina.column_dimensions[col].width = 30
 
         # Pestaña 2: Permisos Administrativos
         ws_permisos = wb.create_sheet(title="Permisos Administrativos")
@@ -685,9 +692,12 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Obtener funcionarios
         funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name', 'last_name')
 
-        # Procesar nómina
-        for i, f in enumerate(funcionarios, 1):
-            ws_nomina.append([i, f.get_full_name() or f.username, f.run, f.get_funcion_display() or ""])
+        # Procesar nómina (empezar desde fila 2, después de los encabezados)
+        for i, f in enumerate(funcionarios, 2):
+            ws_nomina.cell(row=i, column=1).value = i - 1  # N°
+            ws_nomina.cell(row=i, column=2).value = f.get_full_name() or f.username  # Nombre Completo
+            ws_nomina.cell(row=i, column=3).value = f.run  # RUN
+            ws_nomina.cell(row=i, column=4).value = f.get_funcion_display() or ""  # Cargo
 
         permisos = SolicitudPermiso.objects.filter(estado='APROBADO', usuario__in=funcionarios).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
         if year:
