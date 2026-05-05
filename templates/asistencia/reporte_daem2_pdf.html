@@ -1,0 +1,104 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1in;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .info {
+            margin-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .signature-section {
+            margin-top: 60px;
+            text-align: left;
+        }
+        .signature-line {
+            border-bottom: 1px solid #000;
+            width: 300px;
+            margin-top: 40px;
+            margin-bottom: 5px;
+        }
+        .footer-info {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">{{ titulo }}</div>
+        <div class="info"><strong>Establecimiento:</strong> {{ establecimiento }}</div>
+        <div class="info"><strong>Mes:</strong> {{ mes }} <strong>Año:</strong> {{ anio }}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Funcionario</th>
+                <th>RUN</th>
+                <th>Establecimiento</th>
+                <th>Días Solicitados</th>
+                <th>Días Disponibles</th>
+                <th>Fecha Desde</th>
+                <th>Fecha Hasta</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for permiso in permisos %}
+            <tr>
+                <td>{{ permiso.numero }}</td>
+                <td>{{ permiso.funcionario }}</td>
+                <td>{{ permiso.run }}</td>
+                <td>{{ permiso.establecimiento }}</td>
+                <td>{{ permiso.dias_solicitados }}</td>
+                <td>{{ permiso.dias_disponibles }}</td>
+                <td>{{ permiso.fecha_desde }}</td>
+                <td>{{ permiso.fecha_hasta }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="signature-section">
+        <div class="signature-line"></div>
+        <div><strong>Director Colegio Los Alerces</strong></div>
+        <div class="footer-info">
+            Puerto Montt, {{ fecha_actual|date:"d" }} de {{ fecha_actual|date:"F" }} de {{ fecha_actual|date:"Y" }}
+        </div>
+    </div>
+</body>
+</html>

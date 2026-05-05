@@ -1960,7 +1960,7 @@ class ReporteAsistenciaMensualView(LoginRequiredMixin, UserPassesTestMixin, View
         from users.models import CustomUser
         todos_funcionarios = CustomUser.objects.filter(
             role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
-        ).order_by('last_name', 'first_name')
+        ).order_by('first_name', 'last_name')
 
         # Obtener datos del mes
         registros_mes = RegistroAsistencia.objects.filter(
@@ -2877,3 +2877,173 @@ class EliminarHorarioExcepcionalView(LoginRequiredMixin, UserPassesTestMixin, Vi
             f'Se recalcularon {count} registros de asistencia.'
         )
         return redirect('asistencia:gestion_excepcionales')
+
+
+class ReporteDAEM2ExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para generar reporte DAEM2 en Excel"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get(self, request):
+        year = request.GET.get('year', '')
+        mes = request.GET.get('mes', '')
+
+        if not year or not mes:
+            from django.contrib import messages
+            messages.error(request, 'Debe seleccionar mes y año para generar el reporte.')
+            return redirect('reportes')
+
+        try:
+            year = int(year)
+            mes = int(mes)
+        except ValueError:
+            from django.contrib import messages
+            messages.error(request, 'Los valores de mes y año deben ser números válidos.')
+            return redirect('reportes')
+
+        # Obtener permisos administrativos del mes
+        permisos = SolicitudPermiso.objects.filter(
+            estado='APROBADO',
+            fecha_inicio__year=year,
+            fecha_inicio__month=mes
+        ).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name')
+
+        # Crear Excel
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "DAEM2"
+
+        # Título
+        ws['A1'] = "Cuadro Resumen Permisos Administrativos"
+        ws['A1'].font = openpyxl.styles.Font(bold=True, size=14)
+        ws.merge_cells('A1:H1')
+
+        # Establecimiento
+        ws['A3'] = "Establecimiento: Colegio Los Alerces Puerto Montt"
+        ws.merge_cells('A3:H3')
+
+        # Mes y Año
+        meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+        ws['A5'] = f"Mes: {meses[mes-1]}"
+        ws['E5'] = f"Año: {year}"
+
+        # Encabezados de tabla
+        headers = ['N°', 'Funcionario', 'RUN', 'Establecimiento', 'Días Solicitados', 'Días Disponibles', 'Fecha Desde', 'Fecha Hasta']
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=7, column=col)
+            cell.value = header
+            cell.font = openpyxl.styles.Font(bold=True)
+            cell.border = openpyxl.styles.Border(
+                left=openpyxl.styles.Side(style='thin'),
+                right=openpyxl.styles.Side(style='thin'),
+                top=openpyxl.styles.Side(style='thin'),
+                bottom=openpyxl.styles.Side(style='thin')
+            )
+            cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+
+        # Datos
+        for i, permiso in enumerate(permisos, 8):
+            ws.cell(row=i, column=1).value = i - 7  # N°
+            ws.cell(row=i, column=2).value = permiso.usuario.get_full_name() or permiso.usuario.username  # Funcionario
+            ws.cell(row=i, column=3).value = permiso.usuario.run  # RUN
+            ws.cell(row=i, column=4).value = "Colegio Los Alerces"  # Establecimiento
+            ws.cell(row=i, column=5).value = float(permiso.dias_solicitados)  # Días Solicitados
+            ws.cell(row=i, column=6).value = ""  # Días Disponibles (dejar vacío según requerimiento)
+            ws.cell(row=i, column=7).value = permiso.fecha_inicio.strftime("%d-%m-%Y") if permiso.fecha_inicio else ""  # Fecha Desde
+            ws.cell(row=i, column=8).value = permiso.fecha_termino.strftime("%d-%m-%Y") if permiso.fecha_termino else ""  # Fecha Hasta
+
+            # Bordes para las celdas de datos
+            for col in range(1, 9):
+                cell = ws.cell(row=i, column=col)
+                cell.border = openpyxl.styles.Border(
+                    left=openpyxl.styles.Side(style='thin'),
+                    right=openpyxl.styles.Side(style='thin'),
+                    top=openpyxl.styles.Side(style='thin'),
+                    bottom=openpyxl.styles.Side(style='thin')
+                )
+
+        # Firma
+        firma_row = len(permisos) + 10
+        ws.cell(row=firma_row, column=2).value = "Director Colegio Los Alerces"
+        ws.cell(row=firma_row + 2, column=2).value = "Puerto Montt, " + datetime.now().strftime("%d de %B de %Y")
+
+        # Ajustar ancho de columnas
+        for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
+            ws.column_dimensions[col].width = 20
+
+        # Respuesta HTTP
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        filename = f'Cuadro_Resumen_Permisos_Administrativos_{year}_{mes:02d}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        wb.save(response)
+        return response
+
+
+class ReporteDAEM2PDFView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para generar reporte DAEM2 en PDF"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get(self, request):
+        year = request.GET.get('year', '')
+        mes = request.GET.get('mes', '')
+
+        if not year or not mes:
+            from django.contrib import messages
+            messages.error(request, 'Debe seleccionar mes y año para generar el reporte.')
+            return redirect('reportes')
+
+        try:
+            year = int(year)
+            mes = int(mes)
+        except ValueError:
+            from django.contrib import messages
+            messages.error(request, 'Los valores de mes y año deben ser números válidos.')
+            return redirect('reportes')
+
+        # Obtener permisos administrativos del mes
+        permisos = SolicitudPermiso.objects.filter(
+            estado='APROBADO',
+            fecha_inicio__year=year,
+            fecha_inicio__month=mes
+        ).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name')
+
+        # Preparar datos para el template
+        meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
+        permisos_data = []
+        for i, permiso in enumerate(permisos, 1):
+            permisos_data.append({
+                'numero': i,
+                'funcionario': permiso.usuario.get_full_name() or permiso.usuario.username,
+                'run': permiso.usuario.run,
+                'establecimiento': "Colegio Los Alerces",
+                'dias_solicitados': float(permiso.dias_solicitados),
+                'dias_disponibles': "",  # Dejar vacío según requerimiento
+                'fecha_desde': permiso.fecha_inicio.strftime("%d-%m-%Y") if permiso.fecha_inicio else "",
+                'fecha_hasta': permiso.fecha_termino.strftime("%d-%m-%Y") if permiso.fecha_termino else "",
+            })
+
+        # Renderizar template HTML para PDF
+        html_content = render_to_string('asistencia/reporte_daem2_pdf.html', {
+            'titulo': 'Cuadro Resumen Permisos Administrativos',
+            'establecimiento': 'Colegio Los Alerces Puerto Montt',
+            'mes': meses[mes-1],
+            'anio': year,
+            'permisos': permisos_data,
+            'fecha_actual': datetime.now(),
+        })
+
+        # Generar PDF
+        pdf_file = HTML(string=html_content).write_pdf()
+
+        # Crear respuesta HTTP
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        filename = f'Cuadro_Resumen_Permisos_Administrativos_{year}_{mes:02d}.pdf'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        return response

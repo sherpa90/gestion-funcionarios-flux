@@ -33,6 +33,8 @@ from .views import (
     GestionHorariosExcepcionalesView,
     CrearHorarioExcepcionalView,
     EliminarHorarioExcepcionalView,
+    ReporteDAEM2PDFView,
+    ReporteDAEM2ExcelView,
 )
 
 app_name = 'asistencia'
@@ -63,8 +65,8 @@ urlpatterns = [
     path("eliminar-todas-asistencias/", EliminarTodasAsistenciasView.as_view(), name="eliminar_todas_asistencias"),
 
     # Reportes PDF
-    path("reporte-mensual/", ReporteAsistenciaMensualView.as_view(), name="reporte_asistencia_mensual"),
-    path("reporte-mensual/<int:anio>/<int:mes>/", ReporteAsistenciaMensualView.as_view(), name="reporte_asistencia_mensual_params"),
+    path("reporte-daem2-pdf/", ReporteDAEM2PDFView.as_view(), name="reporte_daem2_pdf"),
+    path("reporte-daem2-excel/", ReporteDAEM2ExcelView.as_view(), name="reporte_daem2_excel"),
     path("reporte-individual/<int:anio>/<int:mes>/", ReporteAsistenciaIndividualView.as_view(), name="reporte_asistencia_individual"),
 
     # Alegaciones

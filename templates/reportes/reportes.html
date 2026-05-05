@@ -307,11 +307,11 @@
     </div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
         <button class="rep-modal-btn" style="background:linear-gradient(135deg,#16a34a,#15803d); margin-top: 0;"
-          onclick="window.location.href='{% url 'asistencia:reporte_asistencia_administrativo_excel' %}?year='+document.getElementById('m-asistencia-year').value+'&mes='+document.getElementById('m-asistencia-mes').value; closeModal('asistencia')">
+          onclick="window.location.href='{% url 'asistencia:reporte_daem2_excel' %}?year='+document.getElementById('m-asistencia-year').value+'&mes='+document.getElementById('m-asistencia-mes').value; closeModal('asistencia')">
           <i class="fas fa-file-excel"></i> Excel
         </button>
         <button class="rep-modal-btn" style="background:linear-gradient(135deg,#dc2626,#b91c1c); margin-top: 0;"
-          onclick="window.open('/asistencia/reporte-administrativo/?anio='+document.getElementById('m-asistencia-year').value+'&mes='+document.getElementById('m-asistencia-mes').value, '_blank'); closeModal('asistencia')">
+          onclick="window.open('{% url 'asistencia:reporte_daem2_pdf' %}?year='+document.getElementById('m-asistencia-year').value+'&mes='+document.getElementById('m-asistencia-mes').value, '_blank'); closeModal('asistencia')">
           <i class="fas fa-file-pdf"></i> PDF
         </button>
     </div>
@@ -589,11 +589,11 @@
     </div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
         <button class="rep-modal-btn" style="background:linear-gradient(135deg,#16a34a,#15803d); margin-top: 0;"
-          onclick="window.location.href='{% url 'asistencia:reporte_daem3_excel' %}?tipo='+document.getElementById('m-daem3-tipo').value+'&year='+document.getElementById('m-daem3-year').value+'&mes='+document.getElementById('m-daem3-mes').value; closeModal('daem3')">
+          onclick="window.location.href='{% url 'reportes_daem_excel' %}?tipo='+document.getElementById('m-daem3-tipo').value+'&year='+document.getElementById('m-daem3-year').value+'&mes='+document.getElementById('m-daem3-mes').value; closeModal('daem3')">
           <i class="fas fa-file-excel"></i> Excel
         </button>
         <button class="rep-modal-btn" style="background:linear-gradient(135deg,#dc2626,#b91c1c); margin-top: 0;"
-          onclick="window.open('/asistencia/reporte-daem3/?tipo='+document.getElementById('m-daem3-tipo').value+'&year='+document.getElementById('m-daem3-year').value+'&mes='+document.getElementById('m-daem3-mes').value, '_blank'); closeModal('daem3')">
+          onclick="window.open('{% url 'reportes_daem_pdf' %}?tipo='+document.getElementById('m-daem3-tipo').value+'&year='+document.getElementById('m-daem3-year').value+'&mes='+document.getElementById('m-daem3-mes').value, '_blank'); closeModal('daem3')">
           <i class="fas fa-file-pdf"></i> PDF
         </button>
     </div>

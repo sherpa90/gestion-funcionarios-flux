@@ -653,17 +653,23 @@ class ReporteMensualDiasAdministrativosExcelView(LoginRequiredMixin, UserPassesT
 
 
 class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
-    """Exportar reporte DAEM a Excel (Multi-pestaña)"""
-    
+    """Exportar reporte DAEM/DAEM3 a Excel"""
+
     def test_func(self):
         return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
 
     def get(self, request):
         year = request.GET.get('year', '')
         mes = request.GET.get('mes', '')
-        
+        tipo = request.GET.get('tipo', '').lower()  # Para DAEM3, convertir a minúsculas
+
+        # Si es DAEM3, mostrar formato de asistencia laboral
+        if tipo in ['docentes', 'docente', 'asistentes', 'asistente']:
+            return self._exportar_daem3_excel(year, mes, tipo)
+
+        # Formato regular DAEM (permisos administrativos)
         wb = openpyxl.Workbook()
-        
+
         # Pestaña 1: Nómina
         ws_nomina = wb.active
         ws_nomina.title = "Nómina"
@@ -673,10 +679,10 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         for col in ['B', 'C', 'D']:
             ws_nomina.column_dimensions[col].width = 30
 
-        funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name')
+        funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name', 'last_name')
         for i, f in enumerate(funcionarios, 1):
             ws_nomina.append([i, f.get_full_name() or f.username, f.run, f.get_funcion_display() or ""])
-            
+
         # Pestaña 2: Permisos Administrativos
         ws_permisos = wb.create_sheet(title="Permisos Administrativos")
         ws_permisos.append(['N°', 'Nombre Completo', 'RUN', 'Cargo', 'Tipo de Permiso Administrativo', 'Fecha de Inicio', 'Fecha de Término', 'Cantidad de Días', 'Observaciones'])
@@ -690,7 +696,7 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             permisos = permisos.filter(fecha_inicio__year=year)
         if mes:
             permisos = permisos.filter(fecha_inicio__month=mes)
-            
+
         for i, p in enumerate(permisos, 1):
             ws_permisos.append([
                 i,
@@ -704,89 +710,148 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                 ""
             ])
 
-        # Pestaña 3: Licencias Médicas
-        ws_licencias = wb.create_sheet(title="Licencias Médicas")
-        ws_licencias.append(['N°', 'Nombre Completo', 'RUN', 'Cargo', 'Fecha Inicio', 'Fecha Término', 'Cantidad de Días', 'Observaciones'])
-        for col in ['A']:
-            ws_licencias.column_dimensions[col].width = 10
-        for col in ['B', 'C', 'D', 'E', 'F', 'G', 'H']:
-            ws_licencias.column_dimensions[col].width = 25
+        # Firma
+        firma_row = len(permisos) + 10
+        ws_permisos.cell(row=firma_row, column=2).value = "Director Colegio Los Alerces"
+        ws_permisos.cell(row=firma_row + 2, column=2).value = "Puerto Montt, " + datetime.now().strftime("%d de %B de %Y")
 
-        licencias = LicenciaMedica.objects.filter(usuario__in=funcionarios).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
-        if year:
-            licencias = licencias.filter(fecha_inicio__year=year)
-        if mes:
-            licencias = licencias.filter(fecha_inicio__month=mes)
-            
-        for i, lic in enumerate(licencias, 1):
-            ws_licencias.append([
-                i,
-                lic.usuario.get_full_name() or lic.usuario.username,
-                lic.usuario.run,
-                lic.usuario.get_funcion_display() or "",
-                lic.fecha_inicio.strftime("%d-%m-%Y") if lic.fecha_inicio else "",
-                lic.fecha_termino.strftime("%d-%m-%Y") if lic.fecha_termino else "",
-                lic.dias,
-                ""
-            ])
+        # Ajustar ancho de columnas
+        for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
+            ws_permisos.column_dimensions[col].width = 20
 
-        # Pestaña 4: Horarios del Personal
-        ws_horarios = wb.create_sheet(title="Horarios del Personal")
-        ws_horarios.append(['N°', 'Nombre Completo', 'RUN', 'Cargo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
-        for col in ['A']:
-            ws_horarios.column_dimensions[col].width = 10
-        for col in ['B', 'C', 'D']:
-            ws_horarios.column_dimensions[col].width = 25
-        for col in ['E', 'F', 'G', 'H', 'I', 'J', 'K']:
-            ws_horarios.column_dimensions[col].width = 15
-
-        from asistencia.models import HorarioFuncionario
-        DIA_CHOICES_DICT = {
-            0: 'Lunes', 1: 'Martes', 2: 'Miércoles',
-            3: 'Jueves', 4: 'Viernes', 5: 'Sábado', 6: 'Domingo'
-        }
-
-        for i, f in enumerate(funcionarios, 1):
-            horario = HorarioFuncionario.objects.filter(funcionario=f, activo=True).first()
-            dias_configurados = {}
-            if horario:
-                for dh in horario.dias.all():
-                    dias_configurados[dh.dia_semana] = dh
-
-            row = [i, f.get_full_name() or f.username, f.run, f.get_funcion_display() or ""]
-            for dia_num in range(7):
-                dia_obj = dias_configurados.get(dia_num)
-                if dia_obj and dia_obj.activo and dia_obj.hora_entrada and dia_obj.hora_salida:
-                    horario_str = f"{dia_obj.hora_entrada.strftime('%H:%M')}-{dia_obj.hora_salida.strftime('%H:%M')}"
-                else:
-                    horario_str = "Libre"
-                row.append(horario_str)
-            ws_horarios.append(row)
-
-        # Pestañas estilo (Header en negrita)
-        from openpyxl.styles import Font, PatternFill
-        header_font = Font(bold=True, color="FFFFFF")
-        fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
-
-        for ws in [ws_nomina, ws_permisos, ws_licencias, ws_horarios]:
-            for cell in ws[1]:
-                cell.font = header_font
-                cell.fill = fill
-
-        # Generar archivo
+        # Respuesta HTTP
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        filename = f"reporte_daem"
-        if mes and year:
-            filename += f"_{mes}_{year}"
-        elif year:
-            filename += f"_{year}"
-        response['Content-Disposition'] = f'attachment; filename={filename}.xlsx'
+        filename = f'DAEM_{year}_{int(mes):02d}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        wb.save(response)
+        return response
+
+    def _exportar_daem3_excel(self, year, mes, tipo):
+        """Exportar DAEM3 - Informe de Asistencia Laboral"""
+        from asistencia.models import RegistroAsistencia
+
+        # Determinar el tipo de personal
+        if tipo in ['docentes', 'docente']:
+            tipo_display = 'Docentes'
+            # Filtrar por docentes
+            funcionarios = CustomUser.objects.filter(
+                role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO']
+            ).order_by('first_name', 'last_name')
+        else:  # asistentes
+            tipo_display = 'Asistente de la Educación'
+            # Filtrar por asistentes
+            funcionarios = CustomUser.objects.filter(
+                role__in=['FUNCIONARIO', 'SECRETARIA']
+            ).order_by('first_name', 'last_name')
+
+        # Obtener registros del mes
+        registros_mes = RegistroAsistencia.objects.filter(
+            fecha__year=int(year),
+            fecha__month=int(mes),
+            funcionario__in=funcionarios
+        ).select_related('funcionario')
+
+        # Agrupar por funcionario y calcular atrasos e inasistencias
+        funcionarios_data = []
+        for func in funcionarios:
+            func_registros = registros_mes.filter(funcionario=func)
+
+            # Calcular atrasos (acumulado mensual)
+            total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
+
+            # Calcular inasistencias injustificadas
+            total_inasistencias = 0
+            for r in func_registros:
+                if r.estado == 'AUSENTE':
+                    # Verificar si está justificado
+                    tiene_justificacion = (
+                        r.tiene_permiso_aprobado() or
+                        r.tiene_licencia_medica() or
+                        r.estado in ['JUSTIFICADO', 'DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA']
+                    )
+                    if not tiene_justificacion:
+                        total_inasistencias += 1
+
+            # Solo incluir si tiene atrasos o inasistencias injustificadas
+            if total_atrasos > 0 or total_inasistencias > 0:
+                funcionarios_data.append({
+                    'funcionario': func,
+                    'atrasos': total_atrasos,
+                    'inasistencias': total_inasistencias
+                })
+
+        # Crear Excel
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Informe Asistencia Laboral"
+
+        # Título
+        ws['A1'] = "Informe Asistencia Laboral"
+        ws['A1'].font = openpyxl.styles.Font(bold=True, size=14)
+        ws.merge_cells('A1:D1')
+
+        # Establecimiento
+        ws['A3'] = "Establecimiento: Colegio Los Alerces"
+
+        # Mes de Informe
+        meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+        ws['A5'] = f"Mes de Informe: {meses[int(mes)-1]}"
+
+        # Tipo
+        ws['A7'] = tipo_display
+
+        # Encabezados de tabla
+        headers = ['Nombre y Apellidos', 'RUN', 'Atrasos', 'Inasistencias']
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=9, column=col)
+            cell.value = header
+            cell.font = openpyxl.styles.Font(bold=True)
+            cell.border = openpyxl.styles.Border(
+                left=openpyxl.styles.Side(style='thin'),
+                right=openpyxl.styles.Side(style='thin'),
+                top=openpyxl.styles.Side(style='thin'),
+                bottom=openpyxl.styles.Side(style='thin')
+            )
+            cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+
+        # Datos
+        for i, data in enumerate(funcionarios_data, 10):
+            ws.cell(row=i, column=1).value = data['funcionario'].get_full_name() or data['funcionario'].username
+            ws.cell(row=i, column=2).value = data['funcionario'].run
+            ws.cell(row=i, column=3).value = data['atrasos']  # Minutos de atraso
+            ws.cell(row=i, column=4).value = data['inasistencias']
+
+            # Bordes para las celdas de datos
+            for col in range(1, 5):
+                cell = ws.cell(row=i, column=col)
+                cell.border = openpyxl.styles.Border(
+                    left=openpyxl.styles.Side(style='thin'),
+                    right=openpyxl.styles.Side(style='thin'),
+                    top=openpyxl.styles.Side(style='thin'),
+                    bottom=openpyxl.styles.Side(style='thin')
+                )
+
+        # Firma
+        firma_row = len(funcionarios_data) + 12
+        ws.cell(row=firma_row, column=1).value = "Firma y Timbre Director"
+
+        # Ajustar ancho de columnas
+        ws.column_dimensions['A'].width = 30
+        ws.column_dimensions['B'].width = 15
+        ws.column_dimensions['C'].width = 15
+        ws.column_dimensions['D'].width = 15
+
+        # Respuesta HTTP
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        filename = f'Informe_Asistencia_Laboral_{tipo_display}_{year}_{int(mes):02d}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
         wb.save(response)
         return response
 
 
 class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
-    """Exportar reporte DAEM a PDF"""
+    """Exportar reporte DAEM/DAEM3 a PDF"""
 
     def test_func(self):
         return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
@@ -794,9 +859,15 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
     def get(self, request):
         year = request.GET.get('year', '')
         mes = request.GET.get('mes', '')
+        tipo = request.GET.get('tipo', '').lower()  # Para DAEM3, convertir a minúsculas
 
+        # Si es DAEM3, mostrar formato de asistencia laboral
+        if tipo in ['docentes', 'docente', 'asistentes', 'asistente']:
+            return self._exportar_daem3_pdf(year, mes, tipo)
+
+        # Formato regular DAEM (permisos administrativos)
         # Obtener funcionarios
-        funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name')
+        funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name', 'last_name')
 
         # Preparar datos
         nomina_data = []
@@ -828,75 +899,102 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
                 'observaciones': ""
             })
 
-        licencias_data = []
-        licencias = LicenciaMedica.objects.filter(usuario__in=funcionarios).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
-        if year:
-            licencias = licencias.filter(fecha_inicio__year=year)
-        if mes:
-            licencias = licencias.filter(fecha_inicio__month=mes)
-
-        for i, lic in enumerate(licencias, 1):
-            licencias_data.append({
-                'numero': i,
-                'nombre': lic.usuario.get_full_name() or lic.usuario.username,
-                'run': lic.usuario.run,
-                'cargo': lic.usuario.get_funcion_display() or "",
-                'fecha_inicio': lic.fecha_inicio.strftime("%d-%m-%Y") if lic.fecha_inicio else "",
-                'fecha_termino': lic.fecha_termino.strftime("%d-%m-%Y") if lic.fecha_termino else "",
-                'cantidad_dias': lic.dias,
-                'observaciones': ""
-            })
-
-        # Horarios
-        from asistencia.models import HorarioFuncionario, DiaHorario
-        DIA_CHOICES_DICT = {
-            0: 'Lunes', 1: 'Martes', 2: 'Miércoles',
-            3: 'Jueves', 4: 'Viernes', 5: 'Sábado', 6: 'Domingo'
-        }
-
-        horarios_data = []
-        for i, f in enumerate(funcionarios, 1):
-            horario = HorarioFuncionario.objects.filter(funcionario=f, activo=True).first()
-            dias_configurados = {}
-            if horario:
-                for dh in horario.dias.all():
-                    dias_configurados[dh.dia_semana] = dh
-
-            row = {
-                'numero': i,
-                'nombre': f.get_full_name() or f.username,
-                'run': f.run,
-                'cargo': f.get_funcion_display() or "",
-            }
-            for dia_num in range(7):
-                dia_obj = dias_configurados.get(dia_num)
-                if dia_obj and dia_obj.activo and dia_obj.hora_entrada and dia_obj.hora_salida:
-                    horario_str = f"{dia_obj.hora_entrada.strftime('%H:%M')}-{dia_obj.hora_salida.strftime('%H:%M')}"
-                else:
-                    horario_str = "Libre"
-                row[DIA_CHOICES_DICT[dia_num].lower()] = horario_str
-            horarios_data.append(row)
-
-        # Render PDF
-        html_string = render_to_string('reportes/daem_pdf.html', {
+        # Renderizar template HTML para PDF
+        html_content = render_to_string('reportes/daem_pdf.html', {
             'nomina_data': nomina_data,
             'permisos_data': permisos_data,
-            'licencias_data': licencias_data,
-            'horarios_data': horarios_data,
             'year': year,
             'mes': mes,
-            'fecha_exportacion': now().strftime('%d/%m/%Y %H:%M'),
+            'fecha_actual': datetime.now(),
         })
 
-        html = HTML(string=html_string)
-        result = html.write_pdf()
+        # Generar PDF
+        pdf_file = HTML(string=html_content).write_pdf()
 
-        response = HttpResponse(content_type='application/pdf')
-        filename = f"reporte_daem"
-        if mes and year:
-            filename += f"_{mes}_{year}"
-        response['Content-Disposition'] = f'inline; filename={filename}.pdf'
-        response.write(result)
+        # Crear respuesta HTTP
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        filename = f'DAEM_{year}_{int(mes):02d}.pdf'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        return response
+
+    def _exportar_daem3_pdf(self, year, mes, tipo):
+        """Exportar DAEM3 - Informe de Asistencia Laboral"""
+        from asistencia.models import RegistroAsistencia
+
+        # Determinar el tipo de personal
+        if tipo in ['docentes', 'docente']:
+            tipo_display = 'Docentes'
+            # Filtrar por docentes
+            funcionarios = CustomUser.objects.filter(
+                role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO']
+            ).order_by('first_name', 'last_name')
+        else:  # asistentes
+            tipo_display = 'Asistente de la Educación'
+            # Filtrar por asistentes
+            funcionarios = CustomUser.objects.filter(
+                role__in=['FUNCIONARIO', 'SECRETARIA']
+            ).order_by('first_name', 'last_name')
+
+        # Obtener registros del mes
+        registros_mes = RegistroAsistencia.objects.filter(
+            fecha__year=int(year),
+            fecha__month=int(mes),
+            funcionario__in=funcionarios
+        ).select_related('funcionario')
+
+        # Agrupar por funcionario y calcular atrasos e inasistencias
+        funcionarios_data = []
+        for func in funcionarios:
+            func_registros = registros_mes.filter(funcionario=func)
+
+            # Calcular atrasos (acumulado mensual en minutos)
+            total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
+
+            # Calcular inasistencias injustificadas
+            total_inasistencias = 0
+            for r in func_registros:
+                if r.estado == 'AUSENTE':
+                    # Verificar si está justificado
+                    tiene_justificacion = (
+                        r.tiene_permiso_aprobado() or
+                        r.tiene_licencia_medica() or
+                        r.estado in ['JUSTIFICADO', 'DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA']
+                    )
+                    if not tiene_justificacion:
+                        total_inasistencias += 1
+
+            # Solo incluir si tiene atrasos o inasistencias injustificadas
+            if total_atrasos > 0 or total_inasistencias > 0:
+                funcionarios_data.append({
+                    'funcionario': func,
+                    'atrasos': total_atrasos,
+                    'inasistencias': total_inasistencias
+                })
+
+        # Mes en texto
+        meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+        mes_texto = meses[int(mes)-1]
+
+        # Renderizar template HTML para PDF
+        html_content = render_to_string('reportes/daem3_pdf.html', {
+            'titulo': 'Informe Asistencia Laboral',
+            'establecimiento': 'Colegio Los Alerces',
+            'mes_informe': mes_texto,
+            'tipo_personal': tipo_display,
+            'funcionarios': funcionarios_data,
+            'fecha_actual': datetime.now(),
+        })
+
+        # Generar PDF
+        pdf_file = HTML(string=html_content).write_pdf()
+
+        # Crear respuesta HTTP
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        filename = f'Informe_Asistencia_Laboral_{tipo_display}_{year}_{int(mes):02d}.pdf'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
         return response
 
 

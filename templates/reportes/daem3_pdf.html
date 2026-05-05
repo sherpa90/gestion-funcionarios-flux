@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1in;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .info {
+            margin-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .signature-section {
+            margin-top: 60px;
+            text-align: left;
+        }
+        .signature-line {
+            border-bottom: 1px solid #000;
+            width: 300px;
+            margin-top: 40px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">{{ titulo }}</div>
+        <div class="info"><strong>Establecimiento:</strong> {{ establecimiento }}</div>
+        <div class="info"><strong>Mes de Informe:</strong> {{ mes_informe }}</div>
+        <div class="info"><strong>{{ tipo_personal }}</strong></div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre y Apellidos</th>
+                <th>RUN</th>
+                <th>Atrasos</th>
+                <th>Inasistencias</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in funcionarios %}
+            <tr>
+                <td>{{ data.funcionario.get_full_name|default:data.funcionario.username }}</td>
+                <td>{{ data.funcionario.run }}</td>
+                <td>{{ data.atrasos }}</td>
+                <td>{{ data.inasistencias }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="signature-section">
+        <div class="signature-line"></div>
+        <div><strong>Firma y Timbre Director</strong></div>
+    </div>
+</body>
+</html>
