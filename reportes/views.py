@@ -758,6 +758,52 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         ws_licencias.cell(row=firma_row_lic, column=2).value = "Director Colegio Los Alerces"
         ws_licencias.cell(row=firma_row_lic + 2, column=2).value = "Puerto Montt, " + datetime.now().strftime("%d de %B de %Y")
 
+        # Pestaña 4: Horarios Funcionarios
+        from asistencia.models import HorarioFuncionario, DiaHorario
+        ws_horarios = wb.create_sheet(title="Horarios Funcionarios")
+        ws_horarios.append(['N°', 'Funcionario', 'RUN', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+
+        # Set column widths
+        ws_horarios.column_dimensions['A'].width = 8   # N°
+        ws_horarios.column_dimensions['B'].width = 30  # Funcionario
+        ws_horarios.column_dimensions['C'].width = 15  # RUN
+        for col in ['D', 'E', 'F', 'G', 'H', 'I', 'J']:
+            ws_horarios.column_dimensions[col].width = 15  # Days
+
+        # Get all active schedules with their day details
+        horarios_con_dias = HorarioFuncionario.objects.filter(activo=True).prefetch_related('dias')
+
+        # Create a dictionary for quick lookup
+        horarios_dict = {}
+        for horario in horarios_con_dias:
+            dias_dict = {}
+            for dia in horario.dias.all():
+                dia_nombre = dia.get_dia_semana_display()
+                if dia.activo and dia.hora_entrada:
+                    dias_dict[dia_nombre] = f"{dia.hora_entrada.strftime('%H:%M')}"
+                    if dia.hora_salida:
+                        dias_dict[dia_nombre] += f" - {dia.hora_salida.strftime('%H:%M')}"
+                else:
+                    dias_dict[dia_nombre] = "Libre"
+            horarios_dict[horario.funcionario_id] = dias_dict
+
+        # Procesar horarios semanales
+        for i, func in enumerate(funcionarios, 2):  # Start from row 2 (after headers)
+            dias_horario = horarios_dict.get(func.id, {})
+
+            ws_horarios.cell(row=i, column=1).value = i - 1  # N°
+            ws_horarios.cell(row=i, column=2).value = func.get_full_name() or func.username  # Funcionario
+            ws_horarios.cell(row=i, column=3).value = func.run  # RUN
+
+            # Days of the week
+            ws_horarios.cell(row=i, column=4).value = dias_horario.get('Lunes', 'Libre')
+            ws_horarios.cell(row=i, column=5).value = dias_horario.get('Martes', 'Libre')
+            ws_horarios.cell(row=i, column=6).value = dias_horario.get('Miércoles', 'Libre')
+            ws_horarios.cell(row=i, column=7).value = dias_horario.get('Jueves', 'Libre')
+            ws_horarios.cell(row=i, column=8).value = dias_horario.get('Viernes', 'Libre')
+            ws_horarios.cell(row=i, column=9).value = dias_horario.get('Sábado', 'Libre')
+            ws_horarios.cell(row=i, column=10).value = dias_horario.get('Domingo', 'Libre')
+
         # Respuesta HTTP
         from io import BytesIO
         buffer = BytesIO()
