@@ -673,15 +673,6 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Pestaña 1: Nómina
         ws_nomina = wb.active
         ws_nomina.title = "Nómina"
-        ws_nomina.append(['N°', 'Funcionario', 'RUN', 'Cargo'])
-        for col in ['A']:
-            ws_nomina.column_dimensions[col].width = 10
-        for col in ['B', 'C', 'D']:
-            ws_nomina.column_dimensions[col].width = 30
-
-        funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name', 'last_name')
-        for i, f in enumerate(funcionarios, 1):
-            ws_nomina.append([i, f.get_full_name() or f.username, f.run, f.get_funcion_display() or ""])
 
         # Pestaña 2: Permisos Administrativos
         ws_permisos = wb.create_sheet(title="Permisos Administrativos")
@@ -690,6 +681,13 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             ws_permisos.column_dimensions[col].width = 10
         for col in ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
             ws_permisos.column_dimensions[col].width = 25
+
+        # Obtener funcionarios
+        funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name', 'last_name')
+
+        # Procesar nómina
+        for i, f in enumerate(funcionarios, 1):
+            ws_nomina.append([i, f.get_full_name() or f.username, f.run, f.get_funcion_display() or ""])
 
         permisos = SolicitudPermiso.objects.filter(estado='APROBADO', usuario__in=funcionarios).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
         if year:
@@ -719,11 +717,49 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
             ws_permisos.column_dimensions[col].width = 20
 
+        # Pestaña 3: Licencias Médicas
+        ws_licencias = wb.create_sheet(title="Licencias Medicas")
+        ws_licencias.append(['N°', 'Nombre Completo', 'Cargo', 'Fecha de Inicio', 'Fecha de Término', 'Cantidad de Días', 'Observaciones'])
+        for col in ['A']:
+            ws_licencias.column_dimensions[col].width = 10
+        for col in ['B', 'C', 'D', 'E', 'F', 'G']:
+            ws_licencias.column_dimensions[col].width = 25
+
+        # Procesar licencias médicas
+        licencias = LicenciaMedica.objects.filter(usuario__in=funcionarios).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
+        if year:
+            licencias = licencias.filter(fecha_inicio__year=year)
+        if mes:
+            licencias = licencias.filter(fecha_inicio__month=mes)
+
+        for i, l in enumerate(licencias, 2):  # Start from row 2 (after headers)
+            ws_licencias.append([
+                i - 1,  # N°
+                l.usuario.get_full_name() or l.usuario.username,
+                l.usuario.get_funcion_display() or "",
+                l.fecha_inicio.strftime("%d-%m-%Y") if l.fecha_inicio else "",
+                l.fecha_termino.strftime("%d-%m-%Y") if l.fecha_termino else "",
+                l.dias,
+                ""  # Observaciones vacío
+            ])
+
+        # Firma en la pestaña de licencias
+        firma_row_lic = max(len(licencias) + 5, 5)
+        ws_licencias.cell(row=firma_row_lic, column=2).value = "Director Colegio Los Alerces"
+        ws_licencias.cell(row=firma_row_lic + 2, column=2).value = "Puerto Montt, " + datetime.now().strftime("%d de %B de %Y")
+
         # Respuesta HTTP
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        from io import BytesIO
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
+        response = HttpResponse(
+            buffer.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
         filename = f'DAEM_{year}_{int(mes):02d}.xlsx'
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        wb.save(response)
         return response
 
     def _exportar_daem3_excel(self, year, mes, tipo):
