@@ -239,15 +239,6 @@
                         <i class="fa-solid fa-file-invoice-dollar fa-fw mr-3"></i><span class="ml-3">Mis
                             Liquidaciones</span>
                     </a>
-                    <a href="{% url 'asistencia:mi_asistencia' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-clock fa-fw mr-3"></i><span class="ml-3">Mi Asistencia</span>
-                    </a>
-                    <a href="{% url 'email_directory' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-address-book fa-fw mr-3"></i><span class="ml-3">Directorio de
-                            Correos</span>
-                    </a>
                     {% if user.role == 'FUNCIONARIO' or user.role == 'ADMIN' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'solicitar_permiso' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
@@ -356,22 +347,14 @@
                     </div>
 
 
-                    <a href="{% url 'asistencia:gestion_asistencia' %}"
+                    <a href="{% url 'asistencia:gestion_horarios' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-calendar-week fa-fw mr-3"></i><span class="ml-3">Horarios</span>
                     </a>
                     {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
-                    <a href="{% url 'asistencia:carga_registros' %}"
+                    <a href="{% url 'asistencia:gestion_excepcionales' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-file-upload fa-fw mr-3"></i><span class="ml-3">Cargar Registros</span>
-                    </a>
-                    <a href="{% url 'asistencia:gestion_alegaciones' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-comment-dots fa-fw mr-3"></i><span class="ml-3">Alegaciones</span>
-                    </a>
-                    <a href="{% url 'asistencia:gestion_festivos' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-calendar-day fa-fw mr-3"></i><span class="ml-3">Feriados</span>
+                        <i class="fa-solid fa-calendar-day fa-fw mr-3"></i><span class="ml-3">Excepcionales</span>
                     </a>
                     <a href="{% url 'asistencia:gestion_ano_escolar' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
@@ -505,15 +488,6 @@
                         <i class="fa-solid fa-file-invoice-dollar fa-fw mr-3"></i><span class="ml-3">Mis
                             Liquidaciones</span>
                     </a>
-                    <a href="{% url 'asistencia:mi_asistencia' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-clock fa-fw mr-3"></i><span class="ml-3">Mi Asistencia</span>
-                    </a>
-                    <a href="{% url 'email_directory' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-address-book fa-fw mr-3"></i><span class="ml-3">Directorio de
-                            Correos</span>
-                    </a>
                     {% if user.role == 'FUNCIONARIO' or user.role == 'ADMIN' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' or user.role == 'SECRETARIA' %}
                     <a href="{% url 'solicitar_permiso' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
@@ -622,22 +596,14 @@
                     </div>
 
 
-                    <a href="{% url 'asistencia:gestion_asistencia' %}"
+                    <a href="{% url 'asistencia:gestion_horarios' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
                         <i class="fa-solid fa-calendar-week fa-fw mr-3"></i><span class="ml-3">Horarios</span>
                     </a>
                     {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
-                    <a href="{% url 'asistencia:carga_registros' %}"
+                    <a href="{% url 'asistencia:gestion_excepcionales' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-file-upload fa-fw mr-3"></i><span class="ml-3">Cargar Registros</span>
-                    </a>
-                    <a href="{% url 'asistencia:gestion_alegaciones' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-comment-dots fa-fw mr-3"></i><span class="ml-3">Alegaciones</span>
-                    </a>
-                    <a href="{% url 'asistencia:gestion_festivos' %}"
-                        class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
-                        <i class="fa-solid fa-calendar-day fa-fw mr-3"></i><span class="ml-3">Feriados</span>
+                        <i class="fa-solid fa-calendar-day fa-fw mr-3"></i><span class="ml-3">Excepcionales</span>
                     </a>
                     <a href="{% url 'asistencia:gestion_ano_escolar' %}"
                         class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-lg hover:bg-gray-800">
