@@ -331,9 +331,14 @@
                                      </div>
                                      {% endif %}
                                  </div>
-                                 {% elif reg.estado == 'LICENCIA_MEDICA' %}
+                                  {% elif reg.estado == 'LICENCIA_MEDICA' %}
                                  <div class="text-[9px] font-bold text-red-600 mt-1">
-                                     <i class="fas fa-notes-medical text-[7px] mr-0.5"></i>Licencia Médica
+                                     <i class="fas fa-notes-medical text-[7px] mr-0.5"></i>
+                                     {% if reg.obtener_tipo_licencia_o_permiso %}
+                                         {{ reg.obtener_tipo_licencia_o_permiso }}
+                                     {% else %}
+                                         Licencia Médica
+                                     {% endif %}
                                      {% if reg.justificacion_manual %}
                                      <div class="text-[8px] text-red-500 mt-0.5 truncate max-w-[70px]" title="{{ reg.justificacion_manual }}">
                                          {{ reg.justificacion_manual|truncatechars:20 }}

@@ -452,6 +452,53 @@ class RegistroAsistencia(models.Model):
             # Si no existe el modelo de licencias, retornar False
             return False
 
+    def obtener_tipo_licencia_o_permiso(self):
+        """Retorna el tipo específico de licencia médica o permiso que cubre esta fecha"""
+        try:
+            from licencias.models import LicenciaMedica
+            from permisos.models import SolicitudPermiso
+
+            # Primero buscar en licencias médicas
+            licencias = LicenciaMedica.objects.filter(
+                usuario=self.funcionario,
+                fecha_inicio__lte=self.fecha,
+                fecha_inicio__gte=self.fecha - timedelta(days=60)
+            )
+
+            for licencia in licencias:
+                fecha_fin = licencia.fecha_inicio + timedelta(days=licencia.dias - 1)
+                if self.fecha >= licencia.fecha_inicio and self.fecha <= fecha_fin:
+                    return licencia.get_tipo_display()
+
+            # Si no hay licencia médica, buscar permisos aprobados que podrían ser "permisos sin goce"
+            permisos = SolicitudPermiso.objects.filter(
+                usuario=self.funcionario,
+                estado='APROBADO',
+                fecha_inicio__lte=self.fecha,
+                fecha_termino__gte=self.fecha
+            )
+
+            if permisos.exists():
+                # Si hay permisos aprobados en esta fecha, asumimos que es "Permiso sin Goce de Remuneraciones"
+                return "Permiso sin Goce de Remuneraciones"
+
+            return None
+        except ImportError:
+            return None
+
+    @property
+    def horario_excepcional(self):
+        """Retorna el horario excepcional para esta fecha si existe"""
+        try:
+            from .models import HorarioExcepcional
+            return HorarioExcepcional.objects.filter(fecha=self.fecha).first()
+        except Exception:
+            return None
+
+            return None
+        except ImportError:
+            return None
+
     @property
     def permiso_detalle(self):
         """Retorna detalles del permiso si existe para esta fecha"""

@@ -170,6 +170,7 @@
                                             <th class="px-4 py-3 text-left">Fecha</th>
                                             <th class="px-4 py-3 text-left">Entrada</th>
                                             <th class="px-4 py-3 text-left">Salida</th>
+                                            <th class="px-4 py-3 text-left">Horario</th>
                                             <th class="px-4 py-3 text-left">Atraso</th>
                                             <th class="px-4 py-3 text-left">Estado</th>
                                             {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
@@ -201,6 +202,37 @@
                                                 {% endif %}
                                             </td>
                                             <td class="px-4 py-4 whitespace-nowrap">
+                                                {% if registro.horario_excepcional %}
+                                                <div class="space-y-1">
+                                                    {% if registro.horario_excepcional.hora_entrada %}
+                                                    <div class="text-[9px] font-bold text-purple-600">
+                                                        <i class="fas fa-star text-[7px] mr-1"></i>E: {{ registro.horario_excepcional.hora_entrada }}
+                                                    </div>
+                                                    {% endif %}
+                                                    {% if registro.horario_excepcional.hora_salida %}
+                                                    <div class="text-[9px] font-bold text-purple-600">
+                                                        <i class="fas fa-star text-[7px] mr-1"></i>S: {{ registro.horario_excepcional.hora_salida }}
+                                                    </div>
+                                                    {% endif %}
+                                                    {% if registro.horario_excepcional.motivo %}
+                                                    <div class="text-[8px] font-medium text-purple-500 mt-1" title="{{ registro.horario_excepcional.motivo }}">
+                                                        {{ registro.horario_excepcional.motivo|truncatechars:15 }}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                {% elif registro.horario_dia %}
+                                                <div class="text-[9px] font-bold text-gray-500">
+                                                    {% if registro.horario_dia.activo %}
+                                                        Regular
+                                                    {% else %}
+                                                        Día libre
+                                                    {% endif %}
+                                                </div>
+                                                {% else %}
+                                                <span class="text-[9px] text-gray-300">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-4 py-4 whitespace-nowrap">
                                                 {% if registro.minutos_retraso > 0 %}
                                                 <span class="text-xs font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100">{{ registro.minutos_retraso }} min</span>
                                                 {% else %}
@@ -209,32 +241,53 @@
                                             </td>
                                             <td class="px-4 py-4 whitespace-nowrap">
                                                 {% if registro.estado == 'PUNTUAL' %}
-                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-green-50 text-green-700 border border-green-100">
-                                                        <i class="fas fa-check mr-1.5"></i> Puntual
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-sm">
+                                                        <i class="fas fa-check-circle mr-1.5 text-[8px]"></i> Puntual
                                                     </span>
                                                 {% elif registro.estado == 'RETRASO' %}
-                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-amber-50 text-amber-700 border border-amber-100">
-                                                        <i class="fas fa-clock mr-1.5"></i> Retraso
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-orange-100 text-orange-800 border border-orange-200 shadow-sm">
+                                                        <i class="fas fa-clock mr-1.5 text-[8px]"></i> Retraso
                                                     </span>
                                                 {% elif registro.estado == 'AUSENTE' %}
-                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-red-50 text-red-700 border border-red-100">
-                                                        <i class="fas fa-times mr-1.5"></i> Ausente
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-red-100 text-red-800 border border-red-200 shadow-sm">
+                                                        <i class="fas fa-times-circle mr-1.5 text-[8px]"></i> Ausente
+                                                    </span>
+                                                {% elif registro.estado == 'MEDIO_DIA' %}
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-indigo-100 text-indigo-800 border border-indigo-200 shadow-sm">
+                                                        <i class="fas fa-adjust mr-1.5 text-[8px]"></i> Medio Día
                                                     </span>
                                                 {% elif registro.estado == 'DIA_ADMINISTRATIVO' %}
-                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-purple-50 text-purple-700 border border-purple-100">
-                                                        <i class="fas fa-id-card mr-1.5"></i> Administrativo
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-purple-100 text-purple-800 border border-purple-200 shadow-sm">
+                                                        <i class="fas fa-calendar-check mr-1.5 text-[8px]"></i> Administrativo
                                                     </span>
                                                 {% elif registro.estado == 'LICENCIA_MEDICA' %}
-                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-rose-50 text-rose-700 border border-rose-100">
-                                                        <i class="fas fa-notes-medical mr-1.5"></i> Licencia
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-rose-100 text-rose-800 border border-rose-200 shadow-sm">
+                                                        <i class="fas fa-notes-medical mr-1.5 text-[8px]"></i>
+                                                        {% if registro.obtener_tipo_licencia_o_permiso %}
+                                                            {{ registro.obtener_tipo_licencia_o_permiso|truncatechars:12 }}
+                                                        {% else %}
+                                                            Licencia
+                                                        {% endif %}
+                                                    </span>
+                                                {% elif registro.estado == 'JUSTIFICADO' %}
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-blue-100 text-blue-800 border border-blue-200 shadow-sm">
+                                                        <i class="fas fa-check-double mr-1.5 text-[8px]"></i> Justificado
+                                                    </span>
+                                                {% elif registro.estado == 'DIA_FESTIVO' %}
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-yellow-100 text-yellow-800 border border-yellow-200 shadow-sm">
+                                                        <i class="fas fa-star mr-1.5 text-[8px]"></i> Festivo
+                                                    </span>
+                                                {% elif registro.estado == 'DIA_LIBRE' %}
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-gray-100 text-gray-700 border border-gray-200 shadow-sm">
+                                                        <i class="fas fa-bed mr-1.5 text-[8px]"></i> Día Libre
                                                     </span>
                                                 {% elif registro.estado == 'SIN_DATA' %}
-                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-gray-50 text-gray-400 border border-gray-100 italic">
-                                                        <i class="fas fa-minus-circle mr-1.5"></i> Sin Datos
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-slate-100 text-slate-600 border border-slate-200 shadow-sm italic">
+                                                        <i class="fas fa-minus-circle mr-1.5 text-[8px]"></i> Sin Datos
                                                     </span>
                                                 {% else %}
-                                                    <span class="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-gray-50 text-gray-700 border border-gray-100">
-                                                        {{ registro.get_estado_display }}
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-gray-100 text-gray-700 border border-gray-200 shadow-sm">
+                                                        {{ registro.get_estado_display|truncatechars:12 }}
                                                     </span>
                                                 {% endif %}
                                             </td>
