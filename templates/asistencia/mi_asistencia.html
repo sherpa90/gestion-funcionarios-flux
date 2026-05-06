@@ -98,38 +98,48 @@
 
     <!-- Horario Semanal -->
     <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden mb-4">
-        <div class="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center justify-between">
+        <div class="px-4 py-2.5 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center justify-between">
             <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide flex items-center">
                 <i class="fas fa-clock text-blue-500 mr-2"></i> Mi Horario Semanal
+                {% if es_sereno %}
+                <span class="ml-2 text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">Incluye fines de semana</span>
+                {% else %}
+                <span class="ml-2 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Lunes a Viernes</span>
+                {% endif %}
             </h3>
             <div class="flex items-center space-x-2">
                 <span class="text-xs text-gray-500">Total asignado:</span>
                 <span class="text-sm font-black text-blue-700 bg-white px-2 py-0.5 rounded-lg border border-blue-100 shadow-sm">{{ total_horas_semanales }}</span>
+                {% if es_sereno %}
+                <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">Sereno</span>
+                {% else %}
+                <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">Regular</span>
+                {% endif %}
             </div>
         </div>
-        <div class="p-4 overflow-x-auto">
-            <div class="flex space-x-3 min-w-max">
+        <div class="p-2 overflow-x-auto">
+            <div class="flex space-x-2 min-w-max">
                 {% for dia in horario_semanal %}
-                <div class="flex-1 min-w-[120px] rounded-xl border {% if dia.activo %}bg-white border-blue-100 shadow-sm{% else %}bg-gray-50 border-gray-200 opacity-60{% endif %} overflow-hidden transition-all duration-200 hover:shadow-md">
-                    <div class="px-3 py-2 border-b {% if dia.activo %}bg-blue-50/50 border-blue-50{% else %}bg-gray-100/50 border-gray-100{% endif %}">
-                        <p class="text-xs font-bold text-center uppercase tracking-wider {% if dia.activo %}text-blue-800{% else %}text-gray-500{% endif %}">{{ dia.nombre }}</p>
+                <div class="flex-1 min-w-[100px] rounded-lg border {% if dia.activo %}bg-white border-blue-100 shadow-sm{% else %}bg-gray-50 border-gray-200 opacity-60{% endif %} overflow-hidden transition-all duration-200 hover:shadow-md">
+                    <div class="px-2 py-1 border-b {% if dia.activo %}bg-blue-50/50 border-blue-50{% else %}bg-gray-100/50 border-gray-100{% endif %}">
+                        <p class="text-[9px] font-bold text-center uppercase tracking-wider {% if dia.activo %}text-blue-800{% else %}text-gray-500{% endif %}">{{ dia.nombre }}</p>
                     </div>
-                    <div class="p-3">
+                    <div class="p-1.5">
                         {% if dia.activo %}
-                        <div class="flex flex-col items-center justify-center space-y-2">
-                            <div class="flex items-center space-x-2 text-sm font-mono text-gray-700">
+                        <div class="flex flex-col items-center justify-center space-y-0.5">
+                            <div class="flex items-center space-x-1 text-xs font-mono text-gray-700">
                                 <span class="font-bold">{{ dia.hora_entrada }}</span>
-                                <i class="fas fa-arrow-right text-gray-300 text-xs"></i>
+                                <i class="fas fa-arrow-right text-gray-300 text-[8px]"></i>
                                 <span class="font-bold">{{ dia.hora_salida }}</span>
                             </div>
-                            <div class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                            <div class="text-[8px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded-full">
                                 {{ dia.horas_asignadas }}h
                             </div>
                         </div>
                         {% else %}
-                        <div class="flex flex-col items-center justify-center h-full py-2">
-                            <i class="fas fa-bed text-gray-300 text-lg mb-1"></i>
-                            <span class="text-[10px] font-bold text-gray-400 uppercase">Día Libre</span>
+                        <div class="flex flex-col items-center justify-center h-full py-1">
+                            <i class="fas fa-bed text-gray-300 text-sm mb-0.5"></i>
+                            <span class="text-[8px] font-bold text-gray-400 uppercase">Libre</span>
                         </div>
                         {% endif %}
                     </div>
@@ -251,33 +261,33 @@
                                     {% if es_sereno %}
                                     <!-- Sereno: Entrada PM, Salida AM -->
                                     {% if reg.hora_entrada_real %}
-                                    <div class="flex items-center gap-0.5">
-                                        <span class="text-[8px] text-gray-400 w-4">E</span>
-                                        <span class="text-[10px] font-bold {% if reg.minutos_retraso > 0 %}text-rose-600{% else %}text-gray-700{% endif %} font-mono">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-[9px] text-gray-400 w-5">E</span>
+                                        <span class="text-xs font-bold {% if reg.minutos_retraso > 0 %}text-rose-600{% else %}text-gray-800{% endif %} font-mono">
                                             {{ reg.hora_entrada_real|time:"H:i" }}
                                         </span>
                                     </div>
                                     {% endif %}
                                     {% if reg.hora_salida_real %}
-                                    <div class="flex items-center gap-0.5">
-                                        <span class="text-[8px] text-gray-400 w-4">S</span>
-                                        <span class="text-[10px] font-bold text-gray-700 font-mono">{{ reg.hora_salida_real|time:"H:i" }}</span>
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-[9px] text-gray-400 w-5">S</span>
+                                        <span class="text-xs font-bold text-gray-800 font-mono">{{ reg.hora_salida_real|time:"H:i" }}</span>
                                     </div>
                                     {% endif %}
                                     {% else %}
                                     <!-- Funcionario regular -->
                                     {% if reg.hora_entrada_real %}
-                                    <div class="flex items-center gap-0.5">
-                                        <span class="text-[8px] text-gray-400 w-4">E</span>
-                                        <span class="text-[10px] font-bold {% if reg.minutos_retraso > 0 %}text-rose-600{% else %}text-gray-700{% endif %} font-mono">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-[9px] text-gray-400 w-5">E</span>
+                                        <span class="text-xs font-bold {% if reg.minutos_retraso > 0 %}text-rose-600{% else %}text-gray-800{% endif %} font-mono">
                                             {{ reg.hora_entrada_real|time:"H:i" }}
                                         </span>
                                     </div>
                                     {% endif %}
                                     {% if reg.hora_salida_real %}
-                                    <div class="flex items-center gap-0.5">
-                                        <span class="text-[8px] text-gray-400 w-4">S</span>
-                                        <span class="text-[10px] font-bold text-gray-700 font-mono">{{ reg.hora_salida_real|time:"H:i" }}</span>
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-[9px] text-gray-400 w-5">S</span>
+                                        <span class="text-xs font-bold text-gray-800 font-mono">{{ reg.hora_salida_real|time:"H:i" }}</span>
                                     </div>
                                     {% endif %}
                                     {% endif %}
@@ -289,27 +299,47 @@
                                     <div class="text-[8px] font-bold text-gray-400">{{ reg.horas_trabajadas }}h</div>
                                     {% endif %}
                                 </div>
-                                {% if reg.estado == 'JUSTIFICADO' %}
-                                <div class="text-[9px] font-bold text-blue-500 mt-1">
-                                    <i class="fas fa-check text-[7px] mr-0.5"></i>Justificado
-                                </div>
-                                {% endif %}
+                                 {% if reg.estado == 'JUSTIFICADO' %}
+                                 <div class="text-[9px] font-bold text-blue-600 mt-1">
+                                     <i class="fas fa-check text-[7px] mr-0.5"></i>Justificado
+                                     {% if reg.alegacion %}
+                                     <div class="text-[8px] text-blue-500 mt-0.5 truncate max-w-[70px]" title="{{ reg.alegacion.motivo }}">
+                                         {{ reg.alegacion.motivo|truncatechars:20 }}
+                                     </div>
+                                     {% endif %}
+                                 </div>
+                                 {% endif %}
                                 {% elif reg.estado == 'AUSENTE' %}
                                 <div class="text-[10px] font-black text-red-600 mt-1">
                                     <i class="fas fa-exclamation-triangle text-[8px] mr-0.5"></i>Inasistencia
                                 </div>
-                                {% elif reg.estado == 'MEDIO_DIA' %}
-                                <div class="text-[9px] font-bold text-violet-500 mt-1">
-                                    <i class="fas fa-adjust text-[7px] mr-0.5"></i>1/2 Día
-                                </div>
-                                {% elif reg.estado == 'DIA_ADMINISTRATIVO' %}
-                                <div class="text-[9px] font-bold text-green-600 mt-1">
-                                    <i class="fas fa-calendar-check text-[7px] mr-0.5"></i>Permiso Admin.
-                                </div>
-                                {% elif reg.estado == 'LICENCIA_MEDICA' %}
-                                <div class="text-[9px] font-bold text-red-600 mt-1">
-                                    <i class="fas fa-notes-medical text-[7px] mr-0.5"></i>Licencia Médica
-                                </div>
+                                 {% elif reg.estado == 'MEDIO_DIA' %}
+                                 <div class="text-[9px] font-bold text-violet-600 mt-1">
+                                     <i class="fas fa-adjust text-[7px] mr-0.5"></i>1/2 Día
+                                     {% if reg.justificacion_manual %}
+                                     <div class="text-[8px] text-violet-500 mt-0.5 truncate max-w-[70px]" title="{{ reg.justificacion_manual }}">
+                                         {{ reg.justificacion_manual|truncatechars:20 }}
+                                     </div>
+                                     {% endif %}
+                                 </div>
+                                 {% elif reg.estado == 'DIA_ADMINISTRATIVO' %}
+                                 <div class="text-[9px] font-bold text-green-600 mt-1">
+                                     <i class="fas fa-calendar-check text-[7px] mr-0.5"></i>Permiso Admin.
+                                     {% if reg.justificacion_manual %}
+                                     <div class="text-[8px] text-green-500 mt-0.5 truncate max-w-[70px]" title="{{ reg.justificacion_manual }}">
+                                         {{ reg.justificacion_manual|truncatechars:20 }}
+                                     </div>
+                                     {% endif %}
+                                 </div>
+                                 {% elif reg.estado == 'LICENCIA_MEDICA' %}
+                                 <div class="text-[9px] font-bold text-red-600 mt-1">
+                                     <i class="fas fa-notes-medical text-[7px] mr-0.5"></i>Licencia Médica
+                                     {% if reg.justificacion_manual %}
+                                     <div class="text-[8px] text-red-500 mt-0.5 truncate max-w-[70px]" title="{{ reg.justificacion_manual }}">
+                                         {{ reg.justificacion_manual|truncatechars:20 }}
+                                     </div>
+                                     {% endif %}
+                                 </div>
                                 {% elif reg.estado == 'DIA_FESTIVO' %}
                                 <div class="text-[9px] font-bold text-indigo-500 mt-1">
                                     <i class="fas fa-star text-[7px] mr-0.5"></i>Feriado
@@ -343,23 +373,25 @@
                                  {% endif %}
                              {% endif %}
 
-                             {% if dia.excepcional %}
-                             <div class="mt-1 pt-1 border-t border-purple-200">
-                                 <div class="text-[8px] font-bold text-purple-600">
-                                     <i class="fas fa-calendar-day text-[6px] mr-0.5"></i>Horario Especial
-                                 </div>
-                                 {% if dia.excepcional.hora_entrada %}
-                                 <div class="text-[7px] text-purple-500 mt-0.5">
-                                     E: {{ dia.excepcional.hora_entrada }}
-                                 </div>
-                                 {% endif %}
-                                 {% if dia.excepcional.hora_salida %}
-                                 <div class="text-[7px] text-purple-500">
-                                     S: {{ dia.excepcional.hora_salida }}
-                                 </div>
-                                 {% endif %}
-                             </div>
-                             {% endif %}
+                              {% if dia.excepcional %}
+                              <div class="mt-1 pt-1 border-t border-purple-200">
+                                  <div class="text-[8px] font-bold text-purple-600">
+                                      <i class="fas fa-calendar-day text-[6px] mr-0.5"></i>{{ dia.excepcional.motivo|truncatechars:15 }}
+                                  </div>
+                                  <div class="flex items-center gap-2 mt-0.5">
+                                      {% if dia.excepcional.hora_entrada %}
+                                      <div class="text-[7px] text-purple-500">
+                                          <span class="font-medium">E:</span> {{ dia.excepcional.hora_entrada }}
+                                      </div>
+                                      {% endif %}
+                                      {% if dia.excepcional.hora_salida %}
+                                      <div class="text-[7px] text-purple-500">
+                                          <span class="font-medium">S:</span> {{ dia.excepcional.hora_salida }}
+                                      </div>
+                                      {% endif %}
+                                  </div>
+                              </div>
+                              {% endif %}
                         </div>
                         {% endwith %}
                         {% endif %}

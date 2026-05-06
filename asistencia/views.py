@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import TemplateView, FormView, ListView, View, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -40,7 +40,6 @@ except ImportError:
     pypdf = None
 from .models import HorarioFuncionario, RegistroAsistencia, DiaFestivo, AlegacionAsistencia, AnoEscolar, DiaHorario, HorarioExcepcional
 from .forms import CargaHorariosForm, HorarioFuncionarioForm, CargaRegistrosAsistenciaForm, DiaFestivoForm, HorarioExcepcionalForm
-from django.shortcuts import get_object_or_404, redirect
 from users.models import CustomUser
 from core.utils import normalize_rut
 from admin_dashboard.utils import registrar_log, get_client_ip
@@ -367,7 +366,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
         anio_int = int(anio)
 
         # Determinar si el funcionario es sereno
-        es_sereno = self.request.user.funcion == 'SERENO'
+        es_sereno = (self.request.user.role == 'FUNCIONARIO' and self.request.user.funcion == 'SERENO') or (self.request.user.tipo_funcionario == 'SERENO')
 
         # Filtrar registros del usuario actual con select_related optimizado
         registros_qs = RegistroAsistencia.objects.filter(
@@ -1430,7 +1429,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
         
         anios_disponibles = sorted(list(set(anios_bd)), reverse=True)
 
-        es_sereno = usuario.funcion == 'SERENO'
+        es_sereno = (usuario.role == 'FUNCIONARIO' and usuario.funcion == 'SERENO') or (usuario.tipo_funcionario == 'SERENO')
         for anio in anios_disponibles:
             registros_anio = registros_usuario.filter(fecha__year=anio).order_by('-fecha')
 
@@ -1618,12 +1617,18 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
             (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
         ]
 
+        # Obtener lista de todos los usuarios para el selector
+        todos_los_usuarios = CustomUser.objects.filter(
+            role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']
+        ).exclude(is_active=False).order_by('first_name', 'last_name')
+
         context.update({
             'usuario': usuario,
             'registros_por_anio': registros_por_anio,
             'horario_actual': horario_actual,
             'horario_semanal': horario_semanal,
             'es_sereno': es_sereno,
+            'todos_los_usuarios': todos_los_usuarios,
             'estadisticas_funcionario': {
                 'total_registros': total_registros,
                 'registros_puntuales': registros_puntuales,
@@ -1976,7 +1981,6 @@ class ReporteAsistenciaMensualView(LoginRequiredMixin, UserPassesTestMixin, View
                 messages.error(request, 'Debe seleccionar mes y año para generar el reporte.')
                 return redirect(reverse('asistencia:gestion_asistencia'))
         # Obtener todos los funcionarios que deben tener asistencia
-        from users.models import CustomUser
         todos_funcionarios = CustomUser.objects.filter(
             role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
         ).order_by('first_name', 'last_name')

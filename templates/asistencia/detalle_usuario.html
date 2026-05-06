@@ -30,9 +30,9 @@
                 <div class="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-100 flex-shrink-0">
                     <span class="text-xl font-black text-white">{{ usuario.first_name.0 }}{{ usuario.last_name.0 }}</span>
                 </div>
-                <div>
+                <div class="flex-1">
                     <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight leading-tight">{{ usuario.get_full_name }}</h2>
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">
                         {{ usuario.run }} <span class="mx-2 text-gray-200">|</span>
                         <span class="text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">{{ usuario.funcion|default:usuario.get_role_display }}</span>
                     </p>
@@ -55,6 +55,28 @@
             <a href="{% url 'asistencia:gestion_asistencia' %}" class="flex-1 lg:w-auto inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 shadow-xl shadow-gray-200 hover:shadow-blue-200 transition-all transform hover:-translate-y-0.5">
                 <i class="fas fa-arrow-left mr-2.5"></i> Volver
             </a>
+        </div>
+    </div>
+
+    <!-- Selector de Usuario -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-6">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-users text-blue-600"></i>
+            </div>
+            <div class="flex-1">
+                <label for="usuario-selector" class="block text-sm font-bold text-gray-700 mb-2">Cambiar a otro funcionario</label>
+                <select id="usuario-selector"
+                        class="w-full max-w-md text-sm font-bold border border-gray-200 rounded-xl px-4 py-2.5 bg-white shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+                        onchange="cambiarUsuario(this.value)">
+                    <option value="">Selecciona un funcionario...</option>
+                    {% for user_option in todos_los_usuarios %}
+                    <option value="{{ user_option.id }}" {% if user_option.id == usuario.id %}selected{% endif %}>
+                        {{ user_option.first_name }} {{ user_option.last_name }} ({{ user_option.run }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
     </div>
 
@@ -420,6 +442,12 @@
 </style>
 
 <script>
+function cambiarUsuario(userId) {
+    if (userId && userId !== '{{ usuario.id }}') {
+        window.location.href = `/asistencia/usuario/${userId}/`;
+    }
+}
+
 document.addEventListener('alpine:init', () => {
     Alpine.data('horarioTabs', () => ({
         activeTab: 'registros',
