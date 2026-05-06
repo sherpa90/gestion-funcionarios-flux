@@ -825,15 +825,15 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Determinar el tipo de personal
         if tipo in ['docentes', 'docente']:
             tipo_display = 'Docentes'
-            # Filtrar por docentes
+            # Filtrar por docentes usando el campo tipo_funcionario
             funcionarios = CustomUser.objects.filter(
-                role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO']
+                tipo_funcionario='DOCENTE'
             ).order_by('first_name', 'last_name')
         else:  # asistentes
             tipo_display = 'Asistente de la Educación'
-            # Filtrar por asistentes
+            # Filtrar por asistentes usando el campo tipo_funcionario
             funcionarios = CustomUser.objects.filter(
-                role__in=['FUNCIONARIO', 'SECRETARIA']
+                tipo_funcionario='ASISTENTE'
             ).order_by('first_name', 'last_name')
 
         # Obtener registros del mes
@@ -1017,15 +1017,15 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Determinar el tipo de personal
         if tipo in ['docentes', 'docente']:
             tipo_display = 'Docentes'
-            # Filtrar por docentes
+            # Filtrar por docentes usando el campo tipo_funcionario
             funcionarios = CustomUser.objects.filter(
-                role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO']
+                tipo_funcionario='DOCENTE'
             ).order_by('first_name', 'last_name')
         else:  # asistentes
             tipo_display = 'Asistente de la Educación'
-            # Filtrar por asistentes
+            # Filtrar por asistentes usando el campo tipo_funcionario
             funcionarios = CustomUser.objects.filter(
-                role__in=['FUNCIONARIO', 'SECRETARIA']
+                tipo_funcionario='ASISTENTE'
             ).order_by('first_name', 'last_name')
 
         # Obtener registros del mes

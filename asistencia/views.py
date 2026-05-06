@@ -441,6 +441,15 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             ).values_list('fecha', flat=True)
         )
 
+        # Obtener horarios excepcionales del mes
+        excepcionales_por_fecha = {}
+        excepcionales_qs = HorarioExcepcional.objects.filter(
+            fecha__year=anio_int,
+            fecha__month=mes_int
+        )
+        for exc in excepcionales_qs:
+            excepcionales_por_fecha[exc.fecha] = exc
+
         ESTADO_DISPLAY = {
             'DIA_ADMINISTRATIVO': 'Día Administrativo',
             'MEDIO_DIA': 'Medio Día Administrativo',
@@ -503,6 +512,9 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                         
                     es_falta_sin_registro = es_pasado and not registro and not es_festivo and es_dia_escolar and es_posterior_a_ingreso
 
+                    # Verificar si hay horario excepcional para este día
+                    excepcional = excepcionales_por_fecha.get(fecha)
+
                     # Los fines de semana solo aplican para serenos
                     if es_fin_de_semana and not es_sereno:
                         dias_semana.append({
@@ -516,8 +528,12 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                             'es_hoy': es_hoy,
                             'es_falta_sin_registro': False,
                             'es_dia_escolar': es_dia_escolar,
+                            'excepcional': excepcional,
                         })
                         continue
+
+                    # Verificar si hay horario excepcional para este día
+                    excepcional = excepcionales_por_fecha.get(fecha)
 
                     dias_semana.append({
                         'dia': dia_num,
@@ -530,6 +546,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                         'es_hoy': es_hoy,
                         'es_falta_sin_registro': es_falta_sin_registro,
                         'es_dia_escolar': es_dia_escolar,
+                        'excepcional': excepcional,
                     })
             semanas_calendario.append(dias_semana)
 
@@ -653,6 +670,8 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 })
 
         total_horas_semanales = f"{total_minutos_semanales // 60}h {total_minutos_semanales % 60}m" if total_minutos_semanales % 60 != 0 else f"{total_minutos_semanales // 60}h"
+
+        # Los horarios excepcionales se obtienen más abajo para el calendario
 
         # Calcular horas esperadas para el mes completo (según horario configurado)
         total_minutos_esperados_mes = 0
