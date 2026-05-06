@@ -1,0 +1,19 @@
+[Unit]
+Description=Gunicorn daemon for Django app
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/home/sherpa/Proyectos/gestion-funcionarios-flux
+Environment="PATH=/home/sherpa/Proyectos/gestion-funcionarios-flux/venv/bin"
+ExecStart=/home/sherpa/Proyectos/gestion-funcionarios-flux/venv/bin/gunicorn --workers 3 --bind unix:/home/sherpa/Proyectos/gestion-funcionarios-flux/gunicorn.sock config.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target</content>
+<parameter name="filePath">gunicorn.service
