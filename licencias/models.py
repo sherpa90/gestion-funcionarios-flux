@@ -7,6 +7,7 @@ class LicenciaMedica(models.Model):
         ('PERMISO', 'Permiso sin Goce de Remuneraciones'),
         ('PRENATAL', 'Licencia Prenatal'),
         ('POSTNATAL', 'Licencia Postnatal'),
+        ('POSTNATAL_PARENTAL', 'Permiso Postnatal Parental'),
     ]
     
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='licencias')

@@ -331,13 +331,13 @@
                                      </div>
                                      {% endif %}
                                  </div>
-                                  {% elif reg.estado == 'LICENCIA_MEDICA' %}
+                                 {% elif reg.estado == 'LICENCIA_MEDICA' %}
                                  <div class="text-[9px] font-bold text-red-600 mt-1">
                                      <i class="fas fa-notes-medical text-[7px] mr-0.5"></i>
                                      {% if reg.obtener_tipo_licencia_o_permiso %}
-                                         {{ reg.obtener_tipo_licencia_o_permiso }}
+                                         <span class="font-black">{{ reg.obtener_tipo_licencia_o_permiso }}</span>
                                      {% else %}
-                                         Licencia Médica
+                                         <span class="font-black">Licencia Médica</span>
                                      {% endif %}
                                      {% if reg.justificacion_manual %}
                                      <div class="text-[8px] text-red-500 mt-0.5 truncate max-w-[70px]" title="{{ reg.justificacion_manual }}">
@@ -502,7 +502,13 @@
                                         {% endif %}
                                         {% else %}
                                         <div>
-                                            <div class="text-sm font-bold text-gray-600">{{ reg.get_estado_display }}</div>
+                                            <div class="text-sm font-bold text-gray-600">
+                                                {% if reg.estado == 'LICENCIA_MEDICA' and reg.obtener_tipo_licencia_o_permiso %}
+                                                    {{ reg.obtener_tipo_licencia_o_permiso }}
+                                                {% else %}
+                                                    {{ reg.get_estado_display }}
+                                                {% endif %}
+                                            </div>
                                         </div>
                                         {% endif %}
                                     {% else %}
@@ -559,7 +565,23 @@
                                     {% elif reg.estado == 'DIA_ADMINISTRATIVO' %}
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-green-100 text-green-700">P. Admin</span>
                                     {% elif reg.estado == 'LICENCIA_MEDICA' %}
-                                    <span class="px-2 py-1 rounded-md text-xs font-bold bg-red-100 text-red-700">Lic. Médica</span>
+                                    <span class="px-2 py-1 rounded-md text-xs font-bold bg-red-100 text-red-700">
+                                        {% if reg.obtener_tipo_licencia_o_permiso %}
+                                            {% if reg.obtener_tipo_licencia_o_permiso == 'Permiso sin Goce de Remuneraciones' %}
+                                                Permiso
+                                            {% elif reg.obtener_tipo_licencia_o_permiso == 'Licencia Prenatal' %}
+                                                Prenatal
+                                            {% elif reg.obtener_tipo_licencia_o_permiso == 'Licencia Postnatal' %}
+                                                Postnatal
+                                            {% elif reg.obtener_tipo_licencia_o_permiso == 'Permiso Postnatal Parental' %}
+                                                Post. Par.
+                                            {% else %}
+                                                Lic. Méd.
+                                            {% endif %}
+                                        {% else %}
+                                            Lic. Méd.
+                                        {% endif %}
+                                    </span>
                                     {% elif reg.estado == 'DIA_FESTIVO' %}
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-indigo-100 text-indigo-700">Fer.</span>
                                     {% elif reg.estado == 'JUSTIFICADO' %}
