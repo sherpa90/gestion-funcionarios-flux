@@ -49,7 +49,7 @@
                                             <i class="fas fa-exclamation-triangle text-white text-xs"></i>
                                         </div>
                                         <div>
-                                            <div class="text-lg font-black text-red-700">{{ fallas|length }}</div>
+                                            <div class="text-lg font-black text-red-700">{{ total_fallas }}</div>
                                             <div class="text-xs font-bold text-red-600 uppercase tracking-wider">Total</div>
                                         </div>
                                     </div>
@@ -61,7 +61,7 @@
                                             <i class="fas fa-clock text-white text-xs"></i>
                                         </div>
                                         <div>
-                                            <div class="text-lg font-black text-amber-700">{{ fallas|selectattr:'estado','equalto','EN_REVISION'|list|length }}</div>
+                                            <div class="text-lg font-black text-amber-700">{{ fallas_en_revision }}</div>
                                             <div class="text-xs font-bold text-amber-600 uppercase tracking-wider">En Revisión</div>
                                         </div>
                                     </div>
@@ -73,7 +73,7 @@
                                             <i class="fas fa-check-circle text-white text-xs"></i>
                                         </div>
                                         <div>
-                                            <div class="text-lg font-black text-emerald-700">{{ fallas|selectattr:'estado','equalto','REPARADA'|list|length }}</div>
+                                            <div class="text-lg font-black text-emerald-700">{{ fallas_reparadas }}</div>
                                             <div class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Resueltas</div>
                                         </div>
                                     </div>

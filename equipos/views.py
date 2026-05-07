@@ -464,9 +464,22 @@ def gestion_fallas(request):
     if request.user.role not in ('ADMIN', 'SECRETARIA'):
         messages.error(request, 'No tienes permisos para acceder a esta sección.')
         return redirect('dashboard')
-    
+
     fallas = FallaEquipo.objects.select_related('equipo', 'funcionario').order_by('-fecha_reporte')
-    return render(request, 'equipos/gestion_fallas.html', {'fallas': fallas})
+
+    # Calcular estadísticas
+    total_fallas = fallas.count()
+    fallas_en_revision = fallas.filter(estado='EN_REVISION').count()
+    fallas_reparadas = fallas.filter(estado='REPARADA').count()
+
+    context = {
+        'fallas': fallas,
+        'total_fallas': total_fallas,
+        'fallas_en_revision': fallas_en_revision,
+        'fallas_reparadas': fallas_reparadas,
+    }
+
+    return render(request, 'equipos/gestion_fallas.html', context)
 
 
 @login_required
