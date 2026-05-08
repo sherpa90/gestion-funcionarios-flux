@@ -1,0 +1,12 @@
+Para probar el scroll en la página de reportes, abre la consola del navegador (F12) y ejecuta:
+
+// Verificar estado del scroll
+checkScrollStatus()
+
+// Si el scroll está bloqueado, ejecuta:
+forceScrollRestore()
+
+// Luego verifica nuevamente:
+checkScrollStatus()
+
+También puedes intentar hacer scroll con el mouse o las teclas de flecha.

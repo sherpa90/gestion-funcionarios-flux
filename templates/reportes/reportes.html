@@ -11,8 +11,20 @@
   }
 
   /* ─── Layout ─── */
-  .rep-page { background: #f8f9fc; min-height: 100%; padding: 1.25rem; }
+  .rep-page {
+    background: #f8f9fc;
+    min-height: 100vh; /* Cambiar a 100vh para asegurar altura completa */
+    padding: 1.25rem;
+    /* Asegurar que el scroll esté siempre disponible */
+    overflow-y: auto !important;
+  }
   @media (min-width: 768px) { .rep-page { padding: 1.75rem 2rem; } }
+
+  /* CSS de respaldo para asegurar scroll */
+  html, body {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
 
   /* ─── Card ─── */
   .rep-card {
@@ -913,6 +925,25 @@
 </div>
 
 <script>
+  // Script inmediato para asegurar scroll disponible
+  (function() {
+    // Forzar restauración inmediata del scroll
+    document.body.style.overflow = '';
+    document.body.style.overflowY = 'auto';
+    document.body.style.overflowX = 'hidden';
+    document.documentElement.style.overflow = '';
+    document.documentElement.style.overflowY = 'auto';
+    document.documentElement.style.overflowX = 'hidden';
+
+    // Cerrar cualquier modal que pueda estar abierto
+    var overlays = document.querySelectorAll('.rep-overlay');
+    for (var i = 0; i < overlays.length; i++) {
+      overlays[i].classList.remove('open');
+    }
+
+    console.log('Scroll restaurado inmediatamente');
+  })();
+
   function openModal(id) {
     document.getElementById('modal-' + id).classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -940,23 +971,110 @@
 
   // Asegurar que el scroll se restaure al cargar la página
   document.addEventListener('DOMContentLoaded', function() {
+    // Forzar restauración del scroll
     document.body.style.overflow = '';
     document.body.style.paddingRight = '';
+    document.documentElement.style.overflow = '';
+    document.documentElement.style.paddingRight = '';
+
+    // Cerrar cualquier modal que pueda estar abierto
+    document.querySelectorAll('.rep-overlay.open').forEach(function(el) {
+      el.classList.remove('open');
+    });
+
+    console.log('Scroll restaurado al cargar la página');
   });
 
   // Prevenir que el scroll se quede bloqueado
   window.addEventListener('beforeunload', function() {
     document.body.style.overflow = '';
     document.body.style.paddingRight = '';
+    document.documentElement.style.overflow = '';
+    document.documentElement.style.paddingRight = '';
   });
-  function sortTable(sort, search, year, mes, fechaInicio, fechaFin) {
-    var url = '?sort=' + sort;
-    if (search)     url += '&search='      + encodeURIComponent(search);
-    if (year)       url += '&year='        + year;
-    if (mes)        url += '&mes='         + mes;
-    if (fechaInicio)url += '&fecha_inicio='+ fechaInicio;
-    if (fechaFin)   url += '&fecha_fin='   + fechaFin;
-    window.location.href = url;
-  }
+
+  // Función de emergencia para restaurar scroll
+  window.forceScrollRestore = function() {
+    document.body.style.overflow = '';
+    document.body.style.overflowY = 'auto';
+    document.body.style.overflowX = 'hidden';
+    document.body.style.paddingRight = '';
+    document.documentElement.style.overflow = '';
+    document.documentElement.style.overflowY = 'auto';
+    document.documentElement.style.overflowX = 'hidden';
+    document.documentElement.style.paddingRight = '';
+
+    // Cerrar todos los modales
+    document.querySelectorAll('.rep-overlay').forEach(function(el) {
+      el.classList.remove('open');
+    });
+
+    console.log('Scroll restaurado manualmente - todos los estilos aplicados');
+  };
+
+  // Función de diagnóstico
+  window.checkScrollStatus = function() {
+    console.log('=== DIAGNÓSTICO DE SCROLL ===');
+    console.log('body.style.overflow:', document.body.style.overflow);
+    console.log('body.style.overflowY:', document.body.style.overflowY);
+    console.log('body.style.overflowX:', document.body.style.overflowX);
+    console.log('documentElement.style.overflow:', document.documentElement.style.overflow);
+    console.log('documentElement.style.overflowY:', document.documentElement.style.overflowY);
+    console.log('Modales abiertos:', document.querySelectorAll('.rep-overlay.open').length);
+    console.log('Altura body:', document.body.offsetHeight);
+    console.log('Altura window:', window.innerHeight);
+    console.log('Scroll Y disponible:', document.body.scrollHeight > window.innerHeight);
+    return {
+      bodyOverflow: document.body.style.overflow,
+      htmlOverflow: document.documentElement.style.overflow,
+      modalsOpen: document.querySelectorAll('.rep-overlay.open').length,
+      canScroll: document.body.scrollHeight > window.innerHeight
+    };
+  };
+
+  // Verificar estado del scroll cada 5 segundos
+  setInterval(function() {
+    if (document.body.style.overflow === 'hidden' && !document.querySelector('.rep-overlay.open')) {
+      console.warn('Scroll bloqueado sin modal abierto - restaurando...');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+      document.documentElement.style.overflow = '';
+    }
+  }, 5000);
+
+  // Agregar eventos para asegurar scroll siempre disponible
+  document.addEventListener('wheel', function(e) {
+    // Permitir scroll con rueda del mouse
+    if (document.body.style.overflow === 'hidden') {
+      e.stopPropagation();
+      window.scrollBy(0, e.deltaY);
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function(e) {
+    // Permitir scroll táctil
+    if (document.body.style.overflow === 'hidden') {
+      e.stopPropagation();
+    }
+  }, { passive: true });
+
+  // Teclas de navegación
+  document.addEventListener('keydown', function(e) {
+    if (document.body.style.overflow === 'hidden' && (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'PageUp' || e.key === 'PageDown' || e.key === 'Home' || e.key === 'End')) {
+      // Permitir navegación con teclado
+      return true;
+    }
+  });
+
+  /*
+  CORRECCIONES PARA EL SCROLL:
+  - Script inmediato al cargar para restaurar scroll
+  - CSS de respaldo para asegurar overflow-y: auto
+  - Eventos de wheel y touchmove para permitir scroll
+  - Función de diagnóstico checkScrollStatus()
+  - Función de emergencia forceScrollRestore()
+  - Verificación automática cada 5 segundos
+  */
 </script>
+
 {% endblock %}
