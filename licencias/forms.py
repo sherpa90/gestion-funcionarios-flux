@@ -44,5 +44,13 @@ class LicenciaForm(forms.ModelForm):
     def clean_archivo(self):
         archivo = self.cleaned_data.get('archivo')
         if archivo:
-            validate_file_upload(archivo)
+            # Check file size before calling validator
+            max_size = 10 * 1024 * 1024  # 10 MB in bytes
+            if archivo.size > max_size:
+                # Add warning but don't prevent upload
+                self.add_error(None, f'Advertencia: El archivo supera los 10 MB ({archivo.size // (1024*1024)} MB). '
+                                   'Se permitirá la subida, pero considera optimizar el archivo para mejor rendimiento.')
+            else:
+                # Only validate other aspects if within size limit
+                validate_file_upload(archivo)
         return archivo

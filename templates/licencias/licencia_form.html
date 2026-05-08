@@ -59,17 +59,21 @@
         {% csrf_token %}
 
         {% if form.non_field_errors %}
-        <div class="p-5 bg-red-50 rounded-[2rem] border border-red-100 flex items-start gap-4 animate-in">
-            <div class="w-10 h-10 rounded-xl bg-red-500 text-white flex items-center justify-center flex-shrink-0">
-                <i class="fas fa-exclamation-triangle"></i>
+        {% for error in form.non_field_errors %}
+        <div class="p-5 {% if 'Advertencia:' in error %}bg-yellow-50 rounded-[2rem] border border-yellow-100{% else %}bg-red-50 rounded-[2rem] border border-red-100{% endif %} flex items-start gap-4 animate-in">
+            <div class="w-10 h-10 rounded-xl {% if 'Advertencia:' in error %}bg-yellow-500{% else %}bg-red-500{% endif %} text-white flex items-center justify-center flex-shrink-0">
+                <i class="fas {% if 'Advertencia:' in error %}fa-exclamation-triangle{% else %}fa-exclamation-triangle{% endif %}"></i>
             </div>
             <div>
-                <h3 class="text-sm font-black text-red-800 uppercase tracking-widest mb-1">Errores en el formulario</h3>
-                <div class="text-xs text-red-600 font-bold uppercase tracking-widest leading-relaxed">
-                    {{ form.non_field_errors }}
+                <h3 class="text-sm font-black {% if 'Advertencia:' in error %}text-yellow-800{% else %}text-red-800{% endif %} uppercase tracking-widest mb-1">
+                    {% if 'Advertencia:' in error %}Advertencia{% else %}Error en el formulario{% endif %}
+                </h3>
+                <div class="text-xs {% if 'Advertencia:' in error %}text-yellow-600{% else %}text-red-600{% endif %} font-bold uppercase tracking-widest leading-relaxed">
+                    {{ error }}
                 </div>
             </div>
         </div>
+        {% endfor %}
         {% endif %}
 
         <div class="space-y-6">
@@ -153,7 +157,7 @@
                         Arrastra o haz clic para subir
                     </h4>
                     <p class="text-[10px] text-gray-300 font-bold uppercase tracking-widest mt-2">Formatos: PDF, JPG,
-                        PNG (Máx 10MB)</p>
+                        PNG (Recomendado: hasta 10MB)</p>
 
                     <div id="file-preview"
                         class="hidden absolute inset-0 bg-white rounded-[2rem] p-6 flex-col items-center justify-center text-center">

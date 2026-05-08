@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block page_title %}Reportes{% endblock %}
+{% block top_bar %}{% endblock %}
 
 {% block content %}
 <style>
@@ -668,47 +668,66 @@
   <div style="max-width:1200px;margin:0 auto;">
 
     <!-- Header -->
-    <div style="display:flex;flex-direction:column;gap:.85rem;margin-bottom:1.1rem;">
-      <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:.75rem;">
-        <div>
-          <h1 style="font-size:1.5rem;font-weight:800;color:#0f172a;margin:0;line-height:1.2;">Reportes</h1>
-          <p style="color:#64748b;font-size:.82rem;margin:.3rem 0 0;font-weight:500;">Vista consolidada &middot; Días administrativos y licencias médicas</p>
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mb-8 relative overflow-hidden">
+      <!-- Decorative background -->
+      <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-50 rounded-full opacity-50 blur-3xl"></div>
+      
+      <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <!-- Title Section -->
+        <div class="flex items-center gap-5">
+          <!-- Mobile Menu Toggle (Visible only on mobile since top_bar is hidden) -->
+          <button onclick="document.getElementById('mobile-menu').classList.remove('hidden')" 
+                  class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+            <i class="fas fa-bars"></i>
+          </button>
+
+          <div class="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+            <i class="fas fa-chart-line text-white text-xl"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Reportes Generales</h1>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-wider">
+                Consolidado Institucional
+              </span>
+              <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest hidden sm:inline">Días Administrativos y Licencias</span>
+            </div>
+          </div>
         </div>
-        <div class="rep-exports">
-          <button class="rep-export-btn" onclick="openModal('horarios')"
-            style="background:#eef2ff;color:#4f46e5;border-color:#c7d2fe;">
-            <i class="fas fa-calendar-week"></i> Horarios
+
+        <!-- Export Buttons Area -->
+        <div class="flex flex-wrap gap-2 justify-start lg:justify-end max-w-full lg:max-w-2xl">
+          <button class="rep-export-btn h-10 px-4 bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-600 hover:text-white" onclick="openModal('horarios')">
+            <i class="fas fa-calendar-week"></i> <span class="hidden sm:inline">Horarios</span>
           </button>
-          <button class="rep-export-btn" onclick="openModal('daem')"
-            style="background:#eff6ff;color:#2563eb;border-color:#bfdbfe;">
-            <i class="fas fa-file-excel"></i> DAEM
+          <button class="rep-export-btn h-10 px-4 bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-600 hover:text-white" onclick="openModal('daem')">
+            <i class="fas fa-file-excel"></i> <span class="hidden sm:inline">DAEM</span>
           </button>
-          <button class="rep-export-btn" onclick="openModal('asistencia')"
-            style="background:#fff1f2;color:#e11d48;border-color:#fecdd3;">
-            <i class="fas fa-clipboard-check"></i> DAEM2
+          <button class="rep-export-btn h-10 px-4 bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-600 hover:text-white" onclick="openModal('asistencia')">
+            <i class="fas fa-clipboard-check"></i> <span class="hidden sm:inline">DAEM2</span>
           </button>
-          <button class="rep-export-btn" onclick="openModal('daem3')"
-            style="background:#f3f4f6;color:#374151;border-color:#d1d5db;">
-            <i class="fas fa-file-alt"></i> DAEM3
+          <button class="rep-export-btn h-10 px-4 bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-900 hover:text-white" onclick="openModal('daem3')">
+            <i class="fas fa-file-alt"></i> <span class="hidden sm:inline">DAEM3</span>
           </button>
-          <button class="rep-export-btn" onclick="openModal('mensual')"
-            style="background:#f5f3ff;color:#7c3aed;border-color:#ddd6fe;">
-            <i class="fas fa-calendar-alt"></i> Mensual
+          <button class="rep-export-btn h-10 px-4 bg-purple-50 text-purple-700 border-purple-100 hover:bg-purple-600 hover:text-white" onclick="openModal('mensual')">
+            <i class="fas fa-calendar-alt"></i> <span class="hidden sm:inline">Mensual</span>
           </button>
-          <button class="rep-export-btn" onclick="openModal('excel')"
-            style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;">
-            <i class="fas fa-file-excel"></i> Excel
+          <button class="rep-export-btn h-10 px-4 bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-600 hover:text-white" onclick="openModal('excel')">
+            <i class="fas fa-file-excel"></i> <span class="hidden sm:inline">Excel</span>
           </button>
-          <button class="rep-export-btn" onclick="openModal('pdf')"
-            style="background:#fff1f2;color:#dc2626;border-color:#fecaca;">
-            <i class="fas fa-file-pdf"></i> PDF
+          <button class="rep-export-btn h-10 px-4 bg-red-50 text-red-700 border-red-100 hover:bg-red-600 hover:text-white" onclick="openModal('pdf')">
+            <i class="fas fa-file-pdf"></i> <span class="hidden sm:inline">PDF</span>
           </button>
-          <button class="rep-export-btn" onclick="openModal('justificaciones')"
-            style="background:#fef3c7;color:#92400e;border-color:#fcd34d;">
-            <i class="fas fa-check-circle"></i> Justificaciones
+          <button class="rep-export-btn h-10 px-4 bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-600 hover:text-white" onclick="openModal('justificaciones')">
+            <i class="fas fa-check-circle"></i> <span class="hidden sm:inline">Justificaciones</span>
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-b border-gray-200 mb-6"></div>
+
     <!-- Tabs -->
     <div class="rep-tabs">
       <button class="rep-tab active" onclick="switchTab('listado', this)">

@@ -41,12 +41,7 @@ def validate_file_upload(file):
             f'Solo se aceptan: {", ".join(_ALLOWED_FILE_TYPES.keys())}'
         )
 
-    # 2. Tamaño
-    if file.size > _MAX_UPLOAD_BYTES:
-        raise ValidationError(
-            f'El archivo es demasiado grande ({file.size // (1024*1024)} MB). '
-            f'El máximo permitido es {_MAX_UPLOAD_MB} MB.'
-        )
+    # 2. Tamaño - Note: Size validation now handled in forms to allow warnings
 
     # 3. Magic bytes — verifica que el contenido coincide con la extensión declarada
     file.seek(0)
