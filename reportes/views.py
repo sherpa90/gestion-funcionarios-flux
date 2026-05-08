@@ -159,6 +159,38 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         context['years'] = all_years if all_years else [datetime.now().year]
         context['current_sort'] = sort_by
         
+        # --- Estadísticas para gráficos ---
+        stats_year = int(year) if year and year.isdigit() else now().year
+        
+        # Permisos por mes
+        permisos_mes = SolicitudPermiso.objects.filter(
+            estado='APROBADO',
+            fecha_inicio__year=stats_year
+        ).values('fecha_inicio__month').annotate(total=Sum('dias_solicitados')).order_by('fecha_inicio__month')
+        
+        permisos_data = [0] * 12
+        for p in permisos_mes:
+            if p['fecha_inicio__month']:
+                permisos_data[p['fecha_inicio__month'] - 1] = float(p['total'] or 0)
+        
+        # Licencias por mes
+        licencias_mes = LicenciaMedica.objects.filter(
+            fecha_inicio__year=stats_year
+        ).values('fecha_inicio__month').annotate(total=Sum('dias')).order_by('fecha_inicio__month')
+        
+        licencias_data = [0] * 12
+        for l in licencias_mes:
+            if l['fecha_inicio__month']:
+                licencias_data[l['fecha_inicio__month'] - 1] = int(l['total'] or 0)
+        
+        context['stats'] = {
+            'year': stats_year,
+            'permisos_mensuales': permisos_data,
+            'licencias_mensuales': licencias_data,
+            'total_permisos_anual': sum(permisos_data),
+            'total_licencias_anual': sum(licencias_data),
+        }
+        
         return context
 
 
@@ -912,33 +944,40 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             # y sin cobertura de licencia/permiso (igual a lo que muestra la vista)
             fechas_con_registro = set(func_registros.values_list('fecha', flat=True))
             es_sereno = (func.funcion == 'SERENO') or (func.tipo_funcionario == 'SERENO')
-            dias_laborales = horarios_dict.get(func.id, {0, 1, 2, 3, 4})
+            
+            # Si no tiene horario, no debe tener atrasos ni inasistencias (aplica a todos)
+            tiene_horario = func.id in horarios_dict
+            if not tiene_horario:
+                total_atrasos = 0
+                total_inasistencias = 0
+            else:
+                dias_laborales = horarios_dict.get(func.id, set())
 
-            ausencias_virtuales = 0
-            d = primer_dia_mes
-            while d <= ultimo_dia:
-                if d not in fechas_con_registro and d >= func.date_joined.date():
-                    dia_semana = d.weekday()
-                    if dia_semana >= 5 and not es_sereno:
-                        d += timedelta(days=1)
-                        continue
-                    if d in festivos or d in licencias_func or d in permisos_func:
-                        d += timedelta(days=1)
-                        continue
-                    en_ano_escolar = True
-                    if ano_escolar:
-                        en_ano_escolar = (
-                            ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin or
-                            ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
-                        )
-                    if not en_ano_escolar:
-                        d += timedelta(days=1)
-                        continue
-                    if dia_semana in dias_laborales or es_sereno:
-                        ausencias_virtuales += 1
-                d += timedelta(days=1)
+                ausencias_virtuales = 0
+                d = primer_dia_mes
+                while d <= ultimo_dia:
+                    if d not in fechas_con_registro and d >= func.date_joined.date():
+                        dia_semana = d.weekday()
+                        if dia_semana >= 5 and not es_sereno:
+                            d += timedelta(days=1)
+                            continue
+                        if d in festivos or d in licencias_func or d in permisos_func:
+                            d += timedelta(days=1)
+                            continue
+                        en_ano_escolar = True
+                        if ano_escolar:
+                            en_ano_escolar = (
+                                ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin or
+                                ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
+                            )
+                        if not en_ano_escolar:
+                            d += timedelta(days=1)
+                            continue
+                        if dia_semana in dias_laborales or es_sereno:
+                            ausencias_virtuales += 1
+                    d += timedelta(days=1)
 
-            total_inasistencias = ausencias_db + ausencias_virtuales
+                total_inasistencias = ausencias_db + ausencias_virtuales
 
             # Solo incluir si tiene atrasos o inasistencias
             if total_atrasos > 0 or total_inasistencias > 0:
@@ -1182,33 +1221,40 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
             # y sin cobertura de licencia/permiso (igual a lo que muestra la vista)
             fechas_con_registro = set(func_registros.values_list('fecha', flat=True))
             es_sereno = (func.funcion == 'SERENO') or (func.tipo_funcionario == 'SERENO')
-            dias_laborales = horarios_dict.get(func.id, {0, 1, 2, 3, 4})
+            
+            # Si no tiene horario, no debe tener atrasos ni inasistencias (aplica a todos)
+            tiene_horario = func.id in horarios_dict
+            if not tiene_horario:
+                total_atrasos = 0
+                total_inasistencias = 0
+            else:
+                dias_laborales = horarios_dict.get(func.id, set())
 
-            ausencias_virtuales = 0
-            d = primer_dia_mes
-            while d <= ultimo_dia:
-                if d not in fechas_con_registro and d >= func.date_joined.date():
-                    dia_semana = d.weekday()
-                    if dia_semana >= 5 and not es_sereno:
-                        d += timedelta(days=1)
-                        continue
-                    if d in festivos or d in licencias_func or d in permisos_func:
-                        d += timedelta(days=1)
-                        continue
-                    en_ano_escolar = True
-                    if ano_escolar:
-                        en_ano_escolar = (
-                            ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin or
-                            ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
-                        )
-                    if not en_ano_escolar:
-                        d += timedelta(days=1)
-                        continue
-                    if dia_semana in dias_laborales or es_sereno:
-                        ausencias_virtuales += 1
-                d += timedelta(days=1)
+                ausencias_virtuales = 0
+                d = primer_dia_mes
+                while d <= ultimo_dia:
+                    if d not in fechas_con_registro and d >= func.date_joined.date():
+                        dia_semana = d.weekday()
+                        if dia_semana >= 5 and not es_sereno:
+                            d += timedelta(days=1)
+                            continue
+                        if d in festivos or d in licencias_func or d in permisos_func:
+                            d += timedelta(days=1)
+                            continue
+                        en_ano_escolar = True
+                        if ano_escolar:
+                            en_ano_escolar = (
+                                ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin or
+                                ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
+                            )
+                        if not en_ano_escolar:
+                            d += timedelta(days=1)
+                            continue
+                        if dia_semana in dias_laborales or es_sereno:
+                            ausencias_virtuales += 1
+                    d += timedelta(days=1)
 
-            total_inasistencias = ausencias_db + ausencias_virtuales
+                total_inasistencias = ausencias_db + ausencias_virtuales
 
             # Solo incluir si tiene atrasos o inasistencias
             if total_atrasos > 0 or total_inasistencias > 0:
