@@ -916,10 +916,17 @@
   function openModal(id) {
     document.getElementById('modal-' + id).classList.add('open');
     document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = '15px'; // Compensar scrollbar
   }
   function closeModal(id) {
-    document.getElementById('modal-' + id).classList.remove('open');
+    var modal = document.getElementById('modal-' + id);
+    if (modal) {
+      modal.classList.remove('open');
+    }
+    // Forzar restauración del scroll
     document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    document.documentElement.style.overflow = '';
   }
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
@@ -927,7 +934,20 @@
         el.classList.remove('open');
       });
       document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
     }
+  });
+
+  // Asegurar que el scroll se restaure al cargar la página
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+  });
+
+  // Prevenir que el scroll se quede bloqueado
+  window.addEventListener('beforeunload', function() {
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
   });
   function sortTable(sort, search, year, mes, fechaInicio, fechaFin) {
     var url = '?sort=' + sort;

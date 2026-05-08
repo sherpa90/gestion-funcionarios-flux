@@ -851,11 +851,11 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             # Calcular atrasos (acumulado mensual)
             total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
 
-            # Calcular inasistencias injustificadas
+            # Calcular inasistencias injustificadas (solo cuando aparece "Ausente" en la interfaz)
             total_inasistencias = 0
             for r in func_registros:
                 if r.estado == 'AUSENTE':
-                    # Verificar si está justificado
+                    # Verificar si NO está justificado (es decir, si aparece como "Ausente" en la interfaz)
                     tiene_justificacion = (
                         r.tiene_permiso_aprobado() or
                         r.tiene_licencia_medica() or
@@ -1043,11 +1043,11 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
             # Calcular atrasos (acumulado mensual en minutos)
             total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
 
-            # Calcular inasistencias injustificadas
+            # Calcular inasistencias injustificadas (solo cuando aparece "Ausente" en la interfaz)
             total_inasistencias = 0
             for r in func_registros:
                 if r.estado == 'AUSENTE':
-                    # Verificar si está justificado
+                    # Verificar si NO está justificado (es decir, si aparece como "Ausente" en la interfaz)
                     tiene_justificacion = (
                         r.tiene_permiso_aprobado() or
                         r.tiene_licencia_medica() or

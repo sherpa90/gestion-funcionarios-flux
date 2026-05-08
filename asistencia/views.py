@@ -791,6 +791,10 @@ class GestionAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     context_object_name = 'usuarios'
     paginate_by = 20
 
+    def get_template_names(self):
+        """Fallback por si el template principal no se encuentra"""
+        return ['asistencia/gestion_asistencia.html', 'users/customuser_list.html']
+
     def get_paginate_by(self, queryset):
         """Permite cambiar dinámicamente el número de elementos por página"""
         paginate_by = self.request.GET.get('paginate_by', '20')

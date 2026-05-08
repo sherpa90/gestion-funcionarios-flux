@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Asistencia - Usuarios{% endblock %}
+{% block page_title %}Gestión de Asistencia{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight">Gestión de Asistencia</h1>
+            <p class="mt-2 text-lg text-gray-600">Administración de usuarios y sus registros de asistencia</p>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+            <form method="get" class="flex flex-col sm:flex-row gap-4">
+                <div class="flex-1">
+                    <input type="text" name="search" value="{{ request.GET.search }}"
+                           placeholder="Buscar por nombre o RUT..."
+                           class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all">
+                </div>
+                <div>
+                    <select name="sort" onchange="this.form.submit()"
+                            class="px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-blue-500/20">
+                        <option value="name" {% if request.GET.sort == 'name' or not request.GET.sort %}selected{% endif %}>Ordenar por Nombre</option>
+                        <option value="name_desc" {% if request.GET.sort == 'name_desc' %}selected{% endif %}>Nombre (Descendente)</option>
+                        <option value="rut" {% if request.GET.sort == 'rut' %}selected{% endif %}>Ordenar por RUT</option>
+                        <option value="rut_desc" {% if request.GET.sort == 'rut_desc' %}selected{% endif %}>RUT (Descendente)</option>
+                        <option value="role" {% if request.GET.sort == 'role' %}selected{% endif %}>Ordenar por Rol</option>
+                    </select>
+                </div>
+                <button type="submit" class="px-6 py-3 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-all">
+                    <i class="fas fa-search mr-2"></i>Buscar
+                </button>
+            </form>
+        </div>
+
+        <!-- Statistics -->
+        {% if estadisticas %}
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Usuarios</p>
+                        <p class="text-2xl font-black text-gray-900">{{ estadisticas.total_usuarios }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-users text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Registros</p>
+                        <p class="text-2xl font-black text-gray-900">{{ estadisticas.total_registros }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-clipboard-list text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">% Puntualidad</p>
+                        <p class="text-2xl font-black text-gray-900">{{ estadisticas.porcentaje_puntualidad }}%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-check-circle text-emerald-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider">Con Retraso</p>
+                        <p class="text-2xl font-black text-gray-900">{{ estadisticas.registros_retraso }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-clock text-amber-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Users Table -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-100">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Usuario</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Rol</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Registros</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Puntualidad</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Último Registro</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-50">
+                        {% for usuario_stats in usuarios_con_stats %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                                        <span class="text-sm font-black text-blue-600">
+                                            {{ usuario_stats.usuario.first_name|first }}{{ usuario_stats.usuario.last_name|first }}
+                                        </span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-bold text-gray-900">{{ usuario_stats.usuario.get_full_name }}</div>
+                                        <div class="text-sm text-gray-500">{{ usuario_stats.usuario.run }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold
+                                    {% if usuario_stats.usuario.role == 'ADMIN' %}bg-purple-100 text-purple-800
+                                    {% elif usuario_stats.usuario.role == 'DIRECTOR' %}bg-blue-100 text-blue-800
+                                    {% elif usuario_stats.usuario.role == 'SECRETARIA' %}bg-green-100 text-green-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ usuario_stats.usuario.get_role_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                {{ usuario_stats.total_registros }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-sm font-bold {{ usuario_stats.porcentaje_puntualidad >= 90 and 'text-green-600' or usuario_stats.porcentaje_puntualidad >= 70 and 'text-amber-600' or 'text-red-600' }}">
+                                    {{ usuario_stats.porcentaje_puntualidad }}%
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if usuario_stats.ultimo_registro %}
+                                    {{ usuario_stats.ultimo_registro|date:"d/m/Y" }}
+                                {% else %}
+                                    Sin registros
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                <a href="{% url 'asistencia:detalle_usuario' user_id=usuario_stats.usuario.id %}"
+                                   class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                                    <i class="fas fa-eye mr-2"></i>Ver Detalle
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-users text-gray-400 text-2xl"></i>
+                                </div>
+                                <h3 class="text-lg font-bold text-gray-900 mb-2">No se encontraron usuarios</h3>
+                                <p class="text-gray-500">No hay usuarios que coincidan con los criterios de búsqueda.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        Mostrando {{ usuarios.start_index }} a {{ usuarios.end_index }} de {{ usuarios.paginator.count }} resultados
+                    </div>
+                    <div class="flex space-x-2">
+                        {% if usuarios.has_previous %}
+                        <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}page={{ usuarios.previous_page_number }}"
+                           class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            Anterior
+                        </a>
+                        {% endif %}
+
+                        {% for num in usuarios.paginator.page_range %}
+                        {% if usuarios.number == num %}
+                        <span class="px-3 py-2 border border-blue-500 rounded-lg text-sm font-medium text-blue-600 bg-blue-50">{{ num }}</span>
+                        {% elif num > usuarios.number|add:'-3' and num < usuarios.number|add:'3' %}
+                        <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}page={{ num }}"
+                           class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            {{ num }}
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if usuarios.has_next %}
+                        <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}page={{ usuarios.next_page_number }}"
+                           class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            Siguiente
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
