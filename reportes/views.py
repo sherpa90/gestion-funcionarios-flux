@@ -836,12 +836,29 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                 tipo_funcionario='ASISTENTE'
             ).order_by('first_name', 'last_name')
 
-        # Obtener registros del mes
-        registros_mes = RegistroAsistencia.objects.filter(
-            fecha__year=int(year),
-            fecha__month=int(mes),
-            funcionario__in=funcionarios
-        ).select_related('funcionario')
+        # Pre-cargar datos para conteo de ausencias virtuales
+        from asistencia.models import DiaFestivo, AnoEscolar, HorarioFuncionario
+        from datetime import date as date_cls, timedelta
+        import calendar as cal_module
+
+        today = date_cls.today()
+        primer_dia_mes = date_cls(int(year), int(mes), 1)
+        ultimo_dia_mes = date_cls(int(year), int(mes), cal_module.monthrange(int(year), int(mes))[1])
+        ultimo_dia = min(ultimo_dia_mes, today)
+
+        festivos = set(DiaFestivo.objects.filter(
+            fecha__year=int(year), fecha__month=int(mes)
+        ).values_list('fecha', flat=True))
+
+        ano_escolar = AnoEscolar.objects.filter(ano=int(year)).first()
+
+        horarios_dict = {}
+        for horario in HorarioFuncionario.objects.filter(
+            funcionario__in=funcionarios, activo=True
+        ).prefetch_related('dias'):
+            horarios_dict[horario.funcionario_id] = set(
+                horario.dias.filter(activo=True).values_list('dia_semana', flat=True)
+            )
 
         # Agrupar por funcionario y calcular atrasos e inasistencias
         funcionarios_data = []
@@ -851,9 +868,40 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             # Calcular atrasos (minutos acumulado mensual)
             total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
 
-            # Calcular inasistencias: registros cuyo estado guardado es 'AUSENTE'
-            # (el modelo ya lo determina correctamente al guardar)
-            total_inasistencias = func_registros.filter(estado='AUSENTE').count()
+            # Inasistencias en BD
+            ausencias_db = func_registros.filter(estado='AUSENTE').count()
+
+            # Inasistencias virtuales: días laborales pasados sin ningún registro
+            # (igual a lo que muestra DetalleUsuarioView como "Ausente")
+            fechas_con_registro = set(func_registros.values_list('fecha', flat=True))
+            es_sereno = (func.funcion == 'SERENO') or (func.tipo_funcionario == 'SERENO')
+            dias_laborales = horarios_dict.get(func.id, {0, 1, 2, 3, 4})
+
+            ausencias_virtuales = 0
+            d = primer_dia_mes
+            while d <= ultimo_dia:
+                if d not in fechas_con_registro and d >= func.date_joined.date():
+                    dia_semana = d.weekday()
+                    if dia_semana >= 5 and not es_sereno:
+                        d += timedelta(days=1)
+                        continue
+                    if d in festivos:
+                        d += timedelta(days=1)
+                        continue
+                    en_ano_escolar = True
+                    if ano_escolar:
+                        en_ano_escolar = (
+                            ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin or
+                            ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
+                        )
+                    if not en_ano_escolar:
+                        d += timedelta(days=1)
+                        continue
+                    if dia_semana in dias_laborales or es_sereno:
+                        ausencias_virtuales += 1
+                d += timedelta(days=1)
+
+            total_inasistencias = ausencias_db + ausencias_virtuales
 
             # Solo incluir si tiene atrasos o inasistencias
             if total_atrasos > 0 or total_inasistencias > 0:
@@ -1027,6 +1075,31 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
         ).select_related('funcionario')
 
         # Agrupar por funcionario y calcular atrasos e inasistencias
+        # Pre-cargar datos para conteo de ausencias virtuales
+        from asistencia.models import DiaFestivo, AnoEscolar, HorarioFuncionario
+        from datetime import date as date_cls, timedelta
+        import calendar as cal_module
+
+        today = date_cls.today()
+        primer_dia_mes = date_cls(int(year), int(mes), 1)
+        ultimo_dia_mes = date_cls(int(year), int(mes), cal_module.monthrange(int(year), int(mes))[1])
+        ultimo_dia = min(ultimo_dia_mes, today)
+
+        festivos = set(DiaFestivo.objects.filter(
+            fecha__year=int(year), fecha__month=int(mes)
+        ).values_list('fecha', flat=True))
+
+        ano_escolar = AnoEscolar.objects.filter(ano=int(year)).first()
+
+        horarios_dict = {}
+        for horario in HorarioFuncionario.objects.filter(
+            funcionario__in=funcionarios, activo=True
+        ).prefetch_related('dias'):
+            horarios_dict[horario.funcionario_id] = set(
+                horario.dias.filter(activo=True).values_list('dia_semana', flat=True)
+            )
+
+        # Agrupar por funcionario y calcular atrasos e inasistencias
         funcionarios_data = []
         for func in funcionarios:
             func_registros = registros_mes.filter(funcionario=func)
@@ -1034,8 +1107,39 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
             # Calcular atrasos (minutos acumulado mensual)
             total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
 
-            # Calcular inasistencias: registros cuyo estado guardado es 'AUSENTE'
-            total_inasistencias = func_registros.filter(estado='AUSENTE').count()
+            # Inasistencias en BD
+            ausencias_db = func_registros.filter(estado='AUSENTE').count()
+
+            # Inasistencias virtuales: días laborales pasados sin ningún registro
+            fechas_con_registro = set(func_registros.values_list('fecha', flat=True))
+            es_sereno = (func.funcion == 'SERENO') or (func.tipo_funcionario == 'SERENO')
+            dias_laborales = horarios_dict.get(func.id, {0, 1, 2, 3, 4})
+
+            ausencias_virtuales = 0
+            d = primer_dia_mes
+            while d <= ultimo_dia:
+                if d not in fechas_con_registro and d >= func.date_joined.date():
+                    dia_semana = d.weekday()
+                    if dia_semana >= 5 and not es_sereno:
+                        d += timedelta(days=1)
+                        continue
+                    if d in festivos:
+                        d += timedelta(days=1)
+                        continue
+                    en_ano_escolar = True
+                    if ano_escolar:
+                        en_ano_escolar = (
+                            ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin or
+                            ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
+                        )
+                    if not en_ano_escolar:
+                        d += timedelta(days=1)
+                        continue
+                    if dia_semana in dias_laborales or es_sereno:
+                        ausencias_virtuales += 1
+                d += timedelta(days=1)
+
+            total_inasistencias = ausencias_db + ausencias_virtuales
 
             # Solo incluir si tiene atrasos o inasistencias
             if total_atrasos > 0 or total_inasistencias > 0:
