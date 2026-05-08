@@ -868,7 +868,7 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             if total_atrasos > 0 or total_inasistencias > 0:
                 funcionarios_data.append({
                     'funcionario': func,
-                    'atrasos': total_atrasos,
+                    'atrasos': f"{total_atrasos} minutos",
                     'inasistencias': total_inasistencias
                 })
 
@@ -911,7 +911,7 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         for i, data in enumerate(funcionarios_data, 10):
             ws.cell(row=i, column=1).value = data['funcionario'].get_full_name() or data['funcionario'].username
             ws.cell(row=i, column=2).value = data['funcionario'].run
-            ws.cell(row=i, column=3).value = data['atrasos']  # Minutos de atraso
+            ws.cell(row=i, column=3).value = f"{data['atrasos']} minutos"  # Minutos de atraso
             ws.cell(row=i, column=4).value = data['inasistencias']
 
             # Bordes para las celdas de datos
@@ -1060,7 +1060,7 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
             if total_atrasos > 0 or total_inasistencias > 0:
                 funcionarios_data.append({
                     'funcionario': func,
-                    'atrasos': total_atrasos,
+                    'atrasos': f"{total_atrasos} minutos",
                     'inasistencias': total_inasistencias
                 })
 
