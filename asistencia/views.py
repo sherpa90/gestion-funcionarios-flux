@@ -458,7 +458,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
 
         class RegistroVirtual:
             """Registro virtual para días con permiso/licencia sin marcación"""
-            def __init__(self, estado):
+            def __init__(self, estado, tipo_licencia=None):
                 self.estado = estado
                 self.minutos_retraso = 0
                 self.hora_entrada_real = None
@@ -468,11 +468,14 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 self.horario_asignado = None
                 self.alegacion = None
                 self._estado_display = ESTADO_DISPLAY.get(estado, estado)
+                self._tipo_licencia = tipo_licencia
             @property
             def pk(self):
                 return None
             def get_estado_display(self):
                 return self._estado_display
+            def obtener_tipo_licencia_o_permiso(self):
+                return self._tipo_licencia
 
         for semana in cal.monthdayscalendar(anio_int, mes_int):
             dias_semana = []
@@ -494,7 +497,9 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                     # Reemplaza registros AUSENTE retroactivamente
                     if fecha in licencias_por_fecha:
                         if not registro or registro.estado == 'AUSENTE':
-                            registro = RegistroVirtual('LICENCIA_MEDICA')
+                            licencia_obj = licencias_por_fecha[fecha]
+                            tipo_lic = licencia_obj.get_tipo_display()
+                            registro = RegistroVirtual('LICENCIA_MEDICA', tipo_licencia=tipo_lic)
                     elif fecha in permisos_por_fecha:
                         permiso = permisos_por_fecha[fecha]
                         if not registro or registro.estado == 'AUSENTE':
@@ -1392,7 +1397,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
 
         class RegistroVirtual:
             """Registro virtual para días con permiso/licencia o ausencias sin marcación"""
-            def __init__(self, fecha, estado, nombre_festivo=None):
+            def __init__(self, fecha, estado, nombre_festivo=None, tipo_licencia=None):
                 self.fecha = fecha
                 self.estado = estado
                 self.minutos_retraso = 0
@@ -1403,6 +1408,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 self.alegacion = None
                 self.nombre_festivo = nombre_festivo
                 self._estado_display = ESTADO_DISPLAY.get(estado, estado)
+                self._tipo_licencia = tipo_licencia
             @property
             def pk(self):
                 return None
@@ -1410,6 +1416,8 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 if self.estado == 'FESTIVO' and self.nombre_festivo:
                     return f"Festivo: {self.nombre_festivo}"
                 return self._estado_display
+            def obtener_tipo_licencia_o_permiso(self):
+                return self._tipo_licencia
 
         # Consultar modelos necesarios
         from permisos.models import SolicitudPermiso
@@ -1518,7 +1526,8 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                         if d in festivos:
                             registros_mes_final.append(RegistroVirtual(d, 'FESTIVO', festivos[d]))
                         elif d in licencias_por_fecha:
-                            registros_mes_final.append(RegistroVirtual(d, 'LICENCIA_MEDICA'))
+                            tipo_lic = licencias_por_fecha[d].get_tipo_display()
+                            registros_mes_final.append(RegistroVirtual(d, 'LICENCIA_MEDICA', tipo_licencia=tipo_lic))
                         elif d in permisos_por_fecha:
                             permiso = permisos_por_fecha[d]
                             if permiso.dias_solicitados == 0.5:

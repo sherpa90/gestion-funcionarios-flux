@@ -264,9 +264,19 @@
                                                     <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-rose-100 text-rose-800 border border-rose-200 shadow-sm">
                                                         <i class="fas fa-notes-medical mr-1.5 text-[8px]"></i>
                                                         {% if registro.obtener_tipo_licencia_o_permiso %}
-                                                            {{ registro.obtener_tipo_licencia_o_permiso|truncatechars:12 }}
+                                                            {% if registro.obtener_tipo_licencia_o_permiso == 'Permiso sin Goce de Remuneraciones' %}
+                                                                Sin Goce
+                                                            {% elif registro.obtener_tipo_licencia_o_permiso == 'Licencia Prenatal' %}
+                                                                Prenatal
+                                                            {% elif registro.obtener_tipo_licencia_o_permiso == 'Licencia Postnatal' %}
+                                                                Postnatal
+                                                            {% elif registro.obtener_tipo_licencia_o_permiso == 'Permiso Postnatal Parental' %}
+                                                                Post. Parental
+                                                            {% else %}
+                                                                Lic. Médica
+                                                            {% endif %}
                                                         {% else %}
-                                                            Licencia
+                                                            Lic. Médica
                                                         {% endif %}
                                                     </span>
                                                 {% elif registro.estado == 'JUSTIFICADO' %}

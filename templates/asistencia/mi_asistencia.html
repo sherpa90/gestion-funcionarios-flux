@@ -568,18 +568,18 @@
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-red-100 text-red-700">
                                         {% if reg.obtener_tipo_licencia_o_permiso %}
                                             {% if reg.obtener_tipo_licencia_o_permiso == 'Permiso sin Goce de Remuneraciones' %}
-                                                Permiso
+                                                Sin Goce
                                             {% elif reg.obtener_tipo_licencia_o_permiso == 'Licencia Prenatal' %}
                                                 Prenatal
                                             {% elif reg.obtener_tipo_licencia_o_permiso == 'Licencia Postnatal' %}
                                                 Postnatal
                                             {% elif reg.obtener_tipo_licencia_o_permiso == 'Permiso Postnatal Parental' %}
-                                                Post. Par.
+                                                Post. Parental
                                             {% else %}
-                                                Lic. Méd.
+                                                Lic. Médica
                                             {% endif %}
                                         {% else %}
-                                            Lic. Méd.
+                                            Lic. Médica
                                         {% endif %}
                                     </span>
                                     {% elif reg.estado == 'DIA_FESTIVO' %}

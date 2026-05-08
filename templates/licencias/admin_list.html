@@ -46,9 +46,10 @@
                 <select name="tipo" id="tipo" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-blue-100">
                     <option value="">Todos</option>
                     <option value="LICENCIA" {% if selected_tipo == 'LICENCIA' %}selected{% endif %}>Licencia Médica</option>
-                    <option value="PERMISO" {% if selected_tipo == 'PERMISO' %}selected{% endif %}>Permiso sin Goce</option>
+                    <option value="PERMISO" {% if selected_tipo == 'PERMISO' %}selected{% endif %}>Permiso sin Goce de Remuneraciones</option>
                     <option value="PRENATAL" {% if selected_tipo == 'PRENATAL' %}selected{% endif %}>Licencia Prenatal</option>
                     <option value="POSTNATAL" {% if selected_tipo == 'POSTNATAL' %}selected{% endif %}>Licencia Postnatal</option>
+                    <option value="POSTNATAL_PARENTAL" {% if selected_tipo == 'POSTNATAL_PARENTAL' %}selected{% endif %}>Permiso Postnatal Parental</option>
                 </select>
             </div>
             <div>
@@ -153,6 +154,10 @@
                             </span>
                             {% elif licencia.tipo == 'POSTNATAL' %}
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-indigo-700">
+                                {{ licencia.get_tipo_display }}
+                            </span>
+                            {% elif licencia.tipo == 'POSTNATAL_PARENTAL' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-teal-50 text-teal-700">
                                 {{ licencia.get_tipo_display }}
                             </span>
                             {% else %}
