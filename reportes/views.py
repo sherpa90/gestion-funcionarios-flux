@@ -845,6 +845,8 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         # Pre-cargar datos para conteo de ausencias virtuales
         from asistencia.models import DiaFestivo, AnoEscolar, HorarioFuncionario
+        from permisos.models import SolicitudPermiso
+        from licencias.models import LicenciaMedica
         from datetime import date as date_cls, timedelta
         import calendar as cal_module
 
@@ -875,11 +877,39 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             # Calcular atrasos (minutos acumulado mensual)
             total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
 
-            # Inasistencias en BD
+            # Inasistencias en BD (estado guardado como AUSENTE)
             ausencias_db = func_registros.filter(estado='AUSENTE').count()
 
+            # Pre-cargar licencias y permisos del funcionario para el mes
+            licencias_func = set()
+            for lic in LicenciaMedica.objects.filter(
+                usuario=func, fecha_inicio__lte=ultimo_dia_mes
+            ):
+                fin_lic = lic.fecha_inicio + timedelta(days=lic.dias - 1)
+                inicio = max(lic.fecha_inicio, primer_dia_mes)
+                fin = min(fin_lic, ultimo_dia_mes)
+                d_lic = inicio
+                while d_lic <= fin:
+                    licencias_func.add(d_lic)
+                    d_lic += timedelta(days=1)
+
+            permisos_func = set()
+            for perm in SolicitudPermiso.objects.filter(
+                usuario=func, estado='APROBADO',
+                fecha_inicio__lte=ultimo_dia_mes
+            ).filter(
+                Q(fecha_termino__gte=primer_dia_mes) | Q(fecha_termino__isnull=True)
+            ):
+                inicio = max(perm.fecha_inicio, primer_dia_mes)
+                fin = perm.fecha_termino or ultimo_dia_mes
+                fin = min(fin, ultimo_dia_mes)
+                d_perm = inicio
+                while d_perm <= fin:
+                    permisos_func.add(d_perm)
+                    d_perm += timedelta(days=1)
+
             # Inasistencias virtuales: días laborales pasados sin ningún registro
-            # (igual a lo que muestra DetalleUsuarioView como "Ausente")
+            # y sin cobertura de licencia/permiso (igual a lo que muestra la vista)
             fechas_con_registro = set(func_registros.values_list('fecha', flat=True))
             es_sereno = (func.funcion == 'SERENO') or (func.tipo_funcionario == 'SERENO')
             dias_laborales = horarios_dict.get(func.id, {0, 1, 2, 3, 4})
@@ -892,7 +922,7 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                     if dia_semana >= 5 and not es_sereno:
                         d += timedelta(days=1)
                         continue
-                    if d in festivos:
+                    if d in festivos or d in licencias_func or d in permisos_func:
                         d += timedelta(days=1)
                         continue
                     en_ano_escolar = True
@@ -1114,10 +1144,42 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
             # Calcular atrasos (minutos acumulado mensual)
             total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
 
-            # Inasistencias en BD
+            # Inasistencias en BD (estado guardado como AUSENTE)
             ausencias_db = func_registros.filter(estado='AUSENTE').count()
 
+            # Pre-cargar licencias y permisos del funcionario para excluirlos
+            from permisos.models import SolicitudPermiso
+            from licencias.models import LicenciaMedica
+
+            licencias_func = set()
+            for lic in LicenciaMedica.objects.filter(
+                usuario=func, fecha_inicio__lte=ultimo_dia_mes
+            ):
+                fin_lic = lic.fecha_inicio + timedelta(days=lic.dias - 1)
+                inicio = max(lic.fecha_inicio, primer_dia_mes)
+                fin = min(fin_lic, ultimo_dia_mes)
+                d_lic = inicio
+                while d_lic <= fin:
+                    licencias_func.add(d_lic)
+                    d_lic += timedelta(days=1)
+
+            permisos_func = set()
+            for perm in SolicitudPermiso.objects.filter(
+                usuario=func, estado='APROBADO',
+                fecha_inicio__lte=ultimo_dia_mes
+            ).filter(
+                Q(fecha_termino__gte=primer_dia_mes) | Q(fecha_termino__isnull=True)
+            ):
+                inicio = max(perm.fecha_inicio, primer_dia_mes)
+                fin = perm.fecha_termino or ultimo_dia_mes
+                fin = min(fin, ultimo_dia_mes)
+                d_perm = inicio
+                while d_perm <= fin:
+                    permisos_func.add(d_perm)
+                    d_perm += timedelta(days=1)
+
             # Inasistencias virtuales: días laborales pasados sin ningún registro
+            # y sin cobertura de licencia/permiso (igual a lo que muestra la vista)
             fechas_con_registro = set(func_registros.values_list('fecha', flat=True))
             es_sereno = (func.funcion == 'SERENO') or (func.tipo_funcionario == 'SERENO')
             dias_laborales = horarios_dict.get(func.id, {0, 1, 2, 3, 4})
@@ -1130,7 +1192,7 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
                     if dia_semana >= 5 and not es_sereno:
                         d += timedelta(days=1)
                         continue
-                    if d in festivos:
+                    if d in festivos or d in licencias_func or d in permisos_func:
                         d += timedelta(days=1)
                         continue
                     en_ano_escolar = True
