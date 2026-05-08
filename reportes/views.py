@@ -836,6 +836,13 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                 tipo_funcionario='ASISTENTE'
             ).order_by('first_name', 'last_name')
 
+        # Obtener registros del mes
+        registros_mes = RegistroAsistencia.objects.filter(
+            fecha__year=int(year),
+            fecha__month=int(mes),
+            funcionario__in=funcionarios
+        ).select_related('funcionario')
+
         # Pre-cargar datos para conteo de ausencias virtuales
         from asistencia.models import DiaFestivo, AnoEscolar, HorarioFuncionario
         from datetime import date as date_cls, timedelta
