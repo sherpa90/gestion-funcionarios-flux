@@ -848,27 +848,18 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         for func in funcionarios:
             func_registros = registros_mes.filter(funcionario=func)
 
-            # Calcular atrasos (acumulado mensual)
+            # Calcular atrasos (minutos acumulado mensual)
             total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
 
-            # Calcular inasistencias injustificadas (solo cuando aparece "Ausente" en la interfaz)
-            total_inasistencias = 0
-            for r in func_registros:
-                if r.estado == 'AUSENTE':
-                    # Verificar si NO está justificado (es decir, si aparece como "Ausente" en la interfaz)
-                    tiene_justificacion = (
-                        r.tiene_permiso_aprobado() or
-                        r.tiene_licencia_medica() or
-                        r.estado in ['JUSTIFICADO', 'DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA']
-                    )
-                    if not tiene_justificacion:
-                        total_inasistencias += 1
+            # Calcular inasistencias: registros cuyo estado guardado es 'AUSENTE'
+            # (el modelo ya lo determina correctamente al guardar)
+            total_inasistencias = func_registros.filter(estado='AUSENTE').count()
 
-            # Solo incluir si tiene atrasos o inasistencias injustificadas
+            # Solo incluir si tiene atrasos o inasistencias
             if total_atrasos > 0 or total_inasistencias > 0:
                 funcionarios_data.append({
                     'funcionario': func,
-                    'atrasos': f"{total_atrasos} minutos",
+                    'atrasos': total_atrasos,
                     'inasistencias': total_inasistencias
                 })
 
@@ -911,7 +902,7 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         for i, data in enumerate(funcionarios_data, 10):
             ws.cell(row=i, column=1).value = data['funcionario'].get_full_name() or data['funcionario'].username
             ws.cell(row=i, column=2).value = data['funcionario'].run
-            ws.cell(row=i, column=3).value = f"{data['atrasos']} minutos"  # Minutos de atraso
+            ws.cell(row=i, column=3).value = data['atrasos']  # Número entero de minutos
             ws.cell(row=i, column=4).value = data['inasistencias']
 
             # Bordes para las celdas de datos
@@ -1040,27 +1031,17 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
         for func in funcionarios:
             func_registros = registros_mes.filter(funcionario=func)
 
-            # Calcular atrasos (acumulado mensual en minutos)
+            # Calcular atrasos (minutos acumulado mensual)
             total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
 
-            # Calcular inasistencias injustificadas (solo cuando aparece "Ausente" en la interfaz)
-            total_inasistencias = 0
-            for r in func_registros:
-                if r.estado == 'AUSENTE':
-                    # Verificar si NO está justificado (es decir, si aparece como "Ausente" en la interfaz)
-                    tiene_justificacion = (
-                        r.tiene_permiso_aprobado() or
-                        r.tiene_licencia_medica() or
-                        r.estado in ['JUSTIFICADO', 'DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA']
-                    )
-                    if not tiene_justificacion:
-                        total_inasistencias += 1
+            # Calcular inasistencias: registros cuyo estado guardado es 'AUSENTE'
+            total_inasistencias = func_registros.filter(estado='AUSENTE').count()
 
-            # Solo incluir si tiene atrasos o inasistencias injustificadas
+            # Solo incluir si tiene atrasos o inasistencias
             if total_atrasos > 0 or total_inasistencias > 0:
                 funcionarios_data.append({
                     'funcionario': func,
-                    'atrasos': f"{total_atrasos} minutos",
+                    'atrasos': total_atrasos,
                     'inasistencias': total_inasistencias
                 })
 
