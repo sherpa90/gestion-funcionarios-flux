@@ -83,13 +83,14 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         licencias_semana_actual = []
         for lic in licencias_actual_raw:
             fecha_retorno = lic.fecha_inicio + timedelta(days=lic.dias)
-            if fecha_retorno >= lunes_actual:
+            # Solo incluir si está ACTIVA HOY
+            if lic.fecha_inicio <= hoy <= fecha_retorno:
                 licencias_semana_actual.append({
                     'usuario': lic.usuario,
                     'fecha_inicio': lic.fecha_inicio,
                     'dias': lic.dias,
                     'fecha_retorno': fecha_retorno,
-                    'es_activa': lic.fecha_inicio <= hoy <= fecha_retorno
+                    'es_activa': True
                 })
         context['licencias_semana_actual'] = sorted(licencias_semana_actual, key=lambda x: x['usuario'].get_full_name())
 

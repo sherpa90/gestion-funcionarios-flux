@@ -801,13 +801,13 @@ class GestionAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
     def get_paginate_by(self, queryset):
         """Permite cambiar dinámicamente el número de elementos por página"""
-        paginate_by = self.request.GET.get('paginate_by', '20')
+        paginate_by = self.request.GET.get('paginate_by', 'todos')
         if paginate_by == 'todos':
             return None  # Sin paginación
         try:
             return int(paginate_by)
         except ValueError:
-            return 20  # Valor por defecto
+            return None  # Valor por defecto: todos
 
     def test_func(self):
         # Solo administradores, secretarias, directores y directivos pueden ver la gestión
