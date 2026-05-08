@@ -11,6 +11,7 @@ from django.http import JsonResponse
 from .models import SolicitudPermiso
 from .forms import SolicitudForm, SolicitudBypassForm, SolicitudAdminForm
 from users.models import CustomUser
+from asistencia.models import RegistroAsistencia
 from core.services import BusinessDayCalculator
 from admin_dashboard.utils import registrar_log, get_client_ip
 from django.db import transaction
@@ -172,6 +173,16 @@ class SolicitudListView(LoginRequiredMixin, ListView):
             
         context['efe_years'] = all_efe_years
         context['current_efe_year'] = efe_year
+        
+        # --- Cálculo de atrasos para alerta de umbral ---
+        now = timezone.now()
+        total_retraso_mes = RegistroAsistencia.objects.filter(
+            funcionario=self.request.user,
+            fecha__year=now.year,
+            fecha__month=now.month,
+            estado='RETRASO'
+        ).aggregate(total=Sum('minutos_retraso'))['total'] or 0
+        context['total_retraso_mes'] = total_retraso_mes
         
         return context
 

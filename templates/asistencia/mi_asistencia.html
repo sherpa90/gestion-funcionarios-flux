@@ -44,6 +44,51 @@
         </div>
     </div>
 
+    <!-- Alerta de Umbral de Atrasos (UX Mejorada) -->
+    <div class="mb-5">
+        {% if total_retraso_mes >= 60 %}
+        <div class="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-2xl p-4 shadow-sm animate-pulse">
+            <div class="flex items-center gap-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-200">
+                    <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-sm font-black text-red-900 uppercase tracking-wider">Umbral de Atrasos Superado</h4>
+                    <p class="text-xs text-red-700 font-medium mt-0.5">Has acumulado <span class="font-black text-red-800">{{ total_retraso_mes }} minutos</span> de retraso este mes. Por favor, regulariza tu situación.</p>
+                </div>
+                <div class="hidden sm:block text-right">
+                    <span class="text-[10px] font-bold text-red-400 uppercase">Estado Crítico</span>
+                    <div class="text-lg font-black text-red-600">{{ total_retraso_mes }} min</div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 {% if total_retraso_mes > 40 %}bg-amber-100 text-amber-600{% else %}bg-blue-50 text-blue-500{% endif %} rounded-xl flex items-center justify-center">
+                    <i class="fas fa-clock text-lg"></i>
+                </div>
+                <div>
+                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Atrasos del Mes</h4>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span class="text-lg font-black text-gray-800">{{ total_retraso_mes }} <span class="text-xs font-bold text-gray-400">min</span></span>
+                        {% if total_retraso_mes > 0 %}
+                        <div class="h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden">
+                            <div class="h-full {% if total_retraso_mes > 45 %}bg-amber-500{% else %}bg-blue-500{% endif %} transition-all duration-500" style="width: {% widthratio total_retraso_mes 60 100 %}%"></div>
+                        </div>
+                        <span class="text-[9px] font-bold {% if total_retraso_mes > 45 %}text-amber-600{% else %}text-blue-500{% endif %}">{{ total_retraso_mes }}/60</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="text-[9px] font-bold text-gray-300 uppercase">Límite Mensual</span>
+                <div class="text-xs font-black text-gray-400 italic">60 min</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
     <!-- Stats Inline -->
     <div class="flex flex-wrap gap-2 mb-4">
         <div class="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-full px-3 py-1.5">

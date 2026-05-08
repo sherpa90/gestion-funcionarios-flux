@@ -375,6 +375,10 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             fecha__month=mes
         ).select_related('horario_asignado')
 
+        # Sumar minutos de retraso acumulados del mes (Para la alerta visual de umbral)
+        total_retraso_mes = registros_qs.filter(estado='RETRASO').aggregate(Sum('minutos_retraso'))['minutos_retraso__sum'] or 0
+        context['total_retraso_mes'] = total_retraso_mes
+
         # Indexar registros por fecha para acceso rápido
         registros_por_fecha = {}
         for registro in registros_qs:
