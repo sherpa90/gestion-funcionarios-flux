@@ -375,6 +375,16 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             fecha__month=mes
         ).select_related('horario_asignado')
 
+        # Horario asignado actual para determinar días laborales
+        horario_actual = HorarioFuncionario.objects.filter(
+            funcionario=self.request.user, activo=True
+        ).first()
+
+        dias_configurados = {}
+        if horario_actual:
+            for dh in horario_actual.dias.all():
+                dias_configurados[dh.dia_semana] = dh
+
         # Sumar minutos de retraso acumulados del mes (Para la alerta visual de umbral)
         total_retraso_mes = registros_qs.filter(estado='RETRASO').aggregate(Sum('minutos_retraso'))['minutos_retraso__sum'] or 0
         context['total_retraso_mes'] = total_retraso_mes
@@ -517,31 +527,24 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                     es_posterior_a_ingreso = fecha >= self.request.user.date_joined.date()
                     if not es_posterior_a_ingreso and not registro:
                         registro = RegistroVirtual('SIN_DATA')
-                        
-                    es_falta_sin_registro = es_pasado and not registro and not es_festivo and es_dia_escolar and es_posterior_a_ingreso
 
-                    # Verificar si hay horario excepcional para este día
+                    # Determinar si el día es activo en el horario del funcionario
                     excepcional = excepcionales_por_fecha.get(fecha)
+                    if excepcional:
+                        es_dia_activo = True if excepcional.hora_entrada or excepcional.hora_salida else False
+                    else:
+                        dia_h = dias_configurados.get(dia_semana)
+                        if dia_h:
+                            es_dia_activo = dia_h.activo
+                        else:
+                            # Fallback lógico (Fin de semana no es laboral para personal regular)
+                            es_dia_activo = True if es_sereno else not es_fin_de_semana
 
-                    # Los fines de semana solo aplican para serenos
-                    if es_fin_de_semana and not es_sereno:
-                        dias_semana.append({
-                            'dia': dia_num,
-                            'fecha': fecha,
-                            'es_fin_de_semana': True,
-                            'es_festivo': es_festivo,
-                            'es_sereno': False,
-                            'registro': None,
-                            'es_laboral': False,
-                            'es_hoy': es_hoy,
-                            'es_falta_sin_registro': False,
-                            'es_dia_escolar': es_dia_escolar,
-                            'excepcional': excepcional,
-                        })
-                        continue
+                    # Falta sin registro solo si era un día laboral activo y no hay marcación
+                    es_falta_sin_registro = es_pasado and es_dia_activo and not registro and not es_festivo and es_dia_escolar and es_posterior_a_ingreso
 
-                    # Verificar si hay horario excepcional para este día
-                    excepcional = excepcionales_por_fecha.get(fecha)
+                    # Un día es "laboral" para el calendario si es activo en horario O si hay registro real
+                    es_laboral = es_dia_activo or (registro is not None and registro.estado not in ['SIN_DATA', 'DIA_LIBRE'])
 
                     dias_semana.append({
                         'dia': dia_num,
@@ -550,7 +553,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                         'es_festivo': es_festivo,
                         'es_sereno': es_sereno,
                         'registro': registro,
-                        'es_laboral': True,
+                        'es_laboral': es_laboral,
                         'es_hoy': es_hoy,
                         'es_falta_sin_registro': es_falta_sin_registro,
                         'es_dia_escolar': es_dia_escolar,
@@ -575,14 +578,16 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             if dia and dia.get('es_falta_sin_registro')
         )
         stats = {
-            'total': sum(1 for r in todos_registros if r.estado != 'SIN_DATA'),
+            'total': sum(1 for r in todos_registros if r.estado != 'SIN_DATA') + faltas_sin_registro,
             'puntuales': sum(1 for r in todos_registros if r.estado == 'PUNTUAL'),
             'retraso': sum(1 for r in todos_registros if r.estado == 'RETRASO'),
             'ausente': sum(1 for r in todos_registros if r.estado == 'AUSENTE') + faltas_sin_registro,
+
             'medio_dia': sum(1 for r in todos_registros if r.estado == 'MEDIO_DIA'),
             'admin': sum(1 for r in todos_registros if r.estado == 'DIA_ADMINISTRATIVO'),
             'licencia': sum(1 for r in todos_registros if r.estado == 'LICENCIA_MEDICA'),
             'sin_marcacion': sum(1 for r in todos_registros if r.estado == 'SIN_MARCACION_ENTRADA'),
+            'dias_libre': sum(1 for semana in semanas_calendario for dia in semana if dia and not dia.get('es_laboral') and not dia.get('es_festivo')),
             'dias_con_tiempo': sum(1 for r in registros_list if r.minutos_trabajados is not None),
             'tiempo_promedio': (sum(r.minutos_trabajados for r in registros_list if r.minutos_trabajados is not None) / max(1, sum(1 for r in registros_list if r.minutos_trabajados is not None))),
             'total_minutos_trabajados': sum(r.minutos_trabajados or 0 for r in registros_list),
@@ -622,10 +627,6 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
         
         context['anios_disponibles'] = anios_con_registros
 
-        # Horario asignado
-        horario_actual = HorarioFuncionario.objects.filter(
-            funcionario=self.request.user, activo=True
-        ).first()
 
         # Generar horario_semanal
         horario_semanal = []
@@ -728,6 +729,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 'dias_medio_dia': stats['medio_dia'] or 0,
                 'dias_admin': stats['admin'] or 0,
                 'dias_licencia': stats['licencia'] or 0,
+                'dias_libre': stats['dias_libre'] or 0,
                 'porcentaje_puntualidad': round((dias_puntuales / total_dias * 100) if total_dias > 0 else 0, 1),
                 'dias_con_tiempo_trabajado': stats['dias_con_tiempo'] or 0,
                 'tiempo_promedio_trabajado': round(stats['tiempo_promedio'] or 0, 0),
