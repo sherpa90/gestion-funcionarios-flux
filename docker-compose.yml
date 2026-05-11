@@ -19,7 +19,8 @@ services:
       - SQL_USER=sgpal_user
       - SQL_PASSWORD=Sgpal2025Secure*
       - DEBUG=True
-      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,[::1]
+      - DJANGO_ALLOWED_HOSTS=flux.losalercespuertomontt.cl,tramites.losalercespuertomontt.cl,localhost,127.0.0.1,0.0.0.0,[::1]
+
       - SESSION_COOKIE_SECURE=False
       - CSRF_COOKIE_SECURE=False
       - SECURE_SSL_REDIRECT=False

@@ -5,12 +5,8 @@ from .settings import *
 DEBUG = False
 
 # Hosts permitidos
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '::1',
-    'tu-dominio.com',  # Reemplaza con tu dominio real
-]
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'flux.losalercespuertomontt.cl,tramites.losalercespuertomontt.cl,localhost,127.0.0.1,[::1]').split(',')]
+
 
 # Configuración de base de datos para producción
 DATABASES = {
