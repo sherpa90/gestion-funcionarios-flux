@@ -4,9 +4,9 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # Set default environment variables for build
-ENV DEBUG=True
-ENV SECRET_KEY=dev-secret-key-for-docker-build-only
-ENV DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+ENV DEBUG=False
+ENV SECRET_KEY=CHANGE-ME-IN-PRODUCTION
+ENV DJANGO_ALLOWED_HOSTS=flux.losalercespuertomontt.cl,tramites.losalercespuertomontt.cl,localhost,127.0.0.1,[::1]
 ENV SQL_DATABASE=sgpal_db
 ENV SQL_USER=sgpal_user
 ENV SQL_PASSWORD=sgpal_password

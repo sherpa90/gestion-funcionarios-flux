@@ -40,7 +40,7 @@ ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
 
 
 
-ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'flux.losalercespuertomontt.cl,tramites.losalercespuertomontt.cl,localhost').split(',')]
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'flux.losalercespuertomontt.cl,tramites.losalercespuertomontt.cl,localhost,127.0.0.1,[::1]').split(',')]
 
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://flux.losalercespuertomontt.cl,https://tramites.losalercespuertomontt.cl').split(',') if origin.strip()]
 
