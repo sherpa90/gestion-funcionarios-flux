@@ -1,9 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView, View
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse, Http404
 from django.db import connection
 from django.core.files.storage import default_storage
 from django.conf import settings
@@ -11,6 +11,36 @@ from django.contrib import messages
 import psutil
 import os
 from datetime import datetime
+from licencias.models import LicenciaMedica
+from liquidaciones.models import Liquidacion
+
+class SecureFileDownloadView(LoginRequiredMixin, View):
+    """
+    Vista segura para descargar archivos encriptados (Ley N° 21.719).
+    Desencripta el archivo al vuelo antes de enviarlo al cliente.
+    """
+    def get(self, request, document_type, pk):
+        if document_type == 'licencia':
+            obj = get_object_or_404(LicenciaMedica, pk=pk)
+            # Solo el dueño o el admin/secretaria puede descargar
+            if request.user != obj.usuario and request.user.role not in ['ADMIN', 'DIRECTOR', 'SECRETARIA']:
+                raise Http404("No tienes permiso para ver este documento.")
+        elif document_type == 'liquidacion':
+            obj = get_object_or_404(Liquidacion, pk=pk)
+            if request.user != obj.funcionario and request.user.role not in ['ADMIN', 'DIRECTOR', 'SECRETARIA']:
+                raise Http404("No tienes permiso para ver este documento.")
+        else:
+            raise Http404("Tipo de documento inválido.")
+            
+        if not obj.archivo:
+            raise Http404("El archivo no existe.")
+            
+        try:
+            # Al llamar a open(), EncryptedFileSystemStorage lo desencripta al vuelo
+            file_obj = obj.archivo.open()
+            return FileResponse(file_obj, as_attachment=False, filename=os.path.basename(obj.archivo.name))
+        except Exception as e:
+            raise Http404(f"Error al desencriptar o leer el archivo: {str(e)}")
 
 class CustomLoginView(LoginView):
     template_name = 'core/login.html'

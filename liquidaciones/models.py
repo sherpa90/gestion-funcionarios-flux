@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from core.storage import EncryptedFileSystemStorage
 
 # Meses en español
 MESES_CHOICES = [
@@ -14,7 +15,7 @@ def get_mes_nombre(mes_num):
 
 class Liquidacion(models.Model):
     funcionario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='liquidaciones')
-    archivo = models.FileField(upload_to='liquidaciones/%Y/%m/')
+    archivo = models.FileField(upload_to='liquidaciones/%Y/%m/', storage=EncryptedFileSystemStorage())
     mes = models.IntegerField()
     anio = models.IntegerField()
     fecha_subida = models.DateTimeField(auto_now_add=True)
@@ -31,3 +32,6 @@ class Liquidacion(models.Model):
     def mes_nombre(self):
         """Retorna el nombre del mes en español"""
         return get_mes_nombre(self.mes)
+
+from auditlog.registry import auditlog
+auditlog.register(Liquidacion)

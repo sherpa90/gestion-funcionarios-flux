@@ -14,10 +14,10 @@
                 </div>
                 Logs de Actividad
             </h2>
-            <p class="text-[11px] font-bold text-gray-400 mt-2 uppercase tracking-widest">Auditoría completa y trazabilidad de eventos</p>
+            <p class="text-[11px] font-bold text-gray-400 mt-2 uppercase tracking-widest">Auditoría completa y trazabilidad de eventos unificada</p>
         </div>
         <div class="flex items-center gap-3">
-            <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}export=true"
+            <a href="{% url 'admin_dashboard:logs_export' %}"
                 onclick="window.location.href='{% url 'admin_dashboard:logs_export' %}?' + new URLSearchParams(window.location.search).toString(); return false;"
                 class="px-5 py-3 bg-emerald-600 text-white text-xs font-black rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2">
                 <i class="fas fa-file-excel"></i>
@@ -38,10 +38,9 @@
             <div class="flex-1 min-w-[300px]">
                 <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Búsqueda rápida</label>
                 <div class="relative group">
-                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-slate-900 transition-colors"></i>
                     <input type="text" name="search" value="{{ filtros.search|default:'' }}" 
-                        placeholder="Buscar por acción, descripción o usuario..."
-                        class="w-full pl-12 pr-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-slate-100 transition-all">
+                        placeholder="Buscar por acción, detalles o usuario..."
+                        class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-slate-100 transition-all">
                 </div>
             </div>
 
@@ -56,23 +55,12 @@
                 </select>
             </div>
 
-            <!-- Type Filter -->
-            <div class="w-48">
-                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Tipo de Acción</label>
-                <select name="tipo" class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-slate-100 transition-all appearance-none">
-                    <option value="">TODOS LOS TIPOS</option>
-                    {% for val, label in tipo_choices %}
-                    <option value="{{ val }}" {% if filtros.tipo == val %}selected{% endif %}>{{ label|upper }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
             <!-- Action Buttons -->
             <div class="flex items-center gap-2">
                 <button type="submit" class="p-4 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
                     <i class="fas fa-filter"></i>
                 </button>
-                {% if filtros.role or filtros.tipo or filtros.search %}
+                {% if filtros.role or filtros.search %}
                 <a href="{% url 'admin_dashboard:logs' %}" class="p-4 bg-gray-100 text-gray-500 rounded-2xl hover:bg-gray-200 transition-all" title="Limpiar filtros">
                     <i class="fas fa-times"></i>
                 </a>
@@ -89,7 +77,7 @@
                     <tr>
                         <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest w-48">Fecha y Hora</th>
                         <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest w-64">Usuario / Rol</th>
-                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Acción y Detalles</th>
+                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Actividad y Detalles de Auditoría</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-50">
@@ -103,7 +91,7 @@
                         </td>
                         <td class="px-10 py-6 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-white flex items-center justify-center font-black text-[10px] shadow-sm group-hover:scale-105 transition-transform">
+                                <div class="w-10 h-10 rounded-xl {% if log.es_audit %}bg-indigo-900{% else %}bg-slate-900{% endif %} border border-slate-800 text-white flex items-center justify-center font-black text-[10px] shadow-sm group-hover:scale-105 transition-transform">
                                     {{ log.usuario.first_name.0|default:'S' }}{{ log.usuario.last_name.0|default:'S' }}
                                 </div>
                                 <div class="ml-4 flex flex-col">
@@ -114,7 +102,9 @@
                                         <span class="text-[9px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-wider">
                                             {{ log.usuario.get_role_display|default:"SISTEMA" }}
                                         </span>
-                                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{{ log.ip_address }}</span>
+                                        {% if not log.es_audit %}
+                                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{{ log.ip }}</span>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -123,21 +113,25 @@
                             <div class="flex flex-col gap-2">
                                 <div class="flex items-center gap-3">
                                     <span class="px-2.5 py-1 text-[9px] font-black rounded-lg border uppercase tracking-tighter
-                                        {% if log.tipo == 'AUTH' %}bg-blue-50 text-blue-700 border-blue-100
-                                        {% elif log.tipo == 'CREATE' %}bg-emerald-50 text-emerald-700 border-emerald-100
-                                        {% elif log.tipo == 'UPDATE' %}bg-amber-50 text-amber-700 border-amber-100
-                                        {% elif log.tipo == 'DELETE' %}bg-rose-50 text-rose-700 border-rose-100
-                                        {% elif log.tipo == 'APPROVE' %}bg-indigo-50 text-indigo-700 border-indigo-100
-                                        {% elif log.tipo == 'REJECT' %}bg-orange-50 text-orange-700 border-orange-100
-                                        {% elif log.tipo == 'ERROR' %}bg-red-50 text-red-700 border-red-100
+                                        {% if log.es_audit %}bg-purple-50 text-purple-700 border-purple-100
+                                        {% elif log.tipo_slug == 'AUTH' %}bg-blue-50 text-blue-700 border-blue-100
+                                        {% elif log.tipo_slug == 'CREATE' %}bg-emerald-50 text-emerald-700 border-emerald-100
+                                        {% elif log.tipo_slug == 'DELETE' %}bg-rose-50 text-rose-700 border-rose-100
                                         {% else %}bg-slate-50 text-slate-700 border-slate-100{% endif %}">
-                                        {{ log.get_tipo_display }}
+                                        {{ log.tipo_display }}
                                     </span>
                                     <span class="text-sm font-black text-slate-800">{{ log.accion }}</span>
                                 </div>
-                                <p class="text-xs text-slate-500 font-medium leading-relaxed max-w-2xl">
-                                    {{ log.descripcion }}
-                                </p>
+                                
+                                <div class="{% if log.es_audit %}bg-gray-50 p-3 rounded-xl border border-gray-100 mt-1{% endif %}">
+                                    {% if log.es_audit %}
+                                        <pre class="whitespace-pre-wrap font-mono text-[10px] text-gray-600">{{ log.detalles|default:"Sin cambios registrados" }}</pre>
+                                    {% else %}
+                                        <p class="text-xs text-slate-500 font-medium leading-relaxed max-w-2xl">
+                                            {{ log.detalles }}
+                                        </p>
+                                    {% endif %}
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -146,7 +140,7 @@
                         <td colspan="3" class="px-10 py-24 text-center">
                             <div class="flex flex-col items-center opacity-30">
                                 <i class="fas fa-inbox text-5xl mb-4 text-slate-300"></i>
-                                <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Sin actividad que coincida con los filtros</p>
+                                <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Sin actividad registrada</p>
                             </div>
                         </td>
                     </tr>
@@ -163,7 +157,7 @@
             </div>
             <div class="flex gap-2">
                 {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
                    class="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
                     <i class="fas fa-chevron-left text-xs"></i>
                 </a>
@@ -175,7 +169,7 @@
                         {{ i }}
                     </span>
                     {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
-                    <a href="?page={{ i }}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                    <a href="?page={{ i }}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
                        class="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 text-xs font-bold hover:bg-gray-50 transition-all shadow-sm">
                         {{ i }}
                     </a>
@@ -183,7 +177,7 @@
                 {% endfor %}
 
                 {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
                    class="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
                     <i class="fas fa-chevron-right text-xs"></i>
                 </a>
@@ -197,7 +191,7 @@
     <div class="mt-8 flex items-center justify-center gap-3 py-4 px-6 bg-slate-50 border border-slate-100 rounded-2xl max-w-2xl mx-auto shadow-sm shadow-slate-500/5">
         <i class="fas fa-shield-alt text-slate-400 text-sm"></i>
         <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            Auditoría de alta fidelidad optimizada para rendimiento del sistema
+            Auditoría de alta fidelidad optimizada para cumplimiento legal (Chile)
         </p>
     </div>
 </div>

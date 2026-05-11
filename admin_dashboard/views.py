@@ -24,6 +24,8 @@ from licencias.models import LicenciaMedica
 from .models import SystemLog, Efemeride
 from .forms import EfemerideForm
 from .utils import registrar_log, get_client_ip
+from auditlog.models import LogEntry
+
 
 
 class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
@@ -326,97 +328,138 @@ class SystemLogsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         
         # Parámetros de filtro
         role = self.request.GET.get('role')
-        tipo = self.request.GET.get('tipo')
         search = self.request.GET.get('search')
         
-        queryset = SystemLog.objects.select_related('usuario').order_by('-timestamp')
-        
-        # Aplicar filtros
+        # 1. Obtener logs del sistema (Macro)
+        system_queryset = SystemLog.objects.select_related('usuario').all()
         if role:
-            queryset = queryset.filter(usuario__role=role)
-        if tipo:
-            queryset = queryset.filter(tipo=tipo)
+            system_queryset = system_queryset.filter(usuario__role=role)
         if search:
-            queryset = queryset.filter(
-                Q(accion__icontains=search) |
-                Q(descripcion__icontains=search) |
-                Q(usuario__first_name__icontains=search) |
-                Q(usuario__last_name__icontains=search)
+            system_queryset = system_queryset.filter(
+                Q(accion__icontains=search) | Q(descripcion__icontains=search) |
+                Q(usuario__first_name__icontains=search) | Q(usuario__last_name__icontains=search)
             )
+
+        # 2. Obtener logs de auditoría (Micro)
+        audit_queryset = LogEntry.objects.select_related('actor', 'content_type').all()
+        if role:
+            audit_queryset = audit_queryset.filter(actor__role=role)
+        if search:
+            audit_queryset = audit_queryset.filter(
+                Q(object_repr__icontains=search) | Q(changes__icontains=search) |
+                Q(actor__first_name__icontains=search) | Q(actor__last_name__icontains=search)
+            )
+
+        # 3. Combinar y Normalizar para la vista
+        combined_logs = []
         
-        # Paginación
-        paginator = Paginator(queryset, 25)
+        for log in system_queryset[:300]:
+            combined_logs.append({
+                'timestamp': log.timestamp,
+                'usuario': log.usuario,
+                'tipo_display': log.get_tipo_display(),
+                'tipo_slug': log.tipo,
+                'accion': log.accion,
+                'detalles': log.descripcion,
+                'es_audit': False,
+                'ip': log.ip_address
+            })
+            
+        for log in audit_queryset[:300]:
+            accion_map = {0: 'CREACIÓN', 1: 'MODIFICACIÓN', 2: 'ELIMINACIÓN'}
+            
+            detalles = 'Registro eliminado'
+            if log.action != 2:
+                try:
+                    cambios = log.changes_display_dict
+                    if cambios:
+                        detalles = "\n".join([f"• {k}: {v[0]} ➔ {v[1]}" for k, v in cambios.items()])
+                    else:
+                        detalles = "Sin cambios registrados"
+                except Exception:
+                    detalles = str(log.changes_dict)
+                    
+            combined_logs.append({
+                'timestamp': log.timestamp,
+                'usuario': log.actor,
+                'tipo_display': log.content_type.name.upper() if log.content_type else 'AUDITORÍA',
+                'tipo_slug': 'AUDIT',
+                'accion': f"{accion_map.get(log.action, 'CAMBIO')} EN {log.object_repr}",
+                'detalles': detalles,
+                'es_audit': True,
+                'ip': '-'
+            })
+
+        # 4. Ordenar por fecha descendente
+        combined_logs.sort(key=lambda x: x['timestamp'], reverse=True)
+
+        # 5. Paginación de la lista combinada
+        paginator = Paginator(combined_logs, 40)
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
         
         context['page_obj'] = page_obj
         context['role_choices'] = CustomUser.ROLE_CHOICES
-        context['tipo_choices'] = SystemLog.TIPO_CHOICES
         context['filtros'] = {
             'role': role,
-            'tipo': tipo,
             'search': search,
         }
         
         return context
 
     def export_logs(self, request):
-        """Exporta los logs actuales (filtrados) a Excel"""
+        """Exporta los logs unificados a Excel"""
         import openpyxl
+        from openpyxl.styles import Font, PatternFill
         
-        # Aplicar mismos filtros
+        # Filtros
         role = request.GET.get('role')
-        tipo = request.GET.get('tipo')
         search = request.GET.get('search')
         
-        queryset = SystemLog.objects.select_related('usuario').order_by('-timestamp')
+        # 1. Obtener datos (mismo orden que la vista)
+        system_qs = SystemLog.objects.select_related('usuario').all()
+        audit_qs = LogEntry.objects.select_related('actor', 'content_type').all()
+        
         if role:
-            queryset = queryset.filter(usuario__role=role)
-        if tipo:
-            queryset = queryset.filter(tipo=tipo)
+            system_qs = system_qs.filter(usuario__role=role)
+            audit_qs = audit_qs.filter(actor__role=role)
+        
         if search:
-            queryset = queryset.filter(
-                Q(accion__icontains=search) |
-                Q(descripcion__icontains=search) |
-                Q(usuario__first_name__icontains=search) |
-                Q(usuario__last_name__icontains=search)
-            )
+            system_qs = system_qs.filter(Q(accion__icontains=search) | Q(descripcion__icontains=search))
+            audit_qs = audit_qs.filter(Q(object_repr__icontains=search) | Q(changes__icontains=search))
+
+        combined = []
+        for l in system_qs[:500]:
+            combined.append([l.timestamp, l.usuario.get_full_name() if l.usuario else 'Sistema', l.get_tipo_display(), l.accion, l.descripcion])
+        for l in audit_qs[:500]:
+            combined.append([l.timestamp, l.actor.get_full_name() if l.actor else 'Sistema', 'AUDITORÍA', f"CAMBIO EN {l.object_repr}", l.changes_display_dict])
+        
+        combined.sort(key=lambda x: x[0], reverse=True)
 
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.title = "Logs Sistema"
+        ws.title = "Auditoría Unificada"
         
-        # Encabezados
-        ws.append(['Fecha', 'Hora', 'Usuario', 'Rol', 'Tipo', 'Acción', 'Descripción', 'IP'])
+        ws.append(['Fecha/Hora', 'Usuario', 'Tipo', 'Acción', 'Detalles'])
         
-        # Estilo de encabezado
-        from openpyxl.styles import Font, PatternFill
+        # Estilo
         header_font = Font(bold=True, color="FFFFFF")
-        fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+        fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
         for cell in ws[1]:
             cell.font = header_font
             cell.fill = fill
-        
-        # Datos
-        for log in queryset[:2000]: # Límite de seguridad
-            ws.append([
-                log.timestamp.strftime('%d/%m/%Y'),
-                log.timestamp.strftime('%H:%M:%S'),
-                log.usuario.get_full_name() if log.usuario else 'Sistema',
-                log.usuario.get_role_display() if log.usuario else '-',
-                log.get_tipo_display(),
-                log.accion,
-                log.descripcion,
-                log.ip_address
-            ])
             
-        # Ajustar anchos
-        for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
-            ws.column_dimensions[col].width = 20
-        ws.column_dimensions['G'].width = 60 # Descripción más ancha
+        for row in combined:
+            # Formatear fecha para Excel
+            row[0] = row[0].replace(tzinfo=None)
+            ws.append(row)
+            
+        for col in ['A', 'B', 'C', 'D', 'E']:
+            ws.column_dimensions[col].width = 25
+        ws.column_dimensions['E'].width = 80
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = f'attachment; filename=logs_sistema_{timezone.now().strftime("%Y%m%d")}.xlsx'
+        response['Content-Disposition'] = f'attachment; filename=auditoria_unificada_{timezone.now().strftime("%Y%m%d")}.xlsx'
         wb.save(response)
         return response
 

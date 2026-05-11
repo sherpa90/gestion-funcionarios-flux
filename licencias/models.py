@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from core.storage import EncryptedFileSystemStorage
 
 class LicenciaMedica(models.Model):
     TIPO_CHOICES = [
@@ -14,7 +15,7 @@ class LicenciaMedica(models.Model):
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='LICENCIA')
     fecha_inicio = models.DateField()
     dias = models.PositiveIntegerField()
-    archivo = models.FileField(upload_to='licencias/', null=True, blank=True)
+    archivo = models.FileField(upload_to='licencias/', storage=EncryptedFileSystemStorage(), null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='licencias_creadas', help_text="Usuario que registró la licencia")
 
@@ -28,3 +29,6 @@ class LicenciaMedica(models.Model):
 
     def __str__(self):
         return f"{self.usuario} - {self.fecha_inicio} ({self.dias} días)"
+
+from auditlog.registry import auditlog
+auditlog.register(LicenciaMedica)

@@ -93,8 +93,16 @@ def serve_media(request, path):
     # Abrir el archivo y crear la respuesta
     # FileResponse cierra automaticamente el archivo al final
     try:
+        # Solo usamos el storage encriptado para archivos sensibles
+        if path.startswith('licencias/') or path.startswith('liquidaciones/'):
+            from core.storage import EncryptedFileSystemStorage
+            storage = EncryptedFileSystemStorage()
+            file_obj = storage.open(path, 'rb')
+        else:
+            file_obj = open(file_path, 'rb')
+            
         response = FileResponse(
-            open(file_path, 'rb'),
+            file_obj,
             content_type=content_type,
             as_attachment=False
         )
@@ -131,6 +139,4 @@ urlpatterns = [
     path('media/<path:path>', serve_media, name='media'),
 ]
 
-# En desarrollo, usar la configuracion estatica de Django
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

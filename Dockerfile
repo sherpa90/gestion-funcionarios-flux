@@ -10,8 +10,11 @@ ENV DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
 ENV SQL_DATABASE=sgpal_db
 ENV SQL_USER=sgpal_user
 ENV SQL_PASSWORD=sgpal_password
-ENV SQL_HOST=tramites-flux-sgpaldb-vg4heb
+ENV SQL_HOST=localhost
 ENV SQL_PORT=5432
+# Dummy key for build time (collectstatic)
+ENV ENCRYPTION_KEY=kjP3EtYl7-SeumpP1_k1tsDWpAHDY0LLNMlVIOUp6Ck=
+
 
 WORKDIR /app
 
@@ -28,6 +31,7 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libopenjp2-7-dev \
     libmemcached-dev \
+    libffi-dev \
     zlib1g-dev \
     netcat-openbsd \
     libglib2.0-0 \

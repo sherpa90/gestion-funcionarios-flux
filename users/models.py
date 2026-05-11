@@ -213,3 +213,6 @@ class DirectorioTelefonico(models.Model):
 
     def __str__(self):
         return f"{self.lugar} - {self.anexo}"
+
+from auditlog.registry import auditlog
+auditlog.register(CustomUser)

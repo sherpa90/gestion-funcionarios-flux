@@ -30,10 +30,15 @@ if not SECRET_KEY:
     if DEBUG:
         SECRET_KEY = 'dev-secret-key-for-local-development-only-change-in-production'
     else:
-        raise ValueError(
+        raise ImproperlyConfigured(
             "SECRET_KEY environment variable is not set. "
-            "For production, generate a secure key: python -c 'import secrets; print(secrets.token_hex(50))'"
+            "Please configure it in production."
         )
+
+# Encryption Key for secure file storage (Ley N 21.719)
+ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
+
+
 
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'flux.losalercespuertomontt.cl,tramites.losalercespuertomontt.cl,localhost').split(',')]
 
@@ -71,6 +76,9 @@ INSTALLED_APPS = [
 
     # Health checks and monitoring
     'health_check',
+
+    # Auditing
+    'auditlog',
 ]
 
 MIDDLEWARE = [
@@ -84,6 +92,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'axes.middleware.AxesMiddleware',
+    'auditlog.middleware.AuditlogMiddleware',
 ]
 
 if not DEBUG:
