@@ -12,12 +12,14 @@ services:
     env_file:
       - .env
     environment:
+      - SQL_ENGINE=django.db.backends.postgresql
       - SQL_HOST=db
       - SQL_PORT=5432
       - SQL_DATABASE=sgpal_db
       - SQL_USER=sgpal_user
       - SQL_PASSWORD=Sgpal2025Secure*
       - DEBUG=True
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,[::1]
       - SESSION_COOKIE_SECURE=False
       - CSRF_COOKIE_SECURE=False
       - SECURE_SSL_REDIRECT=False
