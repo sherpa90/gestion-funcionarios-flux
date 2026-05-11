@@ -588,23 +588,25 @@ class RegistroAsistencia(models.Model):
                     # Día completo administrativo
                     return "DIA_ADMINISTRATIVO"
 
+        # Determinar si es un día laboral activo base en su horario semanal
+        dia_semana = self.fecha.weekday()
+        dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana).first()
+        
+        if dia_horario:
+            es_dia_activo_base = dia_horario.activo
+        else:
+            # Fallback lógico si no tiene configurado el DiaHorario
+            es_sereno = self.funcionario.funcion == 'SERENO'
+            es_dia_activo_base = True if es_sereno else dia_semana < 5
+
         # Verificar si hay horario excepcional
         excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
         if excepcional:
-            es_dia_activo = True if excepcional.hora_entrada or excepcional.hora_salida else False
+            # Un horario excepcional global solo aplica si el usuario ya trabajaba ese día
+            tiene_horas = True if excepcional.hora_entrada or excepcional.hora_salida else False
+            es_dia_activo = tiene_horas and es_dia_activo_base
         else:
-            # Verificar si es día libre en su horario semanal
-            dia_semana = self.fecha.weekday()
-            dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana).first()
-            es_dia_activo = True
-            
-            if dia_horario:
-                es_dia_activo = dia_horario.activo
-            else:
-                # Fallback lógico si no tiene configurado el DiaHorario
-                es_sereno = self.funcionario.funcion == 'SERENO'
-                if not es_sereno and dia_semana >= 5:
-                    es_dia_activo = False
+            es_dia_activo = es_dia_activo_base
 
         if not es_dia_activo and not self.hora_entrada_real:
             return "DIA_LIBRE"

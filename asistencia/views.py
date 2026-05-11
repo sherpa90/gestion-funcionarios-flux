@@ -529,16 +529,20 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                         registro = RegistroVirtual('SIN_DATA')
 
                     # Determinar si el día es activo en el horario del funcionario
+                    dia_h = dias_configurados.get(dia_semana)
+                    if dia_h:
+                        es_dia_activo_base = dia_h.activo
+                    else:
+                        # Fallback lógico (Fin de semana no es laboral para personal regular)
+                        es_dia_activo_base = True if es_sereno else not es_fin_de_semana
+
                     excepcional = excepcionales_por_fecha.get(fecha)
                     if excepcional:
-                        es_dia_activo = True if excepcional.hora_entrada or excepcional.hora_salida else False
+                        # Un horario excepcional global solo aplica si el usuario ya trabajaba ese día
+                        tiene_horas_excepcional = True if excepcional.hora_entrada or excepcional.hora_salida else False
+                        es_dia_activo = tiene_horas_excepcional and es_dia_activo_base
                     else:
-                        dia_h = dias_configurados.get(dia_semana)
-                        if dia_h:
-                            es_dia_activo = dia_h.activo
-                        else:
-                            # Fallback lógico (Fin de semana no es laboral para personal regular)
-                            es_dia_activo = True if es_sereno else not es_fin_de_semana
+                        es_dia_activo = es_dia_activo_base
 
                     # Falta sin registro solo si era un día laboral activo y no hay marcación
                     es_falta_sin_registro = es_pasado and es_dia_activo and not registro and not es_festivo and es_dia_escolar and es_posterior_a_ingreso
