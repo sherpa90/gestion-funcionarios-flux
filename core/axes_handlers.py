@@ -6,15 +6,16 @@ Handler personalizado de Axes para:
 from axes.handlers.database import AxesDatabaseHandler
 from django.contrib.auth import get_user_model
 
-User = get_user_model()
-
-
 class AdminExcludedAxesHandler(AxesDatabaseHandler):
     """
     Handler de Axes que:
     - Excluye a los usuarios staff/admin del bloqueo
     - Usa solo username para el bloqueo (no IP)
     """
+    
+    @property
+    def user_model(self):
+        return get_user_model()
     
     def _get_username_from_request(self, request):
         """
@@ -51,7 +52,7 @@ class AdminExcludedAxesHandler(AxesDatabaseHandler):
         if not username:
             return False
         try:
-            user = User.objects.filter(email=username).first()
+            user = self.user_model.objects.filter(email=username).first()
             if user and (user.is_staff or user.is_superuser):
                 return True
         except Exception:
@@ -93,26 +94,18 @@ class AdminExcludedAxesHandler(AxesDatabaseHandler):
         Maneja el evento de login fallido de forma flexible para evitar TypeErrors.
         """
         # Extraer request y credentials de args o kwargs
-        # En señales de Django: (sender, credentials, **kwargs)
-        # Axes puede pasar: (request, credentials) o (sender, credentials, request)
-        
         request = kwargs.get('request')
         credentials = kwargs.get('credentials')
         
         # Si vienen posicionales (típico en proxies de Axes)
         if not request and len(args) >= 1:
-            # Podría ser (request, credentials) o (sender, credentials, request)
-            # Intentamos detectar si el primer arg es un request
             if hasattr(args[0], 'META') or hasattr(args[0], 'POST'):
                 request = args[0]
             
         if not credentials:
             if len(args) >= 2:
-                # Si (request, credentials) -> args[1]
-                # Si (sender, credentials) -> args[1]
                 credentials = args[1]
-            elif isinstance(args[0], dict) and not request:
-                # Si solo se pasó un dict y no detectamos request -> probablemente credentials
+            elif len(args) >= 1 and isinstance(args[0], dict) and not request:
                 credentials = args[0]
         
         # Intentar obtener username/email
@@ -131,12 +124,8 @@ class AdminExcludedAxesHandler(AxesDatabaseHandler):
         """
         Maneja el evento de login exitoso de forma flexible.
         """
-        # En Django exitoso: (sender, user, **kwargs) donde request está en kwargs
-        # En Axes: (request, user)
-        
         user = kwargs.get('user')
         if not user and len(args) >= 2:
-            # Podría ser (sender, user) o (request, user)
             user = args[1]
             
         # Si es administrador, no registrar el éxito (para no resetear contadores de fallos fallidos)
@@ -145,3 +134,4 @@ class AdminExcludedAxesHandler(AxesDatabaseHandler):
         
         # Usar el método original
         super().user_login_success(*args, **kwargs)
+
