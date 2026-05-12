@@ -434,19 +434,21 @@
                                 <i class="fas fa-clock text-blue-600 text-sm"></i>
                             </div>
                             <div>
-                                <div class="text-xs font-black text-gray-500 uppercase tracking-widest">Carga</div>
-                                <div class="text-sm font-black text-blue-600" x-text="totalHorasSemanales"></div>
+                                <div class="text-xs font-black text-gray-500 uppercase tracking-widest">
+                                    Carga <span x-show="dias.some(d => d.semana_tipo)" x-text="'Semana ' + currentSemanaTab"></span>
+                                </div>
+                                <div class="text-sm font-black text-blue-600" x-text="currentSemanaTab === 1 ? totalHorasS1 : totalHorasS2"></div>
                             </div>
                         </div>
-                        <div x-show="totalMinutosSemanales > 2640" class="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+                        <div x-show="!{{ es_sereno|lower }} && ((currentSemanaTab === 1 && totalMinutosS1 > 2640) || (currentSemanaTab === 2 && totalMinutosS2 > 2640))" class="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
                             <i class="fas fa-exclamation-triangle text-red-600 text-xs"></i>
-                            <span class="text-xs font-bold text-red-700">Exceso</span>
+                            <span class="text-xs font-bold text-red-700">Exceso 44h</span>
                         </div>
                     </div>
 
                     <!-- Botón Guardar -->
                     <button type="button" @click="guardarHorario()"
-                        :disabled="guardando || totalMinutosSemanales > 2640"
+                        :disabled="guardando || (!{{ es_sereno|lower }} && Math.max(totalMinutosS1, totalMinutosS2) > 2640)"
                         class="group relative inline-flex items-center justify-center px-8 py-4 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-600 shadow-xl shadow-gray-200 hover:shadow-blue-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                         <i class="fas fa-save mr-3 group-hover:scale-110 transition-transform"></i>
                         <span x-text="guardando ? 'Sincronizando...' : 'Guardar Configuración'"></span>
@@ -532,17 +534,18 @@ function cambiarUsuario(userId) {
 document.addEventListener('alpine:init', () => {
     Alpine.data('horarioTabs', () => ({
         activeTab: 'registros',
+        currentSemanaTab: 1,
         guardando: false,
-        totalHorasSemanales: '0h 0m',
-        totalMinutosSemanales: 0,
-        horasDisplay: '0',
-        minutosDisplay: '0',
+        totalHorasS1: '0h 0m',
+        totalHorasS2: '0h 0m',
+        totalMinutosS1: 0,
+        totalMinutosS2: 0,
         dias: [],
         
         init() {
             let rawDias = '{{ horario_semanal|escapejs }}';
             try {
-                let jsonString = rawDias.replace(/'/g, '"').replace(/True/g, 'true').replace(/False/g, 'false');
+                let jsonString = rawDias.replace(/'/g, '"').replace(/True/g, 'true').replace(/False/g, 'false').replace(/None/g, 'null');
                 this.dias = JSON.parse(jsonString);
             } catch (e) {
                 console.error("Error parsing dias:", e);
@@ -571,8 +574,16 @@ document.addEventListener('alpine:init', () => {
             return `${h}h ${m}m`;
         },
 
+        formatMinutos(totalMinutos) {
+            let h = Math.floor(totalMinutos / 60);
+            let m = totalMinutos % 60;
+            return m === 0 ? `${h}h` : `${h}h ${m}m`;
+        },
+
         calcularTotal() {
-            let totalMinutos = 0;
+            let t1 = 0;
+            let t2 = 0;
+            
             this.dias.forEach(dia => {
                 if (dia.activo && dia.hora_entrada && dia.hora_salida) {
                     let [h1, m1] = dia.hora_entrada.split(':').map(Number);
@@ -581,20 +592,19 @@ document.addEventListener('alpine:init', () => {
                     let min1 = h1 * 60 + m1;
                     let min2 = h2 * 60 + m2;
                     
-                    if (min2 < min1) {
-                        min2 += 24 * 60;
-                    }
+                    if (min2 < min1) min2 += 24 * 60;
                     
-                    totalMinutos += (min2 - min1);
+                    let diff = min2 - min1;
+                    
+                    if (!dia.semana_tipo || dia.semana_tipo == 1) t1 += diff;
+                    if (!dia.semana_tipo || dia.semana_tipo == 2) t2 += diff;
                 }
             });
             
-            this.totalMinutosSemanales = totalMinutos;
-            let h = Math.floor(totalMinutos / 60);
-            let m = totalMinutos % 60;
-            this.totalHorasSemanales = m === 0 ? `${h}h` : `${h}h ${m}m`;
-            this.horasDisplay = h.toString();
-            this.minutosDisplay = m.toString();
+            this.totalMinutosS1 = t1;
+            this.totalMinutosS2 = t2;
+            this.totalHorasS1 = this.formatMinutos(t1);
+            this.totalHorasS2 = this.formatMinutos(t2);
         },
 
         async guardarHorario() {
@@ -610,7 +620,7 @@ document.addEventListener('alpine:init', () => {
                     },
                     body: JSON.stringify({ 
                         dias: this.dias,
-                        total_minutos: this.totalMinutosSemanales
+                        total_minutos: Math.max(this.totalMinutosS1, this.totalMinutosS2)
                     })
                 });
                 

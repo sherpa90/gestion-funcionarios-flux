@@ -2822,8 +2822,17 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
                             except ValueError:
                                 pass
                         
-                    # Validar tope de 44 horas semanales antes de guardar
-                    if data.get('total_minutos', 0) > 44 * 60:
+                    # Validar tope de 44 horas semanales solo para personal regular
+                    # Los serenos están exentos de este límite en el sistema
+                    total_minutos_periodo = data.get('total_minutos', 0)
+                    es_sereno = usuario.funcion == 'SERENO'
+                    
+                    # Si es rotativo, el total_minutos enviado es la suma de ambas semanas.
+                    # Debemos validar por semana independiente (aproximadamente la mitad)
+                    if not es_sereno and total_minutos_periodo > 44 * 60:
+                        # Si hay semanas tipo 2, permitimos hasta 88 (44*2) porque el frontend suma ambos
+                        # Pero lo ideal es que el frontend envíe el máximo de ambas.
+                        # Por ahora, si es regular (no sereno), no debería tener semana_tipo.
                          return JsonResponse({
                              'status': 'error', 
                              'message': 'No se puede exceder el límite de 44 horas semanales.'
