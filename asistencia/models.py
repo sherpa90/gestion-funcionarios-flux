@@ -354,17 +354,21 @@ class RegistroAsistencia(models.Model):
             else:
                 if not self.horario_asignado:
                     return 0
-                # Intentar obtener el horario específico para el día de la semana
-                dia_semana = self.fecha.weekday()
-                dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana).first()
+            # Obtener tipo de semana
+            semana_t = DiaHorario.get_semana_tipo(self.fecha)
+            # Primero buscar específico para esta semana, si no el universal
+            dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
+            if not dia_horario:
+                dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=None).first()
 
-                if dia_horario:
-                    if not dia_horario.activo or not dia_horario.hora_entrada:
-                        return 0 # No debería tener retraso en un día libre o sin hora configurada
-                    hora_esperada = dia_horario.hora_entrada
-                else:
-                    # Fallback al horario general
-                    hora_esperada = self.horario_asignado.hora_entrada
+            if dia_horario:
+                if not dia_horario.activo or not dia_horario.hora_entrada:
+                    return 0 # No debería tener retraso en un día libre o sin hora configurada
+                hora_esperada = dia_horario.hora_entrada
+            else:
+                # Fallback al horario general (si existe en el modelo base)
+                hora_esperada = getattr(self.horario_asignado, 'hora_entrada', None)
+                if not hora_esperada: return 0
 
         minutos_asignados = hora_esperada.hour * 60 + hora_esperada.minute
 
