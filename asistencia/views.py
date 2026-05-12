@@ -383,7 +383,8 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
         dias_configurados = {}
         if horario_actual:
             for dh in horario_actual.dias.all():
-                dias_configurados[dh.dia_semana] = dh
+                # Mapeamos por una tupla (dia_semana, semana_tipo)
+                dias_configurados[(dh.dia_semana, dh.semana_tipo)] = dh
 
         # Sumar minutos de retraso acumulados del mes (Para la alerta visual de umbral)
         total_retraso_mes = registros_qs.filter(estado='RETRASO').aggregate(Sum('minutos_retraso'))['minutos_retraso__sum'] or 0
@@ -529,7 +530,15 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                         registro = RegistroVirtual('SIN_DATA')
 
                     # Determinar si el día es activo en el horario del funcionario
-                    dia_h = dias_configurados.get(dia_semana)
+                    dia_semana = fecha.weekday()
+                    semana_t = DiaHorario.get_semana_tipo(fecha)
+
+                    # Buscar primero horario específico para esta semana (1 o 2)
+                    # Si no existe, cae al horario universal (semana_tipo=None)
+                    dia_h = dias_configurados.get((dia_semana, semana_t))
+                    if not dia_h:
+                        dia_h = dias_configurados.get((dia_semana, None))
+
                     if dia_h:
                         es_dia_activo_base = dia_h.activo
                     else:
@@ -642,13 +651,17 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             3: 'Jueves', 4: 'Viernes', 5: 'Sábado', 6: 'Domingo'
         }
 
-        dias_configurados = {}
-        if horario_actual:
-            for dh in horario_actual.dias.all():
-                dias_configurados[dh.dia_semana] = dh
+
+        # Para el resumen semanal, usamos la paridad de HOY
+        from django.utils import timezone
+        semana_actual_t = DiaHorario.get_semana_tipo(timezone.now().date())
+        context["semana_tipo_actual"] = semana_actual_t
 
         for i in range(dias_totales):
-            dia_obj = dias_configurados.get(i)
+            # Buscar primero específico para esta semana, si no, el universal
+            dia_obj = dias_configurados.get((i, semana_actual_t))
+            if not dia_obj:
+                dia_obj = dias_configurados.get((i, None))
             if dia_obj:
                 horas = 0
                 if dia_obj.activo and dia_obj.hora_entrada and dia_obj.hora_salida:
@@ -698,16 +711,16 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                         continue
                     
                     dia_semana = fecha.weekday()
-                    if not es_sereno and dia_semana >= 5:
-                        continue
-                        
-                    dia_h = next((d for d in horario_semanal if d['dia_semana'] == dia_semana), None)
-                    if dia_h and dia_h['activo']:
-                        if dia_h['hora_entrada'] and dia_h['hora_salida']:
-                            h1, m1 = map(int, dia_h['hora_entrada'].split(':'))
-                            h2, m2 = map(int, dia_h['hora_salida'].split(':'))
-                            min1 = h1 * 60 + m1
-                            min2 = h2 * 60 + m2
+                    semana_t = DiaHorario.get_semana_tipo(fecha)
+                    
+                    dia_h_obj = dias_configurados.get((dia_semana, semana_t))
+                    if not dia_h_obj:
+                        dia_h_obj = dias_configurados.get((dia_semana, None))
+
+                    if dia_h_obj and dia_h_obj.activo:
+                        if dia_h_obj.hora_entrada and dia_h_obj.hora_salida:
+                            min1 = dia_h_obj.hora_entrada.hour * 60 + dia_h_obj.hora_entrada.minute
+                            min2 = dia_h_obj.hora_salida.hour * 60 + dia_h_obj.hora_salida.minute
                             if min2 < min1: min2 += 24 * 60
                             total_minutos_esperados_mes += (min2 - min1)
 
@@ -1597,40 +1610,45 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
 
         # Generar horario_semanal
         horario_semanal = []
-        dias_totales = 7 if es_sereno else 5
-
+        dias_rango = range(7) if es_sereno else range(5)
+        
         DIA_CHOICES_DICT = {
             0: 'Lunes', 1: 'Martes', 2: 'Miércoles',
             3: 'Jueves', 4: 'Viernes', 5: 'Sábado', 6: 'Domingo'
         }
 
-        dias_configurados = {}
-        if horario_actual:
-            for dh in horario_actual.dias.all():
-                dias_configurados[dh.dia_semana] = dh
+        # Para administración, generamos registros para cada tipo de semana si es sereno
+        semanas_a_generar = [1, 2] if es_sereno else [None]
 
-        for i in range(dias_totales):
-            dia_obj = dias_configurados.get(i)
-            if dia_obj:
-                horario_semanal.append({
-                    'dia_semana': i,
-                    'nombre': DIA_CHOICES_DICT[i],
-                    'activo': dia_obj.activo,
-                    'hora_entrada': dia_obj.hora_entrada.strftime('%H:%M') if dia_obj.hora_entrada else '',
-                    'hora_salida': dia_obj.hora_salida.strftime('%H:%M') if dia_obj.hora_salida else ''
-                })
-            else:
-                # Usar valores por defecto si no hay horario configurado para este día
-                hora_entrada_default = '07:55'
-                if horario_actual and horario_actual.hora_entrada:
-                    hora_entrada_default = horario_actual.hora_entrada.strftime('%H:%M')
-                horario_semanal.append({
-                    'dia_semana': i,
-                    'nombre': DIA_CHOICES_DICT[i],
-                    'activo': True,
-                    'hora_entrada': hora_entrada_default,
-                    'hora_salida': '17:00'
-                })
+        for sem_t in semanas_a_generar:
+            for i in dias_rango:
+                dia_obj = None
+                if horario_actual:
+                    dia_obj = horario_actual.dias.filter(dia_semana=i, semana_tipo=sem_t).first()
+                
+                if dia_obj:
+                    horario_semanal.append({
+                        'dia_semana': i,
+                        'semana_tipo': sem_t,
+                        'nombre': DIA_CHOICES_DICT[i],
+                        'activo': dia_obj.activo,
+                        'hora_entrada': dia_obj.hora_entrada.strftime('%H:%M') if dia_obj.hora_entrada else '',
+                        'hora_salida': dia_obj.hora_salida.strftime('%H:%M') if dia_obj.hora_salida else ''
+                    })
+                else:
+                    # Usar valores por defecto si no hay horario configurado para este día
+                    hora_entrada_default = '07:55'
+                    if horario_actual and horario_actual.hora_entrada:
+                        hora_entrada_default = horario_actual.hora_entrada.strftime('%H:%M')
+                    
+                    horario_semanal.append({
+                        'dia_semana': i,
+                        'semana_tipo': sem_t,
+                        'nombre': DIA_CHOICES_DICT[i],
+                        'activo': True if i < 5 else False, # Por defecto desactivar fin de semana
+                        'hora_entrada': hora_entrada_default,
+                        'hora_salida': '17:00'
+                    })
 
 
         # Meses para referencia
@@ -2811,9 +2829,13 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
                              'message': 'No se puede exceder el límite de 44 horas semanales.'
                          }, status=400)
 
+                    semana_tipo = dia_data.get('semana_tipo')
+                    if semana_tipo == "": semana_tipo = None
+                    
                     DiaHorario.objects.update_or_create(
                         horario=horario_base,
                         dia_semana=dia_semana,
+                        semana_tipo=semana_tipo,
                         defaults={
                             'activo': activo,
                             'hora_entrada': hora_entrada,

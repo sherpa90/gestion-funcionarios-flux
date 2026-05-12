@@ -58,21 +58,39 @@ class DiaHorario(models.Model):
     hora_salida = models.TimeField(
         null=True, 
         blank=True,
-        help_text="Hora de salida esperada para este día"
+        help_text="Hora de salida para este día"
     )
     activo = models.BooleanField(
         default=True,
         help_text="Indica si el funcionario debe trabajar este día"
+    )
+    semana_tipo = models.IntegerField(
+        choices=[(1, 'Semana 1'), (2, 'Semana 2')],
+        null=True,
+        blank=True,
+        help_text="Para horarios rotativos (Semana 1/2). Si es nulo, aplica a todas las semanas."
     )
 
     class Meta:
         verbose_name = "Día de Horario"
         verbose_name_plural = "Días de Horario"
         ordering = ['dia_semana']
-        unique_together = ['horario', 'dia_semana']
+        unique_together = ['horario', 'dia_semana', 'semana_tipo']
 
     def __str__(self):
-        return f"{self.horario.funcionario.get_full_name()} - {self.get_dia_semana_display()}"
+        sem = f" (S{self.semana_tipo})" if self.semana_tipo else ""
+        return f"{self.horario.funcionario.get_full_name()} - {self.get_dia_semana_display()}{sem}"
+
+    @staticmethod
+    def get_semana_tipo(fecha):
+        """
+        Retorna la paridad de la semana (1 para impares, 2 para pares)
+        según el estándar ISO.
+        """
+        if not fecha:
+            return 1
+        num_semana = fecha.isocalendar()[1]
+        return 1 if num_semana % 2 != 0 else 2
 
 
 class DiaFestivo(models.Model):
@@ -590,7 +608,20 @@ class RegistroAsistencia(models.Model):
 
         # Determinar si es un día laboral activo base en su horario semanal
         dia_semana = self.fecha.weekday()
-        dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana).first()
+        semana_t = DiaHorario.get_semana_tipo(self.fecha)
+        
+        # Buscar primero horario específico para esta semana (1 o 2)
+        # Si no existe, cae al horario universal (semana_tipo=None)
+        dia_horario = self.horario_asignado.dias.filter(
+            dia_semana=dia_semana, 
+            semana_tipo=semana_t
+        ).first()
+        
+        if not dia_horario:
+            dia_horario = self.horario_asignado.dias.filter(
+                dia_semana=dia_semana, 
+                semana_tipo__isnull=True
+            ).first()
         
         if dia_horario:
             es_dia_activo_base = dia_horario.activo

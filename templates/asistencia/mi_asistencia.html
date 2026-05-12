@@ -156,7 +156,13 @@
                 <span class="text-xs text-gray-500">Total asignado:</span>
                 <span class="text-sm font-black text-blue-700 bg-white px-2 py-0.5 rounded-lg border border-blue-100 shadow-sm">{{ total_horas_semanales }}</span>
                 {% if es_sereno %}
-                <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">Sereno</span>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">Sereno</span>
+                    <span class="text-[9px] font-black text-amber-700 bg-amber-100/50 px-2 py-0.5 rounded-lg border border-amber-200 uppercase tracking-widest">
+                        {% if semana_tipo_actual == 1 %}Semana 1 (Impar){% else %}Semana 2 (Par){% endif %}
+                    </span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                </div>
                 {% else %}
                 <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">Regular</span>
                 {% endif %}
