@@ -328,64 +328,65 @@ class RegistroAsistencia(models.Model):
         if not self.hora_entrada_real:
             return 0
 
+        # Para serenos: su entrada real es PM. Si la hora registrada es AM es la salida, no la entrada.
+        es_sereno = (
+            getattr(self.funcionario, 'funcion', None) == 'SERENO' or
+            getattr(self.funcionario, 'tipo_funcionario', None) == 'SERENO'
+        )
+        if es_sereno and self.hora_entrada_real.hour < 12:
+            # La hora AM registrada es la salida del turno, no la entrada → no hay retraso
+            return 0
+
+        # dia_semana siempre definido antes de cualquier bifurcación
+        dia_semana = self.fecha.weekday()
+
         # PRIORIDAD: Si hay edición manual justificada, usar horario regular (ignorar excepcional)
         if self.justificado_por:
-            # Usar horario regular cuando hay justificación manual
             if not self.horario_asignado:
                 return 0
-            # Intentar obtener el horario específico para el día de la semana
-            dia_semana = self.fecha.weekday()
             dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana).first()
 
             if dia_horario:
                 if not dia_horario.activo or not dia_horario.hora_entrada:
-                    return 0 # No debería tener retraso en un día libre o sin hora configurada
+                    return 0
                 hora_esperada = dia_horario.hora_entrada
             else:
-                # Fallback al horario general
                 hora_esperada = self.horario_asignado.hora_entrada
         else:
-            # Si no hay justificación manual, verificar horario excepcional
+            # Verificar horario excepcional
             excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
             if excepcional:
                 if not excepcional.hora_entrada:
-                    return 0 # Si el excepcional no exige hora de entrada, no hay retraso
+                    return 0
                 hora_esperada = excepcional.hora_entrada
             else:
                 if not self.horario_asignado:
                     return 0
-            # Obtener tipo de semana
-            semana_t = DiaHorario.get_semana_tipo(self.fecha)
-            # Primero buscar específico para esta semana, si no el universal
-            dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
-            if not dia_horario:
-                dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=None).first()
+                # Obtener tipo de semana
+                semana_t = DiaHorario.get_semana_tipo(self.fecha)
+                # Primero buscar específico para esta semana, si no el universal
+                dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
+                if not dia_horario:
+                    dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=None).first()
 
-            if dia_horario:
-                if not dia_horario.activo or not dia_horario.hora_entrada:
-                    return 0 # No debería tener retraso en un día libre o sin hora configurada
-                hora_esperada = dia_horario.hora_entrada
-            else:
-                # Fallback al horario general (si existe en el modelo base)
-                hora_esperada = getattr(self.horario_asignado, 'hora_entrada', None)
-                if not hora_esperada: return 0
+                if dia_horario:
+                    if not dia_horario.activo or not dia_horario.hora_entrada:
+                        return 0
+                    hora_esperada = dia_horario.hora_entrada
+                else:
+                    hora_esperada = getattr(self.horario_asignado, 'hora_entrada', None)
+                    if not hora_esperada:
+                        return 0
 
         minutos_asignados = hora_esperada.hour * 60 + hora_esperada.minute
+        minutos_reales = self.hora_entrada_real.hour * 60 + self.hora_entrada_real.minute
 
-        minutos_reales = (self.hora_entrada_real.hour * 60 +
-                         self.hora_entrada_real.minute)
-
-        # Calcular diferencia en minutos
         diferencia = minutos_reales - minutos_asignados
-
-        # No hay tolerancia en ningún horario - puntualidad exacta requerida
         tolerancia = 0
 
-        # Si llegó dentro de la tolerancia, no cuenta como retraso
         if diferencia <= tolerancia:
             return 0
 
-        # Si llegó tarde, devolver los minutos de retraso
         return max(0, diferencia)
 
     def calcular_tiempo_trabajado(self):
