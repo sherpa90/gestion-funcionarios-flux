@@ -1187,21 +1187,42 @@ def procesar_archivo_asistencia_generico(archivo_excel, usuario_procesador, mes=
             ruts_encontrados_bd.add(rut_str)
             horas_ordenadas = sorted(list(set(horas))) # Únicas y ordenadas
             
-            # Límite de 12:00 para diferenciar entrada de salida (más permisivo para salidas tempranas)
             hora_entrada = None
             hora_salida = None
 
-            limite_salida = time(12, 0)
-            manana = [h for h in horas_ordenadas if h < limite_salida]
-            tarde  = [h for h in horas_ordenadas if h >= limite_salida]
+            limite = time(12, 0)
+            manana = [h for h in horas_ordenadas if h < limite]   # antes del mediodía
+            tarde  = [h for h in horas_ordenadas if h >= limite]  # desde el mediodía
 
-            if manana:
-                hora_entrada = manana[0] # La más temprana de la mañana
-            
-            if tarde:
-                hora_salida = tarde[-1] # La más tardía de la tarde
+            # Detectar si el funcionario es sereno (turno nocturno invertido)
+            es_sereno = (
+                getattr(funcionario, 'funcion', None) == 'SERENO' or
+                getattr(funcionario, 'tipo_funcionario', None) == 'SERENO'
+            )
 
-            logger.info(f"Registro {rut_str} - {fecha}: Entrada={hora_entrada}, Salida={hora_salida} (Marcaciones: {horas_ordenadas}, Límite: {limite_salida})")
+            if es_sereno:
+                # Sereno: entra en la tarde/noche (PM) y sale en la madrugada (AM)
+                # Las marcaciones PM son la ENTRADA, las AM son la SALIDA
+                if tarde:
+                    hora_entrada = tarde[0]   # La más temprana de la tarde (inicio turno)
+                if manana:
+                    hora_salida = manana[-1]  # La más tardía de la madrugada (fin turno)
+                logger.info(
+                    f"[SERENO] Registro {rut_str} - {fecha}: "
+                    f"Entrada(PM)={hora_entrada}, Salida(AM)={hora_salida} "
+                    f"(Marcaciones: {horas_ordenadas})"
+                )
+            else:
+                # Funcionario regular: entra en la mañana (AM) y sale en la tarde (PM)
+                if manana:
+                    hora_entrada = manana[0]  # La más temprana de la mañana
+                if tarde:
+                    hora_salida = tarde[-1]   # La más tardía de la tarde
+                logger.info(
+                    f"Registro {rut_str} - {fecha}: "
+                    f"Entrada={hora_entrada}, Salida={hora_salida} "
+                    f"(Marcaciones: {horas_ordenadas})"
+                )
 
             registro, created = RegistroAsistencia.objects.get_or_create(
                 funcionario=funcionario,
