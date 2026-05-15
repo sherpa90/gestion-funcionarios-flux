@@ -11,14 +11,11 @@
   }
 
   /* ─── Layout ─── */
-  .rep-page {
-    background: #f8f9fc;
-    min-height: 100vh; /* Cambiar a 100vh para asegurar altura completa */
-    padding: 1.25rem;
-    /* Asegurar que el scroll esté siempre disponible */
-    overflow-y: auto !important;
+  .rep-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0;
   }
-  @media (min-width: 768px) { .rep-page { padding: 1.75rem 2rem; } }
 
   /* CSS de respaldo para asegurar scroll */
   html, body {
@@ -119,13 +116,12 @@
   .rep-modal-btn:active { transform: scale(.97); opacity: .9; }
 
   /* ─── Export trigger buttons ─── */
-  .rep-export-btn {
-    display: inline-flex; align-items: center; gap: .45rem;
-    padding: .55rem .9rem; border-radius: .75rem; font-size: .80rem;
-    font-weight: 600; border: 1.5px solid transparent; cursor: pointer;
-    transition: transform .12s ease, box-shadow .15s ease; white-space: nowrap;
-    background: none;
-  }
+.rep-export-btn {
+     display: inline-flex; align-items: center; gap: .45rem;
+     padding: .55rem .9rem; border-radius: .75rem; font-size: .80rem;
+     font-weight: 600; border: none; cursor: pointer;
+     transition: transform .12s ease, box-shadow .15s ease; white-space: nowrap;
+   }
   .rep-export-btn:hover { transform: translateY(-1px); }
   .rep-export-btn:active { transform: scale(.97); }
 
@@ -176,9 +172,14 @@
   }
   @media (min-width: 700px) {
     .rep-filter-grid {
-      grid-template-columns: 2fr 1fr 1fr 1fr auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
       align-items: end;
     }
+    .rep-search-wrap { flex: 2; min-width: 300px; }
+    .rep-filter-row2 { flex: 1; min-width: 150px; }
+    .rep-filter-row3 { flex: 1; min-width: 150px; }
     .rep-filter-row2 { display: contents; }
     .rep-filter-row3 { display: contents; }
   }
@@ -377,7 +378,6 @@
           onclick="window.open('{% url 'asistencia:reporte_daem2_pdf' %}?year='+document.getElementById('m-asistencia-year').value+'&mes='+document.getElementById('m-asistencia-mes').value, '_blank'); closeModal('asistencia')">
           <i class="fas fa-file-pdf"></i> PDF
         </button>
-    </div>
     </div>
   </div>
 </div>
@@ -697,30 +697,30 @@
 
         <!-- Export Buttons Area -->
         <div class="flex flex-wrap gap-2 justify-start lg:justify-end max-w-full lg:max-w-2xl">
-          <button class="rep-export-btn h-10 px-4 bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-600 hover:text-white" onclick="openModal('horarios')">
-            <i class="fas fa-calendar-week"></i> <span class="hidden sm:inline">Horarios</span>
-          </button>
-          <button class="rep-export-btn h-10 px-4 bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-600 hover:text-white" onclick="openModal('daem')">
-            <i class="fas fa-file-excel"></i> <span class="hidden sm:inline">DAEM</span>
-          </button>
-          <button class="rep-export-btn h-10 px-4 bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-600 hover:text-white" onclick="openModal('asistencia')">
-            <i class="fas fa-clipboard-check"></i> <span class="hidden sm:inline">DAEM2</span>
-          </button>
-          <button class="rep-export-btn h-10 px-4 bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-900 hover:text-white" onclick="openModal('daem3')">
-            <i class="fas fa-file-alt"></i> <span class="hidden sm:inline">DAEM3</span>
-          </button>
-          <button class="rep-export-btn h-10 px-4 bg-purple-50 text-purple-700 border-purple-100 hover:bg-purple-600 hover:text-white" onclick="openModal('mensual')">
-            <i class="fas fa-calendar-alt"></i> <span class="hidden sm:inline">Mensual</span>
-          </button>
-          <button class="rep-export-btn h-10 px-4 bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-600 hover:text-white" onclick="openModal('excel')">
-            <i class="fas fa-file-excel"></i> <span class="hidden sm:inline">Excel</span>
-          </button>
-          <button class="rep-export-btn h-10 px-4 bg-red-50 text-red-700 border-red-100 hover:bg-red-600 hover:text-white" onclick="openModal('pdf')">
-            <i class="fas fa-file-pdf"></i> <span class="hidden sm:inline">PDF</span>
-          </button>
-          <button class="rep-export-btn h-10 px-4 bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-600 hover:text-white" onclick="openModal('justificaciones')">
-            <i class="fas fa-check-circle"></i> <span class="hidden sm:inline">Justificaciones</span>
-          </button>
+<button class="rep-export-btn h-9 px-3 bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm" onclick="openModal('horarios')">
+             <i class="fas fa-calendar-week"></i> <span class="hidden xl:inline">Horarios</span>
+           </button>
+           <button class="rep-export-btn h-9 px-3 bg-blue-600 text-white hover:bg-blue-700 shadow-sm" onclick="openModal('daem')">
+             <i class="fas fa-file-excel"></i> <span class="hidden xl:inline">DAEM</span>
+           </button>
+           <button class="rep-export-btn h-9 px-3 bg-rose-600 text-white hover:bg-rose-700 shadow-sm" onclick="openModal('asistencia')">
+             <i class="fas fa-clipboard-check"></i> <span class="hidden xl:inline">DAEM2</span>
+           </button>
+           <button class="rep-export-btn h-9 px-3 bg-slate-700 text-white hover:bg-slate-800 shadow-sm" onclick="openModal('daem3')">
+             <i class="fas fa-file-alt"></i> <span class="hidden xl:inline">DAEM3</span>
+           </button>
+           <button class="rep-export-btn h-9 px-3 bg-purple-600 text-white hover:bg-purple-700 shadow-sm" onclick="openModal('mensual')">
+             <i class="fas fa-calendar-alt"></i> <span class="hidden xl:inline">Mensual</span>
+           </button>
+           <button class="rep-export-btn h-9 px-3 bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm" onclick="openModal('excel')">
+             <i class="fas fa-file-excel"></i> <span class="hidden xl:inline">Excel</span>
+           </button>
+           <button class="rep-export-btn h-9 px-3 bg-red-600 text-white hover:bg-red-700 shadow-sm" onclick="openModal('pdf')">
+             <i class="fas fa-file-pdf"></i> <span class="hidden xl:inline">PDF</span>
+           </button>
+           <button class="rep-export-btn h-9 px-3 bg-amber-600 text-white hover:bg-amber-700 shadow-sm" onclick="openModal('justificaciones')">
+             <i class="fas fa-check-circle"></i> <span class="hidden xl:inline">Justificaciones</span>
+           </button>
         </div>
       </div>
     </div>
@@ -1070,6 +1070,22 @@
     console.log('Scroll restaurado inmediatamente');
   })();
 
+  function sortTable(sort, search, year, mes, inicio, fin) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('sort', sort);
+    if (search) url.searchParams.set('search', search);
+    else url.searchParams.delete('search');
+    if (year) url.searchParams.set('year', year);
+    else url.searchParams.delete('year');
+    if (mes) url.searchParams.set('mes', mes);
+    else url.searchParams.delete('mes');
+    if (inicio) url.searchParams.set('fecha_inicio', inicio);
+    else url.searchParams.delete('fecha_inicio');
+    if (fin) url.searchParams.set('fecha_fin', fin);
+    else url.searchParams.delete('fecha_fin');
+    window.location.href = url.toString();
+  }
+
   function openModal(id) {
     document.getElementById('modal-' + id).classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -1302,4 +1318,5 @@
   */
 </script>
 
+</div></div>
 {% endblock %}
