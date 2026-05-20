@@ -200,22 +200,18 @@
     {% endwith %}
     {% endif %}
 
-    {# ═══ SERENOS: una tabla por semana (cabecera colapsada a una fila) ═══ #}
-    {% if emp.es_sereno %}
+    {# ═══ INDIVIDUAL SERENO: una tabla por semana (cabecera colapsada a una fila) ═══ #}
+    {% if es_individual and empleados_data.0.es_sereno %}
     {% with emp=empleados_data.0 %}
-
-    {# Orden columnas: Lun Mar Mié Jue Vie Sáb Dom | Tot #}
-    {% set col_labels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom','Tot'] %}
-    {% set total_col = 8 %}
 
     {# ── Semana 1 ── #}
     <table>
         <thead>
             <tr>
-                <th colspan="{{ total_col }}" class="semana-title">Semana 1</th>
+                <th colspan="8" class="semana-title">Semana 1</th>
             </tr>
             <tr>
-                {% for lbl in col_labels %}<th>{{ lbl }}</th>{% endfor %}
+                <th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th><th>Tot</th>
             </tr>
         </thead>
         <tbody>
@@ -232,10 +228,10 @@
     <table>
         <thead>
             <tr>
-                <th colspan="{{ total_col }}" class="semana-title">Semana 2</th>
+                <th colspan="8" class="semana-title">Semana 2</th>
             </tr>
             <tr>
-                {% for lbl in col_labels %}<th>{{ lbl }}</th>{% endfor %}
+                <th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th><th>Tot</th>
             </tr>
         </thead>
         <tbody>
@@ -250,7 +246,7 @@
 
     {% endwith %}
 
-    {# ═══ NO SERENOS: tabla normal ═══ #}
+    {# ═══ NO SERENOS O COLECTIVO: tabla normal ═══ #}
     {% else %}
     <table>
         <thead>
@@ -271,16 +267,38 @@
         </thead>
         <tbody>
             {% for emp in empleados_data %}
-            <tr>
-                {% if not es_individual %}<td>{{ forloop.counter }}</td>{% endif %}
-                {% if not es_individual %}<td class="name-cell">{{ emp.nombre }}</td>{% endif %}
-                {% if not es_individual %}<td>{{ emp.run }}</td>{% endif %}
-                {% if not es_individual %}<td>{{ emp.cargo }}</td>{% endif %}
-                {% for dia in emp.dias %}
-                <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
-                {% endfor %}
-                <td class="total-cell">{{ emp.total_horas }}</td>
-            </tr>
+                {% if emp.es_sereno %}
+                    <tr>
+                        {% if not es_individual %}<td>{{ forloop.counter }}</td>{% endif %}
+                        {% if not es_individual %}<td class="name-cell">{{ emp.nombre }} <br><small style="color: #64748b;">(Semana 1)</small></td>{% endif %}
+                        {% if not es_individual %}<td>{{ emp.run }}</td>{% endif %}
+                        {% if not es_individual %}<td>{{ emp.cargo }}</td>{% endif %}
+                        {% for dia in emp.dias_s1 %}
+                        <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
+                        {% endfor %}
+                        <td class="total-cell" rowspan="2" style="vertical-align: middle;">{{ emp.total_horas }}</td>
+                    </tr>
+                    <tr>
+                        {% if not es_individual %}<td>{{ forloop.counter }}</td>{% endif %}
+                        {% if not es_individual %}<td class="name-cell">{{ emp.nombre }} <br><small style="color: #64748b;">(Semana 2)</small></td>{% endif %}
+                        {% if not es_individual %}<td>{{ emp.run }}</td>{% endif %}
+                        {% if not es_individual %}<td>{{ emp.cargo }}</td>{% endif %}
+                        {% for dia in emp.dias_s2 %}
+                        <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
+                        {% endfor %}
+                    </tr>
+                {% else %}
+                    <tr>
+                        {% if not es_individual %}<td>{{ forloop.counter }}</td>{% endif %}
+                        {% if not es_individual %}<td class="name-cell">{{ emp.nombre }}</td>{% endif %}
+                        {% if not es_individual %}<td>{{ emp.run }}</td>{% endif %}
+                        {% if not es_individual %}<td>{{ emp.cargo }}</td>{% endif %}
+                        {% for dia in emp.dias %}
+                        <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
+                        {% endfor %}
+                        <td class="total-cell">{{ emp.total_horas }}</td>
+                    </tr>
+                {% endif %}
             {% endfor %}
         </tbody>
     </table>
