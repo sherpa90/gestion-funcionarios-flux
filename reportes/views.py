@@ -1603,7 +1603,8 @@ class ExportarHorarioIndividualPDFView(LoginRequiredMixin, UserPassesTestMixin, 
             'empleados_data': [empleado_data],
             'fecha_exportacion': now().strftime('%d/%m/%Y %H:%M'),
             'director': CustomUser.objects.filter(role='DIRECTOR').first(),
-            'es_individual': True
+            'es_individual': True,
+            'es_landscape_force': es_sereno
         })
 
         html = HTML(string=html_string)
