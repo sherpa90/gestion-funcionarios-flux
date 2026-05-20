@@ -6,42 +6,52 @@
     <style>
         @page {
             size: {% if es_individual %}portrait{% else %}landscape{% endif %};
-            margin: 1.5cm;
+            margin: 0.8cm;
+        }
+        {% if es_landscape_force %}
+        @page {
+            size: landscape !important;
+            margin: 0.6cm !important;
+        }
+        {% endif %}
+        @page sereno-page {
+            size: landscape !important;
+            margin: 0.6cm !important;
         }
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
-            font-size: {% if es_individual %}11pt{% else %}9pt{% endif %};
+            font-size: 9pt;
             color: #1e293b;
-            line-height: 1.5;
+            line-height: 1.35;
             margin: 0;
             padding: 0;
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
             border-bottom: 3px solid #4F46E5;
         }
         .header h1 {
             margin: 0;
             color: #1e293b;
-            font-size: {% if es_individual %}24pt{% else %}20pt{% endif %};
+            font-size: 20pt;
             letter-spacing: -0.025em;
         }
         .header p {
-            margin: 8px 0 0;
+            margin: 5px 0 0;
             color: #64748b;
-            font-size: 11pt;
+            font-size: 9pt;
             font-weight: 500;
         }
-        
-        /* User Info Card for Individual */
+
+        /* Info card only in individual */
         .info-card {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
             display: {% if es_individual %}block{% else %}none{% endif %};
         }
         .info-grid {
@@ -53,14 +63,14 @@
             width: 33%;
         }
         .info-label {
-            font-size: 9pt;
+            font-size: 8pt;
             color: #64748b;
             text-transform: uppercase;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
         .info-value {
-            font-size: 12pt;
+            font-size: 11pt;
             font-weight: bold;
             color: #1e293b;
         }
@@ -69,38 +79,34 @@
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            margin-bottom: 30px;
+            margin-bottom: 18px;
             border: 1px solid #e2e8f0;
-            border-radius: 12px;
+            border-radius: 10px;
             overflow: hidden;
         }
         th {
             background-color: #4F46E5;
             color: white;
             font-weight: bold;
-            padding: 12px 8px;
+            padding: 7px 3px;
             text-align: center;
             text-transform: uppercase;
-            font-size: {% if es_individual %}10pt{% else %}8pt{% endif %};
-            letter-spacing: 0.05em;
+            font-size: 8pt;
+            letter-spacing: 0.03em;
         }
         td {
-            padding: 12px 8px;
+            padding: 7px 3px;
             border-bottom: 1px solid #e2e8f0;
             border-right: 1px solid #e2e8f0;
             text-align: center;
             vertical-align: middle;
         }
-        td:last-child {
-            border-right: none;
-        }
-        tr:last-child td {
-            border-bottom: none;
-        }
-        
+        td:last-child { border-right: none; }
+        tr:last-child td { border-bottom: none; }
+
         .name-cell {
             text-align: left;
-            padding-left: 15px;
+            padding-left: 8px;
             font-weight: bold;
             color: #1e293b;
         }
@@ -108,49 +114,61 @@
             font-family: 'Courier New', Courier, monospace;
             font-weight: bold;
             color: #334155;
-            font-size: {% if es_individual %}11pt{% else %}8pt{% endif %};
+            font-size: 9pt;
         }
         .libre-cell {
             color: #94a3b8;
             font-style: italic;
-            font-size: {% if es_individual %}10pt{% else %}7pt{% endif %};
+            font-size: 7.5pt;
         }
         .total-cell {
             font-weight: 800;
             color: #4F46E5;
             background-color: #f1f5ff;
+            font-size: 9pt;
         }
-        
+
+        /* ── Sereno: sección por semana ── */
+        .semana-title {
+            background-color: #EEF2FF !important;
+            color: #4F46E5 !important;
+            font-size: 9pt !important;
+            font-weight: 700 !important;
+            text-align: left !important;
+            padding-left: 8px !important;
+            letter-spacing: 0.02em;
+        }
+
         .footer {
             position: fixed;
             bottom: 0;
             width: 100%;
-            font-size: 8pt;
+            font-size: 7pt;
             color: #94a3b8;
             text-align: center;
             border-top: 1px solid #e2e8f0;
-            padding-top: 10px;
+            padding-top: 6px;
         }
         .signature-section {
-            margin-top: 60px;
+            margin-top: 35px;
             text-align: center;
         }
         .signature-box {
             display: inline-block;
-            width: 250px;
+            width: 200px;
         }
         .signature-line {
             border-top: 2px solid #1e293b;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
         .signature-name {
             font-weight: bold;
-            font-size: 11pt;
+            font-size: 10pt;
             margin: 0;
         }
         .signature-title {
             color: #64748b;
-            font-size: 9pt;
+            font-size: 8pt;
             margin: 0;
         }
     </style>
@@ -182,6 +200,58 @@
     {% endwith %}
     {% endif %}
 
+    {# ═══ SERENOS: una tabla por semana (cabecera colapsada a una fila) ═══ #}
+    {% if emp.es_sereno %}
+    {% with emp=empleados_data.0 %}
+
+    {# Orden columnas: Lun Mar Mié Jue Vie Sáb Dom | Tot #}
+    {% set col_labels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom','Tot'] %}
+    {% set total_col = 8 %}
+
+    {# ── Semana 1 ── #}
+    <table>
+        <thead>
+            <tr>
+                <th colspan="{{ total_col }}" class="semana-title">Semana 1</th>
+            </tr>
+            <tr>
+                {% for lbl in col_labels %}<th>{{ lbl }}</th>{% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% for dia in emp.dias_s1 %}
+                <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
+                {% endfor %}
+                <td class="total-cell">{{ emp.total_horas }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    {# ── Semana 2 ── #}
+    <table>
+        <thead>
+            <tr>
+                <th colspan="{{ total_col }}" class="semana-title">Semana 2</th>
+            </tr>
+            <tr>
+                {% for lbl in col_labels %}<th>{{ lbl }}</th>{% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% for dia in emp.dias_s2 %}
+                <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
+                {% endfor %}
+                <td class="total-cell">{{ emp.total_horas }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    {% endwith %}
+
+    {# ═══ NO SERENOS: tabla normal ═══ #}
+    {% else %}
     <table>
         <thead>
             <tr>
@@ -189,12 +259,13 @@
                 {% if not es_individual %}<th>Funcionario</th>{% endif %}
                 {% if not es_individual %}<th>RUN</th>{% endif %}
                 {% if not es_individual %}<th>Cargo</th>{% endif %}
-                {% if emp.es_sereno %}
-                <th>Lun S1</th><th>Mar S1</th><th>Mié S1</th><th>Jue S1</th><th>Vie S1</th><th>Sáb S1</th><th>Dom S1</th>
-                <th>Lun S2</th><th>Mar S2</th><th>Mié S2</th><th>Jue S2</th><th>Vie S2</th><th>Sáb S2</th><th>Dom S2</th>
-                {% else %}
-                <th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th>
-                {% endif %}
+                <th>Lun</th>
+                <th>Mar</th>
+                <th>Mié</th>
+                <th>Jue</th>
+                <th>Vie</th>
+                <th>Sáb</th>
+                <th>Dom</th>
                 <th style="background-color: #3730a3;">Total</th>
             </tr>
         </thead>
@@ -205,23 +276,15 @@
                 {% if not es_individual %}<td class="name-cell">{{ emp.nombre }}</td>{% endif %}
                 {% if not es_individual %}<td>{{ emp.run }}</td>{% endif %}
                 {% if not es_individual %}<td>{{ emp.cargo }}</td>{% endif %}
-                {% if emp.es_sereno %}
-                    {% for dia in emp.dias_s1 %}
-                    <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
-                    {% endfor %}
-                    {% for dia in emp.dias_s2 %}
-                    <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
-                    {% endfor %}
-                {% else %}
-                    {% for dia in emp.dias %}
-                    <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
-                    {% endfor %}
-                {% endif %}
+                {% for dia in emp.dias %}
+                <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
+                {% endfor %}
                 <td class="total-cell">{{ emp.total_horas }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    {% endif %}
 
     <div class="signature-section">
         <div class="signature-box">
