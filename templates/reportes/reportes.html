@@ -115,15 +115,16 @@
   }
   .rep-modal-btn:active { transform: scale(.97); opacity: .9; }
 
-  /* ─── Export trigger buttons ─── */
+/* ─── Export trigger buttons ─── */
 .rep-export-btn {
-     display: inline-flex; align-items: center; gap: .45rem;
-     padding: .55rem .9rem; border-radius: .75rem; font-size: .80rem;
-     font-weight: 600; border: none; cursor: pointer;
-     transition: transform .12s ease, box-shadow .15s ease; white-space: nowrap;
-   }
-  .rep-export-btn:hover { transform: translateY(-1px); }
-  .rep-export-btn:active { transform: scale(.97); }
+   display: inline-flex; align-items: center; gap: .45rem;
+   padding: .55rem .9rem; border-radius: .75rem; font-size: .80rem;
+   font-weight: 600; border: none; cursor: pointer;
+   transition: transform .12s ease, box-shadow .15s ease; white-space: nowrap;
+   width: 8rem !important;
+ }
+.rep-export-btn:hover { transform: translateY(-1px); }
+.rep-export-btn:active { transform: scale(.97); }
 
   /* ─── Filter form ─── */
   .rep-filter-input, .rep-filter-select {
@@ -695,32 +696,32 @@
           </div>
         </div>
 
-        <!-- Export Buttons Area -->
+<!-- Export Buttons Area -->
         <div class="flex flex-wrap gap-2 justify-start lg:justify-end max-w-full lg:max-w-2xl">
-<button class="rep-export-btn h-9 px-3 bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm" onclick="openModal('horarios')">
-             <i class="fas fa-calendar-week"></i> <span class="hidden xl:inline">Horarios</span>
-           </button>
-           <button class="rep-export-btn h-9 px-3 bg-blue-600 text-white hover:bg-blue-700 shadow-sm" onclick="openModal('daem')">
-             <i class="fas fa-file-excel"></i> <span class="hidden xl:inline">DAEM</span>
-           </button>
-           <button class="rep-export-btn h-9 px-3 bg-rose-600 text-white hover:bg-rose-700 shadow-sm" onclick="openModal('asistencia')">
-             <i class="fas fa-clipboard-check"></i> <span class="hidden xl:inline">DAEM2</span>
-           </button>
-           <button class="rep-export-btn h-9 px-3 bg-slate-700 text-white hover:bg-slate-800 shadow-sm" onclick="openModal('daem3')">
-             <i class="fas fa-file-alt"></i> <span class="hidden xl:inline">DAEM3</span>
-           </button>
-           <button class="rep-export-btn h-9 px-3 bg-purple-600 text-white hover:bg-purple-700 shadow-sm" onclick="openModal('mensual')">
-             <i class="fas fa-calendar-alt"></i> <span class="hidden xl:inline">Mensual</span>
-           </button>
-           <button class="rep-export-btn h-9 px-3 bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm" onclick="openModal('excel')">
-             <i class="fas fa-file-excel"></i> <span class="hidden xl:inline">Excel</span>
-           </button>
-           <button class="rep-export-btn h-9 px-3 bg-red-600 text-white hover:bg-red-700 shadow-sm" onclick="openModal('pdf')">
-             <i class="fas fa-file-pdf"></i> <span class="hidden xl:inline">PDF</span>
-           </button>
-           <button class="rep-export-btn h-9 px-3 bg-amber-600 text-white hover:bg-amber-700 shadow-sm" onclick="openModal('justificaciones')">
-             <i class="fas fa-check-circle"></i> <span class="hidden xl:inline">Justificaciones</span>
-           </button>
+            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm" onclick="openModal('horarios')">
+              <i class="fas fa-calendar-week"></i> <span class="hidden xl:inline">Horarios</span>
+            </button>
+            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-blue-600 text-white hover:bg-blue-700 shadow-sm" onclick="openModal('daem')">
+              <i class="fas fa-file-excel"></i> <span class="hidden xl:inline">DAEM</span>
+            </button>
+            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-rose-600 text-white hover:bg-rose-700 shadow-sm" onclick="openModal('asistencia')">
+              <i class="fas fa-clipboard-check"></i> <span class="hidden xl:inline">DAEM2</span>
+            </button>
+            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-slate-700 text-white hover:bg-slate-800 shadow-sm" onclick="openModal('daem3')">
+              <i class="fas fa-file-alt"></i> <span class="hidden xl:inline">DAEM3</span>
+            </button>
+            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-purple-600 text-white hover:bg-purple-700 shadow-sm" onclick="openModal('mensual')">
+              <i class="fas fa-calendar-alt"></i> <span class="hidden xl:inline">Mensual</span>
+            </button>
+            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm" onclick="openModal('excel')">
+              <i class="fas fa-file-excel"></i> <span class="hidden xl:inline">Excel</span>
+            </button>
+            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-red-600 text-white hover:bg-red-700 shadow-sm" onclick="openModal('pdf')">
+              <i class="fas fa-file-pdf"></i> <span class="hidden xl:inline">PDF</span>
+            </button>
+            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-amber-600 text-white hover:bg-amber-700 shadow-sm" onclick="openModal('justificaciones')">
+              <i class="fas fa-check-circle"></i> <span class="hidden xl:inline">Justificaciones</span>
+            </button>
         </div>
       </div>
     </div>
