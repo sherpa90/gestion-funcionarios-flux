@@ -189,13 +189,12 @@
                 {% if not es_individual %}<th>Funcionario</th>{% endif %}
                 {% if not es_individual %}<th>RUN</th>{% endif %}
                 {% if not es_individual %}<th>Cargo</th>{% endif %}
-                <th>Lun</th>
-                <th>Mar</th>
-                <th>Mié</th>
-                <th>Jue</th>
-                <th>Vie</th>
-                <th>Sáb</th>
-                <th>Dom</th>
+                {% if emp.es_sereno %}
+                <th>Lun S1</th><th>Mar S1</th><th>Mié S1</th><th>Jue S1</th><th>Vie S1</th><th>Sáb S1</th><th>Dom S1</th>
+                <th>Lun S2</th><th>Mar S2</th><th>Mié S2</th><th>Jue S2</th><th>Vie S2</th><th>Sáb S2</th><th>Dom S2</th>
+                {% else %}
+                <th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th>
+                {% endif %}
                 <th style="background-color: #3730a3;">Total</th>
             </tr>
         </thead>
@@ -206,11 +205,18 @@
                 {% if not es_individual %}<td class="name-cell">{{ emp.nombre }}</td>{% endif %}
                 {% if not es_individual %}<td>{{ emp.run }}</td>{% endif %}
                 {% if not es_individual %}<td>{{ emp.cargo }}</td>{% endif %}
-                {% for dia in emp.dias %}
-                <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">
-                    {{ dia }}
-                </td>
-                {% endfor %}
+                {% if emp.es_sereno %}
+                    {% for dia in emp.dias_s1 %}
+                    <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
+                    {% endfor %}
+                    {% for dia in emp.dias_s2 %}
+                    <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
+                    {% endfor %}
+                {% else %}
+                    {% for dia in emp.dias %}
+                    <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
+                    {% endfor %}
+                {% endif %}
                 <td class="total-cell">{{ emp.total_horas }}</td>
             </tr>
             {% endfor %}

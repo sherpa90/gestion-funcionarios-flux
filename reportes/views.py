@@ -15,6 +15,12 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import datetime, time
 from django.utils.timezone import now
 
+# Mapeo día de semana (Python weekday 0=Lunes) → nombre en español
+DIA_SEMANA_MAP = {
+    0: 'Lunes', 1: 'Martes', 2: 'Miércoles',
+    3: 'Jueves', 4: 'Viernes', 5: 'Sábado', 6: 'Domingo'
+}
+
 class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     """Vista unificada y minimalista de reportes"""
     template_name = 'reportes/reportes.html'
@@ -792,118 +798,122 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         # Pestaña 4: Horarios Funcionarios
         from asistencia.models import HorarioFuncionario, DiaHorario
+        from django.db.models import Q as QModel
+        
         ws_horarios = wb.create_sheet(title="Horarios Funcionarios")
-        ws_horarios.append(['N°', 'Funcionario', 'RUN', 'Cargo', 'Lunes S1', 'Martes S1', 'Miércoles S1', 'Jueves S1', 'Viernes S1', 'Sábado S1', 'Domingo S1', 'Lunes S2', 'Martes S2', 'Miércoles S2', 'Jueves S2', 'Viernes S2', 'Sábado S2', 'Domingo S2'])
-
+        
+        # Verificar si hay serenos
+        tiene_serenos = CustomUser.objects.filter(
+            role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
+        ).filter(
+            QModel(funcion='SERENO') | QModel(tipo_funcionario='SERENO')
+        ).exists()
+        
+        # Encabezados dinámicos
+        if tiene_serenos:
+            headers_horarios = ['N°', 'Funcionario', 'RUN', 'Cargo',
+                                'Lunes S1', 'Martes S1', 'Miércoles S1', 'Jueves S1', 'Viernes S1', 'Sábado S1', 'Domingo S1',
+                                'Lunes S2', 'Martes S2', 'Miércoles S2', 'Jueves S2', 'Viernes S2', 'Sábado S2', 'Domingo S2']
+        else:
+            headers_horarios = ['N°', 'Funcionario', 'RUN', 'Cargo',
+                                'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+        ws_horarios.append(headers_horarios)
+        
         # Set column widths
         ws_horarios.column_dimensions['A'].width = 8   # N°
         ws_horarios.column_dimensions['B'].width = 30  # Funcionario
         ws_horarios.column_dimensions['C'].width = 15  # RUN
         ws_horarios.column_dimensions['D'].width = 25  # Cargo
-        for col in ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S']:
-            ws_horarios.column_dimensions[col].width = 15  # Days
+        if tiene_serenos:
+            for col_letter in ['E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+                ws_horarios.column_dimensions[col_letter].width = 14
+        else:
+            for col_letter in ['E','F','G','H','I','J','K']:
+                ws_horarios.column_dimensions[col_letter].width = 18
 
-        # Get all active schedules with their day details
+        # Obtener horarios con prefetch
         horarios_con_dias = HorarioFuncionario.objects.filter(activo=True).prefetch_related('dias')
-
-        # Create a dictionary for quick lookup - separate for semana 1 and semana 2
-        horarios_dict_s1 = {}  # Semana 1
-        horarios_dict_s2 = {}  # Semana 2
-        horarios_dict_universal = {}  # Horarios que aplican a ambas semanas
-
+        
+        # Construir diccionarios separados para cada funcionario
+        horarios_dict_s1 = {}
+        horarios_dict_s2 = {}
+        horarios_dict_universal = {}
+        
         for horario in horarios_con_dias:
-            dias_dict_s1 = {}
-            dias_dict_s2 = {}
-            dias_dict_universal = {}
+            d_s1, d_s2, d_uni = {}, {}, {}
             
             for dia in horario.dias.all():
-                dia_nombre = dia.get_dia_semana_display()
+                dia_nombre = DIA_SEMANA_MAP[dia.dia_semana]
                 if dia.activo and dia.hora_entrada:
                     hora_str = f"{dia.hora_entrada.strftime('%H:%M')}"
                     if dia.hora_salida:
                         hora_str += f" - {dia.hora_salida.strftime('%H:%M')}"
-                    
-                    # Check if it's specific to a week or universal
-                    if dia.semana_tipo == 1:
-                        dias_dict_s1[dia_nombre] = hora_str
-                    elif dia.semana_tipo == 2:
-                        dias_dict_s2[dia_nombre] = hora_str
-                    else:
-                        # Universal (applies to both weeks)
-                        dias_dict_universal[dia_nombre] = hora_str
                 else:
-                    # Libre
-                    dia_nombre = dia.get_dia_semana_display()
-                    if dia.semana_tipo == 1:
-                        dias_dict_s1[dia_nombre] = "Libre"
-                    elif dia.semana_tipo == 2:
-                        dias_dict_s2[dia_nombre] = "Libre"
-                    else:
-                        # Universal
-                        dias_dict_universal[dia_nombre] = "Libre"
+                    hora_str = "Libre"
+                
+                if dia.semana_tipo == 1:
+                    d_s1[dia_nombre] = hora_str
+                elif dia.semana_tipo == 2:
+                    d_s2[dia_nombre] = hora_str
+                else:
+                    d_uni[dia_nombre] = hora_str
             
-            horarios_dict_s1[horario.funcionario_id] = dias_dict_s1
-            horarios_dict_s2[horario.funcionario_id] = dias_dict_s2
-            horarios_dict_universal[horario.funcionario_id] = dias_dict_universal
+            horarios_dict_s1[horario.funcionario_id] = d_s1
+            horarios_dict_s2[horario.funcionario_id] = d_s2
+            horarios_dict_universal[horario.funcionario_id] = d_uni
 
         # Procesar horarios semanales
-        for i, func in enumerate(funcionarios, 2):  # Start from row 2 (after headers)
-            # Check if funcionario is sereno
+        row_idx = 2
+        for func in funcionarios:
             es_sereno = (
-                getattr(func, 'funcion', None) == 'SERENO' or
-                getattr(func, 'tipo_funcionario', None) == 'SERENO'
+                getattr(func, 'funcion', None) == 'SERENO'
+                or getattr(func, 'tipo_funcionario', None) == 'SERENO'
             )
             
-            if es_sereno:
-                # For serenos, show week 1 and week 2 schedules separately
-                dias_horario_s1 = horarios_dict_s1.get(func.id, {})
-                dias_horario_s2 = horarios_dict_s2.get(func.id, {})
-                # Also include universal schedules
-                dias_universal = horarios_dict_universal.get(func.id, {})
+            if tiene_serenos and es_sereno:
+                # Formato extendido para serenos con semana 1 y semana 2
+                d_s1 = horarios_dict_s1.get(func.id, {})
+                d_s2 = horarios_dict_s2.get(func.id, {})
+                d_uni = horarios_dict_universal.get(func.id, {})
                 
-                # Merge universal with specific week schedules
-                for dia, hora in dias_universal.items():
-                    if dia not in dias_horario_s1:
-                        dias_horario_s1[dia] = hora
-                    if dia not in dias_horario_s2:
-                        dias_horario_s2[dia] = hora
+                # Merge universal into both weeks
+                for dia, hora in d_uni.items():
+                    if dia not in d_s1: d_s1[dia] = hora
+                    if dia not in d_s2: d_s2[dia] = hora
+                
+                dias_nombres = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
+                ws_horarios.cell(row=row_idx, column=1).value = row_idx - 1
+                ws_horarios.cell(row=row_idx, column=2).value = func.get_full_name() or func.username
+                ws_horarios.cell(row=row_idx, column=3).value = func.run
+                ws_horarios.cell(row=row_idx, column=4).value = func.get_funcion_display() or ""
+                
+                for col_offset, dia_nombre in enumerate(dias_nombres, 5):
+                    ws_horarios.cell(row=row_idx, column=col_offset).value = d_s1.get(dia_nombre, 'Libre')
+                for col_offset, dia_nombre in enumerate(dias_nombres, 12):
+                    ws_horarios.cell(row=row_idx, column=col_offset).value = d_s2.get(dia_nombre, 'Libre')
             else:
-                # For non-serenos, use existing logic (universal or week-specific)
-                dias_horario_s1 = horarios_dict_s1.get(func.id, {})
-                dias_horario_s2 = horarios_dict_s2.get(func.id, {})
-                # Also include universal schedules
-                dias_universal = horarios_dict_universal.get(func.id, {})
+                # Formato simple para no serenos
+                dias_dict = {}
+                horario = getattr(func, 'horario', None)
+                if horario:
+                    for d in horario.dias.all():
+                        if d.activo and d.hora_entrada:
+                            hora_str = f"{d.hora_entrada.strftime('%H:%M')}"
+                            if d.hora_salida:
+                                hora_str += f" - {d.hora_salida.strftime('%H:%M')}"
+                            dias_dict[d.dia_semana] = hora_str
+                        else:
+                            dias_dict[d.dia_semana] = "Libre"
                 
-                # Merge universal with specific week schedules
-                for dia, hora in dias_universal.items():
-                    if dia not in dias_horario_s1:
-                        dias_horario_s1[dia] = hora
-                    if dia not in dias_horario_s2:
-                        dias_horario_s2[dia] = hora
-
-            # Days of the week - Semana 1
-            ws_horarios.cell(row=i, column=1).value = i - 1  # N°
-            ws_horarios.cell(row=i, column=2).value = func.get_full_name() or func.username  # Funcionario
-            ws_horarios.cell(row=i, column=3).value = func.run  # RUN
-            ws_horarios.cell(row=i, column=4).value = func.get_funcion_display() or ""  # Cargo
-
-            # Semana 1 columns (E-K: Lunes to Domingo)
-            ws_horarios.cell(row=i, column=5).value = dias_horario_s1.get('Lunes', 'Libre')
-            ws_horarios.cell(row=i, column=6).value = dias_horario_s1.get('Martes', 'Libre')
-            ws_horarios.cell(row=i, column=7).value = dias_horario_s1.get('Miércoles', 'Libre')
-            ws_horarios.cell(row=i, column=8).value = dias_horario_s1.get('Jueves', 'Libre')
-            ws_horarios.cell(row=i, column=9).value = dias_horario_s1.get('Viernes', 'Libre')
-            ws_horarios.cell(row=i, column=10).value = dias_horario_s1.get('Sábado', 'Libre')
-            ws_horarios.cell(row=i, column=11).value = dias_horario_s1.get('Domingo', 'Libre')
-
-            # Semana 2 columns (L-S: Lunes to Domingo)
-            ws_horarios.cell(row=i, column=12).value = dias_horario_s2.get('Lunes', 'Libre')
-            ws_horarios.cell(row=i, column=13).value = dias_horario_s2.get('Martes', 'Libre')
-            ws_horarios.cell(row=i, column=14).value = dias_horario_s2.get('Miércoles', 'Libre')
-            ws_horarios.cell(row=i, column=15).value = dias_horario_s2.get('Jueves', 'Libre')
-            ws_horarios.cell(row=i, column=16).value = dias_horario_s2.get('Viernes', 'Libre')
-            ws_horarios.cell(row=i, column=17).value = dias_horario_s2.get('Sábado', 'Libre')
-            ws_horarios.cell(row=i, column=18).value = dias_horario_s2.get('Domingo', 'Libre')
+                ws_horarios.cell(row=row_idx, column=1).value = row_idx - 1
+                ws_horarios.cell(row=row_idx, column=2).value = func.get_full_name() or func.username
+                ws_horarios.cell(row=row_idx, column=3).value = func.run
+                ws_horarios.cell(row=row_idx, column=4).value = func.get_funcion_display() or ""
+                
+                for dia_num in range(7):
+                    ws_horarios.cell(row=row_idx, column=5 + dia_num).value = dias_dict.get(dia_num, 'Libre')
+            
+            row_idx += 1
 
         # Respuesta HTTP
         from io import BytesIO
@@ -1366,6 +1376,8 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
 
     def get(self, request):
+        from asistencia.models import HorarioFuncionario, DiaHorario
+
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Horarios del Personal"
@@ -1375,10 +1387,25 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         header_fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
         alignment = Alignment(horizontal="center", vertical="center")
         
-        # Encabezados
-        headers = ['N°', 'Funcionario', 'RUN', 'Cargo', 
-                   'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo', 
-                   'Horas Semanales']
+        # Verificar si hay serenos
+        tiene_serenos = CustomUser.objects.filter(
+            is_active=True,
+            role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
+        ).filter(
+            models.Q(funcion='SERENO') | models.Q(tipo_funcionario='SERENO')
+        ).exists()
+        
+        # Encabezados dinámicos
+        if tiene_serenos:
+            headers = ['N°', 'Funcionario', 'RUN', 'Cargo',
+                       'Lunes S1', 'Martes S1', 'Miércoles S1', 'Jueves S1', 'Viernes S1', 'Sábado S1', 'Domingo S1',
+                       'Lunes S2', 'Martes S2', 'Miércoles S2', 'Jueves S2', 'Viernes S2', 'Sábado S2', 'Domingo S2',
+                       'Horas Semanales']
+        else:
+            headers = ['N°', 'Funcionario', 'RUN', 'Cargo', 
+                       'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo', 
+                       'Horas Semanales']
+        
         ws.append(headers)
         
         # Aplicar estilos a encabezados
@@ -1391,9 +1418,15 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         ws.column_dimensions['B'].width = 35
         ws.column_dimensions['C'].width = 15
         ws.column_dimensions['D'].width = 25
-        for col in ['E', 'F', 'G', 'H', 'I', 'J', 'K']:
-            ws.column_dimensions[col].width = 18
-        ws.column_dimensions['L'].width = 18
+
+        if tiene_serenos:
+            for col_letter in ['E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
+                ws.column_dimensions[col_letter].width = 14
+            ws.column_dimensions['S'].width = 18
+        else:
+            for col_letter in ['E','F','G','H','I','J','K']:
+                ws.column_dimensions[col_letter].width = 18
+            ws.column_dimensions['L'].width = 18
 
         # Obtener todos los funcionarios activos
         funcionarios = CustomUser.objects.filter(
@@ -1403,47 +1436,82 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         for i, f in enumerate(funcionarios, 1):
             horario = getattr(f, 'horario', None)
-            dias_dict = {}
+            es_sereno = (
+                getattr(f, 'funcion', None) == 'SERENO'
+                or getattr(f, 'tipo_funcionario', None) == 'SERENO'
+            )
             total_minutos = 0
             
-            if horario:
+            if tiene_serenos and es_sereno:
+                # Construir horarios separados Semana 1 y Semana 2
+                dias_dict = {}
                 for d in horario.dias.all():
                     if d.activo and d.hora_entrada and d.hora_salida:
-                        dias_dict[d.dia_semana] = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
-                        
-                        # Calcular minutos
                         h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
                         h2, m2 = d.hora_salida.hour, d.hora_salida.minute
                         min1 = h1 * 60 + m1
                         min2 = h2 * 60 + m2
-                        if min2 < min1: min2 += 24 * 60 # Turno nocturno
+                        if min2 < min1: min2 += 24 * 60
                         total_minutos += (min2 - min1)
+                
+                # Build week dicts
+                d_s1, d_s2 = {}, {}
+                for d in horario.dias.all():
+                    hora_str = (
+                        f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
+                        if d.activo and d.hora_entrada and d.hora_salida else "Libre"
+                    )
+                    nombre_dia = DIA_SEMANA_MAP[d.dia_semana]
+                    if d.semana_tipo == 1:
+                        d_s1[nombre_dia] = hora_str
+                    elif d.semana_tipo == 2:
+                        d_s2[nombre_dia] = hora_str
                     else:
-                        dias_dict[d.dia_semana] = "Libre"
+                        d_s1[nombre_dia] = hora_str
+                        d_s2[nombre_dia] = hora_str
+                
+                h_total = total_minutos // 60
+                m_total = total_minutos % 60
+                horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
+                if total_minutos == 0: horas_str = "No configurado"
+                
+                row = [
+                    i, f.get_full_name(), f.run, f.get_funcion_display() or f.get_role_display(),
+                    d_s1.get('Lunes','Libre'), d_s1.get('Martes','Libre'), d_s1.get('Miércoles','Libre'),
+                    d_s1.get('Jueves','Libre'), d_s1.get('Viernes','Libre'), d_s1.get('Sábado','Libre'), d_s1.get('Domingo','Libre'),
+                    d_s2.get('Lunes','Libre'), d_s2.get('Martes','Libre'), d_s2.get('Miércoles','Libre'),
+                    d_s2.get('Jueves','Libre'), d_s2.get('Viernes','Libre'), d_s2.get('Sábado','Libre'), d_s2.get('Domingo','Libre'),
+                    horas_str
+                ]
+            else:
+                # Formato normal para no serenos
+                dias_dict = {}
+                if horario:
+                    for d in horario.dias.all():
+                        if d.activo and d.hora_entrada and d.hora_salida:
+                            dias_dict[d.dia_semana] = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
+                            h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
+                            h2, m2 = d.hora_salida.hour, d.hora_salida.minute
+                            min1 = h1 * 60 + m1
+                            min2 = h2 * 60 + m2
+                            if min2 < min1: min2 += 24 * 60
+                            total_minutos += (min2 - min1)
+                        else:
+                            dias_dict[d.dia_semana] = "Libre"
+                
+                h_total = total_minutos // 60
+                m_total = total_minutos % 60
+                horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
+                if total_minutos == 0: horas_str = "No configurado"
+                
+                row = [
+                    i, f.get_full_name(), f.run, f.get_funcion_display() or f.get_role_display(),
+                    dias_dict.get(0,'Libre'), dias_dict.get(1,'Libre'), dias_dict.get(2,'Libre'),
+                    dias_dict.get(3,'Libre'), dias_dict.get(4,'Libre'), dias_dict.get(5,'Libre'), dias_dict.get(6,'Libre'),
+                    horas_str
+                ]
             
-            # Formatear total horas
-            h_total = total_minutos // 60
-            m_total = total_minutos % 60
-            horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
-            if total_minutos == 0: horas_str = "No configurado"
-
-            row = [
-                i,
-                f.get_full_name(),
-                f.run,
-                f.get_funcion_display() or f.get_role_display(),
-                dias_dict.get(0, "Libre"), # Lun
-                dias_dict.get(1, "Libre"), # Mar
-                dias_dict.get(2, "Libre"), # Mié
-                dias_dict.get(3, "Libre"), # Jue
-                dias_dict.get(4, "Libre"), # Vie
-                dias_dict.get(5, "Libre"), # Sáb
-                dias_dict.get(6, "Libre"), # Dom
-                horas_str
-            ]
             ws.append(row)
-            
-            # Centrar celdas de horarios
             for cell in ws[ws.max_row][4:]:
                 cell.alignment = alignment
 
@@ -1453,6 +1521,7 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         wb.save(response)
         return response
 
+
 class ExportarHorarioIndividualPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
     """Exportar el horario semanal de un funcionario individual a PDF"""
     
@@ -1460,30 +1529,48 @@ class ExportarHorarioIndividualPDFView(LoginRequiredMixin, UserPassesTestMixin, 
         return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
 
     def get(self, request, usuario_id):
+        from asistencia.models import HorarioFuncionario, DiaHorario
+        
         try:
             funcionario = CustomUser.objects.get(pk=usuario_id)
         except CustomUser.DoesNotExist:
             return HttpResponse("Funcionario no encontrado", status=404)
         
+        es_sereno = (
+            getattr(funcionario, 'funcion', None) == 'SERENO' or
+            getattr(funcionario, 'tipo_funcionario', None) == 'SERENO'
+        )
+        
         horario = getattr(funcionario, 'horario', None)
         total_minutos = 0
         
-        # Inicializar con "Libre"
-        dias_data = {i: "Libre" for i in range(7)}
+        # Build separate week schedules
+        dias_s1 = {}
+        dias_s2 = {}
         
         if horario:
             for d in horario.dias.all():
                 if d.activo and d.hora_entrada and d.hora_salida:
-                    dias_data[d.dia_semana] = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
-                    
-                    # Calcular minutos
+                    hora_str = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
                     h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
                     h2, m2 = d.hora_salida.hour, d.hora_salida.minute
                     min1 = h1 * 60 + m1
                     min2 = h2 * 60 + m2
-                    if min2 < min1: 
+                    if min2 < min1:
                         min2 += 24 * 60  # Turno nocturno
                     total_minutos += (min2 - min1)
+                else:
+                    hora_str = "Libre"
+                
+                dia_nombre = list(DIA_SEMANA_MAP.values())[d.dia_semana]
+                
+                if d.semana_tipo == 1:
+                    dias_s1[dia_nombre] = hora_str
+                elif d.semana_tipo == 2:
+                    dias_s2[dia_nombre] = hora_str
+                else:
+                    dias_s1[dia_nombre] = hora_str
+                    dias_s2[dia_nombre] = hora_str
         
         # Formatear total horas
         h_total = total_minutos // 60
@@ -1496,9 +1583,21 @@ class ExportarHorarioIndividualPDFView(LoginRequiredMixin, UserPassesTestMixin, 
             'nombre': funcionario.get_full_name(),
             'run': funcionario.run,
             'cargo': funcionario.get_funcion_display() or funcionario.get_role_display(),
-            'dias': [dias_data[i] for i in range(7)],
             'total_horas': horas_str
         }
+        
+        if es_sereno:
+            dias_names = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+            empleado_data['es_sereno'] = True
+            empleado_data['dias_s1'] = [dias_s1.get(dia, 'Libre') for dia in dias_names]
+            empleado_data['dias_s2'] = [dias_s2.get(dia, 'Libre') for dia in dias_names]
+        else:
+            dias_data = {i: "Libre" for i in range(7)}
+            if horario:
+                for d in horario.dias.all():
+                    if d.activo and d.hora_entrada and d.hora_salida:
+                        dias_data[d.dia_semana] = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
+            empleado_data['dias'] = [dias_data[i] for i in range(7)]
 
         html_string = render_to_string('reportes/pdf_horarios.html', {
             'empleados_data': [empleado_data],
@@ -1523,6 +1622,8 @@ class ExportarHorariosPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
         return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
 
     def get(self, request):
+        from asistencia.models import HorarioFuncionario, DiaHorario
+        
         # Obtener todos los funcionarios activos
         funcionarios = CustomUser.objects.filter(
             is_active=True,
@@ -1530,42 +1631,91 @@ class ExportarHorariosPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
         ).order_by('first_name', 'last_name')
 
         empleados_data = []
+        
+        # Check if there are serenos
+        tiene_serenos = funcionarios.filter(
+            models.Q(funcion='SERENO') | models.Q(tipo_funcionario='SERENO')
+        ).exists()
+        
         DIA_NAMES = {0: 'Lun', 1: 'Mar', 2: 'Mié', 3: 'Jue', 4: 'Vie', 5: 'Sáb', 6: 'Dom'}
 
         for f in funcionarios:
+            es_sereno = (
+                getattr(f, 'funcion', None) == 'SERENO' or
+                getattr(f, 'tipo_funcionario', None) == 'SERENO'
+            )
+            
             horario = getattr(f, 'horario', None)
-            dias_list = []
             total_minutos = 0
             
-            # Inicializar con "Libre"
-            dias_data = {i: "Libre" for i in range(7)}
-            
-            if horario:
-                for d in horario.dias.all():
-                    if d.activo and d.hora_entrada and d.hora_salida:
-                        dias_data[d.dia_semana] = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
+            if tiene_serenos and es_sereno:
+                # Build separate week schedules for serenos
+                dias_s1 = {i: "Libre" for i in range(7)}
+                dias_s2 = {i: "Libre" for i in range(7)}
+                
+                if horario:
+                    for d in horario.dias.all():
+                        if d.activo and d.hora_entrada and d.hora_salida:
+                            h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
+                            h2, m2 = d.hora_salida.hour, d.hora_salida.minute
+                            min1 = h1 * 60 + m1
+                            min2 = h2 * 60 + m2
+                            if min2 < min1:
+                                min2 += 24 * 60
+                            total_minutos += (min2 - min1)
+                        hora_str = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}" if (d.activo and d.hora_entrada and d.hora_salida) else "Libre"
                         
-                        # Calcular minutos
-                        h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
-                        h2, m2 = d.hora_salida.hour, d.hora_salida.minute
-                        min1 = h1 * 60 + m1
-                        min2 = h2 * 60 + m2
-                        if min2 < min1: min2 += 24 * 60
-                        total_minutos += (min2 - min1)
+                        if d.semana_tipo == 1:
+                            dias_s1[d.dia_semana] = hora_str
+                        elif d.semana_tipo == 2:
+                            dias_s2[d.dia_semana] = hora_str
+                        else:
+                            dias_s1[d.dia_semana] = hora_str
+                            dias_s2[d.dia_semana] = hora_str
+                    
+                h_total = total_minutos // 60
+                m_total = total_minutos % 60
+                horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
+                if total_minutos == 0: horas_str = "N/C"
 
-            # Formatear total horas
-            h_total = total_minutos // 60
-            m_total = total_minutos % 60
-            horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
-            if total_minutos == 0: horas_str = "N/C"
+                empleados_data.append({
+                    'nombre': f.get_full_name(),
+                    'run': f.run,
+                    'cargo': f.get_funcion_display() or f.get_role_display(),
+                    'es_sereno': True,
+                    'dias_s1': [dias_s1[i] for i in range(7)],
+                    'dias_s2': [dias_s2[i] for i in range(7)],
+                    'total_horas': horas_str
+                })
+            else:
+                # Normal format for non-serenos
+                dias_list = []
+                dias_data = {i: "Libre" for i in range(7)}
+                total_minutos = 0
+                
+                if horario:
+                    for d in horario.dias.all():
+                        if d.activo and d.hora_entrada and d.hora_salida:
+                            dias_data[d.dia_semana] = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
+                            h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
+                            h2, m2 = d.hora_salida.hour, d.hora_salida.minute
+                            min1 = h1 * 60 + m1
+                            min2 = h2 * 60 + m2
+                            if min2 < min1: min2 += 24 * 60
+                            total_minutos += (min2 - min1)
 
-            empleados_data.append({
-                'nombre': f.get_full_name(),
-                'run': f.run,
-                'cargo': f.get_funcion_display() or f.get_role_display(),
-                'dias': [dias_data[i] for i in range(7)],
-                'total_horas': horas_str
-            })
+                h_total = total_minutos // 60
+                m_total = total_minutos % 60
+                horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
+                if total_minutos == 0: horas_str = "N/C"
+
+                empleados_data.append({
+                    'nombre': f.get_full_name(),
+                    'run': f.run,
+                    'cargo': f.get_funcion_display() or f.get_role_display(),
+                    'dias': [dias_data[i] for i in range(7)],
+                    'total_horas': horas_str
+                })
 
         html_string = render_to_string('reportes/pdf_horarios.html', {
             'empleados_data': empleados_data,
