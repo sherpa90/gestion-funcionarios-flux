@@ -1392,7 +1392,7 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             is_active=True,
             role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
         ).filter(
-            models.Q(funcion='SERENO') | models.Q(tipo_funcionario='SERENO')
+            Q(funcion='SERENO') | Q(tipo_funcionario='SERENO')
         ).exists()
         
         # Encabezados dinámicos
@@ -1634,7 +1634,7 @@ class ExportarHorariosPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
         
         # Check if there are serenos
         tiene_serenos = funcionarios.filter(
-            models.Q(funcion='SERENO') | models.Q(tipo_funcionario='SERENO')
+            Q(funcion='SERENO') | Q(tipo_funcionario='SERENO')
         ).exists()
         
         DIA_NAMES = {0: 'Lun', 1: 'Mar', 2: 'Mié', 3: 'Jue', 4: 'Vie', 5: 'Sáb', 6: 'Dom'}
