@@ -793,48 +793,117 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Pestaña 4: Horarios Funcionarios
         from asistencia.models import HorarioFuncionario, DiaHorario
         ws_horarios = wb.create_sheet(title="Horarios Funcionarios")
-        ws_horarios.append(['N°', 'Funcionario', 'RUN', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+        ws_horarios.append(['N°', 'Funcionario', 'RUN', 'Cargo', 'Lunes S1', 'Martes S1', 'Miércoles S1', 'Jueves S1', 'Viernes S1', 'Sábado S1', 'Domingo S1', 'Lunes S2', 'Martes S2', 'Miércoles S2', 'Jueves S2', 'Viernes S2', 'Sábado S2', 'Domingo S2'])
 
         # Set column widths
         ws_horarios.column_dimensions['A'].width = 8   # N°
         ws_horarios.column_dimensions['B'].width = 30  # Funcionario
         ws_horarios.column_dimensions['C'].width = 15  # RUN
-        for col in ['D', 'E', 'F', 'G', 'H', 'I', 'J']:
+        ws_horarios.column_dimensions['D'].width = 25  # Cargo
+        for col in ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S']:
             ws_horarios.column_dimensions[col].width = 15  # Days
 
         # Get all active schedules with their day details
         horarios_con_dias = HorarioFuncionario.objects.filter(activo=True).prefetch_related('dias')
 
-        # Create a dictionary for quick lookup
-        horarios_dict = {}
+        # Create a dictionary for quick lookup - separate for semana 1 and semana 2
+        horarios_dict_s1 = {}  # Semana 1
+        horarios_dict_s2 = {}  # Semana 2
+        horarios_dict_universal = {}  # Horarios que aplican a ambas semanas
+
         for horario in horarios_con_dias:
-            dias_dict = {}
+            dias_dict_s1 = {}
+            dias_dict_s2 = {}
+            dias_dict_universal = {}
+            
             for dia in horario.dias.all():
                 dia_nombre = dia.get_dia_semana_display()
                 if dia.activo and dia.hora_entrada:
-                    dias_dict[dia_nombre] = f"{dia.hora_entrada.strftime('%H:%M')}"
+                    hora_str = f"{dia.hora_entrada.strftime('%H:%M')}"
                     if dia.hora_salida:
-                        dias_dict[dia_nombre] += f" - {dia.hora_salida.strftime('%H:%M')}"
+                        hora_str += f" - {dia.hora_salida.strftime('%H:%M')}"
+                    
+                    # Check if it's specific to a week or universal
+                    if dia.semana_tipo == 1:
+                        dias_dict_s1[dia_nombre] = hora_str
+                    elif dia.semana_tipo == 2:
+                        dias_dict_s2[dia_nombre] = hora_str
+                    else:
+                        # Universal (applies to both weeks)
+                        dias_dict_universal[dia_nombre] = hora_str
                 else:
-                    dias_dict[dia_nombre] = "Libre"
-            horarios_dict[horario.funcionario_id] = dias_dict
+                    # Libre
+                    dia_nombre = dia.get_dia_semana_display()
+                    if dia.semana_tipo == 1:
+                        dias_dict_s1[dia_nombre] = "Libre"
+                    elif dia.semana_tipo == 2:
+                        dias_dict_s2[dia_nombre] = "Libre"
+                    else:
+                        # Universal
+                        dias_dict_universal[dia_nombre] = "Libre"
+            
+            horarios_dict_s1[horario.funcionario_id] = dias_dict_s1
+            horarios_dict_s2[horario.funcionario_id] = dias_dict_s2
+            horarios_dict_universal[horario.funcionario_id] = dias_dict_universal
 
         # Procesar horarios semanales
         for i, func in enumerate(funcionarios, 2):  # Start from row 2 (after headers)
-            dias_horario = horarios_dict.get(func.id, {})
+            # Check if funcionario is sereno
+            es_sereno = (
+                getattr(func, 'funcion', None) == 'SERENO' or
+                getattr(func, 'tipo_funcionario', None) == 'SERENO'
+            )
+            
+            if es_sereno:
+                # For serenos, show week 1 and week 2 schedules separately
+                dias_horario_s1 = horarios_dict_s1.get(func.id, {})
+                dias_horario_s2 = horarios_dict_s2.get(func.id, {})
+                # Also include universal schedules
+                dias_universal = horarios_dict_universal.get(func.id, {})
+                
+                # Merge universal with specific week schedules
+                for dia, hora in dias_universal.items():
+                    if dia not in dias_horario_s1:
+                        dias_horario_s1[dia] = hora
+                    if dia not in dias_horario_s2:
+                        dias_horario_s2[dia] = hora
+            else:
+                # For non-serenos, use existing logic (universal or week-specific)
+                dias_horario_s1 = horarios_dict_s1.get(func.id, {})
+                dias_horario_s2 = horarios_dict_s2.get(func.id, {})
+                # Also include universal schedules
+                dias_universal = horarios_dict_universal.get(func.id, {})
+                
+                # Merge universal with specific week schedules
+                for dia, hora in dias_universal.items():
+                    if dia not in dias_horario_s1:
+                        dias_horario_s1[dia] = hora
+                    if dia not in dias_horario_s2:
+                        dias_horario_s2[dia] = hora
 
+            # Days of the week - Semana 1
             ws_horarios.cell(row=i, column=1).value = i - 1  # N°
             ws_horarios.cell(row=i, column=2).value = func.get_full_name() or func.username  # Funcionario
             ws_horarios.cell(row=i, column=3).value = func.run  # RUN
+            ws_horarios.cell(row=i, column=4).value = func.get_funcion_display() or ""  # Cargo
 
-            # Days of the week
-            ws_horarios.cell(row=i, column=4).value = dias_horario.get('Lunes', 'Libre')
-            ws_horarios.cell(row=i, column=5).value = dias_horario.get('Martes', 'Libre')
-            ws_horarios.cell(row=i, column=6).value = dias_horario.get('Miércoles', 'Libre')
-            ws_horarios.cell(row=i, column=7).value = dias_horario.get('Jueves', 'Libre')
-            ws_horarios.cell(row=i, column=8).value = dias_horario.get('Viernes', 'Libre')
-            ws_horarios.cell(row=i, column=9).value = dias_horario.get('Sábado', 'Libre')
-            ws_horarios.cell(row=i, column=10).value = dias_horario.get('Domingo', 'Libre')
+            # Semana 1 columns (E-K: Lunes to Domingo)
+            ws_horarios.cell(row=i, column=5).value = dias_horario_s1.get('Lunes', 'Libre')
+            ws_horarios.cell(row=i, column=6).value = dias_horario_s1.get('Martes', 'Libre')
+            ws_horarios.cell(row=i, column=7).value = dias_horario_s1.get('Miércoles', 'Libre')
+            ws_horarios.cell(row=i, column=8).value = dias_horario_s1.get('Jueves', 'Libre')
+            ws_horarios.cell(row=i, column=9).value = dias_horario_s1.get('Viernes', 'Libre')
+            ws_horarios.cell(row=i, column=10).value = dias_horario_s1.get('Sábado', 'Libre')
+            ws_horarios.cell(row=i, column=11).value = dias_horario_s1.get('Domingo', 'Libre')
+
+            # Semana 2 columns (L-S: Lunes to Domingo)
+            ws_horarios.cell(row=i, column=12).value = dias_horario_s2.get('Lunes', 'Libre')
+            ws_horarios.cell(row=i, column=13).value = dias_horario_s2.get('Martes', 'Libre')
+            ws_horarios.cell(row=i, column=14).value = dias_horario_s2.get('Miércoles', 'Libre')
+            ws_horarios.cell(row=i, column=15).value = dias_horario_s2.get('Jueves', 'Libre')
+            ws_horarios.cell(row=i, column=16).value = dias_horario_s2.get('Viernes', 'Libre')
+            ws_horarios.cell(row=i, column=17).value = dias_horario_s2.get('Sábado', 'Libre')
+            ws_horarios.cell(row=i, column=18).value = dias_horario_s2.get('Domingo', 'Libre')
 
         # Respuesta HTTP
         from io import BytesIO
