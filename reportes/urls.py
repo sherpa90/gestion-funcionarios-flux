@@ -4,7 +4,7 @@ from .views import (
     ReporteMensualDiasAdministrativosView, ReporteMensualDiasAdministrativosExcelView,
     ExportarDAEMExcelView, ExportarDAEMPDFView, MiReportePDFView,
     ExportarHorariosExcelView, ExportarHorariosPDFView, MiHorarioPDFView,
-    ExportarJustificacionesExcelView, ExportarJustificacionesPDFView
+    ExportarHorarioIndividualPDFView, ExportarJustificacionesExcelView, ExportarJustificacionesPDFView
 )
 
 urlpatterns = [
@@ -18,6 +18,7 @@ urlpatterns = [
     path('daem-excel/', ExportarDAEMExcelView.as_view(), name='reportes_daem_excel'),
     path('daem-pdf/', ExportarDAEMPDFView.as_view(), name='reportes_daem_pdf'),
     path('excel/horarios/', ExportarHorariosExcelView.as_view(), name='exportar_horarios'),
+    path('pdf/horarios/<int:usuario_id>/', ExportarHorarioIndividualPDFView.as_view(), name='exportar_horario_individual_pdf'),
     path('pdf/horarios/', ExportarHorariosPDFView.as_view(), name='exportar_horarios_pdf'),
     path('pdf/mi-horario/', MiHorarioPDFView.as_view(), name='mi_horario_pdf'),
     path('excel/justificaciones/', ExportarJustificacionesExcelView.as_view(), name='reportes_justificaciones_excel'),

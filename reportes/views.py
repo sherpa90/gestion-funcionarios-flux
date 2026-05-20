@@ -1384,6 +1384,69 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         wb.save(response)
         return response
 
+class ExportarHorarioIndividualPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Exportar el horario semanal de un funcionario individual a PDF"""
+    
+    def test_func(self):
+        return self.request.user.role in ['DIRECTOR', 'SECRETARIA', 'ADMIN', 'DIRECTIVO']
+
+    def get(self, request, usuario_id):
+        try:
+            funcionario = CustomUser.objects.get(pk=usuario_id)
+        except CustomUser.DoesNotExist:
+            return HttpResponse("Funcionario no encontrado", status=404)
+        
+        horario = getattr(funcionario, 'horario', None)
+        total_minutos = 0
+        
+        # Inicializar con "Libre"
+        dias_data = {i: "Libre" for i in range(7)}
+        
+        if horario:
+            for d in horario.dias.all():
+                if d.activo and d.hora_entrada and d.hora_salida:
+                    dias_data[d.dia_semana] = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
+                    
+                    # Calcular minutos
+                    h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
+                    h2, m2 = d.hora_salida.hour, d.hora_salida.minute
+                    min1 = h1 * 60 + m1
+                    min2 = h2 * 60 + m2
+                    if min2 < min1: 
+                        min2 += 24 * 60  # Turno nocturno
+                    total_minutos += (min2 - min1)
+        
+        # Formatear total horas
+        h_total = total_minutos // 60
+        m_total = total_minutos % 60
+        horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
+        if total_minutos == 0: 
+            horas_str = "N/C"
+
+        empleado_data = {
+            'nombre': funcionario.get_full_name(),
+            'run': funcionario.run,
+            'cargo': funcionario.get_funcion_display() or funcionario.get_role_display(),
+            'dias': [dias_data[i] for i in range(7)],
+            'total_horas': horas_str
+        }
+
+        html_string = render_to_string('reportes/pdf_horarios.html', {
+            'empleados_data': [empleado_data],
+            'fecha_exportacion': now().strftime('%d/%m/%Y %H:%M'),
+            'director': CustomUser.objects.filter(role='DIRECTOR').first(),
+            'es_individual': True
+        })
+
+        html = HTML(string=html_string)
+        result = html.write_pdf()
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename=horario_{funcionario.run}.pdf'
+        response.write(result)
+        return response
+
+
 class ExportarHorariosPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
     """Exportar los horarios semanales de todos los funcionarios a PDF"""
     
