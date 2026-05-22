@@ -1480,10 +1480,15 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                         d_s1[nombre] = "Libre"
                         d_s2[nombre] = "Libre"
 
-                h_total = total_minutos // 60
-                m_total = total_minutos % 60
+                # Para serenos: mostrar promedio semanal (ciclo rotativo / 2) según regla 44h + carry a la semana posterior
+                mostrar_minutos = total_minutos
+                if es_sereno:
+                    mostrar_minutos = total_minutos // 2
+
+                h_total = mostrar_minutos // 60
+                m_total = mostrar_minutos % 60
                 horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
-                if total_minutos == 0: horas_str = "No configurado"
+                if mostrar_minutos == 0: horas_str = "No configurado"
                 
                 row = [
                     i, f.get_full_name(), f.run, f.get_funcion_display() or f.get_role_display(),
@@ -1559,28 +1564,36 @@ class ExportarHorarioIndividualPDFView(LoginRequiredMixin, UserPassesTestMixin, 
         dias_s2 = {}
         
         if horario:
-            for d in horario.dias.all():
-                if d.activo and d.hora_entrada and d.hora_salida:
-                    hora_str = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
-                    h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
-                    h2, m2 = d.hora_salida.hour, d.hora_salida.minute
-                    min1 = h1 * 60 + m1
-                    min2 = h2 * 60 + m2
-                    if min2 < min1:
-                        min2 += 24 * 60  # Turno nocturno
-                    total_minutos += (min2 - min1)
-                else:
-                    hora_str = "Libre"
-                
-                dia_nombre = list(DIA_SEMANA_MAP.values())[d.dia_semana]
-                
-                if d.semana_tipo == 1:
-                    dias_s1[dia_nombre] = hora_str
-                elif d.semana_tipo == 2:
-                    dias_s2[dia_nombre] = hora_str
-                else:
-                    dias_s1[dia_nombre] = hora_str
-                    dias_s2[dia_nombre] = hora_str
+            # Robust lookup for individual sereno report (same as collective)
+            for day in range(7):
+                dia_nombre = list(DIA_SEMANA_MAP.values())[day]
+
+                # Semana 1
+                d1 = horario.dias.filter(dia_semana=day, semana_tipo=1).first()
+                if not d1:
+                    d1 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
+
+                # Semana 2
+                d2 = horario.dias.filter(dia_semana=day, semana_tipo=2).first()
+                if not d2:
+                    d2 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
+
+                def get_hora_str(dh):
+                    nonlocal total_minutos
+                    if dh and dh.activo and dh.hora_entrada and dh.hora_salida:
+                        hora_str = f"{dh.hora_entrada.strftime('%H:%M')} - {dh.hora_salida.strftime('%H:%M')}"
+                        h1, m1 = dh.hora_entrada.hour, dh.hora_entrada.minute
+                        h2, m2 = dh.hora_salida.hour, dh.hora_salida.minute
+                        min1 = h1 * 60 + m1
+                        min2 = h2 * 60 + m2
+                        if min2 < min1:
+                            min2 += 24 * 60
+                        total_minutos += (min2 - min1)
+                        return hora_str
+                    return "Libre"
+
+                dias_s1[dia_nombre] = get_hora_str(d1)
+                dias_s2[dia_nombre] = get_hora_str(d2)
         
         # Formatear total horas
         h_total = total_minutos // 60
@@ -1758,42 +1771,85 @@ class MiHorarioPDFView(LoginRequiredMixin, View):
         f = request.user
         horario = getattr(f, 'horario', None)
         total_minutos = 0
-        
-        # Inicializar con "Libre"
-        dias_data = {i: "Libre" for i in range(7)}
-        
-        if horario:
-            for d in horario.dias.all():
-                if d.activo and d.hora_entrada and d.hora_salida:
-                    dias_data[d.dia_semana] = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
-                    
-                    # Calcular minutos
-                    h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
-                    h2, m2 = d.hora_salida.hour, d.hora_salida.minute
-                    min1 = h1 * 60 + m1
-                    min2 = h2 * 60 + m2
-                    if min2 < min1: min2 += 24 * 60
-                    total_minutos += (min2 - min1)
 
-        # Formatear total horas
-        h_total = total_minutos // 60
-        m_total = total_minutos % 60
-        horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
-        if total_minutos == 0: horas_str = "N/C"
+        es_sereno = (
+            getattr(f, 'funcion', None) == 'SERENO' or
+            getattr(f, 'tipo_funcionario', None) == 'SERENO'
+        )
 
-        empleado_data = {
-            'nombre': f.get_full_name(),
-            'run': f.run,
-            'cargo': f.get_funcion_display() or f.get_role_display(),
-            'dias': [dias_data[i] for i in range(7)],
-            'total_horas': horas_str
-        }
+        if es_sereno:
+            dias_s1 = {}
+            dias_s2 = {}
+            if horario:
+                for day in range(7):
+                    dia_nombre = list(DIA_SEMANA_MAP.values())[day]
+
+                    d1 = horario.dias.filter(dia_semana=day, semana_tipo=1).first()
+                    if not d1:
+                        d1 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
+
+                    d2 = horario.dias.filter(dia_semana=day, semana_tipo=2).first()
+                    if not d2:
+                        d2 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
+
+                    def get_hora_str(dh):
+                        nonlocal total_minutos
+                        if dh and dh.activo and dh.hora_entrada and dh.hora_salida:
+                            h1, m1 = dh.hora_entrada.hour, dh.hora_entrada.minute
+                            h2, m2 = dh.hora_salida.hour, dh.hora_salida.minute
+                            min1 = h1 * 60 + m1
+                            min2 = h2 * 60 + m2
+                            if min2 < min1: min2 += 24 * 60
+                            total_minutos += (min2 - min1)
+                            return f"{dh.hora_entrada.strftime('%H:%M')} - {dh.hora_salida.strftime('%H:%M')}"
+                        return "Libre"
+
+                    dias_s1[dia_nombre] = get_hora_str(d1)
+                    dias_s2[dia_nombre] = get_hora_str(d2)
+
+            empleado_data = {
+                'nombre': f.get_full_name(),
+                'run': f.run,
+                'cargo': f.get_funcion_display() or f.get_role_display(),
+                'es_sereno': True,
+                'dias_s1': [dias_s1.get(list(DIA_SEMANA_MAP.values())[day], 'Libre') for day in range(7)],
+                'dias_s2': [dias_s2.get(list(DIA_SEMANA_MAP.values())[day], 'Libre') for day in range(7)],
+                'total_horas': f"{total_minutos // 60}h {total_minutos % 60}m" if total_minutos % 60 else f"{total_minutos // 60}h"
+            }
+            if total_minutos == 0:
+                empleado_data['total_horas'] = "N/C"
+        else:
+            dias_data = {i: "Libre" for i in range(7)}
+            if horario:
+                for d in horario.dias.all():
+                    if d.activo and d.hora_entrada and d.hora_salida:
+                        dias_data[d.dia_semana] = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
+                        h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
+                        h2, m2 = d.hora_salida.hour, d.hora_salida.minute
+                        min1 = h1 * 60 + m1
+                        min2 = h2 * 60 + m2
+                        if min2 < min1: min2 += 24 * 60
+                        total_minutos += (min2 - min1)
+
+            h_total = total_minutos // 60
+            m_total = total_minutos % 60
+            horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
+            if total_minutos == 0: horas_str = "N/C"
+
+            empleado_data = {
+                'nombre': f.get_full_name(),
+                'run': f.run,
+                'cargo': f.get_funcion_display() or f.get_role_display(),
+                'dias': [dias_data[i] for i in range(7)],
+                'total_horas': horas_str
+            }
 
         html_string = render_to_string('reportes/pdf_horarios.html', {
             'empleados_data': [empleado_data],
             'fecha_exportacion': now().strftime('%d/%m/%Y %H:%M'),
             'director': CustomUser.objects.filter(role='DIRECTOR').first(),
-            'es_individual': True
+            'es_individual': True,
+            'es_landscape_force': es_sereno
         })
 
         html = HTML(string=html_string)

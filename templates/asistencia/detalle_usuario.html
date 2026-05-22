@@ -635,6 +635,20 @@ document.addEventListener('alpine:init', () => {
                 }
             });
             
+            // Regla serenos: tope 44h por semana de rotación + carry-over al siguiente ciclo
+            if (this.dias.some(d => d.semana_tipo)) {
+                const MAX = 44 * 60;
+                let a1 = t1;
+                let a2 = t2;
+                if (a1 > MAX) {
+                    const excess = a1 - MAX;
+                    a1 = MAX;
+                    a2 += excess;
+                }
+                t1 = a1;
+                t2 = a2;
+            }
+
             this.totalMinutosS1 = t1;
             this.totalMinutosS2 = t2;
             this.totalHorasS1 = this.formatMinutos(t1);
