@@ -474,10 +474,22 @@
                                 <div class="text-sm font-black text-blue-600" x-text="currentSemanaTab === 1 ? totalHorasS1 : totalHorasS2"></div>
                             </div>
                         </div>
-                        <div x-show="!{{ es_sereno|lower }} && ((currentSemanaTab === 1 && totalMinutosS1 > 2640) || (currentSemanaTab === 2 && totalMinutosS2 > 2640))" class="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
-                            <i class="fas fa-exclamation-triangle text-red-600 text-xs"></i>
-                            <span class="text-xs font-bold text-red-700">Exceso 44h</span>
+
+                        <!-- Cuadro separado: promedio ajustado solo para serenos -->
+                        <div x-show="dias.some(d => d.semana_tipo) && adjWeeklyHoras"
+                             class="ml-3 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-bold text-emerald-700 flex items-center gap-2">
+                            <i class="fas fa-balance-scale text-emerald-600"></i>
+                            <div>
+                                <div class="text-[10px] text-emerald-600 uppercase tracking-widest">Promedio semanal</div>
+                                <div class="font-black" x-text="adjWeeklyHoras"></div>
+                                <div class="text-[9px] text-emerald-500">(44h + carry a siguiente semana)</div>
+                            </div>
                         </div>
+
+                         <div x-show="!{{ es_sereno|lower }} && ((currentSemanaTab === 1 && totalMinutosS1 > 2640) || (currentSemanaTab === 2 && totalMinutosS2 > 2640))" class="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+                             <i class="fas fa-exclamation-triangle text-red-600 text-xs"></i>
+                             <span class="text-xs font-bold text-red-700">Exceso 44h</span>
+                         </div>
                     </div>
 
                     <!-- Botón Guardar -->
@@ -574,6 +586,11 @@ document.addEventListener('alpine:init', () => {
         totalHorasS2: '0h 0m',
         totalMinutosS1: 0,
         totalMinutosS2: 0,
+        // Valores ajustados (solo para serenos - 44h + carry)
+        adjWeeklyHoras: null,
+        adjMinutosS1: 0,
+        adjMinutosS2: 0,
+        adjWeeklyMinutos: 0,
         dias: [],
         
         init() {
@@ -649,10 +666,29 @@ document.addEventListener('alpine:init', () => {
                 t2 = a2;
             }
 
+            // Valores reales (lo que el sereno realmente tiene configurado)
             this.totalMinutosS1 = t1;
             this.totalMinutosS2 = t2;
             this.totalHorasS1 = this.formatMinutos(t1);
             this.totalHorasS2 = this.formatMinutos(t2);
+
+            // Valores ajustados según regla serenos (44h máximo + carry a la semana posterior)
+            if (this.dias.some(d => d.semana_tipo)) {
+                const MAX = 44 * 60;
+                let adj1 = t1;
+                let adj2 = t2;
+                if (adj1 > MAX) {
+                    const excess = adj1 - MAX;
+                    adj1 = MAX;
+                    adj2 += excess;
+                }
+                this.adjMinutosS1 = adj1;
+                this.adjMinutosS2 = adj2;
+                this.adjWeeklyMinutos = Math.round((adj1 + adj2) / 2);
+                this.adjWeeklyHoras = this.formatMinutos(this.adjWeeklyMinutos);
+            } else {
+                this.adjWeeklyHoras = null;
+            }
         },
 
         async guardarHorario() {

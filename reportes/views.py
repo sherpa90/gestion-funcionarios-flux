@@ -1398,13 +1398,13 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Encabezados dinámicos
         if tiene_serenos:
             headers = ['N°', 'Funcionario', 'RUN', 'Cargo',
-                       'Lunes S1', 'Martes S1', 'Miércoles S1', 'Jueves S1', 'Viernes S1', 'Sábado S1', 'Domingo S1',
-                       'Lunes S2', 'Martes S2', 'Miércoles S2', 'Jueves S2', 'Viernes S2', 'Sábado S2', 'Domingo S2',
-                       'Horas Semanales']
+                        'Lunes S1', 'Martes S1', 'Miércoles S1', 'Jueves S1', 'Viernes S1', 'Sábado S1', 'Domingo S1',
+                        'Lunes S2', 'Martes S2', 'Miércoles S2', 'Jueves S2', 'Viernes S2', 'Sábado S2', 'Domingo S2',
+                        'Horas Reales (Ciclo)', 'Prom. Semanal Ajustado (44h + carry)']
         else:
             headers = ['N°', 'Funcionario', 'RUN', 'Cargo', 
-                       'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo', 
-                       'Horas Semanales']
+                        'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo', 
+                        'Horas Semanales']
         
         ws.append(headers)
         
@@ -1423,6 +1423,7 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             for col_letter in ['E','F','G','H','I','J','K','L','M','N','O','P','Q','R']:
                 ws.column_dimensions[col_letter].width = 14
             ws.column_dimensions['S'].width = 18
+            ws.column_dimensions['T'].width = 22  # Promedio ajustado
         else:
             for col_letter in ['E','F','G','H','I','J','K']:
                 ws.column_dimensions[col_letter].width = 18
@@ -1443,25 +1444,25 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             total_minutos = 0
             
             if tiene_serenos and es_sereno:
-                # Robust lookup matching the weekly schedule editor (prefer specific semana_tipo, then None)
+                # Robust lookup + cálculo de suma real + promedio ajustado (44h + carry)
                 d_s1 = {}
                 d_s2 = {}
+                raw_s1 = 0
+                raw_s2 = 0
+
                 if horario:
                     for day in range(7):
                         nombre = DIA_SEMANA_MAP[day]
 
-                        # Semana 1
                         d1 = horario.dias.filter(dia_semana=day, semana_tipo=1).first()
                         if not d1:
                             d1 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
 
-                        # Semana 2
                         d2 = horario.dias.filter(dia_semana=day, semana_tipo=2).first()
                         if not d2:
                             d2 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
 
-                        def get_hora_str(dh):
-                            nonlocal total_minutos
+                        def calc_minutes(dh):
                             if dh and dh.activo and dh.hora_entrada and dh.hora_salida:
                                 h1, m1 = dh.hora_entrada.hour, dh.hora_entrada.minute
                                 h2, m2 = dh.hora_salida.hour, dh.hora_salida.minute
@@ -1469,34 +1470,63 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                                 min2 = h2 * 60 + m2
                                 if min2 < min1:
                                     min2 += 24 * 60
-                                total_minutos += (min2 - min1)
+                                return min2 - min1
+                            return 0
+
+                        def get_str(dh):
+                            if dh and dh.activo and dh.hora_entrada and dh.hora_salida:
                                 return f"{dh.hora_entrada.strftime('%H:%M')} - {dh.hora_salida.strftime('%H:%M')}"
                             return "Libre"
 
-                        d_s1[nombre] = get_hora_str(d1)
-                        d_s2[nombre] = get_hora_str(d2)
+                        mins1 = calc_minutes(d1)
+                        mins2 = calc_minutes(d2)
+
+                        raw_s1 += mins1
+                        raw_s2 += mins2
+
+                        d_s1[nombre] = get_str(d1)
+                        d_s2[nombre] = get_str(d2)
                 else:
                     for nombre in DIA_SEMANA_MAP.values():
                         d_s1[nombre] = "Libre"
                         d_s2[nombre] = "Libre"
 
-                # Para serenos: mostrar promedio semanal (ciclo rotativo / 2) según regla 44h + carry a la semana posterior
-                mostrar_minutos = total_minutos
-                if es_sereno:
-                    mostrar_minutos = total_minutos // 2
+                # Suma real del ciclo (lo que el sereno tiene configurado)
+                total_real_minutos = raw_s1 + raw_s2
 
-                h_total = mostrar_minutos // 60
-                m_total = mostrar_minutos % 60
-                horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
-                if mostrar_minutos == 0: horas_str = "No configurado"
-                
+                # Ajuste según regla: 44h tope + carry a la semana posterior
+                MAX = 44 * 60
+                adj1 = raw_s1
+                adj2 = raw_s2
+                if adj1 > MAX:
+                    excess = adj1 - MAX
+                    adj1 = MAX
+                    adj2 += excess
+
+                promedio_semanal_min = (adj1 + adj2) // 2
+
+                # Formatear para la columna de suma real
+                h_real = total_real_minutos // 60
+                m_real = total_real_minutos % 60
+                horas_reales_str = f"{h_real}h {m_real}m" if m_real > 0 else f"{h_real}h"
+                if total_real_minutos == 0:
+                    horas_reales_str = "No configurado"
+
+                # Formatear promedio ajustado
+                h_aj = promedio_semanal_min // 60
+                m_aj = promedio_semanal_min % 60
+                promedio_ajustado_str = f"{h_aj}h {m_aj}m" if m_aj > 0 else f"{h_aj}h"
+                if promedio_semanal_min == 0:
+                    promedio_ajustado_str = "N/C"
+
                 row = [
                     i, f.get_full_name(), f.run, f.get_funcion_display() or f.get_role_display(),
                     d_s1.get('Lunes','Libre'), d_s1.get('Martes','Libre'), d_s1.get('Miércoles','Libre'),
                     d_s1.get('Jueves','Libre'), d_s1.get('Viernes','Libre'), d_s1.get('Sábado','Libre'), d_s1.get('Domingo','Libre'),
                     d_s2.get('Lunes','Libre'), d_s2.get('Martes','Libre'), d_s2.get('Miércoles','Libre'),
                     d_s2.get('Jueves','Libre'), d_s2.get('Viernes','Libre'), d_s2.get('Sábado','Libre'), d_s2.get('Domingo','Libre'),
-                    horas_str
+                    horas_reales_str,          # Suma real del ciclo
+                    promedio_ajustado_str      # Promedio semanal según regla 44h + carry
                 ]
             else:
                 # Formato normal para no serenos
@@ -1518,13 +1548,20 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                 m_total = total_minutos % 60
                 horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
                 if total_minutos == 0: horas_str = "No configurado"
-                
-                row = [
-                    i, f.get_full_name(), f.run, f.get_funcion_display() or f.get_role_display(),
-                    dias_dict.get(0,'Libre'), dias_dict.get(1,'Libre'), dias_dict.get(2,'Libre'),
-                    dias_dict.get(3,'Libre'), dias_dict.get(4,'Libre'), dias_dict.get(5,'Libre'), dias_dict.get(6,'Libre'),
-                    horas_str
-                ]
+
+                if tiene_serenos:
+                    # Non-sereno en modo sereno: duplicamos los 7 días y ponemos horas en las dos columnas nuevas
+                    dias_s1_s2 = [dias_dict.get(i,'Libre') for i in range(7)] * 2
+                    row = [
+                        i, f.get_full_name(), f.run, f.get_funcion_display() or f.get_role_display(),
+                    ] + dias_s1_s2 + [horas_str, "N/A"]
+                else:
+                    row = [
+                        i, f.get_full_name(), f.run, f.get_funcion_display() or f.get_role_display(),
+                        dias_dict.get(0,'Libre'), dias_dict.get(1,'Libre'), dias_dict.get(2,'Libre'),
+                        dias_dict.get(3,'Libre'), dias_dict.get(4,'Libre'), dias_dict.get(5,'Libre'), dias_dict.get(6,'Libre'),
+                        horas_str
+                    ]
             
             ws.append(row)
             for cell in ws[ws.max_row][4:]:
@@ -1678,38 +1715,58 @@ class ExportarHorariosPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
                 dias_s2 = {i: "Libre" for i in range(7)}
                 
                 if horario:
-                    # Robust lookup: for each day, prefer specific semana_tipo, then None (common schedule)
+                    # Robust lookup + raw per week + adjusted promedio
+                    raw_s1 = 0
+                    raw_s2 = 0
                     for day in range(7):
-                        # Semana 1
                         d1 = horario.dias.filter(dia_semana=day, semana_tipo=1).first()
                         if not d1:
                             d1 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
                         
-                        # Semana 2
                         d2 = horario.dias.filter(dia_semana=day, semana_tipo=2).first()
                         if not d2:
                             d2 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
 
-                        def get_hora_str(dh):
-                            nonlocal total_minutos
+                        def calc_mins(dh):
                             if dh and dh.activo and dh.hora_entrada and dh.hora_salida:
                                 h1, m1 = dh.hora_entrada.hour, dh.hora_entrada.minute
                                 h2, m2 = dh.hora_salida.hour, dh.hora_salida.minute
                                 min1 = h1 * 60 + m1
                                 min2 = h2 * 60 + m2
-                                if min2 < min1:
-                                    min2 += 24 * 60
-                                total_minutos += (min2 - min1)  # accumulate here too
+                                if min2 < min1: min2 += 24 * 60
+                                return min2 - min1
+                            return 0
+
+                        def get_str(dh):
+                            if dh and dh.activo and dh.hora_entrada and dh.hora_salida:
                                 return f"{dh.hora_entrada.strftime('%H:%M')} - {dh.hora_salida.strftime('%H:%M')}"
                             return "Libre"
 
-                        dias_s1[day] = get_hora_str(d1)
-                        dias_s2[day] = get_hora_str(d2)
+                        raw_s1 += calc_mins(d1)
+                        raw_s2 += calc_mins(d2)
+
+                        dias_s1[day] = get_str(d1)
+                        dias_s2[day] = get_str(d2)
                     
-                h_total = total_minutos // 60
-                m_total = total_minutos % 60
-                horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
-                if total_minutos == 0: horas_str = "N/C"
+                # Suma real del ciclo
+                total_real = raw_s1 + raw_s2
+                h_real = total_real // 60
+                m_real = total_real % 60
+                horas_reales_str = f"{h_real}h {m_real}m" if m_real > 0 else f"{h_real}h"
+                if total_real == 0: horas_reales_str = "N/C"
+
+                # Ajuste 44h + carry → promedio semanal
+                MAX = 44 * 60
+                adj1 = raw_s1
+                adj2 = raw_s2
+                if adj1 > MAX:
+                    excess = adj1 - MAX
+                    adj1 = MAX
+                    adj2 += excess
+                prom_min = (adj1 + adj2) // 2
+                h_prom = prom_min // 60
+                m_prom = prom_min % 60
+                prom_ajustado_str = f"{h_prom}h {m_prom}m" if m_prom > 0 else f"{h_prom}h"
 
                 empleados_data.append({
                     'nombre': f.get_full_name(),
@@ -1718,7 +1775,8 @@ class ExportarHorariosPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
                     'es_sereno': True,
                     'dias_s1': [dias_s1[i] for i in range(7)],
                     'dias_s2': [dias_s2[i] for i in range(7)],
-                    'total_horas': horas_str
+                    'total_horas': horas_reales_str,           # suma real
+                    'promedio_ajustado': prom_ajustado_str     # 44h + carry
                 })
             else:
                 # Normal format for non-serenos

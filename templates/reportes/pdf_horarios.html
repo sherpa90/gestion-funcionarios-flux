@@ -276,7 +276,10 @@
                         {% for dia in emp.dias_s1 %}
                         <td class="{% if dia == 'Libre' %}libre-cell{% else %}time-cell{% endif %}">{{ dia }}</td>
                         {% endfor %}
-                        <td class="total-cell" rowspan="2" style="vertical-align: middle;">{{ emp.total_horas }}</td>
+                         <td class="total-cell" rowspan="2" style="vertical-align: middle; font-size: 9pt;">
+                             {{ emp.total_horas }}<br>
+                             <span style="font-size: 7pt; color: #4f46e5;">Prom. aj.: {{ emp.promedio_ajustado|default:"—" }}</span>
+                         </td>
                     </tr>
                     <tr>
                         {% if not es_individual %}<td>{{ forloop.counter }}</td>{% endif %}
