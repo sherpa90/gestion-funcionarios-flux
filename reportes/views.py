@@ -1443,33 +1443,42 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             total_minutos = 0
             
             if tiene_serenos and es_sereno:
-                # Construir horarios separados Semana 1 y Semana 2
-                dias_dict = {}
-                for d in horario.dias.all():
-                    if d.activo and d.hora_entrada and d.hora_salida:
-                        h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
-                        h2, m2 = d.hora_salida.hour, d.hora_salida.minute
-                        min1 = h1 * 60 + m1
-                        min2 = h2 * 60 + m2
-                        if min2 < min1: min2 += 24 * 60
-                        total_minutos += (min2 - min1)
-                
-                # Build week dicts
-                d_s1, d_s2 = {}, {}
-                for d in horario.dias.all():
-                    hora_str = (
-                        f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}"
-                        if d.activo and d.hora_entrada and d.hora_salida else "Libre"
-                    )
-                    nombre_dia = DIA_SEMANA_MAP[d.dia_semana]
-                    if d.semana_tipo == 1:
-                        d_s1[nombre_dia] = hora_str
-                    elif d.semana_tipo == 2:
-                        d_s2[nombre_dia] = hora_str
-                    else:
-                        d_s1[nombre_dia] = hora_str
-                        d_s2[nombre_dia] = hora_str
-                
+                # Robust lookup matching the weekly schedule editor (prefer specific semana_tipo, then None)
+                d_s1 = {}
+                d_s2 = {}
+                if horario:
+                    for day in range(7):
+                        nombre = DIA_SEMANA_MAP[day]
+
+                        # Semana 1
+                        d1 = horario.dias.filter(dia_semana=day, semana_tipo=1).first()
+                        if not d1:
+                            d1 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
+
+                        # Semana 2
+                        d2 = horario.dias.filter(dia_semana=day, semana_tipo=2).first()
+                        if not d2:
+                            d2 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
+
+                        def get_hora_str(dh):
+                            if dh and dh.activo and dh.hora_entrada and dh.hora_salida:
+                                h1, m1 = dh.hora_entrada.hour, dh.hora_entrada.minute
+                                h2, m2 = dh.hora_salida.hour, dh.hora_salida.minute
+                                min1 = h1 * 60 + m1
+                                min2 = h2 * 60 + m2
+                                if min2 < min1:
+                                    min2 += 24 * 60
+                                total_minutos += (min2 - min1)
+                                return f"{dh.hora_entrada.strftime('%H:%M')} - {dh.hora_salida.strftime('%H:%M')}"
+                            return "Libre"
+
+                        d_s1[nombre] = get_hora_str(d1)
+                        d_s2[nombre] = get_hora_str(d2)
+                else:
+                    for nombre in DIA_SEMANA_MAP.values():
+                        d_s1[nombre] = "Libre"
+                        d_s2[nombre] = "Libre"
+
                 h_total = total_minutos // 60
                 m_total = total_minutos % 60
                 horas_str = f"{h_total}h {m_total}m" if m_total > 0 else f"{h_total}h"
@@ -1655,24 +1664,32 @@ class ExportarHorariosPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
                 dias_s2 = {i: "Libre" for i in range(7)}
                 
                 if horario:
-                    for d in horario.dias.all():
-                        if d.activo and d.hora_entrada and d.hora_salida:
-                            h1, m1 = d.hora_entrada.hour, d.hora_entrada.minute
-                            h2, m2 = d.hora_salida.hour, d.hora_salida.minute
-                            min1 = h1 * 60 + m1
-                            min2 = h2 * 60 + m2
-                            if min2 < min1:
-                                min2 += 24 * 60
-                            total_minutos += (min2 - min1)
-                        hora_str = f"{d.hora_entrada.strftime('%H:%M')} - {d.hora_salida.strftime('%H:%M')}" if (d.activo and d.hora_entrada and d.hora_salida) else "Libre"
+                    # Robust lookup: for each day, prefer specific semana_tipo, then None (common schedule)
+                    for day in range(7):
+                        # Semana 1
+                        d1 = horario.dias.filter(dia_semana=day, semana_tipo=1).first()
+                        if not d1:
+                            d1 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
                         
-                        if d.semana_tipo == 1:
-                            dias_s1[d.dia_semana] = hora_str
-                        elif d.semana_tipo == 2:
-                            dias_s2[d.dia_semana] = hora_str
-                        else:
-                            dias_s1[d.dia_semana] = hora_str
-                            dias_s2[d.dia_semana] = hora_str
+                        # Semana 2
+                        d2 = horario.dias.filter(dia_semana=day, semana_tipo=2).first()
+                        if not d2:
+                            d2 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
+
+                        def get_hora_str(dh):
+                            if dh and dh.activo and dh.hora_entrada and dh.hora_salida:
+                                h1, m1 = dh.hora_entrada.hour, dh.hora_entrada.minute
+                                h2, m2 = dh.hora_salida.hour, dh.hora_salida.minute
+                                min1 = h1 * 60 + m1
+                                min2 = h2 * 60 + m2
+                                if min2 < min1:
+                                    min2 += 24 * 60
+                                total_minutos += (min2 - min1)  # accumulate here too
+                                return f"{dh.hora_entrada.strftime('%H:%M')} - {dh.hora_salida.strftime('%H:%M')}"
+                            return "Libre"
+
+                        dias_s1[day] = get_hora_str(d1)
+                        dias_s2[day] = get_hora_str(d2)
                     
                 h_total = total_minutos // 60
                 m_total = total_minutos % 60
