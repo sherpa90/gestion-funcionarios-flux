@@ -1666,7 +1666,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                         'dia_semana': i,
                         'semana_tipo': sem_t,
                         'nombre': DIA_CHOICES_DICT[i],
-                        'activo': True if i < 5 else False, # Por defecto desactivar fin de semana
+                        'activo': True,  # Para serenos los fines de semana (Sáb/Dom) son laborales (turnos nocturnos)
                         'hora_entrada': hora_entrada_default,
                         'hora_salida': '17:00'
                     })
