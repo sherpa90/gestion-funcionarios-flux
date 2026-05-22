@@ -1461,6 +1461,7 @@ class ExportarHorariosExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                             d2 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
 
                         def get_hora_str(dh):
+                            nonlocal total_minutos
                             if dh and dh.activo and dh.hora_entrada and dh.hora_salida:
                                 h1, m1 = dh.hora_entrada.hour, dh.hora_entrada.minute
                                 h2, m2 = dh.hora_salida.hour, dh.hora_salida.minute
@@ -1677,6 +1678,7 @@ class ExportarHorariosPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
                             d2 = horario.dias.filter(dia_semana=day, semana_tipo=None).first()
 
                         def get_hora_str(dh):
+                            nonlocal total_minutos
                             if dh and dh.activo and dh.hora_entrada and dh.hora_salida:
                                 h1, m1 = dh.hora_entrada.hour, dh.hora_entrada.minute
                                 h2, m2 = dh.hora_salida.hour, dh.hora_salida.minute
