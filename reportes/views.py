@@ -189,12 +189,25 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             if l['fecha_inicio__month']:
                 licencias_data[l['fecha_inicio__month'] - 1] = int(l['total'] or 0)
         
+# Atrasos por mes (minutos acumulados)
+        atrasos_mes = RegistroAsistencia.objects.filter(
+            estado='RETRASO',
+            fecha__year=stats_year
+        ).values('fecha__month').annotate(total=Sum('minutos_retraso')).order_by('fecha__month')
+
+        atrasos_data = [0] * 12
+        for a in atrasos_mes:
+            if a['fecha__month']:
+                atrasos_data[a['fecha__month'] - 1] = int(a['total'] or 0)
+
         context['stats'] = {
             'year': stats_year,
             'permisos_mensuales': permisos_data,
             'licencias_mensuales': licencias_data,
+            'atrasos_mensuales': atrasos_data,
             'total_permisos_anual': sum(permisos_data),
             'total_licencias_anual': sum(licencias_data),
+            'total_atrasos_anual': sum(atrasos_data),
         }
         
         return context

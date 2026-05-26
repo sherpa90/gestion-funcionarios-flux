@@ -279,11 +279,10 @@
 
   @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* ─── Stats Grid ─── */
-  .stats-grid {
-    display: grid; grid-template-columns: 1fr; gap: 1rem;
-  }
-  @media (min-width: 1024px) { .stats-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; } }
+/* ─── Stats Grid ─── */
+   .stats-grid {
+     display: grid; grid-template-columns: 1fr; gap: 1.5rem;
+   }
   
   .chart-card {
     padding: 1.25rem; background: #fff; border-radius: var(--rep-radius);
@@ -1016,50 +1015,70 @@
 
     </div>
 
-    <!-- Tab Content: Estadísticas -->
-    <div id="tab-estadisticas" class="rep-tab-content">
-      <div class="stats-grid">
-        <!-- Chart: Permisos Administrativos -->
-        <div class="chart-card">
-          <div class="chart-header">
-            <div class="chart-title">
-              <div class="chart-icon" style="background:#eef2ff; color:#4f46e5;"><i class="fas fa-calendar-check"></i></div>
-              Permisos Administrativos
-            </div>
-            <div style="font-size:.7rem; font-weight:700; color:#94a3b8; background:#f8fafc; padding:.25rem .5rem; border-radius:.4rem; border:1px solid #e2e8f0; text-transform:uppercase; letter-spacing:0.02em;">
-              Año {{ stats.year }}
-            </div>
-          </div>
-          <div class="chart-container">
-            <canvas id="chartPermisos"></canvas>
-          </div>
-          <div style="margin-top:1.25rem; display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid #f1f5f9;">
-            <span style="font-size:.75rem; color:#64748b; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;">Días totales</span>
-            <span style="font-size:1.25rem; font-weight:900; color:#4f46e5; font-family:system-ui;">{{ stats.total_permisos_anual|floatformat:1 }}</span>
-          </div>
-        </div>
+<!-- Tab Content: Estadísticas -->
+     <div id="tab-estadisticas" class="rep-tab-content">
+       <div class="stats-grid">
+         <!-- Chart: Permisos Administrativos -->
+         <div class="chart-card">
+           <div class="chart-header">
+             <div class="chart-title">
+               <div class="chart-icon" style="background:#eef2ff; color:#4f46e5;"><i class="fas fa-calendar-check"></i></div>
+               Permisos Administrativos
+             </div>
+             <div style="font-size:.7rem; font-weight:700; color:#94a3b8; background:#f8fafc; padding:.25rem .5rem; border-radius:.4rem; border:1px solid #e2e8f0; text-transform:uppercase; letter-spacing:0.02em;">
+               Año {{ stats.year }}
+             </div>
+           </div>
+           <div class="chart-container">
+             <canvas id="chartPermisos"></canvas>
+           </div>
+           <div style="margin-top:1.25rem; display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid #f1f5f9;">
+             <span style="font-size:.75rem; color:#64748b; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;">Días totales</span>
+             <span style="font-size:1.25rem; font-weight:900; color:#4f46e5; font-family:system-ui;">{{ stats.total_permisos_anual|floatformat:1 }}</span>
+           </div>
+         </div>
 
-        <!-- Chart: Licencias Médicas -->
-        <div class="chart-card">
-          <div class="chart-header">
-            <div class="chart-title">
-              <div class="chart-icon" style="background:#faf5ff; color:#7c3aed;"><i class="fas fa-notes-medical"></i></div>
-              Licencias Médicas
-            </div>
-            <div style="font-size:.7rem; font-weight:700; color:#94a3b8; background:#f8fafc; padding:.25rem .5rem; border-radius:.4rem; border:1px solid #e2e8f0; text-transform:uppercase; letter-spacing:0.02em;">
-              Año {{ stats.year }}
-            </div>
-          </div>
-          <div class="chart-container">
-            <canvas id="chartLicencias"></canvas>
-          </div>
-          <div style="margin-top:1.25rem; display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid #f1f5f9;">
-            <span style="font-size:.75rem; color:#64748b; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;">Días totales</span>
-            <span style="font-size:1.25rem; font-weight:900; color:#7c3aed; font-family:system-ui;">{{ stats.total_licencias_anual }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+         <!-- Chart: Licencias Médicas -->
+         <div class="chart-card">
+           <div class="chart-header">
+             <div class="chart-title">
+               <div class="chart-icon" style="background:#faf5ff; color:#7c3aed;"><i class="fas fa-notes-medical"></i></div>
+               Licencias Médicas
+             </div>
+             <div style="font-size:.7rem; font-weight:700; color:#94a3b8; background:#f8fafc; padding:.25rem .5rem; border-radius:.4rem; border:1px solid #e2e8f0; text-transform:uppercase; letter-spacing:0.02em;">
+               Año {{ stats.year }}
+             </div>
+           </div>
+           <div class="chart-container">
+             <canvas id="chartLicencias"></canvas>
+           </div>
+           <div style="margin-top:1.25rem; display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid #f1f5f9;">
+             <span style="font-size:.75rem; color:#64748b; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;">Días totales</span>
+             <span style="font-size:1.25rem; font-weight:900; color:#7c3aed; font-family:system-ui;">{{ stats.total_licencias_anual }}</span>
+           </div>
+         </div>
+
+         <!-- Chart: Atrasos Mensuales -->
+         <div class="chart-card">
+           <div class="chart-header">
+             <div class="chart-title">
+               <div class="chart-icon" style="background:#fffbeb; color:#d97706;"><i class="fas fa-clock"></i></div>
+               Atrasos Mensuales
+             </div>
+             <div style="font-size:.7rem; font-weight:700; color:#94a3b8; background:#f8fafc; padding:.25rem .5rem; border-radius:.4rem; border:1px solid #e2e8f0; text-transform:uppercase; letter-spacing:0.02em;">
+               Año {{ stats.year }}
+             </div>
+           </div>
+           <div class="chart-container">
+             <canvas id="chartAtrasos"></canvas>
+           </div>
+           <div style="margin-top:1.25rem; display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid #f1f5f9;">
+             <span style="font-size:.75rem; color:#64748b; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;">Minutos totales</span>
+             <span style="font-size:1.25rem; font-weight:900; color:#d97706; font-family:system-ui;">{{ stats.total_atrasos_anual }}</span>
+           </div>
+         </div>
+       </div>
+     </div>
 
 
 <script>
@@ -1180,18 +1199,21 @@
     }
   }
 
-  // Gráficos
-  let chartPermisos = null;
-  let chartLicencias = null;
+// Gráficos
+   let chartPermisos = null;
+   let chartLicencias = null;
+   let chartAtrasos = null;
 
-  function initCharts() {
-    const ctxPermisos = document.getElementById('chartPermisos').getContext('2d');
-    const ctxLicencias = document.getElementById('chartLicencias').getContext('2d');
-
-    const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+   function initCharts() {
+     const ctxPermisos = document.getElementById('chartPermisos').getContext('2d');
+     const ctxLicencias = document.getElementById('chartLicencias').getContext('2d');
+     const ctxAtrasos = document.getElementById('chartAtrasos').getContext('2d');
     
-    if (chartPermisos) chartPermisos.destroy();
-    if (chartLicencias) chartLicencias.destroy();
+     const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    
+     if (chartPermisos) chartPermisos.destroy();
+     if (chartLicencias) chartLicencias.destroy();
+     if (chartAtrasos) chartAtrasos.destroy();
 
     const commonOptions = {
       responsive: true,
@@ -1248,21 +1270,74 @@
       options: commonOptions
     });
 
-    chartLicencias = new Chart(ctxLicencias, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Días Licencia',
-          data: {{ stats.licencias_mensuales|safe }},
-          backgroundColor: '#7c3aed',
-          borderRadius: 4,
-          hoverBackgroundColor: '#6d28d9'
-        }]
-      },
-      options: commonOptions
-    });
-  }
+chartLicencias = new Chart(ctxLicencias, {
+       type: 'bar',
+       data: {
+         labels: labels,
+         datasets: [{
+           label: 'Días Licencia',
+           data: {{ stats.licencias_mensuales|safe }},
+           backgroundColor: '#7c3aed',
+           borderRadius: 4,
+           hoverBackgroundColor: '#6d28d9'
+         }]
+       },
+       options: commonOptions
+     });
+
+     chartAtrasos = new Chart(ctxAtrasos, {
+       type: 'bar',
+       data: {
+         labels: labels,
+         datasets: [{
+           label: 'Minutos de Atraso',
+           data: {{ stats.atrasos_mensuales|safe }},
+           backgroundColor: '#f59e0b',
+           borderRadius: 4,
+           hoverBackgroundColor: '#d97706'
+         }]
+       },
+       options: {
+         responsive: true,
+         maintainAspectRatio: false,
+         plugins: {
+           legend: { display: false },
+           tooltip: {
+             backgroundColor: '#1e293b',
+             titleFont: { size: 12, weight: 'bold' },
+             bodyFont: { size: 12 },
+             padding: 12,
+             cornerRadius: 8,
+             displayColors: false,
+             callbacks: {
+               label: function(context) {
+                 return context.parsed.y + ' min';
+               }
+             }
+           }
+         },
+         scales: {
+           y: { 
+             beginAtZero: true, 
+             grid: { borderDash: [5, 5], color: '#f1f5f9', drawBorder: false }, 
+             ticks: { 
+               font: { size: 10, weight: '600' }, 
+               color: '#94a3b8',
+               callback: function(value) { return value + ' min'; }
+             } 
+           },
+           x: { 
+             grid: { display: false }, 
+             ticks: { font: { size: 10, weight: '600' }, color: '#94a3b8' } 
+           }
+         },
+         interaction: {
+           intersect: false,
+           mode: 'index',
+         },
+       }
+     });
+   }
 
 
   // Función de diagnóstico
