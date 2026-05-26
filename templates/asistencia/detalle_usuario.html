@@ -283,9 +283,16 @@
                                                         <i class="fas fa-clock mr-1.5 text-[8px]"></i> Retraso
                                                     </span>
                                                 {% elif registro.estado == 'AUSENTE' %}
-                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-red-100 text-red-800 border border-red-200 shadow-sm">
-                                                        <i class="fas fa-times-circle mr-1.5 text-[8px]"></i> Ausente
-                                                    </span>
+                                                    <div class="flex flex-col gap-1">
+                                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-red-100 text-red-800 border border-red-200 shadow-sm">
+                                                            <i class="fas fa-times-circle mr-1.5 text-[8px]"></i> Ausente
+                                                        </span>
+                                                        {% if registro.permiso_detalle and registro.permiso_detalle.es_medio_dia %}
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-black uppercase bg-indigo-50 text-indigo-700 border border-indigo-200" title="Tiene medio día administrativo {{ registro.permiso_detalle.jornada }} aprobado">
+                                                            <i class="fas fa-adjust mr-1 text-[7px]"></i> ½ día {{ registro.permiso_detalle.jornada }} adm.
+                                                        </span>
+                                                        {% endif %}
+                                                    </div>
                                                 {% elif registro.estado == 'MEDIO_DIA' %}
                                                     <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-indigo-100 text-indigo-800 border border-indigo-200 shadow-sm">
                                                         <i class="fas fa-adjust mr-1.5 text-[8px]"></i> Medio Día

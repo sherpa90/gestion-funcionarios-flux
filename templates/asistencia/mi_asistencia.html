@@ -364,6 +364,11 @@
                                 <div class="text-[10px] font-black text-red-600 mt-1">
                                     <i class="fas fa-exclamation-triangle text-[8px] mr-0.5"></i>Inasistencia
                                 </div>
+                                {% if reg.permiso_detalle and reg.permiso_detalle.es_medio_dia %}
+                                <div class="text-[9px] font-bold text-indigo-600 mt-0.5" title="Tiene medio día administrativo {{ reg.permiso_detalle.jornada }} aprobado">
+                                    <i class="fas fa-adjust text-[7px] mr-0.5"></i>½ día {{ reg.permiso_detalle.jornada }} adm.
+                                </div>
+                                {% endif %}
                                  {% elif reg.estado == 'MEDIO_DIA' %}
                                  <div class="text-[9px] font-bold text-violet-600 mt-1">
                                      <i class="fas fa-adjust text-[7px] mr-0.5"></i>1/2 Día
@@ -560,6 +565,11 @@
                                                     {{ reg.get_estado_display }}
                                                 {% endif %}
                                             </div>
+                                            {% if reg.estado == 'AUSENTE' and reg.permiso_detalle and reg.permiso_detalle.es_medio_dia %}
+                                            <div class="text-xs font-bold text-indigo-600 mt-1" title="Tiene medio día administrativo {{ reg.permiso_detalle.jornada }} aprobado">
+                                                <i class="fas fa-adjust text-[10px] mr-1"></i>½ día {{ reg.permiso_detalle.jornada }} adm.
+                                            </div>
+                                            {% endif %}
                                         </div>
                                         {% endif %}
                                     {% else %}
@@ -610,7 +620,12 @@
                                     {% elif reg.estado == 'RETRASO' %}
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-amber-100 text-amber-700">+{{ reg.minutos_retraso }}m</span>
                                     {% elif reg.estado == 'AUSENTE' %}
-                                    <span class="px-2 py-1 rounded-md text-xs font-bold bg-red-200 text-red-800 animate-pulse">FALTA</span>
+                                    <div class="flex flex-col items-end gap-1">
+                                        <span class="px-2 py-1 rounded-md text-xs font-bold bg-red-200 text-red-800 animate-pulse">FALTA</span>
+                                        {% if reg.permiso_detalle and reg.permiso_detalle.es_medio_dia %}
+                                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-100 text-indigo-700">½ {{ reg.permiso_detalle.jornada }}</span>
+                                        {% endif %}
+                                    </div>
                                     {% elif reg.estado == 'MEDIO_DIA' %}
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-violet-100 text-violet-700">1/2</span>
                                     {% elif reg.estado == 'DIA_ADMINISTRATIVO' %}
