@@ -330,8 +330,8 @@ class SystemLogsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         role = self.request.GET.get('role')
         search = self.request.GET.get('search')
         
-        # 1. Obtener logs del sistema (Macro)
-        system_queryset = SystemLog.objects.select_related('usuario').all()
+        # 1. Obtener logs del sistema (Macro) - EXCLUIR "Sistema Automático" (usuario=None)
+        system_queryset = SystemLog.objects.select_related('usuario').filter(usuario__isnull=False)
         if role:
             system_queryset = system_queryset.filter(usuario__role=role)
         if search:
@@ -340,8 +340,8 @@ class SystemLogsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 Q(usuario__first_name__icontains=search) | Q(usuario__last_name__icontains=search)
             )
 
-        # 2. Obtener logs de auditoría (Micro)
-        audit_queryset = LogEntry.objects.select_related('actor', 'content_type').all()
+        # 2. Obtener logs de auditoría (Micro) - EXCLUIR "Sistema Automático" (actor=None)
+        audit_queryset = LogEntry.objects.select_related('actor', 'content_type').filter(actor__isnull=False)
         if role:
             audit_queryset = audit_queryset.filter(actor__role=role)
         if search:
@@ -416,9 +416,9 @@ class SystemLogsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         role = request.GET.get('role')
         search = request.GET.get('search')
         
-        # 1. Obtener datos (mismo orden que la vista)
-        system_qs = SystemLog.objects.select_related('usuario').all()
-        audit_qs = LogEntry.objects.select_related('actor', 'content_type').all()
+        # 1. Obtener datos (mismo orden que la vista) - EXCLUIR "Sistema Automático"
+        system_qs = SystemLog.objects.select_related('usuario').filter(usuario__isnull=False)
+        audit_qs = LogEntry.objects.select_related('actor', 'content_type').filter(actor__isnull=False)
         
         if role:
             system_qs = system_qs.filter(usuario__role=role)
@@ -430,9 +430,9 @@ class SystemLogsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
         combined = []
         for l in system_qs[:500]:
-            combined.append([l.timestamp, l.usuario.get_full_name() if l.usuario else 'Sistema', l.get_tipo_display(), l.accion, l.descripcion])
+            combined.append([l.timestamp, l.usuario.get_full_name(), l.get_tipo_display(), l.accion, l.descripcion])
         for l in audit_qs[:500]:
-            combined.append([l.timestamp, l.actor.get_full_name() if l.actor else 'Sistema', 'AUDITORÍA', f"CAMBIO EN {l.object_repr}", l.changes_display_dict])
+            combined.append([l.timestamp, l.actor.get_full_name(), 'AUDITORÍA', f"CAMBIO EN {l.object_repr}", l.changes_display_dict])
         
         combined.sort(key=lambda x: x[0], reverse=True)
 
