@@ -958,16 +958,19 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         ws_justificaciones.column_dimensions['D'].width = 25
         ws_justificaciones.column_dimensions['E'].width = 60
 
-        for idx, f in enumerate(funcionarios, 1):
+        just_idx = 1
+        for f in funcionarios:
             justs = justificaciones_por_func.get(f.id, [])
-            justs_str = "; ".join(justs) if justs else ""
-            ws_justificaciones.append([
-                idx,
-                f.get_full_name() or f.username,
-                f.run,
-                f.get_funcion_display() or "",
-                justs_str
-            ])
+            if justs:
+                justs_str = "; ".join(justs)
+                ws_justificaciones.append([
+                    just_idx,
+                    f.get_full_name() or f.username,
+                    f.run,
+                    f.get_funcion_display() or "",
+                    justs_str
+                ])
+                just_idx += 1
 
         # Respuesta HTTP
         from io import BytesIO
@@ -1112,8 +1115,8 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
 
                 total_inasistencias = ausencias_db + ausencias_virtuales
 
-            # Solo incluir si tiene atrasos o inasistencias
-            if total_atrasos > 0 or total_inasistencias > 0:
+            # Solo incluir si tiene inasistencias injustificadas o atrasos acumulados >= 60 minutos
+            if total_inasistencias > 0 or total_atrasos >= 60:
                 funcionarios_data.append({
                     'funcionario': func,
                     'atrasos': total_atrasos,
@@ -1389,8 +1392,8 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
 
                 total_inasistencias = ausencias_db + ausencias_virtuales
 
-            # Solo incluir si tiene atrasos o inasistencias
-            if total_atrasos > 0 or total_inasistencias > 0:
+            # Solo incluir si tiene inasistencias injustificadas o atrasos acumulados >= 60 minutos
+            if total_inasistencias > 0 or total_atrasos >= 60:
                 funcionarios_data.append({
                     'funcionario': func,
                     'atrasos': total_atrasos,
