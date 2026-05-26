@@ -915,6 +915,57 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             
             row_idx += 1
 
+        # Pestaña 5: Observaciones (Justificaciones de asistencia)
+        ws_observaciones = wb.create_sheet(title="Observaciones")
+        ws_observaciones.append(['N°', 'Nombre Completo', 'RUN', 'Cargo', 'Justificaciones Asistencia'])
+        
+        ws_observaciones.column_dimensions['A'].width = 8
+        ws_observaciones.column_dimensions['B'].width = 30
+        ws_observaciones.column_dimensions['C'].width = 15
+        ws_observaciones.column_dimensions['D'].width = 25
+        ws_observaciones.column_dimensions['E'].width = 60
+
+        # Obtener todas las justificaciones del mes/año para estos funcionarios
+        from asistencia.models import RegistroAsistencia
+        registros_justificados = RegistroAsistencia.objects.filter(
+            funcionario__in=funcionarios,
+            estado='JUSTIFICADO'
+        ).order_by('fecha')
+
+        if year:
+            registros_justificados = registros_justificados.filter(fecha__year=year)
+        if mes:
+            registros_justificados = registros_justificados.filter(fecha__month=mes)
+
+        # Agrupar por funcionario
+        justificaciones_por_func = {}
+        for r in registros_justificados:
+            if r.justificacion_manual:
+                if r.hora_entrada_real and r.hora_salida_real:
+                    hora_str = f"{r.hora_entrada_real.strftime('%H:%M')} a {r.hora_salida_real.strftime('%H:%M')}"
+                elif r.hora_entrada_real:
+                    hora_str = r.hora_entrada_real.strftime('%H:%M')
+                elif r.hora_salida_real:
+                    hora_str = r.hora_salida_real.strftime('%H:%M')
+                else:
+                    hora_str = "--:--"
+                
+                just_text = f"{r.fecha.strftime('%d-%m-%Y')} ({hora_str}): {r.justificacion_manual}"
+                if r.funcionario_id not in justificaciones_por_func:
+                    justificaciones_por_func[r.funcionario_id] = []
+                justificaciones_por_func[r.funcionario_id].append(just_text)
+
+        for idx, f in enumerate(funcionarios, 1):
+            justs = justificaciones_por_func.get(f.id, [])
+            justs_str = "; ".join(justs) if justs else ""
+            ws_observaciones.append([
+                idx,
+                f.get_full_name() or f.username,
+                f.run,
+                f.get_funcion_display() or "",
+                justs_str
+            ])
+
         # Respuesta HTTP
         from io import BytesIO
         buffer = BytesIO()
