@@ -1960,15 +1960,101 @@ class EditarRegistroAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View
             # Recalcular el estado automáticamente
             registro.save()
 
-            messages.success(request, f'Registro actualizado correctamente para {registro.funcionario.get_full_name()}')
+            messages.success(request, f'Registro editado/justificado correctamente')
             return redirect('asistencia:detalle_usuario', user_id=registro.funcionario.id)
-        else:
-            # Mostrar el formulario con errores
-            context = {
-                'registro': registro,
-                'form': form,
-            }
-            return render(request, 'asistencia/editar_registro_asistencia.html', context)
+            
+        context = {
+            'registro': registro,
+            'form': form,
+        }
+        return render(request, 'asistencia/editar_registro_asistencia.html', context)
+
+
+class JustificarAusenciaVirtualView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para justificar un registro de ausencia que aún no existe en BD (virtual)"""
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get(self, request, user_id, fecha):
+        usuario = get_object_or_404(CustomUser, pk=user_id)
+        from datetime import datetime
+        try:
+            fecha_obj = datetime.strptime(fecha, '%Y-%m-%d').date()
+        except ValueError:
+            messages.error(request, 'Formato de fecha inválido.')
+            return redirect('asistencia:detalle_usuario', user_id=usuario.id)
+
+        # Si el registro ya existe, redirigir a editar el existente
+        registro = RegistroAsistencia.objects.filter(funcionario=usuario, fecha=fecha_obj).first()
+        if registro:
+            return redirect('asistencia:editar_registro_asistencia', pk=registro.pk)
+
+        context = {
+            'usuario': usuario,
+            'fecha': fecha_obj,
+            'form': EditarRegistroAsistenciaForm(),
+        }
+        return render(request, 'asistencia/justificar_ausencia_virtual.html', context)
+
+    def post(self, request, user_id, fecha):
+        usuario = get_object_or_404(CustomUser, pk=user_id)
+        from datetime import datetime
+        try:
+            fecha_obj = datetime.strptime(fecha, '%Y-%m-%d').date()
+        except ValueError:
+            messages.error(request, 'Formato de fecha inválido.')
+            return redirect('asistencia:detalle_usuario', user_id=usuario.id)
+
+        form = EditarRegistroAsistenciaForm(request.POST)
+
+        if form.is_valid():
+            hora_entrada = form.cleaned_data.get('hora_entrada_real')
+            hora_salida = form.cleaned_data.get('hora_salida_real')
+            justificacion = form.cleaned_data.get('justificacion_manual', '').strip()
+
+            if not justificacion and not (hora_entrada or hora_salida):
+                messages.error(request, 'Debe proporcionar una justificación o las horas de marcación.')
+                context = {
+                    'usuario': usuario,
+                    'fecha': fecha_obj,
+                    'form': form,
+                }
+                return render(request, 'asistencia/justificar_ausencia_virtual.html', context)
+
+            # Crear el registro
+            registro, created = RegistroAsistencia.objects.get_or_create(
+                funcionario=usuario,
+                fecha=fecha_obj,
+                defaults={
+                    'procesado_por': request.user,
+                }
+            )
+
+            # Actualizar horas si se proporcionaron
+            if hora_entrada:
+                registro.hora_entrada_real = hora_entrada
+            if hora_salida:
+                registro.hora_salida_real = hora_salida
+
+            # Actualizar justificación manual
+            if justificacion:
+                registro.justificacion_manual = justificacion
+                registro.justificado_por = request.user
+                registro.fecha_justificacion = timezone.now()
+
+            # Guardar (el estado se recalcula automáticamente en el save)
+            registro.save()
+            messages.success(request, f'Registro del {fecha_obj.strftime("%d/%m/%Y")} justificado/modificado exitosamente.')
+            return redirect('asistencia:detalle_usuario', user_id=usuario.id)
+            
+        context = {
+            'usuario': usuario,
+            'fecha': fecha_obj,
+            'form': form,
+        }
+        return render(request, 'asistencia/justificar_ausencia_virtual.html', context)
+
 
 
 class EliminarTodosRegistrosUsuarioView(LoginRequiredMixin, UserPassesTestMixin, View):

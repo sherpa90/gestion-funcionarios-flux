@@ -23,6 +23,7 @@ from .views import (
     CrearDiaFestivoView,
     EliminarDiaFestivoView,
     JustificarRegistroView,
+    JustificarAusenciaVirtualView,
     EditarRegistroAsistenciaView,
     ExportarRetrasosExcelView,
     ExportarRetrasosPDFView,
@@ -84,6 +85,7 @@ urlpatterns = [
 
     # Justificaciones manuales
     path("justificar-registro/<int:pk>/", JustificarRegistroView.as_view(), name="justificar_registro"),
+    path("usuario/<int:user_id>/justificar-ausencia/<str:fecha>/", JustificarAusenciaVirtualView.as_view(), name="justificar_ausencia_virtual"),
     path("registro/editar/<int:pk>/", EditarRegistroAsistenciaView.as_view(), name="editar_registro_asistencia"),
 
     # Exportar retrasos

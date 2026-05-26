@@ -1009,6 +1009,7 @@ class UserRecalculateBalancesView(LoginRequiredMixin, UserPassesTestMixin, View)
             usuario=request.user,
             tipo='UPDATE',
             accion='Recalcular Saldos Global',
+            descripcion=f'Se han recalculado los saldos de {count} usuarios',
             ip_address=get_client_ip(request)
         )
         
