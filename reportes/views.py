@@ -948,7 +948,26 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             
             row_idx += 1
 
+        # Pestaña 5: Justificaciones (Todas las justificaciones de asistencia del mes)
+        ws_justificaciones = wb.create_sheet(title="Justificaciones")
+        ws_justificaciones.append(['N°', 'Nombre Completo', 'RUN', 'Cargo', 'Justificaciones Asistencia'])
+        
+        ws_justificaciones.column_dimensions['A'].width = 8
+        ws_justificaciones.column_dimensions['B'].width = 30
+        ws_justificaciones.column_dimensions['C'].width = 15
+        ws_justificaciones.column_dimensions['D'].width = 25
+        ws_justificaciones.column_dimensions['E'].width = 60
 
+        for idx, f in enumerate(funcionarios, 1):
+            justs = justificaciones_por_func.get(f.id, [])
+            justs_str = "; ".join(justs) if justs else ""
+            ws_justificaciones.append([
+                idx,
+                f.get_full_name() or f.username,
+                f.run,
+                f.get_funcion_display() or "",
+                justs_str
+            ])
 
         # Respuesta HTTP
         from io import BytesIO
