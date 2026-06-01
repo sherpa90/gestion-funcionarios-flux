@@ -328,13 +328,12 @@ class RegistroAsistencia(models.Model):
         if not self.hora_entrada_real:
             return 0
 
-        # Para serenos: su entrada real es PM. Si la hora registrada es AM es la salida, no la entrada.
+        # Los serenos están exentos de control de retraso
         es_sereno = (
             getattr(self.funcionario, 'funcion', None) == 'SERENO' or
             getattr(self.funcionario, 'tipo_funcionario', None) == 'SERENO'
         )
-        if es_sereno and self.hora_entrada_real.hour < 12:
-            # La hora AM registrada es la salida del turno, no la entrada → no hay retraso
+        if es_sereno:
             return 0
 
         # dia_semana siempre definido antes de cualquier bifurcación
@@ -552,7 +551,16 @@ class RegistroAsistencia(models.Model):
         if not self.horario_asignado:
             return "SIN_HORARIO"
 
-
+        # Los serenos están exentos de control de asistencia (atrasos y ausencias)
+        es_sereno = (
+            getattr(self.funcionario, 'funcion', None) == 'SERENO' or
+            getattr(self.funcionario, 'tipo_funcionario', None) == 'SERENO'
+        )
+        if es_sereno:
+            # Si marcaron entrada, queda como puntual; si no, no se registra ausencia
+            if self.hora_entrada_real:
+                return "PUNTUAL"
+            return "SIN_DATA"
 
         # Verificar si es día festivo (prioridad máxima)
         if DiaFestivo.es_dia_festivo(self.fecha):

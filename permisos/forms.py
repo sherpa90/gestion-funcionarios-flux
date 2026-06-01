@@ -2,6 +2,7 @@ from django import forms
 from .models import SolicitudPermiso
 from core.services import BusinessDayCalculator
 from users.models import CustomUser
+from datetime import date as _date
 
 class SolicitudForm(forms.ModelForm):
     jornada = forms.ChoiceField(
@@ -17,6 +18,7 @@ class SolicitudForm(forms.ModelForm):
         widgets = {
             'fecha_inicio': forms.DateInput(attrs={
                 'type': 'date',
+                'min': _date.today().isoformat(),
                 'class': 'w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all uppercase tracking-widest'
             }),
             'dias_solicitados': forms.Select(attrs={
@@ -64,11 +66,19 @@ class SolicitudForm(forms.ModelForm):
         dias = cleaned_data.get('dias_solicitados')
         jornada = cleaned_data.get('jornada')
 
-        if fecha_inicio and dias:
-            # Priorizar self.user (pasado desde la vista) o self.instance.usuario
-            user = getattr(self, 'user', None) or getattr(self.instance, 'usuario', None)
-            if not BusinessDayCalculator.is_business_day(fecha_inicio, user=user):
-                raise forms.ValidationError("La fecha de inicio debe ser un día hábil.")
+        if fecha_inicio:
+            # No se permiten fechas pasadas
+            if fecha_inicio < _date.today():
+                raise forms.ValidationError(
+                    "No puedes solicitar un día administrativo en una fecha pasada. "
+                    "La fecha de inicio debe ser hoy o posterior."
+                )
+
+            if dias:
+                # Priorizar self.user (pasado desde la vista) o self.instance.usuario
+                user = getattr(self, 'user', None) or getattr(self.instance, 'usuario', None)
+                if not BusinessDayCalculator.is_business_day(fecha_inicio, user=user):
+                    raise forms.ValidationError("La fecha de inicio debe ser un día hábil.")
 
         # Validar jornada solo si es medio día
         if dias and dias % 1 == 0.5:  # Si termina en .5
@@ -110,7 +120,8 @@ class SolicitudBypassForm(forms.ModelForm):
         fields = ['usuario', 'fecha_inicio', 'dias_solicitados', 'jornada', 'observacion']
         widgets = {
             'fecha_inicio': forms.DateInput(attrs={
-                'type': 'date', 
+                'type': 'date',
+                'min': f"{_date.today().year}-01-01",
                 'class': 'w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm font-black text-gray-700 focus:ring-2 focus:ring-blue-100 transition-all uppercase tracking-widest'
             }),
             'dias_solicitados': forms.Select(attrs={
@@ -129,11 +140,20 @@ class SolicitudBypassForm(forms.ModelForm):
         fecha_inicio = cleaned_data.get('fecha_inicio')
         dias = cleaned_data.get('dias_solicitados')
         jornada = cleaned_data.get('jornada')
-
         usuario = cleaned_data.get('usuario')
-        if fecha_inicio and dias:
-            if not BusinessDayCalculator.is_business_day(fecha_inicio, user=usuario):
-                raise forms.ValidationError("La fecha de inicio debe ser un día hábil.")
+
+        if fecha_inicio:
+            # Para ingreso directo, se permiten fechas pasadas solo si son del año actual
+            hoy = _date.today()
+            if fecha_inicio < hoy and fecha_inicio.year != hoy.year:
+                raise forms.ValidationError(
+                    "No puedes ingresar un día administrativo de años anteriores. "
+                    "Las fechas pasadas deben corresponder al año en curso."
+                )
+
+            if dias:
+                if not BusinessDayCalculator.is_business_day(fecha_inicio, user=usuario):
+                    raise forms.ValidationError("La fecha de inicio debe ser un día hábil.")
 
         # Validar jornada solo si es medio día
         if dias and dias % 1 == 0.5:  # Si termina en .5

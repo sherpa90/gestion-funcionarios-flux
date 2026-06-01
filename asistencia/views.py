@@ -1583,10 +1583,12 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                             else:
                                 registros_mes_final.append(RegistroVirtual(d, 'DIA_ADMINISTRATIVO'))
                         elif d.weekday() in dias_laborales:
-                            if d >= usuario.date_joined.date():
-                                registros_mes_final.append(RegistroVirtual(d, 'AUSENTE'))
-                            else:
-                                registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
+                            # Los serenos no generan ausencias virtuales
+                            if not es_sereno:
+                                if d >= usuario.date_joined.date():
+                                    registros_mes_final.append(RegistroVirtual(d, 'AUSENTE'))
+                                else:
+                                    registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
                     
                     d += td(days=1)
 
@@ -1694,9 +1696,9 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
             'estadisticas_funcionario': {
                 'total_registros': total_registros,
                 'registros_puntuales': registros_puntuales,
-                'registros_retraso': registros_retraso,
-                'registros_ausentes': registros_ausentes,
-                'total_minutos_retraso': total_minutos_retraso,
+                'registros_retraso': 0 if es_sereno else registros_retraso,
+                'registros_ausentes': 0 if es_sereno else registros_ausentes,
+                'total_minutos_retraso': 0 if es_sereno else total_minutos_retraso,
                 'anios_con_asistencia': len(anios_disponibles),
                 'promedio_por_anio': round(total_registros / len(anios_disponibles), 1) if anios_disponibles else 0,
                 'porcentaje_puntualidad': round((registros_puntuales / total_registros * 100) if total_registros > 0 else 0, 1),
@@ -3086,12 +3088,31 @@ class ReporteDAEM2ExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             messages.error(request, 'Los valores de mes y año deben ser números válidos.')
             return redirect('reportes')
 
+        import calendar as _cal
+        from datetime import date as _date
+        # Límite del mes seleccionado (para calcular días usados hasta ese momento)
+        ultimo_dia_mes = _date(year, mes, _cal.monthrange(year, mes)[1])
+
         # Obtener permisos administrativos del mes
         permisos = SolicitudPermiso.objects.filter(
             estado='APROBADO',
             fecha_inicio__year=year,
             fecha_inicio__month=mes
         ).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name')
+
+        def dias_usados_hasta_mes(usuario, hasta_fecha):
+            """Suma de días de permisos aprobados del usuario hasta la fecha indicada."""
+            return SolicitudPermiso.objects.filter(
+                usuario=usuario,
+                estado='APROBADO',
+                fecha_inicio__lte=hasta_fecha
+            ).aggregate(total=Sum('dias_solicitados'))['total'] or 0
+
+        def dias_restantes(usuario, hasta_fecha):
+            """Días disponibles = asignados - usados (mínimo 0)."""
+            total = float(usuario.dias_disponibles or 0)
+            usados = float(dias_usados_hasta_mes(usuario, hasta_fecha))
+            return max(total - usados, 0)
 
         # Crear Excel
         wb = openpyxl.Workbook()
@@ -3134,7 +3155,7 @@ class ReporteDAEM2ExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             ws.cell(row=i, column=3).value = permiso.usuario.run  # RUN
             ws.cell(row=i, column=4).value = "Colegio Los Alerces"  # Establecimiento
             ws.cell(row=i, column=5).value = float(permiso.dias_solicitados)  # Días Solicitados
-            ws.cell(row=i, column=6).value = ""  # Días Disponibles (dejar vacío según requerimiento)
+            ws.cell(row=i, column=6).value = dias_restantes(permiso.usuario, ultimo_dia_mes)  # Días Disponibles
             ws.cell(row=i, column=7).value = permiso.fecha_inicio.strftime("%d-%m-%Y") if permiso.fecha_inicio else ""  # Fecha Desde
             ws.cell(row=i, column=8).value = permiso.fecha_termino.strftime("%d-%m-%Y") if permiso.fecha_termino else ""  # Fecha Hasta
 
@@ -3188,6 +3209,24 @@ class ReporteDAEM2PDFView(LoginRequiredMixin, UserPassesTestMixin, View):
             messages.error(request, 'Los valores de mes y año deben ser números válidos.')
             return redirect('reportes')
 
+        import calendar as _cal
+        from datetime import date as _date
+        # Límite del mes seleccionado
+        ultimo_dia_mes = _date(year, mes, _cal.monthrange(year, mes)[1])
+
+        def _dias_usados_hasta(usuario, hasta_fecha):
+            from django.db.models import Sum as _Sum
+            return SolicitudPermiso.objects.filter(
+                usuario=usuario,
+                estado='APROBADO',
+                fecha_inicio__lte=hasta_fecha
+            ).aggregate(total=_Sum('dias_solicitados'))['total'] or 0
+
+        def _dias_restantes(usuario, hasta_fecha):
+            total = float(usuario.dias_disponibles or 0)
+            usados = float(_dias_usados_hasta(usuario, hasta_fecha))
+            return max(total - usados, 0)
+
         # Obtener permisos administrativos del mes
         permisos = SolicitudPermiso.objects.filter(
             estado='APROBADO',
@@ -3207,7 +3246,7 @@ class ReporteDAEM2PDFView(LoginRequiredMixin, UserPassesTestMixin, View):
                 'run': permiso.usuario.run,
                 'establecimiento': "Colegio Los Alerces",
                 'dias_solicitados': float(permiso.dias_solicitados),
-                'dias_disponibles': "",  # Dejar vacío según requerimiento
+                'dias_disponibles': _dias_restantes(permiso.usuario, ultimo_dia_mes),
                 'fecha_desde': permiso.fecha_inicio.strftime("%d-%m-%Y") if permiso.fecha_inicio else "",
                 'fecha_hasta': permiso.fecha_termino.strftime("%d-%m-%Y") if permiso.fecha_termino else "",
             })

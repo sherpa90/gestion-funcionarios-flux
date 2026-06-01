@@ -12,8 +12,9 @@ from users.models import CustomUser
 from core.services import BusinessDayCalculator
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
-from datetime import datetime, time
+from datetime import datetime, time, date
 from django.utils.timezone import now
+from .calc_utils import calcular_inasistencias_reales
 
 # Mapeo día de semana (Python weekday 0=Lunes) → nombre en español
 DIA_SEMANA_MAP = {
@@ -99,10 +100,53 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             if fecha_fin:
                 registros_asistencia = registros_asistencia.filter(fecha__lte=fecha_fin)
 
-            total_atrasos = registros_asistencia.filter(estado='RETRASO').count()
-            total_inasistencias = registros_asistencia.filter(estado='AUSENTE').count()
-            total_minutos_retraso = registros_asistencia.filter(estado='RETRASO').aggregate(
-                total=Sum('minutos_retraso'))['total'] or 0
+            es_sereno_func = (
+                getattr(functorio, 'funcion', None) == 'SERENO' or
+                getattr(functorio, 'tipo_funcionario', None) == 'SERENO'
+            )
+            if es_sereno_func:
+                total_atrasos = 0
+                total_inasistencias = 0
+                total_minutos_retraso = 0
+            else:
+                # Determinar rango de fechas para el cálculo de inasistencias reales
+                f_inicio_calc = None
+                f_fin_calc = None
+                
+                # Convertir fechas string a date si es necesario
+                def parse_date(d_val):
+                    if isinstance(d_val, str) and d_val:
+                        return datetime.strptime(d_val, '%Y-%m-%d').date()
+                    elif isinstance(d_val, datetime):
+                        return d_val.date()
+                    return d_val
+
+                if fecha_inicio:
+                    f_inicio_calc = parse_date(fecha_inicio)
+                elif year:
+                    y_int = int(year)
+                    if mes:
+                        m_int = int(mes)
+                        f_inicio_calc = date(y_int, m_int, 1)
+                    else:
+                        f_inicio_calc = date(y_int, 1, 1)
+
+                if fecha_fin:
+                    f_fin_calc = parse_date(fecha_fin)
+                elif year:
+                    y_int = int(year)
+                    if mes:
+                        m_int = int(mes)
+                        import calendar
+                        _, last_day = calendar.monthrange(y_int, m_int)
+                        f_fin_calc = date(y_int, m_int, last_day)
+                    else:
+                        f_fin_calc = date(y_int, 12, 31)
+
+                total_atrasos = registros_asistencia.filter(estado='RETRASO').count()
+                total_inasistencias = calcular_inasistencias_reales(functorio, f_inicio_calc, f_fin_calc)
+                total_minutos_retraso = registros_asistencia.filter(estado='RETRASO').aggregate(
+                    total=Sum('minutos_retraso'))['total'] or 0
             
             empleados_data.append({
                 'funcionario': functorio,
@@ -189,10 +233,12 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             if l['fecha_inicio__month']:
                 licencias_data[l['fecha_inicio__month'] - 1] = int(l['total'] or 0)
         
-# Atrasos por mes (minutos acumulados)
+# Atrasos por mes (minutos acumulados) - excluir serenos
         atrasos_mes = RegistroAsistencia.objects.filter(
             estado='RETRASO',
             fecha__year=stats_year
+        ).exclude(
+            Q(funcionario__funcion='SERENO') | Q(funcionario__tipo_funcionario='SERENO')
         ).values('fecha__month').annotate(total=Sum('minutos_retraso')).order_by('fecha__month')
 
         atrasos_data = [0] * 12
@@ -271,10 +317,19 @@ class PDFIndividualView(LoginRequiredMixin, UserPassesTestMixin, View):
         if fecha_fin:
             registros_asistencia = registros_asistencia.filter(fecha__lte=fecha_fin)
 
-        total_inasistencias = registros_asistencia.filter(estado='AUSENTE').count()
-        total_atrasos = registros_asistencia.filter(estado='RETRASO').count()
-        total_minutos_retraso = registros_asistencia.filter(estado='RETRASO').aggregate(
-            total=Sum('minutos_retraso'))['total'] or 0
+        es_sereno_func = (
+            getattr(functorio, 'funcion', None) == 'SERENO' or
+            getattr(functorio, 'tipo_funcionario', None) == 'SERENO'
+        )
+        if es_sereno_func:
+            total_inasistencias = 0
+            total_atrasos = 0
+            total_minutos_retraso = 0
+        else:
+            total_inasistencias = registros_asistencia.filter(estado='AUSENTE').count()
+            total_atrasos = registros_asistencia.filter(estado='RETRASO').count()
+            total_minutos_retraso = registros_asistencia.filter(estado='RETRASO').aggregate(
+                total=Sum('minutos_retraso'))['total'] or 0
         
         html_string = render_to_string('reportes/pdf_individual.html', {
             'functorio': functorio,
@@ -339,10 +394,19 @@ class MiReportePDFView(LoginRequiredMixin, View):
         if fecha_inicio:registros_asistencia = registros_asistencia.filter(fecha__gte=fecha_inicio)
         if fecha_fin:   registros_asistencia = registros_asistencia.filter(fecha__lte=fecha_fin)
 
-        total_inasistencias = registros_asistencia.filter(estado='AUSENTE').count()
-        total_atrasos       = registros_asistencia.filter(estado='RETRASO').count()
-        total_minutos_retraso = registros_asistencia.filter(estado='RETRASO').aggregate(
-            total=Sum('minutos_retraso'))['total'] or 0
+        es_sereno_func = (
+            getattr(functorio, 'funcion', None) == 'SERENO' or
+            getattr(functorio, 'tipo_funcionario', None) == 'SERENO'
+        )
+        if es_sereno_func:
+            total_inasistencias = 0
+            total_atrasos = 0
+            total_minutos_retraso = 0
+        else:
+            total_inasistencias = registros_asistencia.filter(estado='AUSENTE').count()
+            total_atrasos       = registros_asistencia.filter(estado='RETRASO').count()
+            total_minutos_retraso = registros_asistencia.filter(estado='RETRASO').aggregate(
+                total=Sum('minutos_retraso'))['total'] or 0
 
         html_string = render_to_string('reportes/pdf_individual.html', {
             'functorio': functorio,
@@ -437,10 +501,19 @@ class PDFColectivoView(LoginRequiredMixin, UserPassesTestMixin, View):
             if fecha_fin:
                 registros_asistencia = registros_asistencia.filter(fecha__lte=fecha_fin)
 
-            total_atrasos = registros_asistencia.filter(estado='RETRASO').count()
-            total_inasistencias = registros_asistencia.filter(estado='AUSENTE').count()
-            total_minutos_retraso = registros_asistencia.filter(estado='RETRASO').aggregate(
-                total=Sum('minutos_retraso'))['total'] or 0
+            es_sereno_func = (
+                getattr(functorio, 'funcion', None) == 'SERENO' or
+                getattr(functorio, 'tipo_funcionario', None) == 'SERENO'
+            )
+            if es_sereno_func:
+                total_atrasos = 0
+                total_inasistencias = 0
+                total_minutos_retraso = 0
+            else:
+                total_atrasos = registros_asistencia.filter(estado='RETRASO').count()
+                total_inasistencias = registros_asistencia.filter(estado='AUSENTE').count()
+                total_minutos_retraso = registros_asistencia.filter(estado='RETRASO').aggregate(
+                    total=Sum('minutos_retraso'))['total'] or 0
 
             total_dias_disponibles += float(functorio.dias_disponibles)
             total_licencias += total_lic
@@ -545,10 +618,16 @@ class ExportarExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             if fecha_fin:
                 registros = registros.filter(fecha__lte=fecha_fin)
 
-            total_inasistencias = registros.filter(estado='AUSENTE').count()
-            total_atrasos = registros.filter(estado='RETRASO').count()
-            total_minutos_retraso = registros.filter(estado='RETRASO').aggregate(
-                total=Sum('minutos_retraso'))['total'] or 0
+            es_sereno_func = (
+                getattr(functorio, 'funcion', None) == 'SERENO' or
+                getattr(functorio, 'tipo_funcionario', None) == 'SERENO'
+            )
+            total_inasistencias = registros.filter(estado='AUSENTE').count() if not es_sereno_func else 0
+            total_atrasos = registros.filter(estado='RETRASO').count() if not es_sereno_func else 0
+            total_minutos_retraso = (
+                registros.filter(estado='RETRASO').aggregate(
+                    total=Sum('minutos_retraso'))['total'] or 0
+            ) if not es_sereno_func else 0
             
             ws.append([
                 functorio.get_full_name(),
