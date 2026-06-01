@@ -3100,64 +3100,37 @@ class ReporteDAEM2ExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             fecha_inicio__month=mes
         ).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name')
 
-        def dias_usados_hasta_mes(usuario, hasta_fecha):
-            """Suma de días de permisos aprobados del usuario hasta la fecha indicada."""
-            return SolicitudPermiso.objects.filter(
-                usuario=usuario,
-                estado='APROBADO',
-                fecha_inicio__lte=hasta_fecha
-            ).aggregate(total=Sum('dias_solicitados'))['total'] or 0
-
-        def dias_restantes(usuario, hasta_fecha):
-            """Días disponibles = asignados - usados (mínimo 0)."""
-            total = float(usuario.dias_disponibles or 0)
-            usados = float(dias_usados_hasta_mes(usuario, hasta_fecha))
-            return max(total - usados, 0)
-
-        # Crear Excel
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "DAEM2"
-
-        # Título
-        ws['A1'] = "Cuadro Resumen Permisos Administrativos"
-        ws['A1'].font = openpyxl.styles.Font(bold=True, size=14)
-        ws.merge_cells('A1:H1')
-
-        # Establecimiento
-        ws['A3'] = "Establecimiento: Colegio Los Alerces Puerto Montt"
-        ws.merge_cells('A3:H3')
-
-        # Mes y Año
-        meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-        ws['A5'] = f"Mes: {meses[mes-1]}"
-        ws['E5'] = f"Año: {year}"
-
-        # Encabezados de tabla
-        headers = ['N°', 'Funcionario', 'RUN', 'Establecimiento', 'Días Solicitados', 'Días Disponibles', 'Fecha Desde', 'Fecha Hasta']
-        for col, header in enumerate(headers, 1):
-            cell = ws.cell(row=7, column=col)
-            cell.value = header
-            cell.font = openpyxl.styles.Font(bold=True)
-            cell.border = openpyxl.styles.Border(
-                left=openpyxl.styles.Side(style='thin'),
-                right=openpyxl.styles.Side(style='thin'),
-                top=openpyxl.styles.Side(style='thin'),
-                bottom=openpyxl.styles.Side(style='thin')
-            )
-            cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+        # Agrupar por usuario
+        usuarios_data = {}
+        for p in permisos:
+            uid = p.usuario.id
+            if uid not in usuarios_data:
+                usuarios_data[uid] = {
+                    'usuario': p.usuario,
+                    'dias_solicitados_mes': 0.0,
+                    'fechas_desde': [],
+                    'fechas_hasta': []
+                }
+            usuarios_data[uid]['dias_solicitados_mes'] += float(p.dias_solicitados)
+            if p.fecha_inicio:
+                usuarios_data[uid]['fechas_desde'].append(p.fecha_inicio.strftime("%d-%m-%Y"))
+            if p.fecha_termino:
+                usuarios_data[uid]['fechas_hasta'].append(p.fecha_termino.strftime("%d-%m-%Y"))
+        
+        datos_finales = list(usuarios_data.values())
+        datos_finales.sort(key=lambda x: (x['usuario'].first_name, x['usuario'].last_name))
 
         # Datos
-        for i, permiso in enumerate(permisos, 8):
+        for i, item in enumerate(datos_finales, 8):
+            u = item['usuario']
             ws.cell(row=i, column=1).value = i - 7  # N°
-            ws.cell(row=i, column=2).value = permiso.usuario.get_full_name() or permiso.usuario.username  # Funcionario
-            ws.cell(row=i, column=3).value = permiso.usuario.run  # RUN
+            ws.cell(row=i, column=2).value = u.get_full_name() or u.username  # Funcionario
+            ws.cell(row=i, column=3).value = u.run  # RUN
             ws.cell(row=i, column=4).value = "Colegio Los Alerces"  # Establecimiento
-            ws.cell(row=i, column=5).value = float(permiso.dias_solicitados)  # Días Solicitados
-            ws.cell(row=i, column=6).value = dias_restantes(permiso.usuario, ultimo_dia_mes)  # Días Disponibles
-            ws.cell(row=i, column=7).value = permiso.fecha_inicio.strftime("%d-%m-%Y") if permiso.fecha_inicio else ""  # Fecha Desde
-            ws.cell(row=i, column=8).value = permiso.fecha_termino.strftime("%d-%m-%Y") if permiso.fecha_termino else ""  # Fecha Hasta
+            ws.cell(row=i, column=5).value = item['dias_solicitados_mes']  # Días Solicitados ese mes
+            ws.cell(row=i, column=6).value = float(u.dias_disponibles)  # Días Disponibles totales
+            ws.cell(row=i, column=7).value = "\n".join(item['fechas_desde'])  # Fecha Desde
+            ws.cell(row=i, column=8).value = "\n".join(item['fechas_hasta'])  # Fecha Hasta
 
             # Bordes para las celdas de datos
             for col in range(1, 9):
@@ -3214,19 +3187,6 @@ class ReporteDAEM2PDFView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Límite del mes seleccionado
         ultimo_dia_mes = _date(year, mes, _cal.monthrange(year, mes)[1])
 
-        def _dias_usados_hasta(usuario, hasta_fecha):
-            from django.db.models import Sum as _Sum
-            return SolicitudPermiso.objects.filter(
-                usuario=usuario,
-                estado='APROBADO',
-                fecha_inicio__lte=hasta_fecha
-            ).aggregate(total=_Sum('dias_solicitados'))['total'] or 0
-
-        def _dias_restantes(usuario, hasta_fecha):
-            total = float(usuario.dias_disponibles or 0)
-            usados = float(_dias_usados_hasta(usuario, hasta_fecha))
-            return max(total - usados, 0)
-
         # Obtener permisos administrativos del mes
         permisos = SolicitudPermiso.objects.filter(
             estado='APROBADO',
@@ -3234,21 +3194,42 @@ class ReporteDAEM2PDFView(LoginRequiredMixin, UserPassesTestMixin, View):
             fecha_inicio__month=mes
         ).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name')
 
+        # Agrupar por usuario
+        usuarios_data = {}
+        for p in permisos:
+            uid = p.usuario.id
+            if uid not in usuarios_data:
+                usuarios_data[uid] = {
+                    'usuario': p.usuario,
+                    'dias_solicitados_mes': 0.0,
+                    'fechas_desde': [],
+                    'fechas_hasta': []
+                }
+            usuarios_data[uid]['dias_solicitados_mes'] += float(p.dias_solicitados)
+            if p.fecha_inicio:
+                usuarios_data[uid]['fechas_desde'].append(p.fecha_inicio.strftime("%d-%m-%Y"))
+            if p.fecha_termino:
+                usuarios_data[uid]['fechas_hasta'].append(p.fecha_termino.strftime("%d-%m-%Y"))
+        
+        datos_finales = list(usuarios_data.values())
+        datos_finales.sort(key=lambda x: (x['usuario'].first_name, x['usuario'].last_name))
+
         # Preparar datos para el template
         meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
         permisos_data = []
-        for i, permiso in enumerate(permisos, 1):
+        for i, item in enumerate(datos_finales, 1):
+            u = item['usuario']
             permisos_data.append({
                 'numero': i,
-                'funcionario': permiso.usuario.get_full_name() or permiso.usuario.username,
-                'run': permiso.usuario.run,
+                'funcionario': u.get_full_name() or u.username,
+                'run': u.run,
                 'establecimiento': "Colegio Los Alerces",
-                'dias_solicitados': float(permiso.dias_solicitados),
-                'dias_disponibles': _dias_restantes(permiso.usuario, ultimo_dia_mes),
-                'fecha_desde': permiso.fecha_inicio.strftime("%d-%m-%Y") if permiso.fecha_inicio else "",
-                'fecha_hasta': permiso.fecha_termino.strftime("%d-%m-%Y") if permiso.fecha_termino else "",
+                'dias_solicitados': item['dias_solicitados_mes'],
+                'dias_disponibles': float(u.dias_disponibles),
+                'fecha_desde': " / ".join(item['fechas_desde']),
+                'fecha_hasta': " / ".join(item['fechas_hasta']),
             })
 
         # Renderizar template HTML para PDF
