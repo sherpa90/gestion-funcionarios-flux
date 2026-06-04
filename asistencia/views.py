@@ -3098,27 +3098,17 @@ class ReporteDAEM2ExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             estado='APROBADO',
             fecha_inicio__year=year,
             fecha_inicio__month=mes
-        ).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name')
+        ).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
 
-        # Agrupar por usuario
-        usuarios_data = {}
+        # Procesar cada permiso individualmente para que no se junten fechas en la misma celda
+        datos_finales = []
         for p in permisos:
-            uid = p.usuario.id
-            if uid not in usuarios_data:
-                usuarios_data[uid] = {
-                    'usuario': p.usuario,
-                    'dias_solicitados_mes': 0.0,
-                    'fechas_desde': [],
-                    'fechas_hasta': []
-                }
-            usuarios_data[uid]['dias_solicitados_mes'] += float(p.dias_solicitados)
-            if p.fecha_inicio:
-                usuarios_data[uid]['fechas_desde'].append(p.fecha_inicio.strftime("%d-%m-%Y"))
-            if p.fecha_termino:
-                usuarios_data[uid]['fechas_hasta'].append(p.fecha_termino.strftime("%d-%m-%Y"))
-        
-        datos_finales = list(usuarios_data.values())
-        datos_finales.sort(key=lambda x: (x['usuario'].first_name, x['usuario'].last_name))
+            datos_finales.append({
+                'usuario': p.usuario,
+                'dias_solicitados': float(p.dias_solicitados),
+                'fecha_desde': p.fecha_inicio.strftime("%d-%m-%Y") if p.fecha_inicio else "",
+                'fecha_hasta': p.fecha_termino.strftime("%d-%m-%Y") if p.fecha_termino else "",
+            })
 
         # ── Crear libro y hoja ────────────────────────────────────────────────
         wb = openpyxl.Workbook()
@@ -3178,10 +3168,10 @@ class ReporteDAEM2ExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             ws.cell(row=i, column=2).value = u.get_full_name() or u.username  # Funcionario
             ws.cell(row=i, column=3).value = u.run  # RUN
             ws.cell(row=i, column=4).value = "Colegio Los Alerces"  # Establecimiento
-            ws.cell(row=i, column=5).value = item['dias_solicitados_mes']  # Días Solicitados ese mes
+            ws.cell(row=i, column=5).value = item['dias_solicitados']  # Días Solicitados
             ws.cell(row=i, column=6).value = float(u.dias_disponibles)  # Días Disponibles totales
-            ws.cell(row=i, column=7).value = "\n".join(item['fechas_desde'])  # Fecha Desde
-            ws.cell(row=i, column=8).value = "\n".join(item['fechas_hasta'])  # Fecha Hasta
+            ws.cell(row=i, column=7).value = item['fecha_desde']  # Fecha Desde
+            ws.cell(row=i, column=8).value = item['fecha_hasta']  # Fecha Hasta
 
             # Bordes para las celdas de datos
             for col in range(1, 9):
@@ -3243,27 +3233,17 @@ class ReporteDAEM2PDFView(LoginRequiredMixin, UserPassesTestMixin, View):
             estado='APROBADO',
             fecha_inicio__year=year,
             fecha_inicio__month=mes
-        ).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name')
+        ).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
 
-        # Agrupar por usuario
-        usuarios_data = {}
+        # Procesar cada permiso individualmente
+        datos_finales = []
         for p in permisos:
-            uid = p.usuario.id
-            if uid not in usuarios_data:
-                usuarios_data[uid] = {
-                    'usuario': p.usuario,
-                    'dias_solicitados_mes': 0.0,
-                    'fechas_desde': [],
-                    'fechas_hasta': []
-                }
-            usuarios_data[uid]['dias_solicitados_mes'] += float(p.dias_solicitados)
-            if p.fecha_inicio:
-                usuarios_data[uid]['fechas_desde'].append(p.fecha_inicio.strftime("%d-%m-%Y"))
-            if p.fecha_termino:
-                usuarios_data[uid]['fechas_hasta'].append(p.fecha_termino.strftime("%d-%m-%Y"))
-        
-        datos_finales = list(usuarios_data.values())
-        datos_finales.sort(key=lambda x: (x['usuario'].first_name, x['usuario'].last_name))
+            datos_finales.append({
+                'usuario': p.usuario,
+                'dias_solicitados': float(p.dias_solicitados),
+                'fecha_desde': p.fecha_inicio.strftime("%d-%m-%Y") if p.fecha_inicio else "",
+                'fecha_hasta': p.fecha_termino.strftime("%d-%m-%Y") if p.fecha_termino else "",
+            })
 
         # Preparar datos para el template
         meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -3277,10 +3257,10 @@ class ReporteDAEM2PDFView(LoginRequiredMixin, UserPassesTestMixin, View):
                 'funcionario': u.get_full_name() or u.username,
                 'run': u.run,
                 'establecimiento': "Colegio Los Alerces",
-                'dias_solicitados': item['dias_solicitados_mes'],
+                'dias_solicitados': item['dias_solicitados'],
                 'dias_disponibles': float(u.dias_disponibles),
-                'fecha_desde': " / ".join(item['fechas_desde']),
-                'fecha_hasta': " / ".join(item['fechas_hasta']),
+                'fecha_desde': item['fecha_desde'],
+                'fecha_hasta': item['fecha_hasta'],
             })
 
         # Renderizar template HTML para PDF
