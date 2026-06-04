@@ -3098,7 +3098,7 @@ class ReporteDAEM2ExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             estado='APROBADO',
             fecha_inicio__year=year,
             fecha_inicio__month=mes
-        ).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
+        ).select_related('usuario').order_by('fecha_inicio', 'usuario__first_name', 'usuario__last_name')
 
         # Procesar cada permiso individualmente para que no se junten fechas en la misma celda
         datos_finales = []
@@ -3233,7 +3233,7 @@ class ReporteDAEM2PDFView(LoginRequiredMixin, UserPassesTestMixin, View):
             estado='APROBADO',
             fecha_inicio__year=year,
             fecha_inicio__month=mes
-        ).select_related('usuario').order_by('usuario__first_name', 'usuario__last_name', 'fecha_inicio')
+        ).select_related('usuario').order_by('fecha_inicio', 'usuario__first_name', 'usuario__last_name')
 
         # Procesar cada permiso individualmente
         datos_finales = []
