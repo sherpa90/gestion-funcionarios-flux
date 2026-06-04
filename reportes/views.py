@@ -72,6 +72,48 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             if fecha_fin:
                 permisos = permisos.filter(fecha_inicio__lte=fecha_fin)
             
+            # Calcular días disponibles cronológicamente hasta la fecha del filtro
+            # Base: 6 días administrativos al año
+            BASE_DIAS_ADMINISTRATIVOS = 6.0
+            
+            # Determinar la fecha límite para el cálculo cronológico
+            fecha_limite = None
+            if fecha_fin:
+                try:
+                    from datetime import datetime
+                    fecha_limite = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+                except ValueError:
+                    pass
+            elif year and mes:
+                import calendar
+                try:
+                    y_int = int(year)
+                    m_int = int(mes)
+                    _, last_day = calendar.monthrange(y_int, m_int)
+                    from datetime import date
+                    fecha_limite = date(y_int, m_int, last_day)
+                except (ValueError, TypeError):
+                    pass
+            elif year:
+                try:
+                    from datetime import date
+                    y_int = int(year)
+                    fecha_limite = date(y_int, 12, 31)
+                except (ValueError, TypeError):
+                    pass
+            
+            # Calcular días usados hasta la fecha límite (cronológicamente)
+            permisos_hasta_limite = SolicitudPermiso.objects.filter(
+                usuario=functorio,
+                estado='APROBADO'
+            )
+            if fecha_limite:
+                permisos_hasta_limite = permisos_hasta_limite.filter(fecha_inicio__lte=fecha_limite)
+            
+            dias_usados_cronologicos = permisos_hasta_limite.aggregate(Sum('dias_solicitados'))['dias_solicitados__sum'] or 0
+            dias_disponibles_calculados = max(BASE_DIAS_ADMINISTRATIVOS - float(dias_usados_cronologicos), 0)
+            
+            # Para el listado de permisos en el template, usar los permisos filtrados normalmente
             dias_usados = permisos.aggregate(Sum('dias_solicitados'))['dias_solicitados__sum'] or 0
             
             # Obtener licencias médicas
@@ -151,8 +193,8 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             empleados_data.append({
                 'funcionario': functorio,
                 'cargo': functorio.get_funcion_display() or functorio.get_tipo_funcionario_display() or functorio.get_role_display(),
-                # Calculate remaining administrative leave days up to the filtered date
-                'dias_disponibles': max(float(functorio.dias_disponibles) - float(dias_usados), 0),
+                # Días disponibles calculados cronológicamente hasta la fecha del filtro
+                'dias_disponibles': dias_disponibles_calculados,
                 'dias_usados': dias_usados,
                 'total_licencias': total_licencias,
                 'dias_licencias': dias_licencias,
@@ -282,7 +324,7 @@ class PDFIndividualView(LoginRequiredMixin, UserPassesTestMixin, View):
         permisos = SolicitudPermiso.objects.filter(
             usuario=functorio,
             estado='APROBADO'
-        ).order_by('-fecha_inicio')
+        ).order_by('fecha_inicio')
         
         if year:
             permisos = permisos.filter(fecha_inicio__year=year)
@@ -296,7 +338,7 @@ class PDFIndividualView(LoginRequiredMixin, UserPassesTestMixin, View):
         dias_usados = permisos.aggregate(Sum('dias_solicitados'))['dias_solicitados__sum'] or 0
         
         # Obtener licencias
-        licencias = LicenciaMedica.objects.filter(usuario=functorio).order_by('-fecha_inicio')
+        licencias = LicenciaMedica.objects.filter(usuario=functorio).order_by('fecha_inicio')
         
         if year:
             licencias = licencias.filter(fecha_inicio__year=year)
@@ -375,7 +417,7 @@ class MiReportePDFView(LoginRequiredMixin, View):
         permisos = SolicitudPermiso.objects.filter(
             usuario=functorio,
             estado='APROBADO'
-        ).order_by('-fecha_inicio')
+        ).order_by('fecha_inicio')
         if year:        permisos = permisos.filter(fecha_inicio__year=year)
         if mes:         permisos = permisos.filter(fecha_inicio__month=mes)
         if fecha_inicio:permisos = permisos.filter(fecha_inicio__gte=fecha_inicio)
@@ -383,7 +425,7 @@ class MiReportePDFView(LoginRequiredMixin, View):
 
         dias_usados = permisos.aggregate(Sum('dias_solicitados'))['dias_solicitados__sum'] or 0
 
-        licencias = LicenciaMedica.objects.filter(usuario=functorio).order_by('-fecha_inicio')
+        licencias = LicenciaMedica.objects.filter(usuario=functorio).order_by('fecha_inicio')
         if year:        licencias = licencias.filter(fecha_inicio__year=year)
         if mes:         licencias = licencias.filter(fecha_inicio__month=mes)
         if fecha_inicio:licencias = licencias.filter(fecha_inicio__gte=fecha_inicio)
