@@ -3120,7 +3120,58 @@ class ReporteDAEM2ExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         datos_finales = list(usuarios_data.values())
         datos_finales.sort(key=lambda x: (x['usuario'].first_name, x['usuario'].last_name))
 
-        # Datos
+        # ── Crear libro y hoja ────────────────────────────────────────────────
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'DAEM2'
+
+        meses_nombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+        nombre_mes = meses_nombres[mes - 1]
+
+        # Estilos reutilizables
+        title_font   = openpyxl.styles.Font(bold=True, size=13)
+        header_fill  = openpyxl.styles.PatternFill(start_color='1F4E79', end_color='1F4E79', fill_type='solid')
+        header_font  = openpyxl.styles.Font(color='FFFFFF', bold=True, size=10)
+        center_align = openpyxl.styles.Alignment(horizontal='center', vertical='center', wrap_text=True)
+        thin_border  = openpyxl.styles.Border(
+            left=openpyxl.styles.Side(style='thin'),
+            right=openpyxl.styles.Side(style='thin'),
+            top=openpyxl.styles.Side(style='thin'),
+            bottom=openpyxl.styles.Side(style='thin'),
+        )
+
+        # Fila 1 – Título principal
+        ws.merge_cells('A1:H1')
+        ws['A1'] = 'CUADRO RESUMEN PERMISOS ADMINISTRATIVOS'
+        ws['A1'].font = title_font
+        ws['A1'].alignment = center_align
+
+        # Fila 2 – Establecimiento
+        ws.merge_cells('A2:H2')
+        ws['A2'] = 'Colegio Los Alerces Puerto Montt'
+        ws['A2'].alignment = center_align
+
+        # Fila 3 – Período
+        ws.merge_cells('A3:H3')
+        ws['A3'] = f'Mes: {nombre_mes} {year}'
+        ws['A3'].alignment = center_align
+
+        # Filas 4-6 vacías (separador)
+        for row_idx in range(4, 7):
+            ws.merge_cells(f'A{row_idx}:H{row_idx}')
+
+        # Fila 7 – Encabezados de columna
+        col_headers = ['N°', 'Funcionario', 'RUN', 'Establecimiento',
+                       'Días Solicitados', 'Días Disponibles', 'Fecha Desde', 'Fecha Hasta']
+        for col, header in enumerate(col_headers, 1):
+            cell = ws.cell(row=7, column=col, value=header)
+            cell.fill   = header_fill
+            cell.font   = header_font
+            cell.alignment = center_align
+            cell.border = thin_border
+
+        # ── Datos ─────────────────────────────────────────────────────────────
         for i, item in enumerate(datos_finales, 8):
             u = item['usuario']
             ws.cell(row=i, column=1).value = i - 7  # N°
