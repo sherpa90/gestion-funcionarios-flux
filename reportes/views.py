@@ -151,7 +151,8 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             empleados_data.append({
                 'funcionario': functorio,
                 'cargo': functorio.get_funcion_display() or functorio.get_tipo_funcionario_display() or functorio.get_role_display(),
-                'dias_disponibles': functorio.dias_disponibles,
+                # Calculate remaining administrative leave days up to the filtered date
+                'dias_disponibles': max(float(functorio.dias_disponibles) - float(dias_usados), 0),
                 'dias_usados': dias_usados,
                 'total_licencias': total_licencias,
                 'dias_licencias': dias_licencias,
