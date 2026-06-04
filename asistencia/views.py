@@ -3099,13 +3099,38 @@ class ReporteDAEM2ExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             fecha_inicio__year=year,
             fecha_inicio__month=mes
         ).select_related('usuario').order_by('fecha_inicio', 'usuario__first_name', 'usuario__last_name')
+        
+        # Calcular días disponibles cronológicamente para todo el año hasta cada permiso
+        BASE_DIAS_ADMINISTRATIVOS = 6.0
+        
+        # Obtener TODOS los permisos del año para cada funcionario para cálculo cronológico
+        usuarios_con_permisos = {}
+        for p in permisos:
+            if p.usuario_id not in usuarios_con_permisos:
+                usuarios_con_permisos[p.usuario_id] = list(SolicitudPermiso.objects.filter(
+                    usuario=p.usuario,
+                    estado='APROBADO',
+                    fecha_inicio__year=year
+                ).order_by('fecha_inicio', 'created_at'))
+        
+        # Calcular días disponibles cronológicamente para cada funcionario
+        usuarios_dias_calculados = {}
+        for user_id, user_permisos in usuarios_con_permisos.items():
+            dias_acumulados = 0.0
+            user_dias = {}
+            for p in user_permisos:
+                dias_acumulados += float(p.dias_solicitados)
+                user_dias[p.id] = max(BASE_DIAS_ADMINISTRATIVOS - dias_acumulados, 0)
+            usuarios_dias_calculados[user_id] = user_dias
 
         # Procesar cada permiso individualmente para que no se junten fechas en la misma celda
         datos_finales = []
         for p in permisos:
+            dias_disp = usuarios_dias_calculados.get(p.usuario_id, {}).get(p.id, BASE_DIAS_ADMINISTRATIVOS)
             datos_finales.append({
                 'usuario': p.usuario,
                 'dias_solicitados': float(p.dias_solicitados),
+                'dias_disponibles': dias_disp,
                 'fecha_desde': p.fecha_inicio.strftime("%d-%m-%Y") if p.fecha_inicio else "",
                 'fecha_hasta': p.fecha_termino.strftime("%d-%m-%Y") if p.fecha_termino else "",
             })
@@ -3169,7 +3194,7 @@ class ReporteDAEM2ExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             ws.cell(row=i, column=3).value = u.run  # RUN
             ws.cell(row=i, column=4).value = "Colegio Los Alerces"  # Establecimiento
             ws.cell(row=i, column=5).value = item['dias_solicitados']  # Días Solicitados
-            ws.cell(row=i, column=6).value = float(u.dias_disponibles)  # Días Disponibles totales
+            ws.cell(row=i, column=6).value = item['dias_disponibles']  # Días Disponibles cronológicos
             ws.cell(row=i, column=7).value = item['fecha_desde']  # Fecha Desde
             ws.cell(row=i, column=8).value = item['fecha_hasta']  # Fecha Hasta
 
@@ -3234,13 +3259,38 @@ class ReporteDAEM2PDFView(LoginRequiredMixin, UserPassesTestMixin, View):
             fecha_inicio__year=year,
             fecha_inicio__month=mes
         ).select_related('usuario').order_by('fecha_inicio', 'usuario__first_name', 'usuario__last_name')
+        
+        # Calcular días disponibles cronológicamente para todo el año hasta cada permiso
+        BASE_DIAS_ADMINISTRATIVOS = 6.0
+        
+        # Obtener TODOS los permisos del año para cada funcionario para cálculo cronológico
+        usuarios_con_permisos = {}
+        for p in permisos:
+            if p.usuario_id not in usuarios_con_permisos:
+                usuarios_con_permisos[p.usuario_id] = list(SolicitudPermiso.objects.filter(
+                    usuario=p.usuario,
+                    estado='APROBADO',
+                    fecha_inicio__year=year
+                ).order_by('fecha_inicio', 'created_at'))
+        
+        # Calcular días disponibles cronológicamente para cada funcionario
+        usuarios_dias_calculados = {}
+        for user_id, user_permisos in usuarios_con_permisos.items():
+            dias_acumulados = 0.0
+            user_dias = {}
+            for p in user_permisos:
+                dias_acumulados += float(p.dias_solicitados)
+                user_dias[p.id] = max(BASE_DIAS_ADMINISTRATIVOS - dias_acumulados, 0)
+            usuarios_dias_calculados[user_id] = user_dias
 
         # Procesar cada permiso individualmente
         datos_finales = []
         for p in permisos:
+            dias_disp = usuarios_dias_calculados.get(p.usuario_id, {}).get(p.id, BASE_DIAS_ADMINISTRATIVOS)
             datos_finales.append({
                 'usuario': p.usuario,
                 'dias_solicitados': float(p.dias_solicitados),
+                'dias_disponibles': dias_disp,
                 'fecha_desde': p.fecha_inicio.strftime("%d-%m-%Y") if p.fecha_inicio else "",
                 'fecha_hasta': p.fecha_termino.strftime("%d-%m-%Y") if p.fecha_termino else "",
             })
@@ -3258,7 +3308,7 @@ class ReporteDAEM2PDFView(LoginRequiredMixin, UserPassesTestMixin, View):
                 'run': u.run,
                 'establecimiento': "Colegio Los Alerces",
                 'dias_solicitados': item['dias_solicitados'],
-                'dias_disponibles': float(u.dias_disponibles),
+                'dias_disponibles': item['dias_disponibles'],
                 'fecha_desde': item['fecha_desde'],
                 'fecha_hasta': item['fecha_hasta'],
             })

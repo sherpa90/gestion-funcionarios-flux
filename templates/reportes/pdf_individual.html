@@ -264,23 +264,25 @@
     </div>
 
     <div class="section-title">Permisos Administrativos Aprobados</div>
-    {% if permisos %}
+    {% if permisos_con_dias %}
     <table>
         <thead>
             <tr>
-                <th style="width: 20%;">Fecha Inicio</th>
-                <th style="width: 20%;">Fecha Término</th>
+                <th style="width: 18%;">Fecha Inicio</th>
+                <th style="width: 18%;">Fecha Término</th>
                 <th style="width: 10%;" class="text-center">Días</th>
-                <th style="width: 50%;">Observación</th>
+                <th style="width: 14%;" class="text-center">Días Disp.</th>
+                <th style="width: 40%;">Observación</th>
             </tr>
         </thead>
         <tbody>
-            {% for permiso in permisos %}
+            {% for item in permisos_con_dias %}
             <tr>
-                <td class="text-center numero">{{ permiso.fecha_inicio|date:"d/m/Y" }}</td>
-                <td class="text-center numero">{{ permiso.fecha_termino|date:"d/m/Y"|default:"-" }}</td>
-                <td class="text-center numero">{{ permiso.dias_solicitados|floatformat:1 }}</td>
-                <td>{{ permiso.observacion|default:"-" }}</td>
+                <td class="text-center numero">{{ item.permiso.fecha_inicio|date:"d/m/Y" }}</td>
+                <td class="text-center numero">{{ item.permiso.fecha_termino|date:"d/m/Y"|default:"-" }}</td>
+                <td class="text-center numero">{{ item.permiso.dias_solicitados|floatformat:1 }}</td>
+                <td class="text-center numero">{{ item.dias_disponibles|floatformat:1 }}</td>
+                <td>{{ item.permiso.observacion|default:"-" }}</td>
             </tr>
             {% endfor %}
         </tbody>
