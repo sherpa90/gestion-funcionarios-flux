@@ -45,3 +45,36 @@ class SolicitudPermiso(models.Model):
         base_date = self.created_at.date() if self.created_at else timezone.now().date()
         dias_diferencia = (self.fecha_inicio - base_date).days
         return dias_diferencia < 2
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        estado_anterior = None
+        if not is_new:
+            try:
+                estado_anterior = SolicitudPermiso.objects.get(pk=self.pk).estado
+            except SolicitudPermiso.DoesNotExist:
+                pass
+
+        super().save(*args, **kwargs)
+
+        # Sincronizar registros de asistencia si el estado cambió a/desde APROBADO,
+        # o si se creó aprobado (raro pero posible).
+        if is_new or estado_anterior != self.estado:
+            # Solo actualizar si involucra APROBADO (ya sea antes o ahora) para optimizar
+            if self.estado == 'APROBADO' or estado_anterior == 'APROBADO':
+                from asistencia.models import RegistroAsistencia
+                from datetime import timedelta
+                
+                if self.fecha_inicio and self.fecha_termino:
+                    fecha = self.fecha_inicio
+                    while fecha <= self.fecha_termino:
+                        # Buscar si existe el registro para esa fecha
+                        registro = RegistroAsistencia.objects.filter(
+                            funcionario=self.usuario, 
+                            fecha=fecha
+                        ).first()
+                        
+                        if registro:
+                            # Al llamar save() se dispara determinar_estado()
+                            registro.save()
+                        fecha += timedelta(days=1)

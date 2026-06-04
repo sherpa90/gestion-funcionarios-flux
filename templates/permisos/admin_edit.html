@@ -67,6 +67,24 @@
                         {% endif %}
                     </div>
 
+                    <!-- Jornada (Oculta por defecto) -->
+                    <div class="sm:col-span-6" id="jornada-container" style="display: none;">
+                        <label for="{{ form.jornada.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.jornada.label }}
+                        </label>
+                        <div class="flex space-x-4">
+                            {% for radio in form.jornada %}
+                            <label class="inline-flex items-center">
+                                {{ radio.tag }}
+                                <span class="ml-2 text-sm text-gray-700">{{ radio.choice_label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.jornada.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.jornada.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
                     <!-- Fecha Término (calculada) -->
                     <div class="sm:col-span-6">
                         <label class="block text-sm font-medium text-gray-700">Fecha de Término (Calculada)</label>
@@ -122,4 +140,34 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const diasSelect = document.getElementById('{{ form.dias_solicitados.id_for_label }}');
+    const jornadaContainer = document.getElementById('jornada-container');
+    
+    function toggleJornada() {
+        if(!diasSelect) return;
+        const selectedValue = parseFloat(diasSelect.value);
+        const esMedioDia = selectedValue % 1 === 0.5;
+        const radios = document.querySelectorAll('input[name="jornada"]');
+        
+        if (esMedioDia) {
+            jornadaContainer.style.display = 'block';
+            radios.forEach(radio => radio.setAttribute('required', 'required'));
+        } else {
+            jornadaContainer.style.display = 'none';
+            radios.forEach(radio => {
+                radio.removeAttribute('required');
+                radio.checked = false;
+            });
+        }
+    }
+
+    if (diasSelect) {
+        diasSelect.addEventListener('change', toggleJornada);
+        // Inicializar el estado al cargar la página
+        toggleJornada(); 
+    }
+});
+</script>
 {% endblock %}

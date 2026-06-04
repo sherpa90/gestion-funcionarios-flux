@@ -590,7 +590,7 @@ class RegistroAsistencia(models.Model):
                         # Sin marcación de salida → ausente en la jornada laboral (tarde)
                         # El medio día AM administrativo sigue vigente (accessible via permiso_detalle)
                         if not self.hora_salida_real:
-                            return "AUSENTE"
+                            return "JUSTIFICADO" if self.justificacion_manual else "AUSENTE"
                         if self.hora_entrada_real:
                             # Si marcó entrada, verificar si fue en la tarde (después de 12:00)
                             if self.hora_entrada_real.hour >= 12:
@@ -607,14 +607,14 @@ class RegistroAsistencia(models.Model):
                                 return "MEDIO_DIA"
                         else:
                             # Tiene salida pero no entrada → sin marcación de entrada
-                            return "SIN_MARCACION_ENTRADA"
+                            return "JUSTIFICADO" if self.justificacion_manual else "SIN_MARCACION_ENTRADA"
 
                     elif permiso.jornada == 'PM':
                         # Tiene libre en la tarde, trabaja en la mañana
                         # Sin marcación de salida → ausente en la jornada laboral (mañana)
                         # El medio día PM administrativo sigue vigente (accessible via permiso_detalle)
                         if not self.hora_salida_real:
-                            return "AUSENTE"
+                            return "JUSTIFICADO" if self.justificacion_manual else "AUSENTE"
                         if self.hora_entrada_real:
                             # Verificar retraso solo respecto a la mañana
                             retraso = self.calcular_retraso()
@@ -622,7 +622,7 @@ class RegistroAsistencia(models.Model):
                             return "MEDIO_DIA"
                         else:
                             # Tiene salida pero no entrada → sin marcación de entrada
-                            return "SIN_MARCACION_ENTRADA"
+                            return "JUSTIFICADO" if self.justificacion_manual else "SIN_MARCACION_ENTRADA"
                 else:
                     # Día completo administrativo
                     return "DIA_ADMINISTRATIVO"
