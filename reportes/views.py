@@ -1013,7 +1013,7 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                 p.fecha_inicio.strftime("%d-%m-%Y") if p.fecha_inicio else "",
                 p.fecha_termino.strftime("%d-%m-%Y") if p.fecha_termino else "",
                 float(p.dias_solicitados),
-                justs_str
+                ""
             ])
 
         # Firma
