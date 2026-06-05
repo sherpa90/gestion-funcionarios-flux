@@ -67,7 +67,7 @@
             <tr>
                 <th>Nombre y Apellidos</th>
                 <th>RUN</th>
-                <th>Atrasos (minutos)</th>
+                <th>Atrasos (h m)</th>
                 <th>Inasistencias</th>
             </tr>
         </thead>
@@ -76,7 +76,7 @@
             <tr>
                 <td>{{ data.funcionario.get_full_name|default:data.funcionario.username }}</td>
                 <td>{{ data.funcionario.run }}</td>
-                <td>{{ data.atrasos }} min</td>
+                <td>{{ data.atrasos }}</td>
                 <td>{{ data.inasistencias }}</td>
             </tr>
             {% endfor %}

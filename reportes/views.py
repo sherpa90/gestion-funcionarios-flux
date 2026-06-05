@@ -1389,7 +1389,11 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         for i, data in enumerate(funcionarios_data, 10):
             ws.cell(row=i, column=1).value = data['funcionario'].get_full_name() or data['funcionario'].username
             ws.cell(row=i, column=2).value = data['funcionario'].run
-            ws.cell(row=i, column=3).value = round(data['atrasos'] / 60, 2)  # Convert minutes to hours
+            # Convert minutes to hours and minutes string
+            total_minutes = data['atrasos']
+            hrs = total_minutes // 60
+            mins = total_minutes % 60
+            ws.cell(row=i, column=3).value = f"{hrs}h {mins}m"
             ws.cell(row=i, column=4).value = data['inasistencias']
 
             # Bordes para las celdas de datos
@@ -1623,7 +1627,7 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
             if total_inasistencias > 0 or total_atrasos >= 60:
                 funcionarios_data.append({
                     'funcionario': func,
-                    'atrasos': total_atrasos,
+                    'atrasos': f"{total_atrasos // 60}h {total_atrasos % 60}m",
                     'inasistencias': total_inasistencias
                 })
 
