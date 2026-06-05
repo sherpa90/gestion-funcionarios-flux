@@ -1389,7 +1389,7 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         for i, data in enumerate(funcionarios_data, 10):
             ws.cell(row=i, column=1).value = data['funcionario'].get_full_name() or data['funcionario'].username
             ws.cell(row=i, column=2).value = data['funcionario'].run
-            ws.cell(row=i, column=3).value = data['atrasos']  # Número entero de minutos
+            ws.cell(row=i, column=3).value = round(data['atrasos'] / 60, 2)  # Convert minutes to hours
             ws.cell(row=i, column=4).value = data['inasistencias']
 
             # Bordes para las celdas de datos

@@ -46,12 +46,14 @@ class Equipo(models.Model):
         max_length=100,
         null=True,
         blank=True,
+        unique=True,
         verbose_name='Número de Serie'
     )
     numero_inventario = models.CharField(
         max_length=100,
         null=True,
         blank=True,
+        unique=True,
         verbose_name='Número de Inventario'
     )
     observaciones = models.TextField(
@@ -100,11 +102,17 @@ class Equipo(models.Model):
     
     def clean(self):
         if self.numero_serie:
+            # Verificar que el número de serie sea único
+            if Equipo.objects.filter(numero_serie=self.numero_serie).exclude(pk=self.pk).exists():
+                raise ValidationError('El número de serie ya está registrado en otro equipo.')
             # Verificar que no contenga caracteres de plantilla Django
             if '{{' in self.numero_serie or '}}' in self.numero_serie:
                 raise ValidationError('El número de serie no puede contener caracteres de plantilla.')
             self.numero_serie = self.numero_serie.upper()
         if self.numero_inventario:
+            # Verificar que el número de inventario sea único
+            if Equipo.objects.filter(numero_inventario=self.numero_inventario).exclude(pk=self.pk).exists():
+                raise ValidationError('El número de inventario ya está registrado en otro equipo.')
             # Verificar que no contenga caracteres de plantilla Django
             if '{{' in self.numero_inventario or '}}' in self.numero_inventario:
                 raise ValidationError('El número de inventario no puede contener caracteres de plantilla.')
