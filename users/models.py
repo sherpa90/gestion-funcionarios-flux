@@ -118,6 +118,9 @@ class CustomUser(AbstractUser):
         related_name='blocked_users',
         help_text="Usuario que realizó el bloqueo"
     )
+    is_on_leave = models.BooleanField(default=False, help_text="Si está marcado, el funcionario está de baja")
+    baja_date = models.DateField(null=True, blank=True, help_text="Fecha de inicio de la baja")
+    alta_date = models.DateField(null=True, blank=True, help_text="Fecha de alta/reingreso")
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['run', 'first_name', 'last_name']
@@ -146,6 +149,16 @@ class CustomUser(AbstractUser):
         self.dias_disponibles = max(0.0, 6.0 - float(total_aprobados))
         self.save()
         return self.dias_disponibles
+
+    def is_on_baja_on_date(self, fecha):
+        """Verifica si el funcionario está de baja en una fecha específica."""
+        if not self.is_on_leave or not self.baja_date:
+            return False
+        
+        if self.alta_date and fecha >= self.alta_date:
+            return False
+        
+        return fecha >= self.baja_date
 
     def save(self, *args, **kwargs):
         # Normalizar el RUT antes de guardar (con puntos para formato chileno)

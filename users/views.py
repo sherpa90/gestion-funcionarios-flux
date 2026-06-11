@@ -11,7 +11,7 @@ from django.core.management import call_command
 from django.core.management import call_command
 from django import forms
 from .models import CustomUser
-from .forms import UserCreateForm, UserEditForm, BulkUserImportForm
+from .forms import UserCreateForm, UserEditForm, BulkUserImportForm, UserBajaForm, UserAltaForm
 import openpyxl
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -173,6 +173,76 @@ class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return super().form_valid(form)
 
 
+class UserBajaView(LoginRequiredMixin, UserPassesTestMixin, FormView):
+    """Vista para dar de baja a un funcionario"""
+    template_name = 'users/user_baja_form.html'
+    form_class = UserBajaForm
+    
+    def test_func(self):
+        return self.request.user.role in ['SECRETARIA', 'ADMIN']
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user'] = get_object_or_404(CustomUser, pk=self.kwargs['pk'])
+        return context
+    
+    def form_valid(self, form):
+        usuario = get_object_or_404(CustomUser, pk=self.kwargs['pk'])
+        baja_date = form.cleaned_data['baja_date']
+        
+        usuario.is_on_leave = True
+        usuario.baja_date = baja_date
+        usuario.alta_date = None
+        usuario.save()
+        
+        registrar_log(
+            usuario=self.request.user,
+            tipo='UPDATE',
+            accion='Baja de Funcionario',
+            descripcion=f'Se dio de baja al funcionario: {usuario.run} - {usuario.email} desde {baja_date}',
+            ip_address=get_client_ip(self.request)
+        )
+        
+        messages.success(self.request, f'{usuario.get_full_name()} fue dado de baja desde {baja_date.strftime("%d/%m/%Y")}.')
+        return redirect('user_list')
+
+
+class UserAltaView(LoginRequiredMixin, UserPassesTestMixin, FormView):
+    """Vista para dar de alta a un funcionario"""
+    template_name = 'users/user_alta_form.html'
+    form_class = UserAltaForm
+    
+    def test_func(self):
+        return self.request.user.role in ['SECRETARIA', 'ADMIN']
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user'] = get_object_or_404(CustomUser, pk=self.kwargs['pk'])
+        return context
+    
+    def get_success_url(self):
+        return reverse_lazy('user_list')
+    
+    def form_valid(self, form):
+        usuario = get_object_or_404(CustomUser, pk=self.kwargs['pk'])
+        alta_date = form.cleaned_data['alta_date']
+        
+        usuario.is_on_leave = False
+        usuario.alta_date = alta_date
+        usuario.save()
+        
+        registrar_log(
+            usuario=self.request.user,
+            tipo='UPDATE',
+            accion='Alta de Funcionario',
+            descripcion=f'Se dio de alta al funcionario: {usuario.run} - {usuario.email} desde {alta_date}',
+            ip_address=get_client_ip(self.request)
+        )
+        
+        messages.success(self.request, f'{usuario.get_full_name()} fue dado de alta desde {alta_date.strftime("%d/%m/%Y")}.')
+        return redirect('user_list')
+
+
 class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = CustomUser
     template_name = 'users/user_confirm_delete.html'
@@ -206,8 +276,11 @@ class BulkUserImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['download_template'] = True
+        context['user'] = get_object_or_404(CustomUser, pk=self.kwargs['pk'])
         return context
+    
+    def get_success_url(self):
+        return reverse_lazy('user_list')
     
     def form_valid(self, form):
         excel_file = form.cleaned_data['excel_file']

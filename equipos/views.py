@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.conf import settings
 from weasyprint import HTML
 from django.db.models import Prefetch
-from .models import Equipo, PrestamoEquipo, FallaEquipo
+from .models import Equipo, PrestamoEquipo, FallaEquipo, LugarEquipo
 from users.models import CustomUser
 from datetime import datetime
 import openpyxl
@@ -67,6 +67,10 @@ def lista_equipos(request):
                 valor_limpio = valor.replace('{{', '').replace('}}', '').replace('{%', '').replace('%}', '').strip()
                 setattr(equipo, campo, valor_limpio)
         
+        # Sanitizar lugar
+        if equipo.lugar:
+            equipo.lugar.nombre = equipo.lugar.nombre.replace('{{', '').replace('}}', '').replace('{%', '').replace('%}', '').strip()
+        
         # Obtener préstamo activo desde la pre-carga
         equipo.prestamo_activo = equipo.prestamo_activo_list[0] if equipo.prestamo_activo_list else None
 
@@ -90,11 +94,34 @@ def lista_equipos(request):
     if estado:
         no_asignados = no_asignados.filter(estado=estado)
 
+    # El inventario general (todos los equipos, con información de préstamo activo)
+    inventario_general = equipos_base.order_by('estado', 'marca')
+    if tipo:
+        inventario_general = inventario_general.filter(tipo=tipo)
+    if estado:
+        inventario_general = inventario_general.filter(estado=estado)
+    if funcionario_id:
+        # Si hay funcionario seleccionado, mantener el inventario general visible con todos los equipos
+        pass
+    
+    # Sanitizar inventario general
+    for equipo in inventario_general:
+        for campo in ['numero_serie', 'numero_inventario', 'marca', 'modelo']:
+            valor = getattr(equipo, campo, '')
+            if valor:
+                valor_limpio = valor.replace('{{', '').replace('}}', '').replace('{%', '').replace('%}', '').strip()
+                setattr(equipo, campo, valor_limpio)
+        if equipo.lugar:
+            equipo.lugar.nombre = equipo.lugar.nombre.replace('{{', '').replace('}}', '').replace('{%', '').replace('%}', '').strip()
+        equipo.prestamo_activo = equipo.prestamo_activo_list[0] if equipo.prestamo_activo_list else None
+
     context = {
         'asignados_por_funcionario': asignados_por_funcionario,
         'no_asignados': no_asignados,
+        'inventario_general': inventario_general,
         'tipos': Equipo.TIPO_CHOICES,
         'estados': Equipo.ESTADO_CHOICES,
+        'lugares': LugarEquipo.objects.filter(activo=True).order_by('nombre'),
         'funcionarios': funcionarios,
         'selected_funcionario': selected_funcionario,
         'stats': stats,
@@ -125,6 +152,8 @@ def crear_equipo(request):
                 observaciones=request.POST.get('observaciones', ''),
                 estado=estado_inicial,
                 fecha_adquisicion=request.POST.get('fecha_adquisicion') or None,
+                fecha_origen=request.POST.get('fecha_origen') or None,
+                lugar_id=request.POST.get('lugar') or None,
                 creado_por=request.user
             )
 
@@ -151,13 +180,114 @@ def crear_equipo(request):
             messages.error(request, f'Error al crear equipo: {str(e)}')
 
     funcionarios = CustomUser.objects.filter(is_active=True).order_by('first_name', 'last_name')
+    lugares = LugarEquipo.objects.filter(activo=True).order_by('nombre')
 
     context = {
         'tipos': Equipo.TIPO_CHOICES,
         'estados': Equipo.ESTADO_CHOICES,
+        'lugares': lugares,
         'funcionarios': funcionarios,
     }
     return render(request, 'equipos/crear_equipo.html', context)
+
+
+@login_required
+def crear_lugar_equipo(request):
+    """Crear lugar de equipo (solo administradores)"""
+    if request.user.role != 'ADMIN':
+        messages.error(request, 'No tienes permisos para acceder a esta sección.')
+        return redirect('lista_equipos')
+    
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip().upper()
+        descripcion = request.POST.get('descripcion', '').strip()
+        
+        if not nombre:
+            messages.error(request, 'El nombre del lugar es obligatorio.')
+            return redirect('lista_equipos')
+        
+        lugar, created = LugarEquipo.objects.get_or_create(
+            nombre=nombre,
+            defaults={'descripcion': descripcion, 'creado_por': request.user}
+        )
+        
+        if created:
+            messages.success(request, f'Lugar "{lugar.nombre}" creado exitosamente.')
+            registrar_log(
+                usuario=request.user,
+                tipo='CREATE',
+                accion='Creación de Lugar de Equipo',
+                descripcion=f'Se creó lugar de equipo: {lugar.nombre}',
+                ip_address=get_client_ip(request)
+            )
+        else:
+            messages.info(request, f'El lugar "{lugar.nombre}" ya existe.')
+        
+        return redirect('lista_equipos')
+    
+    return redirect('lista_equipos')
+
+
+@login_required
+def editar_lugar_equipo(request, lugar_id):
+    """Editar lugar de equipo (solo administradores)"""
+    if request.user.role != 'ADMIN':
+        messages.error(request, 'No tienes permisos para acceder a esta sección.')
+        return redirect('lista_equipos')
+    
+    lugar = get_object_or_404(LugarEquipo, id=lugar_id)
+    
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip().upper()
+        descripcion = request.POST.get('descripcion', '').strip()
+        activo = request.POST.get('activo') == 'on'
+        
+        if not nombre:
+            messages.error(request, 'El nombre del lugar es obligatorio.')
+            return redirect('lista_equipos')
+        
+        lugar.nombre = nombre
+        lugar.descripcion = descripcion
+        lugar.activo = activo
+        lugar.save()
+        
+        messages.success(request, f'Lugar "{lugar.nombre}" actualizado exitosamente.')
+        registrar_log(
+            usuario=request.user,
+            tipo='UPDATE',
+            accion='Actualización de Lugar de Equipo',
+            descripcion=f'Se actualizó lugar de equipo: {lugar.nombre}',
+            ip_address=get_client_ip(request)
+        )
+        
+        return redirect('lista_equipos')
+    
+    return redirect('lista_equipos')
+
+
+@login_required
+def eliminar_lugar_equipo(request, lugar_id):
+    """Eliminar lugar de equipo (solo administradores)"""
+    if request.user.role != 'ADMIN':
+        messages.error(request, 'No tienes permisos para acceder a esta sección.')
+        return redirect('lista_equipos')
+    
+    lugar = get_object_or_404(LugarEquipo, id=lugar_id)
+    
+    if request.method == 'POST':
+        lugar.activo = False
+        lugar.save()
+        
+        messages.success(request, f'Lugar "{lugar.nombre}" desactivado exitosamente.')
+        registrar_log(
+            usuario=request.user,
+            tipo='UPDATE',
+            accion='Desactivación de Lugar de Equipo',
+            descripcion=f'Se desactivó lugar de equipo: {lugar.nombre}',
+            ip_address=get_client_ip(request)
+        )
+    
+    return redirect('lista_equipos')
 
 
 @login_required
@@ -185,6 +315,8 @@ def editar_equipo(request, equipo_id):
         equipo.observaciones = request.POST.get('observaciones', '')
         equipo.estado = request.POST.get('estado')
         equipo.fecha_adquisicion = request.POST.get('fecha_adquisicion') or None
+        equipo.fecha_origen = request.POST.get('fecha_origen') or None
+        equipo.lugar_id = request.POST.get('lugar') or None
         equipo.save()
 
         # Manejo de vinculación/desvinculación
@@ -233,11 +365,13 @@ def editar_equipo(request, equipo_id):
 
     prestamo_actual = equipo.prestamos.filter(activo=True).first()
     funcionarios = CustomUser.objects.filter(is_active=True).order_by('first_name', 'last_name')
+    lugares = LugarEquipo.objects.filter(activo=True).order_by('nombre')
 
     context = {
         'equipo': equipo,
         'tipos': Equipo.TIPO_CHOICES,
         'estados': Equipo.ESTADO_CHOICES,
+        'lugares': lugares,
         'funcionarios': funcionarios,
         'prestamo_actual': prestamo_actual,
     }
@@ -550,7 +684,7 @@ def export_inventario_excel(request):
     headers = [
         'Tipo', 'Marca', 'Modelo', 'N° Serie', 'N° Inventario',
         'Estado', 'Funcionario Asignado', 'RUT Funcionario',
-        'Fecha Asignación', 'Fecha Adquisición', 'Observaciones'
+        'Fecha Asignación', 'Fecha Adquisición', 'Fecha Origen', 'Lugar', 'Observaciones'
     ]
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col, value=header)
@@ -581,10 +715,12 @@ def export_inventario_excel(request):
             ws.cell(row=row, column=9, value='-').border = thin_border
         
         ws.cell(row=row, column=10, value=equipo.fecha_adquisicion.strftime('%d/%m/%Y') if equipo.fecha_adquisicion else '').border = thin_border
-        ws.cell(row=row, column=11, value=equipo.observaciones or '').border = thin_border
+        ws.cell(row=row, column=11, value=equipo.fecha_origen.strftime('%d/%m/%Y') if equipo.fecha_origen else '').border = thin_border
+        ws.cell(row=row, column=12, value=equipo.lugar.nombre if equipo.lugar else '').border = thin_border
+        ws.cell(row=row, column=13, value=equipo.observaciones or '').border = thin_border
     
     # Ajustar anchos de columna
-    column_widths = [15, 15, 20, 20, 18, 15, 25, 15, 15, 15, 30]
+    column_widths = [15, 15, 20, 20, 18, 15, 25, 15, 15, 15, 15, 20, 30]
     for col, width in enumerate(column_widths, 1):
         ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = width
     

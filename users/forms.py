@@ -216,3 +216,19 @@ class BulkUserImportForm(forms.Form):
             if file.size > 5 * 1024 * 1024:
                 raise ValidationError('El archivo no debe superar los 5MB')
         return file
+
+
+class UserBajaForm(forms.Form):
+    """Formulario para dar de baja a un funcionario"""
+    baja_date = forms.DateField(
+        label='Fecha de baja',
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'})
+    )
+
+
+class UserAltaForm(forms.Form):
+    """Formulario para dar de alta a un funcionario"""
+    alta_date = forms.DateField(
+        label='Fecha de alta',
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'})
+    )

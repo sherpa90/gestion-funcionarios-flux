@@ -320,6 +320,10 @@
                                                             Lic. Médica
                                                         {% endif %}
                                                     </span>
+                                                {% elif registro.estado == 'BAJA' %}
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-red-50 text-red-700 border border-red-200 shadow-sm">
+                                                        <i class="fas fa-user-clock mr-1.5 text-[8px]"></i> Baja
+                                                    </span>
                                                 {% elif registro.estado == 'JUSTIFICADO' %}
                                                     <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-blue-100 text-blue-800 border border-blue-200 shadow-sm">
                                                         <i class="fas fa-check-double mr-1.5 text-[8px]"></i> Justificado

@@ -54,6 +54,18 @@
                             <p class="text-sm font-medium text-gray-700">{{ equipo.fecha_adquisicion|date:"d M Y" }}</p>
                         </div>
                         {% endif %}
+                        {% if equipo.fecha_origen %}
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Fecha de Origen</p>
+                            <p class="text-sm font-medium text-gray-700">{{ equipo.fecha_origen|date:"d M Y" }}</p>
+                        </div>
+                        {% endif %}
+                        {% if equipo.lugar %}
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Lugar</p>
+                            <p class="text-sm font-medium text-gray-700">{{ equipo.lugar.nombre }}</p>
+                        </div>
+                        {% endif %}
                     </div>
 
                     {% if prestamo_actual %}

@@ -134,6 +134,13 @@
             <span class="text-sm font-black text-gray-700">{{ estadisticas.dias_libre }}</span>
         </div>
         {% endif %}
+        {% if estadisticas.dias_baja > 0 %}
+        <div class="flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-full px-3 py-1.5">
+            <i class="fas fa-user-clock text-rose-500 text-[10px]"></i>
+            <span class="text-[10px] font-bold text-rose-600 uppercase">Baja</span>
+            <span class="text-sm font-black text-rose-700">{{ estadisticas.dias_baja }}</span>
+        </div>
+        {% endif %}
         <div class="flex items-center gap-2 bg-red-100 border border-red-300 rounded-full px-3 py-1.5">
             <i class="fas fa-exclamation-triangle text-red-600 text-[10px]"></i>
             <span class="text-[10px] font-bold text-red-700 uppercase">Inasistencia</span>
@@ -265,6 +272,7 @@
                                 {% elif reg.estado == 'MEDIO_DIA' %}bg-violet-50/50 border-violet-100
                                 {% elif reg.estado == 'DIA_ADMINISTRATIVO' %}bg-green-50/70 border-green-300
                                 {% elif reg.estado == 'LICENCIA_MEDICA' %}bg-red-50/70 border-red-300
+                                {% elif reg.estado == 'BAJA' %}bg-rose-50/70 border-rose-300
                                 {% elif reg.estado == 'DIA_FESTIVO' %}bg-indigo-50/50 border-indigo-100
                                 {% elif reg.estado == 'JUSTIFICADO' %}bg-blue-50/50 border-blue-100
                                 {% elif reg.estado == 'SIN_MARCACION_ENTRADA' %}bg-orange-50/50 border-orange-200
@@ -283,6 +291,7 @@
                                 <span class="text-xs font-bold
                                     {% if reg and reg.estado == 'AUSENTE' %}text-red-700
                                     {% elif reg and reg.estado == 'SIN_MARCACION_ENTRADA' %}text-orange-700
+                                    {% elif reg and reg.estado == 'BAJA' %}text-rose-700
                                     {% elif dia.es_falta_sin_registro %}text-red-700
                                     {% elif not dia.es_dia_escolar %}text-gray-400
                                     {% elif dia.es_fin_de_semana %}text-amber-600
@@ -294,6 +303,8 @@
                                 <span class="text-[7px] font-black text-red-600 uppercase animate-pulse">FALTA</span>
                                 {% elif reg and reg.estado == 'SIN_MARCACION_ENTRADA' %}
                                 <span class="text-[7px] font-black text-orange-600 uppercase">Sin E.</span>
+                                {% elif reg and reg.estado == 'BAJA' %}
+                                <span class="text-[7px] font-black text-rose-600 uppercase">Baja</span>
                                 {% elif dia.es_falta_sin_registro %}
                                 <span class="text-[7px] font-black text-red-600 uppercase animate-pulse">FALTA</span>
                                 {% elif not dia.es_dia_escolar %}
@@ -401,6 +412,10 @@
                                      </div>
                                      {% endif %}
                                  </div>
+                                 {% elif reg.estado == 'BAJA' %}
+                                 <div class="text-[9px] font-bold text-rose-600 mt-1">
+                                     <i class="fas fa-user-clock text-[7px] mr-0.5"></i>Baja
+                                 </div>
                                 {% elif reg.estado == 'DIA_FESTIVO' %}
                                 <div class="text-[9px] font-bold text-indigo-500 mt-1">
                                     <i class="fas fa-star text-[7px] mr-0.5"></i>Feriado
@@ -476,6 +491,7 @@
                                 {% elif reg.estado == 'SIN_MARCACION_ENTRADA' %}bg-orange-50/30 border-orange-200 border-l-4
                                 {% elif reg.estado == 'DIA_ADMINISTRATIVO' %}bg-green-50/70 border-green-300 border-l-4
                                 {% elif reg.estado == 'LICENCIA_MEDICA' %}bg-red-50/70 border-red-300 border-l-4
+                                {% elif reg.estado == 'BAJA' %}bg-rose-50/70 border-rose-300 border-l-4
                                 {% elif reg.estado == 'MEDIO_DIA' %}bg-violet-50/30 border-violet-200 border-l-4
                                 {% elif reg.estado == 'DIA_FESTIVO' %}bg-indigo-50/30 border-indigo-200
                                 {% elif reg.estado == 'JUSTIFICADO' %}bg-blue-50/30 border-blue-200
@@ -494,6 +510,7 @@
                                     <div class="text-lg font-black
                                         {% if reg and reg.estado == 'AUSENTE' %}text-red-700
                                         {% elif reg and reg.estado == 'SIN_MARCACION_ENTRADA' %}text-orange-700
+                                        {% elif reg and reg.estado == 'BAJA' %}text-rose-700
                                         {% elif dia.es_falta_sin_registro %}text-red-700
                                         {% elif not dia.es_dia_escolar %}text-gray-400
                                         {% elif dia.es_fin_de_semana %}text-amber-600
@@ -561,6 +578,8 @@
                                             <div class="text-sm font-bold text-gray-600">
                                                 {% if reg.estado == 'LICENCIA_MEDICA' and reg.obtener_tipo_licencia_o_permiso %}
                                                     {{ reg.obtener_tipo_licencia_o_permiso }}
+                                                {% elif reg.estado == 'BAJA' %}
+                                                    Baja
                                                 {% else %}
                                                     {{ reg.get_estado_display }}
                                                 {% endif %}

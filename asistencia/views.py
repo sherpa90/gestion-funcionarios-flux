@@ -468,6 +468,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             'DIA_ADMINISTRATIVO': 'Día Administrativo',
             'MEDIO_DIA': 'Medio Día Administrativo',
             'LICENCIA_MEDICA': 'Licencia Médica',
+            'BAJA': 'Baja',
             'SIN_DATA': 'Sin Datos',
         }
 
@@ -522,6 +523,9 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                                 registro = RegistroVirtual('MEDIO_DIA')
                             else:
                                 registro = RegistroVirtual('DIA_ADMINISTRATIVO')
+                    elif self.request.user.is_on_baja_on_date(fecha):
+                        if not registro or registro.estado == 'AUSENTE':
+                            registro = RegistroVirtual('BAJA')
 
                     # No es falta si hay registro (real o virtual), festivo, o no es día escolar
                     # O si la fecha es anterior a su ingreso al establecimiento
@@ -595,6 +599,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             'puntuales': sum(1 for r in todos_registros if r.estado == 'PUNTUAL'),
             'retraso': sum(1 for r in todos_registros if r.estado == 'RETRASO'),
             'ausente': sum(1 for r in todos_registros if r.estado == 'AUSENTE') + faltas_sin_registro,
+            'baja': sum(1 for r in todos_registros if r.estado == 'BAJA'),
 
             'medio_dia': sum(1 for r in todos_registros if r.estado == 'MEDIO_DIA'),
             'admin': sum(1 for r in todos_registros if r.estado == 'DIA_ADMINISTRATIVO'),
@@ -743,6 +748,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 'dias_puntuales': dias_puntuales,
                 'dias_retraso': stats['retraso'] or 0,
                 'dias_ausente': stats['ausente'] or 0,
+                'dias_baja': stats['baja'] or 0,
                 'dias_medio_dia': stats['medio_dia'] or 0,
                 'dias_admin': stats['admin'] or 0,
                 'dias_licencia': stats['licencia'] or 0,
@@ -1582,6 +1588,8 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                                 registros_mes_final.append(RegistroVirtual(d, 'MEDIO_DIA'))
                             else:
                                 registros_mes_final.append(RegistroVirtual(d, 'DIA_ADMINISTRATIVO'))
+                        elif usuario.is_on_baja_on_date(d):
+                            registros_mes_final.append(RegistroVirtual(d, 'BAJA'))
                         elif d.weekday() in dias_laborales:
                             # Los serenos no generan ausencias virtuales
                             if not es_sereno:
@@ -1600,6 +1608,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
 
                     retrasos_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'RETRASO')
                     ausentes_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'AUSENTE')
+                    bajas_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'BAJA')
                     admin_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'DIA_ADMINISTRATIVO')
                     licencia_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'LICENCIA_MEDICA')
                     medio_dia_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'MEDIO_DIA')
@@ -1611,6 +1620,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                         'retrasos': retrasos_mes,
                         'total': sum(1 for r in registros_mes_final if getattr(r, 'estado', None) != 'SIN_DATA'),
                         'ausentes': ausentes_mes,
+                        'bajas': bajas_mes,
                         'admin': admin_mes,
                         'licencia': licencia_mes,
                         'medio_dia': medio_dia_mes,

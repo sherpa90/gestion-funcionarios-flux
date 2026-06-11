@@ -113,6 +113,35 @@
                         <input type="date" name="fecha_adquisicion" value="{{ equipo.fecha_adquisicion|date:'Y-m-d' }}"
                             class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5">
                     </div>
+
+                    <!-- Fecha de Origen -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Fecha de
+                            Origen</label>
+                        <input type="date" name="fecha_origen" value="{{ equipo.fecha_origen|date:'Y-m-d' }}"
+                            class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5">
+                    </div>
+
+                    <!-- Lugar -->
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Lugar</label>
+                        <div class="flex gap-2">
+                            <select name="lugar"
+                                class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5">
+                                <option value="">Seleccionar Lugar...</option>
+                                {% for lugar in lugares %}
+                                <option value="{{ lugar.id }}" {% if equipo.lugar and equipo.lugar.id == lugar.id %}selected{% endif %}>{{ lugar.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if user.role == 'ADMIN' %}
+                            <button type="button" onclick="document.getElementById('modal-lugar').classList.remove('hidden')"
+                                class="px-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 transition-all"
+                                title="Agregar nuevo lugar">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Assignment Section -->
@@ -193,4 +222,41 @@
         });
     });
 </script>
+
+<!-- Modal Agregar Lugar -->
+<div id="modal-lugar" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900 bg-opacity-50 transition-opacity">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl relative">
+        <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-3xl mb-6 mx-auto">
+            <i class="fas fa-map-marker-alt"></i>
+        </div>
+        <h3 class="text-xl font-black text-center text-gray-900 mb-2">Agregar Nuevo Lugar</h3>
+        <p class="text-gray-500 text-sm text-center mb-6 font-medium">Define un lugar preestablecido para asignar equipos.</p>
+        
+        <form action="{% url 'crear_lugar_equipo' %}" method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1 mb-2">Nombre del Lugar</label>
+                <input type="text" name="nombre" required
+                    class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5"
+                    placeholder="Ej: Sala de Computación, Oficina Dirección...">
+            </div>
+            <div>
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest ml-1 mb-2">Descripción (Opcional)</label>
+                <textarea name="descripcion" rows="3"
+                    class="w-full rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold py-3.5"
+                    placeholder="Detalles adicionales del lugar..."></textarea>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                <button type="button" onclick="document.getElementById('modal-lugar').classList.add('hidden')"
+                    class="w-full py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors">
+                    Guardar Lugar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

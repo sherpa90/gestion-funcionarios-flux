@@ -5,6 +5,9 @@ urlpatterns = [
     # Administrador
     path('lista/', views.lista_equipos, name='lista_equipos'),
     path('crear/', views.crear_equipo, name='crear_equipo'),
+    path('lugares/crear/', views.crear_lugar_equipo, name='crear_lugar_equipo'),
+    path('lugares/editar/<int:lugar_id>/', views.editar_lugar_equipo, name='editar_lugar_equipo'),
+    path('lugares/eliminar/<int:lugar_id>/', views.eliminar_lugar_equipo, name='eliminar_lugar_equipo'),
     path('editar/<int:equipo_id>/', views.editar_equipo, name='editar_equipo'),
     path('eliminar/<int:equipo_id>/', views.eliminar_equipo, name='eliminar_equipo'),
     path('asignar/<int:equipo_id>/', views.asignar_equipo, name='asignar_equipo'),

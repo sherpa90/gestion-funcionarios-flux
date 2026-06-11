@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (
-    UserListView, UserCreateView, UserUpdateView, UserDeleteView,
+    UserListView, UserCreateView, UserUpdateView, UserBajaView, UserAltaView, UserDeleteView,
     BulkUserImportView, download_template, ResetUserPasswordView, ChangeOwnPasswordView,
     AdminChangePasswordView, EmailDirectoryView, CrearGrupoCorreoView, CrearDirectorioTelefonicoView,
     EditarGrupoCorreoView, EliminarGrupoCorreoView, EditarDirectorioTelefonicoView, EliminarDirectorioTelefonicoView,
@@ -12,6 +12,8 @@ urlpatterns = [
     path('directorio/', EmailDirectoryView.as_view(), name='email_directory'),
     path('crear/', UserCreateView.as_view(), name='user_create'),
     path('<int:pk>/editar/', UserUpdateView.as_view(), name='user_edit'),
+    path('<int:pk>/baja/', UserBajaView.as_view(), name='user_baja'),
+    path('<int:pk>/alta/', UserAltaView.as_view(), name='user_alta'),
     path('<int:pk>/eliminar/', UserDeleteView.as_view(), name='user_delete'),
     path('importar/', BulkUserImportView.as_view(), name='bulk_import_users'),
     path('plantilla/', download_template, name='download_user_template'),

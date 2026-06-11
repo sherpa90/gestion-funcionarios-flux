@@ -3,6 +3,49 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 
+class LugarEquipo(models.Model):
+    """Modelo para gestionar lugares/ubicaciones de equipos"""
+    
+    nombre = models.CharField(
+        max_length=100,
+        unique=True,
+        verbose_name='Nombre del Lugar'
+    )
+    descripcion = models.TextField(
+        blank=True,
+        verbose_name='Descripción'
+    )
+    activo = models.BooleanField(
+        default=True,
+        verbose_name='Activo'
+    )
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='lugares_equipos_creados'
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Lugar de Equipo'
+        verbose_name_plural = 'Lugares de Equipos'
+        ordering = ['nombre']
+    
+    def __str__(self):
+        return self.nombre
+    
+    def save(self, *args, **kwargs):
+        self.nombre = self.nombre.strip().upper()
+        super().save(*args, **kwargs)
+    
+    def clean(self):
+        if self.nombre:
+            self.nombre = self.nombre.strip().upper()
+            if '{{' in self.nombre or '}}' in self.nombre:
+                raise ValidationError('El nombre del lugar no puede contener caracteres de plantilla.')
+
+
 class Equipo(models.Model):
     """Modelo para gestionar equipos tecnológicos"""
     
@@ -71,6 +114,19 @@ class Equipo(models.Model):
         blank=True,
         verbose_name='Fecha de Adquisición'
     )
+    fecha_origen = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha de Origen'
+    )
+    lugar = models.ForeignKey(
+        LugarEquipo,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='equipos',
+        verbose_name='Lugar'
+    )
     creado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -94,6 +150,21 @@ class Equipo(models.Model):
         elif self.numero_serie:
             desc += f" - SN: {self.numero_serie}"
         return desc
+    
+    def validate_unique(self, exclude=None):
+        """Validación personalizada para permitir múltiples equipos sin número de serie/inventario."""
+        if exclude is None:
+            exclude = set()
+        else:
+            exclude = set(exclude)
+        
+        # No validar unicidad si los campos están vacíos
+        if not self.numero_serie:
+            exclude.add('numero_serie')
+        if not self.numero_inventario:
+            exclude.add('numero_inventario')
+        
+        super().validate_unique(exclude=exclude)
     
     def save(self, *args, **kwargs):
         # Ejecutar validación completa

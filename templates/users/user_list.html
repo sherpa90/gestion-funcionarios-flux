@@ -203,6 +203,8 @@
   .badge-purple { background: #faf5ff; color: #7e22ce; border: 1px solid #e9d5ff; }
   .badge-pink { background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; }
   .badge-gray { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+  .badge-baja { background: #fef2f2; color: #be123c; border: 1px solid #fecdd3; }
+  .badge-alta { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
 
   .horario-info { display: flex; flex-direction: column; gap: 0.15rem; }
   .horario-time { font-size: 0.85rem; font-weight: 800; color: #334155; display: flex; align-items: center; gap: 0.3rem;}
@@ -404,6 +406,9 @@
                           {% else %}badge-role{% endif %}">
                           {{ user.get_funcion_display|default:user.get_tipo_funcionario_display|default:user.get_role_display }}
                       </span>
+                      {% if user.is_on_leave %}
+                      <span class="badge badge-baja mt-2">Baja desde {{ user.baja_date|date:"d/m/Y" }}</span>
+                      {% endif %}
                   </td>
 
                   <td>
@@ -427,6 +432,11 @@
                               <div class="row-menu-content">
                                   <a href="{% url 'reset_user_password' user.pk %}" class="row-menu-item"><i class="fas fa-key text-amber-500"></i> Restablecer Clave</a>
                                   <a href="{% url 'admin_change_password' user.pk %}" class="row-menu-item"><i class="fas fa-lock text-green-500"></i> Asignar Clave Manual</a>
+                                  {% if user.is_on_leave %}
+                                  <a href="{% url 'user_alta' user.pk %}" class="row-menu-item"><i class="fas fa-user-check text-emerald-500"></i> Dar de Alta</a>
+                                  {% else %}
+                                  <a href="{% url 'user_baja' user.pk %}" class="row-menu-item"><i class="fas fa-user-clock text-rose-500"></i> Dar de Baja</a>
+                                  {% endif %}
                                   {% if request.user.role == 'ADMIN' %}
                                   <hr style="border:none; border-top:1px solid #f1f5f9; margin:0.25rem 0;">
                                   <a href="{% url 'user_delete' user.pk %}" class="row-menu-item danger"><i class="fas fa-trash-alt"></i> Borrar Sistema</a>
@@ -467,6 +477,9 @@
                         {% else %}badge-role{% endif %}">
                         {{ user.get_funcion_display|default:user.get_tipo_funcionario_display|default:user.get_role_display }}
                   </span>
+                  {% if user.is_on_leave %}
+                  <span class="badge badge-baja">Baja</span>
+                  {% endif %}
 
               </div>
 
@@ -491,6 +504,11 @@
                       <div class="row-menu-content" style="bottom:100%; right:0; width:min-content; min-width:160px; transform:translateY(-5px);">
                           <a href="{% url 'reset_user_password' user.pk %}" class="row-menu-item"><i class="fas fa-key text-amber-500"></i> Reset Clave</a>
                           <a href="{% url 'admin_change_password' user.pk %}" class="row-menu-item"><i class="fas fa-lock text-green-500"></i> Asignar Manual</a>
+                          {% if user.is_on_leave %}
+                          <a href="{% url 'user_alta' user.pk %}" class="row-menu-item"><i class="fas fa-user-check text-emerald-500"></i> Dar de Alta</a>
+                          {% else %}
+                          <a href="{% url 'user_baja' user.pk %}" class="row-menu-item"><i class="fas fa-user-clock text-rose-500"></i> Dar de Baja</a>
+                          {% endif %}
                           {% if request.user.role == 'ADMIN' %}
                           <hr style="border:none; border-top:1px solid #f1f5f9; margin:0.25rem 0;">
                           <a href="{% url 'user_delete' user.pk %}" class="row-menu-item danger"><i class="fas fa-trash-alt"></i> Borrar</a>
