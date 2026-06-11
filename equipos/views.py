@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.conf import settings
 from weasyprint import HTML
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from .models import Equipo, PrestamoEquipo, FallaEquipo, LugarEquipo
 from users.models import CustomUser
 from datetime import datetime
@@ -40,6 +40,9 @@ def lista_equipos(request):
     # Filtros
     tipo = request.GET.get('tipo')
     estado = request.GET.get('estado')
+    lugar_id = request.GET.get('lugar')
+    search = request.GET.get('search')
+    orden = request.GET.get('orden', 'marca')
     funcionario_id = request.GET.get('funcionario_id')
 
     equipos = equipos_base
@@ -47,6 +50,16 @@ def lista_equipos(request):
         equipos = equipos.filter(tipo=tipo)
     if estado:
         equipos = equipos.filter(estado=estado)
+    if lugar_id:
+        equipos = equipos.filter(lugar_id=lugar_id)
+    if search:
+        equipos = equipos.filter(
+            models.Q(marca__icontains=search) |
+            models.Q(modelo__icontains=search) |
+            models.Q(numero_serie__icontains=search) |
+            models.Q(numero_inventario__icontains=search) |
+            models.Q(lugar__nombre__icontains=search)
+        )
 
     # Lista de funcionarios para el selector
     funcionarios = CustomUser.objects.all().order_by('first_name', 'last_name')
@@ -95,14 +108,35 @@ def lista_equipos(request):
         no_asignados = no_asignados.filter(estado=estado)
 
     # El inventario general (todos los equipos, con información de préstamo activo)
-    inventario_general = equipos_base.order_by('estado', 'marca')
+    orden_mapping = {
+        'marca': 'marca',
+        '-marca': '-marca',
+        'tipo': 'tipo',
+        '-tipo': '-tipo',
+        'estado': 'estado',
+        '-estado': '-estado',
+        'fecha_origen': 'fecha_origen',
+        '-fecha_origen': '-fecha_origen',
+        'lugar': 'lugar__nombre',
+        '-lugar': '-lugar__nombre',
+    }
+    orden_query = orden_mapping.get(orden, 'marca')
+    
+    inventario_general = equipos_base.order_by(orden_query)
     if tipo:
         inventario_general = inventario_general.filter(tipo=tipo)
     if estado:
         inventario_general = inventario_general.filter(estado=estado)
-    if funcionario_id:
-        # Si hay funcionario seleccionado, mantener el inventario general visible con todos los equipos
-        pass
+    if lugar_id:
+        inventario_general = inventario_general.filter(lugar_id=lugar_id)
+    if search:
+        inventario_general = inventario_general.filter(
+            models.Q(marca__icontains=search) |
+            models.Q(modelo__icontains=search) |
+            models.Q(numero_serie__icontains=search) |
+            models.Q(numero_inventario__icontains=search) |
+            models.Q(lugar__nombre__icontains=search)
+        )
     
     # Sanitizar inventario general
     for equipo in inventario_general:
@@ -125,7 +159,24 @@ def lista_equipos(request):
         'funcionarios': funcionarios,
         'selected_funcionario': selected_funcionario,
         'stats': stats,
-        'filtros_activos': bool(tipo or estado or funcionario_id),
+        'filtros_activos': bool(tipo or estado or lugar_id or search or funcionario_id),
+        'selected_tipo': tipo,
+        'selected_estado': estado,
+        'selected_lugar': lugar_id,
+        'search': search,
+        'orden': orden,
+        'ordenes': [
+            ('marca', 'Marca A-Z'),
+            ('-marca', 'Marca Z-A'),
+            ('tipo', 'Tipo A-Z'),
+            ('-tipo', 'Tipo Z-A'),
+            ('estado', 'Estado A-Z'),
+            ('-estado', 'Estado Z-A'),
+            ('fecha_origen', 'Fecha Origen más antigua'),
+            ('-fecha_origen', 'Fecha Origen más reciente'),
+            ('lugar', 'Lugar A-Z'),
+            ('-lugar', 'Lugar Z-A'),
+        ],
     }
     return render(request, 'equipos/lista_equipos.html', context)
 

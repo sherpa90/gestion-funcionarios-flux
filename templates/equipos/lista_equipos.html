@@ -237,14 +237,102 @@
 
     <!-- Section: General Inventory Dropdown -->
     <div class="space-y-6 pt-12 border-t border-gray-100">
-        <div class="flex items-center justify-between px-1">
-            <div class="flex items-center gap-2">
-                <i class="fas fa-warehouse text-gray-400"></i>
-                <h3 class="text-lg font-black text-gray-800 uppercase tracking-wider">Inventario General</h3>
-            </div>
-            <span class="px-4 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-black rounded-full uppercase tracking-widest">
-                {{ inventario_general.count }} EQUIPOS
-            </span>
+        <details class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <summary class="px-6 py-5 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-warehouse text-gray-400"></i>
+                    <div>
+                        <h3 class="text-lg font-black text-gray-800 uppercase tracking-wider">Inventario General</h3>
+                        <p class="text-xs text-gray-400 font-bold mt-1">Click para ver todos los equipos</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="px-4 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-black rounded-full uppercase tracking-widest">
+                        {{ inventario_general.count }} EQUIPOS
+                    </span>
+                    <i class="fas fa-chevron-down text-gray-400"></i>
+                </div>
+            </summary>
+
+            <div class="p-6 border-t border-gray-100">
+            <!-- Search and Filters -->
+            <form method="GET" action="{% url 'lista_equipos' %}" class="space-y-4">
+                {% if funcionario_id %}
+                <input type="hidden" name="funcionario_id" value="{{ funcionario_id }}">
+                {% endif %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <!-- Search -->
+                    <div class="lg:col-span-2">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Buscar</label>
+                        <div class="relative">
+                            <input type="text" name="search" value="{{ search|default:'' }}"
+                                class="w-full px-4 py-3 rounded-2xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold text-sm"
+                                placeholder="Marca, modelo, serie, inventario...">
+                        </div>
+                    </div>
+
+                    <!-- Tipo -->
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tipo</label>
+                        <select name="tipo"
+                            class="w-full px-4 py-3 rounded-2xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold text-sm">
+                            <option value="">Todos</option>
+                            {% for value, label in tipos %}
+                            <option value="{{ value }}" {% if selected_tipo == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Estado -->
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Estado</label>
+                        <select name="estado"
+                            class="w-full px-4 py-3 rounded-2xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold text-sm">
+                            <option value="">Todos</option>
+                            {% for value, label in estados %}
+                            <option value="{{ value }}" {% if selected_estado == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Lugar -->
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Lugar</label>
+                        <select name="lugar"
+                            class="w-full px-4 py-3 rounded-2xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold text-sm">
+                            <option value="">Todos</option>
+                            {% for lugar in lugares %}
+                            <option value="{{ lugar.id }}" {% if selected_lugar == lugar.id|stringformat:"s" %}selected{% endif %}>{{ lugar.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Orden -->
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Ordenar por</label>
+                        <select name="orden" onchange="this.form.submit()"
+                            class="w-full px-4 py-3 rounded-2xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold text-sm">
+                            {% for value, label in ordenes %}
+                            <option value="{{ value }}" {% if orden == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="flex items-end gap-3">
+                        <button type="submit"
+                            class="flex-1 py-3 px-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-filter mr-2"></i> Filtrar
+                        </button>
+                        <a href="{% url 'lista_equipos' %}"
+                            class="flex-1 py-3 px-4 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 transition-colors text-center">
+                            Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
         </div>
 
         {% if inventario_general %}
@@ -342,6 +430,8 @@
             <p class="text-gray-400 font-black uppercase tracking-widest">No hay equipos en inventario</p>
         </div>
         {% endif %}
+            </div>
+        </details>
     </div>
 </div>
 {% endblock %}
