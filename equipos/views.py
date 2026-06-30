@@ -54,11 +54,11 @@ def lista_equipos(request):
         equipos = equipos.filter(lugar_id=lugar_id)
     if search:
         equipos = equipos.filter(
-            models.Q(marca__icontains=search) |
-            models.Q(modelo__icontains=search) |
-            models.Q(numero_serie__icontains=search) |
-            models.Q(numero_inventario__icontains=search) |
-            models.Q(lugar__nombre__icontains=search)
+            Q(marca__icontains=search) |
+            Q(modelo__icontains=search) |
+            Q(numero_serie__icontains=search) |
+            Q(numero_inventario__icontains=search) |
+            Q(lugar__nombre__icontains=search)
         )
 
     # Lista de funcionarios para el selector
@@ -131,11 +131,11 @@ def lista_equipos(request):
         inventario_general = inventario_general.filter(lugar_id=lugar_id)
     if search:
         inventario_general = inventario_general.filter(
-            models.Q(marca__icontains=search) |
-            models.Q(modelo__icontains=search) |
-            models.Q(numero_serie__icontains=search) |
-            models.Q(numero_inventario__icontains=search) |
-            models.Q(lugar__nombre__icontains=search)
+            Q(marca__icontains=search) |
+            Q(modelo__icontains=search) |
+            Q(numero_serie__icontains=search) |
+            Q(numero_inventario__icontains=search) |
+            Q(lugar__nombre__icontains=search)
         )
     
     # Sanitizar inventario general
@@ -654,14 +654,20 @@ def gestion_fallas(request):
 
     # Calcular estadísticas
     total_fallas = fallas.count()
-    fallas_en_revision = fallas.filter(estado='EN_REVISION').count()
-    fallas_reparadas = fallas.filter(estado='REPARADA').count()
+    fallas_reportadas = fallas.filter(estado='REPORTADA')
+    fallas_en_revision = fallas.filter(estado='EN_REVISION')
+    fallas_reparadas = fallas.filter(estado='REPARADA')
 
     context = {
         'fallas': fallas,
-        'total_fallas': total_fallas,
+        'fallas_reportadas': fallas_reportadas,
         'fallas_en_revision': fallas_en_revision,
         'fallas_reparadas': fallas_reparadas,
+        'total_fallas': total_fallas,
+        'total_reportadas': fallas_reportadas.count(),
+        'total_en_revision': fallas_en_revision.count(),
+        'total_reparadas': fallas_reparadas.count(),
+        'ESTADO_FALLA_CHOICES': FallaEquipo.ESTADO_FALLA_CHOICES,
     }
 
     return render(request, 'equipos/gestion_fallas.html', context)
