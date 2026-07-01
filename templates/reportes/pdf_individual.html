@@ -1,337 +1,433 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <title>Reporte Individual - {{ functorio.get_full_name }}</title>
     <style>
         @page {
             size: A4;
-            margin: 2cm;
-
-            @bottom-center {
-                content: "Página " counter(page) " de " counter(pages);
-                font-size: 9pt;
-                font-family: Arial, sans-serif;
-            }
+            margin: 1.8cm 1.5cm;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 10pt;
-            line-height: 1.4;
-            color: #333;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            font-size: 9.5pt;
+            line-height: 1.5;
+            color: #1e293b;
         }
 
+        /* ─── Header ─── */
         .header {
-            text-align: center;
+            position: relative;
+            padding-bottom: 18px;
             margin-bottom: 25px;
-            border-bottom: 2px solid #1e40af;
-            padding-bottom: 15px;
         }
 
-        .header h1 {
-            font-size: 16pt;
-            color: #1e40af;
-            margin-bottom: 5px;
-            text-transform: uppercase;
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #4F46E5 0%, #7C3AED 100%);
         }
 
-        .header h2 {
-            font-size: 14pt;
-            color: #374151;
-            font-weight: normal;
-        }
-
-        .periodo {
-            text-align: center;
-            font-size: 12pt;
-            font-weight: bold;
-            color: #1e40af;
-            margin-bottom: 20px;
-            padding: 8px;
-            background-color: #f3f4f6;
-            border-radius: 4px;
-        }
-
-        .info-box {
-            background: #f3f4f6;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-
-        .info-row {
+        .header-main {
             display: flex;
-            margin-bottom: 8px;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
         }
 
-        .info-label {
-            font-weight: bold;
-            width: 180px;
-            color: #4b5563;
+        .header-title h1 {
+            font-size: 18pt;
+            font-weight: 800;
+            color: #1e1b4b;
+            letter-spacing: -0.5px;
         }
 
-        .info-value {
-            color: #111827;
-        }
-
-        .resumen {
-            background: #eff6ff;
-            border-left: 4px solid #1e40af;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-
-        .resumen-item {
-            display: inline-block;
-            margin-right: 30px;
-        }
-
-        .resumen-label {
-            font-weight: bold;
-            color: #4b5563;
-        }
-
-        .resumen-value {
-            color: #1e40af;
+        .header-title h2 {
             font-size: 12pt;
-            font-weight: bold;
+            color: #64748b;
+            font-weight: 500;
+            margin-top: 4px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-
-        th {
-            background-color: #1e40af;
+        .periodo-badge {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
             color: white;
-            padding: 8px 6px;
-            text-align: center;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 10pt;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+        }
+
+        /* ─── Profile Card ─── */
+        .profile-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 22px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px 24px;
+        }
+
+        .profile-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .profile-label {
+            font-weight: 600;
+            color: #64748b;
             font-size: 9pt;
-            font-weight: bold;
+            width: 110px;
+            flex-shrink: 0;
+        }
+
+        .profile-value {
+            color: #0f172a;
+            font-weight: 500;
+        }
+
+        /* ─── Stats Grid ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        .stat-card--danger { border-left: 4px solid #dc2626; }
+        .stat-card--warning { border-left: 4px solid #d97706; }
+        .stat-card--info { border-left: 4px solid #2563eb; }
+        .stat-card--success { border-left: 4px solid #059669; }
+        .stat-card--purple { border-left: 4px solid #7c3aed; }
+
+        .stat-icon {
+            font-size: 16pt;
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            font-size: 8pt;
+            color: #64748b;
+            font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        td {
-            border: 1px solid #d1d5db;
-            padding: 6px 8px;
-            font-size: 9pt;
+        .stat-value {
+            font-size: 16pt;
+            font-weight: 700;
+            margin-top: 4px;
         }
 
-        tr:nth-child(even) {
-            background-color: #f9fafb;
+        .stat-value--danger { color: #dc2626; }
+        .stat-value--warning { color: #d97706; }
+        .stat-value--info { color: #2563eb; }
+        .stat-value--success { color: #059669; }
+        .stat-value--purple { color: #7c3aed; }
+
+        /* ─── Section ─── */
+        .section {
+            margin-bottom: 22px;
         }
 
-        tr:nth-child(odd) {
-            background-color: #ffffff;
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
         }
 
-        .text-center {
-            text-align: center;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .numero {
-            font-family: Arial, sans-serif;
+        .section-icon {
+            width: 28px;
+            height: 28px;
+            background: #4F46E5;
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11pt;
+            margin-right: 10px;
         }
 
         .section-title {
             font-size: 12pt;
-            font-weight: bold;
-            color: #1e40af;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #d1d5db;
-            padding-bottom: 5px;
+            font-weight: 700;
+            color: #1e1b4b;
         }
 
-        .footer {
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 1px solid #d1d5db;
+        /* ─── Tables ─── */
+        .report-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 8.5pt;
+        }
+
+        .report-table th {
+            background: #4F46E5;
+            color: white;
+            padding: 10px 8px;
+            font-weight: 600;
+            text-align: center;
+            font-size: 8pt;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .report-table th:first-child { border-radius: 6px 0 0 6px; }
+        .report-table th:last-child { border-radius: 0 6px 6px 0; }
+
+        .report-table td {
+            padding: 9px 8px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        .report-table tbody tr:nth-child(even) { background: #f8fafc; }
+        .report-table tbody tr:last-child td { border-bottom: none; }
+
+        .report-table .text-center { text-align: center; }
+
+        /* ─── Days Badge ─── */
+        .days-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 42px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 600;
             font-size: 9pt;
-            color: #6b7280;
         }
 
-        .footer-info {
+        .days-badge--approved { background: #dcfce7; color: #166534; }
+        .days-badge--used { background: #dbeafe; color: #1d4ed8; }
+        .days-badge--license { background: #fef3c7; color: #a16207; }
+
+        /* ─── Empty State ─── */
+        .empty-state {
+            text-align: center;
+            padding: 32px 16px;
+            color: #94a3b8;
+            font-style: italic;
+            font-size: 9.5pt;
+        }
+
+        /* ─── Footer ─── */
+        .footer {
+            margin-top: 35px;
+            padding-top: 18px;
+            border-top: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
+            align-items: flex-end;
         }
 
-        .signature {
-            margin-top: 40px;
-            display: flex;
-            justify-content: space-around;
+        .footer-left {
+            font-size: 8.5pt;
+            color: #64748b;
+        }
+
+        .footer-right {
+            text-align: center;
         }
 
         .signature-box {
-            text-align: center;
-            width: 250px;
+            display: inline-block;
         }
 
         .signature-line {
-            border-bottom: 1px solid #333;
-            margin-bottom: 8px;
-            padding-bottom: 5px;
+            width: 200px;
+            border-bottom: 2px solid #334155;
+            margin-bottom: 6px;
         }
 
         .signature-title {
-            font-size: 10pt;
-            font-weight: bold;
-        }
-
-        .empty-message {
-            text-align: center;
-            padding: 20px;
-            color: #6b7280;
-            font-style: italic;
+            font-size: 9pt;
+            font-weight: 600;
+            color: #334155;
         }
     </style>
 </head>
-
 <body>
+    <!-- Header -->
     <div class="header">
-        <h1>Reporte Individual de Funcionario</h1>
-        <h2>Dirección de Educación Municipal</h2>
+        <div class="header-main">
+            <div class="header-title">
+                <h1><i class="fas fa-user"></i> Reporte Individual</h1>
+                <h2>Dirección de Educación Municipal</h2>
+            </div>
+            <div class="periodo-badge">
+                {% if mes_nombre %}
+                    {{ mes_nombre }} {{ year }}
+                {% elif year %}
+                    Año {{ year }}
+                {% else %}
+                    Todos los períodos
+                {% endif %}
+            </div>
+        </div>
     </div>
 
-    <div class="periodo">
-        {% if mes_nombre %}
-        {{ mes_nombre }} de {{ year }}
-        {% elif year %}
-        Año {{ year }}
+    <!-- Profile Card -->
+    <div class="profile-card">
+        <div class="profile-grid">
+            <div class="profile-item">
+                <span class="profile-label">Nombre:</span>
+                <span class="profile-value">{{ functorio.get_full_name }}</span>
+            </div>
+            <div class="profile-item">
+                <span class="profile-label">RUT:</span>
+                <span class="profile-value">{{ functorio.run }}</span>
+            </div>
+            <div class="profile-item">
+                <span class="profile-label">Correo:</span>
+                <span class="profile-value">{{ functorio.email|default:"-" }}</span>
+            </div>
+            <div class="profile-item">
+                <span class="profile-label">Rol:</span>
+                <span class="profile-value">{{ functorio.get_role_display }}</span>
+            </div>
+            <div class="profile-item">
+                <span class="profile-label">Días Disponibles:</span>
+                <span class="profile-value">{{ functorio.dias_disponibles|floatformat:1 }} días</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card stat-card--info">
+            <div class="stat-icon">📅</div>
+            <div class="stat-label">Días Usados</div>
+            <div class="stat-value stat-value--info">{{ dias_usados|floatformat:1 }}</div>
+        </div>
+        <div class="stat-card stat-card--success">
+            <div class="stat-icon">📝</div>
+            <div class="stat-label">Permisos</div>
+            <div class="stat-value stat-value--success">{{ permisos_con_dias|length }}</div>
+        </div>
+        <div class="stat-card stat-card--purple">
+            <div class="stat-icon">🏥</div>
+            <div class="stat-label">Días en Licencia</div>
+            <div class="stat-value stat-value--purple">{{ total_dias_licencias }}</div>
+        </div>
+        <div class="stat-card stat-card--danger">
+            <div class="stat-icon">❌</div>
+            <div class="stat-label">Inasistencias</div>
+            <div class="stat-value stat-value--danger">{{ total_inasistencias }}</div>
+        </div>
+        <div class="stat-card stat-card--warning">
+            <div class="stat-icon">⏰</div>
+            <div class="stat-label">Atrasos</div>
+            <div class="stat-value stat-value--warning">{{ total_atrasos }}</div>
+        </div>
+    </div>
+
+    <!-- Permisos Administrativos -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-icon"><i class="fas fa-calendar-check"></i></div>
+            <div class="section-title">Permisos Administrativos Aprobados</div>
+        </div>
+        {% if permisos_con_dias %}
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Término</th>
+                    <th class="text-center">Días</th>
+                    <th class="text-center">Días Disp.</th>
+                    <th>Observación</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in permisos_con_dias %}
+                <tr>
+                    <td class="text-center">{{ item.permiso.fecha_inicio|date:"d/m/Y" }}</td>
+                    <td class="text-center">{{ item.permiso.fecha_termino|date:"d/m/Y"|default:"-" }}</td>
+                    <td class="text-center"><span class="days-badge days-badge--approved">{{ item.permiso.dias_solicitados|floatformat:1 }}</span></td>
+                    <td class="text-center"><span class="days-badge days-badge--used">{{ item.dias_disponibles|floatformat:1 }}</span></td>
+                    <td>{{ item.permiso.observacion|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         {% else %}
-        Todos los períodos
+        <div class="empty-state">No hay permisos administrativos en el período seleccionado</div>
         {% endif %}
     </div>
 
-    <div class="info-box">
-        <div class="info-row">
-            <span class="info-label">Nombre:</span>
-            <span class="info-value">{{ functorio.get_full_name }}</span>
+    <!-- Licencias Médicas -->
+    <div class="section">
+        <div class="section-header">
+            <div class="section-icon"><i class="fas fa-notes-medical"></i></div>
+            <div class="section-title">Licencias Médicas</div>
         </div>
-        <div class="info-row">
-            <span class="info-label">RUT:</span>
-            <span class="info-value">{{ functorio.run }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Correo:</span>
-            <span class="info-value">{{ functorio.email }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Rol:</span>
-            <span class="info-value">{{ functorio.get_role_display }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Días Disponibles:</span>
-            <span class="info-value">{{ functorio.dias_disponibles|floatformat:1 }} días</span>
-        </div>
+        {% if licencias %}
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Término</th>
+                    <th class="text-center">Días</th>
+                    <th>Registrado por</th>
+                    <th>Fecha Registro</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for licencia in licencias %}
+                <tr>
+                    <td class="text-center">{{ licencia.fecha_inicio|date:"d/m/Y" }}</td>
+                    <td class="text-center">{{ licencia.fecha_termino|date:"d/m/Y"|default:"-" }}</td>
+                    <td class="text-center"><span class="days-badge days-badge--license">{{ licencia.dias }}</span></td>
+                    <td>{{ licencia.created_by|default:"-" }}</td>
+                    <td class="text-center">{{ licencia.created_at|date:"d/m/Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">No hay licencias médicas en el período seleccionado</div>
+        {% endif %}
     </div>
 
-    <div class="resumen">
-        <div class="resumen-item">
-            <span class="resumen-label">Días Usados:</span>
-            <span class="resumen-value">{{ dias_usados|floatformat:1 }}</span>
-        </div>
-        <div class="resumen-item">
-            <span class="resumen-label">Licencias:</span>
-            <span class="resumen-value">{{ licencias.count }}</span>
-        </div>
-        <div class="resumen-item">
-            <span class="resumen-label">Días en Licencia:</span>
-            <span class="resumen-value">{{ total_dias_licencias }}</span>
-        </div>
-        <div class="resumen-item">
-            <span class="resumen-label">Inasistencias:</span>
-            <span class="resumen-value" style="color: #991b1b;">{{ total_inasistencias }}</span>
-        </div>
-        <div class="resumen-item">
-            <span class="resumen-label">Atrasos:</span>
-            <span class="resumen-value" style="color: #92400e;">{{ total_atrasos }}</span>
-        </div>
-    </div>
-
-    <div class="section-title">Permisos Administrativos Aprobados</div>
-    {% if permisos_con_dias %}
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 18%;">Fecha Inicio</th>
-                <th style="width: 18%;">Fecha Término</th>
-                <th style="width: 10%;" class="text-center">Días</th>
-                <th style="width: 14%;" class="text-center">Días Disp.</th>
-                <th style="width: 40%;">Observación</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in permisos_con_dias %}
-            <tr>
-                <td class="text-center numero">{{ item.permiso.fecha_inicio|date:"d/m/Y" }}</td>
-                <td class="text-center numero">{{ item.permiso.fecha_termino|date:"d/m/Y"|default:"-" }}</td>
-                <td class="text-center numero">{{ item.permiso.dias_solicitados|floatformat:1 }}</td>
-                <td class="text-center numero">{{ item.dias_disponibles|floatformat:1 }}</td>
-                <td>{{ item.permiso.observacion|default:"-" }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="empty-message">No hay permisos en el período seleccionado</div>
-    {% endif %}
-
-    <div class="section-title">Licencias Médicas</div>
-    {% if licencias %}
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 20%;">Fecha Inicio</th>
-                <th style="width: 20%;">Fecha Término</th>
-                <th style="width: 10%;" class="text-center">Días</th>
-                <th style="width: 20%;">Registrado por</th>
-                <th style="width: 30%;">Fecha Registro</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for licencia in licencias %}
-            <tr>
-                <td class="text-center numero">{{ licencia.fecha_inicio|date:"d/m/Y" }}</td>
-                <td class="text-center numero">{{ licencia.fecha_termino|date:"d/m/Y"|default:"-" }}</td>
-                <td class="text-center numero">{{ licencia.dias }}</td>
-                <td class="text-center">{{ licencia.created_by|default:"-" }}</td>
-                <td class="text-center numero">{{ licencia.created_at|date:"d/m/Y H:i" }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="empty-message">No hay licencias médicas en el período seleccionado</div>
-    {% endif %}
-
+    <!-- Footer -->
     <div class="footer">
-        <div class="footer-info">
-            <span>Fecha de emisión: {{ fecha_exportacion }}</span>
-            <span>Generado por: FLUX - Sistema de Gestión</span>
+        <div class="footer-left">
+            Documento generado el {{ fecha_exportacion }}
         </div>
-    </div>
-
-    <div class="signature">
-        <div class="signature-box">
-            <div class="signature-line"></div>
-            <div>Director(a) de Educación Municipal</div>
+        <div class="footer-right">
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div class="signature-title">Director(a) de Educación Municipal</div>
+            </div>
         </div>
     </div>
 </body>
-
 </html>
