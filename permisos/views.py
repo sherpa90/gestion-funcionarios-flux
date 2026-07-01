@@ -3,7 +3,7 @@ from django.views.generic import CreateView, ListView, View, UpdateView, DeleteV
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
-from datetime import timedelta
+from datetime import timedelta, date
 from django.utils import timezone
 from django.db.models import Q, Sum
 from django.core.paginator import Paginator
@@ -113,12 +113,33 @@ class SolicitudBypassView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
                 form.add_error(None, f"El usuario {usuario.get_full_name()} no tiene saldo suficiente. Saldo: {usuario.dias_disponibles} días, Pendiente: {solicitudes_pendientes} días.")
                 return self.form_invalid(form)
             
-            # Marcar como PENDIENTE (requiere aprobación del Director)
-            form.instance.estado = 'PENDIENTE'
-            form.instance.created_by = self.request.user  # Registrar quién creó la solicitud
-            # No descontamos días aquí, se descuentan al aprobar
+            # Marcar como APROBADO directamente (sin aprobación adicional)
+            form.instance.estado = 'APROBADO'
+            form.instance.created_by = self.request.user
             
-            messages.success(self.request, f'Solicitud registrada exitosamente para {usuario.get_full_name()}. Pendiente de aprobación por Director.')
+            # Descontar días directamente del usuario
+            usuario.dias_disponibles -= form.instance.dias_solicitados
+            usuario.save()
+            
+            # Crear registros de asistencia para los días del permiso (solo días hábiles)
+            # Usar el mismo cálculo de business days que calculate_end_date
+            fecha_inicio = form.instance.fecha_inicio
+            fecha_termino = form.instance.fecha_termino
+            es_medio_dia = form.instance.dias_solicitados == 0.5
+            
+            fecha_actual = fecha_inicio
+            while fecha_actual <= fecha_termino:
+                if BusinessDayCalculator.is_business_day(fecha_actual, user=usuario):
+                    # Actualizar o crear registro con estado DÍA_ADMINISTRATIVO o MEDIO_DIA
+                    registro, created = RegistroAsistencia.objects.get_or_create(
+                        funcionario=usuario,
+                        fecha=fecha_actual,
+                    )
+                    registro.estado = 'MEDIO_DIA' if es_medio_dia else 'DIA_ADMINISTRATIVO'
+                    registro.save()
+                fecha_actual += timedelta(days=1)
+            
+            messages.success(self.request, f'Permiso registrado y aprobado exitosamente para {usuario.get_full_name()}. {form.instance.dias_solicitados} días descontados.')
             return super().form_valid(form)
         except Exception as e:
             import traceback
@@ -487,7 +508,7 @@ class SolicitudAdminManagementView(LoginRequiredMixin, UserPassesTestMixin, List
         context = super().get_context_data(**kwargs)
 
         # Usuarios para filtro
-        context['usuarios'] = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']).order_by('last_name', 'first_name')
+        context['usuarios'] = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('last_name', 'first_name')
 
         # Estados para filtro
         context['estados'] = [
@@ -567,7 +588,7 @@ class SolicitudAdminEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView
     success_url = reverse_lazy('admin_management')
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR']
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -660,7 +681,7 @@ class SolicitudAdminDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
     template_name = 'permisos/admin_delete.html'
 
     def test_func(self):
-        return self.request.user.role in ['ADMIN', 'SECRETARIA']
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR']
 
     def get(self, request, pk):
         solicitud = get_object_or_404(SolicitudPermiso, pk=pk)
