@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Asignar Semanas a Serenos{% endblock %}
+
+{% block extra_css %}
+<style>
+.week-card {
+    transition: all 0.2s ease;
+}
+.week-card:hover {
+    transform: translateY(-2px);
+}
+.week-t1 {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    color: white;
+}
+.week-t2 {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+.week-none {
+    background: #f9fafb;
+    border: 2px dashed #e5e7eb;
+}
+.week-none:hover {
+    border-color: #9ca3af;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    {% if not funcionario %}
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="px-6 py-5 bg-gray-50/50 border-b border-gray-50">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+                    <i class="fas fa-user-shield text-indigo-600 text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-gray-900 uppercase tracking-widest">Seleccionar Funcionario Sereno</h3>
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Elige un sereno para asignar sus semanas de turno</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for sereno in serenos %}
+                <a href="{% url 'asistencia:asignar_semanas_serenos' sereno.id %}?anio={{ anio }}" 
+                   class="block p-6 rounded-2xl border border-gray-100 bg-white hover:border-indigo-200 hover:shadow-md transition-all duration-200 group">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white font-black text-lg shadow-lg">
+                            {{ sereno.first_name|first|upper }}{{ sereno.last_name|first|upper }}
+                        </div>
+                        <div>
+                            <p class="text-sm font-black text-gray-900 group-hover:text-indigo-600 transition-colors">
+                                {{ sereno.get_full_name }}
+                            </p>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">RUN: {{ sereno.run }}</p>
+                        </div>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="col-span-full text-center py-12">
+                    <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-users-slash text-gray-300 text-2xl"></i>
+                    </div>
+                    <p class="text-sm font-black text-gray-500">No hay funcionarios serenos registrados</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+
+    <div class="space-y-6">
+        <!-- Header con selector de funcionario y año -->
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="px-6 py-5 bg-gray-50/50 border-b border-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+                        <i class="fas fa-calendar-alt text-indigo-600 text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-gray-900 uppercase tracking-widest">Asignar Semanas - {{ funcionario.get_full_name }}</h3>
+                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Configura qué turno le corresponde cada semana</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'asistencia:asignar_semanas_serenos_lista' %}?anio={{ anio }}" 
+                       class="px-4 py-2 bg-gray-100 text-gray-700 text-[10px] font-black uppercase tracking-wider rounded-xl hover:bg-gray-200 transition border border-gray-200">
+                        <i class="fas fa-exchange-alt mr-1"></i> Cambiar Sereno
+                    </a>
+                    <select id="anio-selector" onchange="window.location.href='?anio=' + this.value" 
+                            class="border border-gray-200 rounded-xl px-4 py-2 text-xs font-black text-gray-900 focus:ring-2 focus:ring-indigo-100">
+                        {% for y in anios %}
+                        <option value="{{ y }}" {% if y == anio %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div x-data="asignarSemana({{ funcionario.id }}, {{ anio }}, {{ semanas|safe }}, {{ asignaciones|safe }})" x-init="inicializar()">
+                    <!-- Controles -->
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Filtro:</span>
+                            <button @click="filtro = 'todos'" 
+                                    :class="filtro === 'todos' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                                    class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all">
+                                Todos
+                            </button>
+                            <button @click="filtro = 't1'" 
+                                    :class="filtro === 't1' ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'"
+                                    class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-indigo-100">
+                                T1
+                            </button>
+                            <button @click="filtro = 't2'" 
+                                    :class="filtro === 't2' ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'"
+                                    class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-amber-100">
+                                T2
+                            </button>
+                            <button @click="filtro = 'libre'" 
+                                    :class="filtro === 'libre' ? 'bg-gray-600 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'"
+                                    class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-gray-200">
+                                Libre
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button @click="mostrarResumen()" 
+                                    class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-wider rounded-xl hover:bg-blue-100 transition border border-blue-100">
+                                <i class="fas fa-chart-bar mr-1.5"></i> Resumen
+                            </button>
+                            <button @click="guardarAsignaciones()" 
+                                    :disabled="guardando"
+                                    class="inline-flex items-center px-6 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-wider rounded-xl hover:bg-blue-600 shadow-lg shadow-gray-200 transition-all disabled:opacity-50">
+                                <i class="fas fa-save mr-1.5"></i>
+                                <span x-text="guardando ? 'Guardando...' : 'Guardar Año'"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Leyenda -->
+                    <div class="flex flex-wrap gap-3 mb-6">
+                        <span class="flex items-center gap-1.5 text-[10px] font-black text-gray-500">
+                            <span class="w-3 h-3 rounded bg-indigo-600 inline-block"></span> Turno 1 (Impar)
+                        </span>
+                        <span class="flex items-center gap-1.5 text-[10px] font-black text-gray-500">
+                            <span class="w-3 h-3 rounded bg-amber-500 inline-block"></span> Turno 2 (Par)
+                        </span>
+                        <span class="flex items-center gap-1.5 text-[10px] font-black text-gray-500">
+                            <span class="w-3 h-3 rounded bg-gray-200 inline-block"></span> Sin asignar
+                        </span>
+                    </div>
+
+                    <!-- Grilla de semanas -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                        <template x-for="semana in semanasFiltradas()" :key="semana.semana_iso">
+                            <button @click="toggleSemana(semana)"
+                                    :class="getClasesSemana(semana)"
+                                    class="week-card relative flex flex-col items-center justify-center p-4 rounded-2xl border-2 shadow-sm text-center">
+                                <span class="text-[8px] font-black uppercase tracking-widest opacity-80" x-text="'S' + semana.semana_iso"></span>
+                                <span class="text-[10px] font-black mt-0.5" x-text="getTurnoLabel(semana)"></span>
+                                <span class="text-[8px] opacity-70 mt-1" x-text="semana.rango"></span>
+                                <span class="text-[8px] opacity-50 mt-0.5" x-text="semana.mes"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    {% if semanas|length == 0 %}
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-calendar-times text-gray-300 text-2xl"></i>
+                        </div>
+                        <p class="text-sm font-black text-gray-500">No hay semanas generadas para este año</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Modal de resumen -->
+                    <div x-show="resumenAbierto" x-cloak @click.away="resumenAbierto = false" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-sm font-black text-gray-900 uppercase tracking-widest">Resumen del Año {{ anio }}</h4>
+                                <button @click="resumenAbierto = false" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                                    <span class="text-xs font-black text-indigo-700">Turno 1 (Impar)</span>
+                                    <span class="text-sm font-black text-indigo-600" x-text="resumen.t1 + ' semanas'"></span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-amber-50 rounded-xl border border-amber-100">
+                                    <span class="text-xs font-black text-amber-700">Turno 2 (Par)</span>
+                                    <span class="text-sm font-black text-amber-600" x-text="resumen.t2 + ' semanas'"></span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
+                                    <span class="text-xs font-black text-gray-700">Sin asignar</span>
+                                    <span class="text-sm font-black text-gray-600" x-text="resumen.libre + ' semanas'"></span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-blue-50 rounded-xl border border-blue-100">
+                                    <span class="text-xs font-black text-blue-700">Total</span>
+                                    <span class="text-sm font-black text-blue-600" x-text="resumen.total + ' semanas'"></span>
+                                </div>
+                            </div>
+                            <div class="mt-4 text-center">
+                                <button @click="resumenAbierto = false" class="px-6 py-2 bg-gray-900 text-white text-xs font-black rounded-xl hover:bg-gray-700 transition">
+                                    Cerrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('asignarSemana', (funcionarioId, anio, semanasData, asignacionesData) => ({
+        funcionarioId: funcionarioId,
+        anio: anio,
+        semanas: semanasData || [],
+        asignaciones: asignacionesData || {},
+        filtro: 'todos',
+        guardando: false,
+        resumenAbierto: false,
+        resumen: { t1: 0, t2: 0, libre: 0, total: 0 },
+
+        inicializar() {
+            // Datos ya cargados desde el contexto
+            this.calcularResumen();
+        },
+
+        toggleResumen() {
+            if (this.resumenAbierto) {
+                this.resumenAbierto = false;
+            } else {
+                this.calcularResumen();
+                this.resumenAbierto = true;
+            }
+        },
+
+        semanasFiltradas() {
+            if (this.filtro === 'todos') return this.semanas;
+            return this.semanas.filter(s => {
+                const turno = this.asignaciones[s.semana_iso];
+                if (this.filtro === 't1') return turno === 1;
+                if (this.filtro === 't2') return turno === 2;
+                if (this.filtro === 'libre') return !turno;
+                return true;
+            });
+        },
+
+        getClasesSemana(semana) {
+            const turno = this.asignaciones[semana.semana_iso];
+            if (turno === 1) return 'week-t1 border-indigo-600';
+            if (turno === 2) return 'week-t2 border-amber-500';
+            return 'week-none border-gray-200 text-gray-500';
+        },
+
+        getTurnoLabel(semana) {
+            const turno = this.asignaciones[semana.semana_iso];
+            if (turno === 1) return 'T1';
+            if (turno === 2) return 'T2';
+            return '—';
+        },
+
+        toggleSemana(semana) {
+            const actual = this.asignaciones[semana.semana_iso];
+            if (!actual) {
+                this.asignaciones[semana.semana_iso] = 1;
+            } else if (actual === 1) {
+                this.asignaciones[semana.semana_iso] = 2;
+            } else {
+                delete this.asignaciones[semana.semana_iso];
+            }
+        },
+
+        calcularResumen() {
+            let t1 = 0, t2 = 0, libre = 0;
+            this.semanas.forEach(s => {
+                const turno = this.asignaciones[s.semana_iso];
+                if (turno === 1) t1++;
+                else if (turno === 2) t2++;
+                else libre++;
+            });
+            this.resumen = { t1, t2, libre, total: this.semanas.length };
+        },
+
+        mostrarResumen() {
+            this.calcularResumen();
+            this.resumenAbierto = true;
+        },
+
+        async guardarAsignaciones() {
+            if (this.guardando) return;
+            this.guardando = true;
+            try {
+                const res = await fetch(`{% url 'asistencia:asignar_semanas_serenos' funcionario.id %}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        anio: this.anio,
+                        asignaciones: this.asignaciones
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    Swal.fire({
+                        title: '¡Guardado!',
+                        text: data.message,
+                        icon: 'success',
+                        confirmButtonText: 'Genial',
+                        confirmButtonColor: '#111827',
+                        background: '#ffffff',
+                        customClass: {
+                            popup: 'rounded-3xl',
+                            confirmButton: 'rounded-xl font-black uppercase tracking-widest text-xs px-6 py-3'
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.message || 'No se pudo guardar.',
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444'
+                    });
+                }
+            } catch (e) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Error de conexión.',
+                    icon: 'error',
+                    confirmButtonColor: '#ef4444'
+                });
+            } finally {
+                this.guardando = false;
+            }
+        }
+    }));
+});
+</script>
+{% endblock %}
