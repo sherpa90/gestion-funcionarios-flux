@@ -66,8 +66,13 @@ class SolicitudForm(forms.ModelForm):
         dias = cleaned_data.get('dias_solicitados')
         jornada = cleaned_data.get('jornada')
 
+        user = getattr(self, 'user', None)
+        if user and user.dias_disponibles <= 0:
+            raise forms.ValidationError(
+                "No puedes solicitar días administrativos. Ya has alcanzado el límite de 6.0 días."
+            )
+
         if fecha_inicio:
-            # No se permiten fechas pasadas
             if fecha_inicio < _date.today():
                 raise forms.ValidationError(
                     "No puedes solicitar un día administrativo en una fecha pasada. "
@@ -75,13 +80,10 @@ class SolicitudForm(forms.ModelForm):
                 )
 
             if dias:
-                # Priorizar self.user (pasado desde la vista) o self.instance.usuario
-                user = getattr(self, 'user', None) or getattr(self.instance, 'usuario', None)
                 if not BusinessDayCalculator.is_business_day(fecha_inicio, user=user):
                     raise forms.ValidationError("La fecha de inicio debe ser un día hábil.")
 
-        # Validar jornada solo si es medio día
-        if dias and dias % 1 == 0.5:  # Si termina en .5
+        if dias and dias % 1 == 0.5:
             if not jornada:
                 raise forms.ValidationError("Debes seleccionar la jornada (mañana o tarde) para permisos de medio día.")
             if jornada not in ['AM', 'PM']:
@@ -166,11 +168,51 @@ class SolicitudBypassForm(forms.ModelForm):
 
 class SolicitudAdminForm(SolicitudForm):
     """Formulario para edición administrativa - incluye el campo de estado"""
+    usuario = forms.ModelChoiceField(
+        queryset=CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name', 'last_name'),
+        widget=forms.Select(attrs={
+            'class': 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+        }),
+        label="Usuario"
+    )
+    
     class Meta(SolicitudForm.Meta):
-        fields = SolicitudForm.Meta.fields + ['estado']
-        widgets = SolicitudForm.Meta.widgets.copy()
-        widgets.update({
+        fields = ['usuario', 'fecha_inicio', 'dias_solicitados', 'jornada', 'observacion', 'estado']
+        widgets = {
+            'fecha_inicio': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            }),
+            'dias_solicitados': forms.Select(attrs={
+                'id': 'id_dias_solicitados',
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500',
+            }),
+            'observacion': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            }),
             'estado': forms.Select(attrs={
                 'class': 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
             })
-        })
+        }
+    
+    def clean(self):
+        # Permitir fechas pasadas en edición administrativa
+        cleaned_data = super(SolicitudForm, self).clean()
+        fecha_inicio = cleaned_data.get('fecha_inicio')
+        dias = cleaned_data.get('dias_solicitados')
+        jornada = cleaned_data.get('jornada')
+        usuario = cleaned_data.get('usuario')
+
+        if fecha_inicio and dias:
+            user = usuario or getattr(self, 'instance', None) and getattr(self.instance, 'usuario', None)
+            if not BusinessDayCalculator.is_business_day(fecha_inicio, user=user):
+                raise forms.ValidationError("La fecha de inicio debe ser un día hábil.")
+
+        if dias and dias % 1 == 0.5:
+            if not jornada:
+                raise forms.ValidationError("Debes seleccionar la jornada (mañana o tarde) para permisos de medio día.")
+            if jornada not in ['AM', 'PM']:
+                raise forms.ValidationError("La jornada debe ser AM o PM para permisos de medio día.")
+
+        return cleaned_data

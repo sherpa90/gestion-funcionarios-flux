@@ -70,9 +70,9 @@
     width: 100%; padding: 0.8rem 1rem; border: 1.5px solid #cbd5e1; border-radius: var(--input-radius);
     font-size: 0.95rem; color: #1e293b; background: #f8fafc; transition: all 0.2s ease; outline: none; box-shadow: none;
   }
-  .form-control:focus, .form-group input:not([type="radio"]):not([type="checkbox"]):focus, .form-group select:focus, .form-group textarea:focus {
-    background: #fff; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-  }
+.form-control:disabled, .form-group input:not([type="radio"]):not([type="checkbox"]):disabled, .form-group select:disabled, .form-group textarea:disabled {
+     background: #f3f4f6; cursor: not-allowed; opacity: 0.6;
+   }
 
   .form-help { font-size: 0.8rem; color: #64748b; margin-top: 0.4rem; font-weight: 500; }
   
@@ -134,14 +134,21 @@
     <div class="premium-card">
       <div class="premium-card-body">
         
-        <!-- Saldo Panel -->
-        <div class="saldo-box {% if user.dias_disponibles < 2 %}saldo-box-err{% elif user.dias_disponibles < 4 %}saldo-box-warn{% else %}saldo-box-ok{% endif %}">
-          <div class="saldo-icon"><i class="fas fa-wallet"></i></div>
-          <div>
-            <div class="saldo-label">Días Disponibles</div>
-            <div class="saldo-value">{{ user.dias_disponibles|floatformat:1 }} <span style="font-size:0.45em;font-weight:700;color:inherit;opacity:0.6;text-transform:uppercase;letter-spacing:-0.5px;">de 6.0</span></div>
-          </div>
-        </div>
+<!-- Saldo Panel -->
+         <div class="saldo-box {% if user.dias_disponibles <= 0 %}saldo-box-err{% elif user.dias_disponibles < 2 %}saldo-box-warn{% else %}saldo-box-ok{% endif %}">
+           <div class="saldo-icon"><i class="fas fa-wallet"></i></div>
+           <div>
+             <div class="saldo-label">Días Disponibles</div>
+             <div class="saldo-value">{{ user.dias_disponibles|floatformat:1 }} <span style="font-size:0.45em;font-weight:700;color:inherit;opacity:0.6;text-transform:uppercase;letter-spacing:-0.5px;">de 6.0</span></div>
+           </div>
+         </div>
+
+         {% if user.dias_disponibles <= 0 %}
+         <div class="error-message" style="margin-bottom:1.5rem;">
+           <i class="fas fa-exclamation-circle"></i> 
+           <strong>No tienes días administrativos disponibles.</strong> Ya has alcanzado el límite de 6.0 días. Podrás solicitar nuevamente en el próximo periodo.
+         </div>
+         {% endif %}
 
         {% if form.non_field_errors %}
         <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:0.75rem;padding:1rem;margin-bottom:1.5rem;border-left:4px solid #ef4444;">
@@ -152,11 +159,11 @@
         </div>
         {% endif %}
 
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
+<form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
 
-            <div style="display:grid;grid-template-columns:1fr;gap:1.5rem;">
-              
+                <div style="display:grid;grid-template-columns:1fr;gap:1.5rem;">
+               
               <div class="form-group" style="margin:0;">
                   <label for="{{ form.fecha_inicio.id_for_label }}" class="form-label">
                       {{ form.fecha_inicio.label }}
@@ -226,7 +233,7 @@
             </div>
 
             <div class="actions-container">
-                <button type="submit" class="btn-submit">
+                <button type="submit" class="btn-submit" {% if user.dias_disponibles <= 0 %}disabled{% endif %}>
                     Enviar Solicitud <i class="fas fa-paper-plane"></i>
                 </button>
                 <a href="{% url 'dashboard_funcionario' %}" class="btn-cancel">

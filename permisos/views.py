@@ -3,7 +3,7 @@ from django.views.generic import CreateView, ListView, View, UpdateView, DeleteV
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
-from datetime import timedelta, date
+from datetime import timedelta
 from django.utils import timezone
 from django.db.models import Q, Sum
 from django.core.paginator import Paginator
@@ -11,10 +11,9 @@ from django.http import JsonResponse
 from .models import SolicitudPermiso
 from .forms import SolicitudForm, SolicitudBypassForm, SolicitudAdminForm
 from users.models import CustomUser
-from asistencia.models import RegistroAsistencia
-from core.services import BusinessDayCalculator
 from admin_dashboard.utils import registrar_log, get_client_ip
 from django.db import transaction
+from asistencia.models import RegistroAsistencia
 
 class SolicitudCancelView(LoginRequiredMixin, View):
     """Vista para que el usuario pueda cancelar su propia solicitud pendiente"""
@@ -61,11 +60,17 @@ class SolicitudCreateView(LoginRequiredMixin, CreateView):
             usuario=self.request.user,
             estado='PENDIENTE'
         ).aggregate(total=Sum('dias_solicitados'))['total'] or 0.0
-        
+
         saldo_real = self.request.user.dias_disponibles - solicitudes_pendientes
 
+        # Verificar si tiene días disponibles (considerando solicitudes pendientes)
+        if saldo_real <= 0:
+            form.add_error(None, f"No tienes días disponibles para solicitar. Tu saldo actual es de {self.request.user.dias_disponibles} días y tienes {solicitudes_pendientes} día(s) en solicitudes pendientes de aprobación.")
+            return self.form_invalid(form)
+            
+        # Verificar si tiene suficientes días para esta solicitud específica
         if saldo_real < form.instance.dias_solicitados:
-            form.add_error(None, f"Saldo insuficiente. Tienes {self.request.user.dias_disponibles} días disponibles, pero {solicitudes_pendientes} día(s) están en solicitudes pendientes de aprobación.")
+            form.add_error(None, f"Saldo insuficiente para solicitar {form.instance.dias_solicitados} días. Tienes {saldo_real} días disponibles después de considerar solicitudes pendientes.")
             return self.form_invalid(form)
 
         # Todas las solicitudes quedan pendientes para llevar un mejor orden (incluyendo las del Director)
@@ -108,38 +113,22 @@ class SolicitudBypassView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             ).aggregate(total=Sum('dias_solicitados'))['total'] or 0.0
             
             saldo_real = usuario.dias_disponibles - solicitudes_pendientes
-    
-            if saldo_real < form.instance.dias_solicitados:
-                form.add_error(None, f"El usuario {usuario.get_full_name()} no tiene saldo suficiente. Saldo: {usuario.dias_disponibles} días, Pendiente: {solicitudes_pendientes} días.")
+
+            # Verificar si el usuario tiene días disponibles (considerando solicitudes pendientes)
+            if saldo_real <= 0:
+                form.add_error(None, f"El usuario {usuario.get_full_name()} no tiene días disponibles para solicitar. Saldo actual: {usuario.dias_disponibles} días, Pendiente: {solicitudes_pendientes} días.")
                 return self.form_invalid(form)
             
-            # Marcar como APROBADO directamente (sin aprobación adicional)
-            form.instance.estado = 'APROBADO'
+            # Verificar si tiene suficientes días para esta solicitud específica
+            if saldo_real < form.instance.dias_solicitados:
+                form.add_error(None, f"El usuario {usuario.get_full_name()} no tiene saldo suficiente. Solicita: {form.instance.dias_solicitados} días, Disponible (después de pendientes): {saldo_real} días.")
+                return self.form_invalid(form)
+
+            # Marcar como PENDIENTE (requiere aprobación posterior)
+            form.instance.estado = 'PENDIENTE'
             form.instance.created_by = self.request.user
             
-            # Descontar días directamente del usuario
-            usuario.dias_disponibles -= form.instance.dias_solicitados
-            usuario.save()
-            
-            # Crear registros de asistencia para los días del permiso (solo días hábiles)
-            # Usar el mismo cálculo de business days que calculate_end_date
-            fecha_inicio = form.instance.fecha_inicio
-            fecha_termino = form.instance.fecha_termino
-            es_medio_dia = form.instance.dias_solicitados == 0.5
-            
-            fecha_actual = fecha_inicio
-            while fecha_actual <= fecha_termino:
-                if BusinessDayCalculator.is_business_day(fecha_actual, user=usuario):
-                    # Actualizar o crear registro con estado DÍA_ADMINISTRATIVO o MEDIO_DIA
-                    registro, created = RegistroAsistencia.objects.get_or_create(
-                        funcionario=usuario,
-                        fecha=fecha_actual,
-                    )
-                    registro.estado = 'MEDIO_DIA' if es_medio_dia else 'DIA_ADMINISTRATIVO'
-                    registro.save()
-                fecha_actual += timedelta(days=1)
-            
-            messages.success(self.request, f'Permiso registrado y aprobado exitosamente para {usuario.get_full_name()}. {form.instance.dias_solicitados} días descontados.')
+            messages.success(self.request, f'Solicitud registrada exitosamente para {usuario.get_full_name()}. Pendiente de aprobación.')
             return super().form_valid(form)
         except Exception as e:
             import traceback
@@ -620,60 +609,68 @@ class SolicitudAdminEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView
             )
 
         try:
-            with transaction.atomic():
-                # 5. Bloquear al usuario para actualización de saldo segura
-                usuario = CustomUser.objects.select_for_update().get(pk=solicitud.usuario.pk)
-                
-                # Caso A: Se desaprueba algo que estaba APROBADO (Devolver días con tope 6.0)
-                if estado_anterior == 'APROBADO' and nuevo_estado != 'APROBADO':
-                    usuario.dias_disponibles = min(6.0, usuario.dias_disponibles + dias_anteriores)
-                    usuario.save()
-                
-                # Caso B: Se aprueba algo que NO estaba aprobado (Descontar días)
-                elif estado_anterior != 'APROBADO' and nuevo_estado == 'APROBADO':
-                    if usuario.dias_disponibles >= solicitud.dias_solicitados:
-                        usuario.dias_disponibles -= solicitud.dias_solicitados
-                        usuario.save()
-                    else:
-                        form.add_error(None, f"El usuario {usuario.get_full_name()} no tiene días suficientes ({usuario.dias_disponibles} disponibles).")
-                        return self.form_invalid(form)
-                
-                # Caso C: Sigue aprobado pero cambiaron los días solicitados
-                elif estado_anterior == 'APROBADO' and nuevo_estado == 'APROBADO' and 'dias_solicitados' in form.changed_data:
-                    # Devolvemos lo anterior y descontamos lo nuevo
-                    temp_disponibles = min(6.0, usuario.dias_disponibles + dias_anteriores)
-                    if temp_disponibles >= solicitud.dias_solicitados:
-                        usuario.dias_disponibles = temp_disponibles - solicitud.dias_solicitados
-                        usuario.save()
-                    else:
-                        form.add_error(None, f"Saldo insuficiente para actualizar los días ({temp_disponibles} disponibles tras ajuste).")
-                        return self.form_invalid(form)
-
-                # 6. Asignar estado final y otros metadatos
-                solicitud.estado = nuevo_estado
-                solicitud.updated_at = timezone.now()
-                
-                # 7. Guardar solicitud (Esto dispara el UPDATE en DB)
-                solicitud.save()
-                
-                # 8. Registrar Auditoría
-                registrar_log(
-                    usuario=self.request.user,
-                    tipo='UPDATE',
-                    accion='Edición Admin de Permiso',
-                    descripcion=f'Se editó permiso de {solicitud.usuario.get_full_name()} (Estado anterior: {estado_anterior} -> {nuevo_estado})',
-                    ip_address=get_client_ip(self.request)
-                )
-                
-                messages.success(self.request, f'Solicitud de {solicitud.usuario.get_full_name()} actualizada exitosamente.')
-                return redirect(self.success_url)
-
+             with transaction.atomic():
+                 # 5. Bloquear al usuario para actualización de saldo segura
+                 usuario = CustomUser.objects.select_for_update().get(pk=solicitud.usuario.pk)
+                 
+                 # Caso A: Se desaprueba algo que estaba APROBADO (Devolver días con tope 6.0)
+                 if estado_anterior == 'APROBADO' and nuevo_estado != 'APROBADO':
+                     usuario.dias_disponibles = min(6.0, usuario.dias_disponibles + dias_anteriores)
+                     usuario.save()
+                 
+                 # Caso B: Se aprueba algo que NO estaba aprobado (Descontar días)
+                 elif estado_anterior != 'APROBADO' and nuevo_estado == 'APROBADO':
+                     # Calcular saldo disponible considerando solicitudes pendientes
+                     solicitudes_pendientes = SolicitudPermiso.objects.filter(
+                         usuario=usuario,
+                         estado='PENDIENTE'
+                     ).exclude(pk=solicitud.pk).aggregate(total=Sum('dias_solicitados'))['total'] or 0.0
+                     
+                     # Excluir la solicitud actual si está en pendiente (para no contarla dos veces)
+                     saldo_disponible = usuario.dias_disponibles - solicitudes_pendientes
+                     
+                     if saldo_disponible >= solicitud.dias_solicitados:
+                         usuario.dias_disponibles = saldo_disponible - solicitud.dias_solicitados
+                         usuario.save()
+                     else:
+                         form.add_error(None, f"El usuario {usuario.get_full_name()} no tiene días suficientes. Disponible: {usuario.dias_disponibles} días, Pendientes (excluyendo esta solicitud): {solicitudes_pendientes} días, Necesarios: {solicitud.dias_solicitados} días.")
+                         return self.form_invalid(form)
+                 
+                 # Caso C: Sigue aprobado pero cambiaron los días solicitados
+                 elif estado_anterior == 'APROBADO' and nuevo_estado == 'APROBADO' and 'dias_solicitados' in form.changed_data:
+                     # Devolvemos lo anterior y descontamos lo nuevo
+                     temp_disponibles = min(6.0, usuario.dias_disponibles + dias_anteriores)
+                     if temp_disponibles >= solicitud.dias_solicitados:
+                         usuario.dias_disponibles = temp_disponibles - solicitud.dias_solicitados
+                         usuario.save()
+                     else:
+                         form.add_error(None, f"Saldo insuficiente para actualizar los días ({temp_disponibles} disponibles tras ajuste).")
+                         return self.form_invalid(form)
+                 
+                 # 6. Asignar estado final y otros metadatos
+                 solicitud.estado = nuevo_estado
+                 solicitud.updated_at = timezone.now()
+                 
+                 # 7. Guardar solicitud (Esto dispara el UPDATE en DB)
+                 solicitud.save()
+                 
+                 # 8. Registrar Auditoría
+                 registrar_log(
+                     usuario=self.request.user,
+                     tipo='UPDATE',
+                     accion='Edición Admin de Permiso',
+                     descripcion=f'Se editó permiso de {solicitud.usuario.get_full_name()} (Estado anterior: {estado_anterior} -> {nuevo_estado})',
+                     ip_address=get_client_ip(self.request)
+                 )
+                 
+                 messages.success(self.request, f'Solicitud de {solicitud.usuario.get_full_name()} actualizada exitosamente.')
+                 return redirect(self.success_url)
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.exception(f"Error al guardar solicitud: {e}")
-            form.add_error(None, "Ocurrió un error inesperado. Intente nuevamente o contacte al administrador.")
-            return self.form_invalid(form)
+             import logging
+             logger = logging.getLogger(__name__)
+             logger.exception(f"Error al guardar solicitud: {e}")
+             form.add_error(None, "Ocurrió un error inesperado. Intente nuevamente o contacte al administrador.")
+             return self.form_invalid(form)
 
 
 class SolicitudAdminDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):

@@ -543,16 +543,19 @@
         </div>
     </div>
 
-    <!-- Acciones Rápidas -->
+<!-- Acciones Rápidas -->
     <div class="quick-actions">
-        <a href="{% url 'solicitar_permiso' %}" class="action-card ac-blue">
+        <a href="{% url 'solicitar_permiso' %}" class="action-card ac-blue {% if dias_disponibles <= 0 %}opacity-50 pointer-events-none{% endif %}" title="{% if dias_disponibles <= 0 %}No tienes días disponibles para solicitar{% else %}Generar nueva solicitud de permiso{% endif %}">
             <div class="ac-content">
                 <h3>Solicitar Días</h3>
                 <p>Generar nueva solicitud de permiso</p>
+                {% if dias_disponibles <= 0 %}
+                <p class="mt-1 text-xs text-red-500 bg-red-50 px-2 py-1 rounded">¡Sin días disponibles!</p>
+                {% endif %}
             </div>
             <div class="ac-icon"><i class="fas fa-calendar-plus"></i></div>
         </a>
-
+        
         <a href="{% url 'licencia_list' %}" class="action-card ac-green">
             <div class="ac-content">
                 <h3>Mis Licencias</h3>

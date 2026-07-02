@@ -135,6 +135,9 @@ class CustomUser(AbstractUser):
 
     def recalculate_dias_disponibles(self):
         """Recalcula los días disponibles restando los permisos APROBADOS del año actual."""
+        if not self.is_active:
+            return self.dias_disponibles
+            
         from permisos.models import SolicitudPermiso
         from django.db.models import Sum
         from django.utils import timezone
@@ -201,6 +204,19 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.run})"
+
+    def esta_ausente(self):
+        """Determina si el usuario debería contarse como ausente en reportes.
+        
+        Un usuario es considerado ausente si está actualmente empleado (is_active=True)
+        y está de baja (is_on_leave=True).
+        
+        Esto asegura que los trabajadores de reemplazo cuyo contrato ha terminado
+        (is_active=False) no se cuenten como ausentes, incluso si is_on_leave 
+        estuviera establecido en True (lo cual no debería ocurrir en casos normales
+        de término de contrato).
+        """
+        return self.is_active and self.is_on_leave
 
 
 class DirectorioTelefonico(models.Model):
