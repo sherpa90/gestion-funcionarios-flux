@@ -14,6 +14,7 @@ from users.models import CustomUser
 from admin_dashboard.utils import registrar_log, get_client_ip
 from django.db import transaction
 from asistencia.models import RegistroAsistencia
+from core.services import BusinessDayCalculator
 
 class SolicitudCancelView(LoginRequiredMixin, View):
     """Vista para que el usuario pueda cancelar su propia solicitud pendiente"""
