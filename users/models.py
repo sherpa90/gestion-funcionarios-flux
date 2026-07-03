@@ -74,6 +74,7 @@ class CustomUser(AbstractUser):
         ('INSPECTOR', 'Inspector (a)'),
         ('INSPECTOR_GENERAL', 'Inspector General'),
         ('JEFE_UTP', 'Jefe (a) de UTP'),
+        ('MONITOR_TALLER', 'Monitor Taller'),
         ('PSICOPEDAGOGO', 'Psicopedagogo (a)'),
         ('PSICOLOGO', 'Psicólogo (a)'),
         ('SECRETARIA', 'Secretaria'),
@@ -197,7 +198,7 @@ class CustomUser(AbstractUser):
             return 'ADMINISTRATIVO'
         elif self.tipo_funcionario == 'DOCENTE' or (self.funcion and 'DOCENTE' in self.funcion):
             return 'DOCENTE'
-        elif self.tipo_funcionario == 'ASISTENTE' or (self.funcion and any(term in self.funcion for term in ['ASISTENTE', 'TECNICO', 'AUXILIAR', 'ENCARGADO', 'INSPECTOR', 'JEFE', 'PSICOPEDAGOGO', 'PSICOLOGO', 'FONOAUDIOLOGO', 'TERAPEUTA', 'ENFERMERO', 'SERENO', 'INFORMATICO'])):
+        elif self.tipo_funcionario == 'ASISTENTE' or (self.funcion and any(term in self.funcion for term in ['ASISTENTE', 'TECNICO', 'AUXILIAR', 'ENCARGADO', 'INSPECTOR', 'JEFE', 'PSICOPEDAGOGO', 'PSICOLOGO', 'FONOAUDIOLOGO', 'TERAPEUTA', 'ENFERMERO', 'SERENO', 'INFORMATICO', 'MONITOR', 'TALLER'])):
             return 'ASISTENTE'
         else:
             return 'OTRO'
