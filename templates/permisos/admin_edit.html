@@ -38,6 +38,7 @@
                         <div class="mt-1 rounded-md shadow-sm">
                             <input type="text" readonly value="{{ object.usuario.get_full_name }} ({{ object.usuario.run }})"
                                    class="block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm bg-gray-100">
+                            {{ form.usuario }}
                         </div>
                     </div>
 
@@ -114,13 +115,11 @@
                             Estado Actual
                         </label>
                         <div class="mt-1 rounded-md shadow-sm">
-                            <select name="estado" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                <option value="PENDIENTE" {% if object.estado == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
-                                <option value="APROBADO" {% if object.estado == 'APROBADO' %}selected{% endif %}>Aprobado</option>
-                                <option value="RECHAZADO" {% if object.estado == 'RECHAZADO' %}selected{% endif %}>Rechazado</option>
-                                <option value="CANCELADO" {% if object.estado == 'CANCELADO' %}selected{% endif %}>Cancelado</option>
-                            </select>
+                            {{ form.estado }}
                         </div>
+                        {% if form.estado.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.estado.errors.0 }}</p>
+                        {% endif %}
                         <p class="mt-1 text-xs text-gray-500">Cambiar el estado afectará el saldo de días del funcionario</p>
                     </div>
                 </div>

@@ -170,9 +170,7 @@ class SolicitudAdminForm(SolicitudForm):
     """Formulario para edición administrativa - incluye el campo de estado"""
     usuario = forms.ModelChoiceField(
         queryset=CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']).order_by('first_name', 'last_name'),
-        widget=forms.Select(attrs={
-            'class': 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
-        }),
+        widget=forms.HiddenInput(),
         label="Usuario"
     )
     
@@ -197,7 +195,6 @@ class SolicitudAdminForm(SolicitudForm):
         }
     
     def clean(self):
-        # Permitir fechas pasadas en edición administrativa
         cleaned_data = super(SolicitudForm, self).clean()
         fecha_inicio = cleaned_data.get('fecha_inicio')
         dias = cleaned_data.get('dias_solicitados')
