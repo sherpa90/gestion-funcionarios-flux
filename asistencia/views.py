@@ -38,7 +38,7 @@ try:
 except ImportError:
     PYPDF_AVAILABLE = False
     pypdf = None
-from .models import HorarioFuncionario, RegistroAsistencia, DiaFestivo, AlegacionAsistencia, AnoEscolar, DiaHorario, HorarioExcepcional
+from .models import HorarioFuncionario, RegistroAsistencia, DiaFestivo, AlegacionAsistencia, AnoEscolar, DiaHorario, HorarioExcepcional, SemanaAsignadaSereno
 from .forms import CargaHorariosForm, HorarioFuncionarioForm, CargaRegistrosAsistenciaForm, DiaFestivoForm, HorarioExcepcionalForm
 from users.models import CustomUser
 from core.utils import normalize_rut
@@ -535,7 +535,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
 
                     # Determinar si el día es activo en el horario del funcionario
                     dia_semana = fecha.weekday()
-                    semana_t = DiaHorario.get_semana_tipo(fecha)
+                    semana_t = DiaHorario.get_semana_tipo(fecha, self.request.user)
 
                     # Buscar primero horario específico para esta semana (1 o 2)
                     # Si no existe, cae al horario universal (semana_tipo=None)
@@ -659,7 +659,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
 
         # Para el resumen semanal, usamos la paridad de HOY
         from django.utils import timezone
-        semana_actual_t = DiaHorario.get_semana_tipo(timezone.now().date())
+        semana_actual_t = DiaHorario.get_semana_tipo(timezone.now().date(), self.request.user)
         context["semana_tipo_actual"] = semana_actual_t
 
         for i in range(dias_totales):
@@ -716,7 +716,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                         continue
                     
                     dia_semana = fecha.weekday()
-                    semana_t = DiaHorario.get_semana_tipo(fecha)
+                    semana_t = DiaHorario.get_semana_tipo(fecha, self.request.user)
                     
                     dia_h_obj = dias_configurados.get((dia_semana, semana_t))
                     if not dia_h_obj:
@@ -3342,3 +3342,160 @@ class ReporteDAEM2PDFView(LoginRequiredMixin, UserPassesTestMixin, View):
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
         return response
+
+
+class AsignarSemanasSerenosListaView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """Vista para listar todos los serenos y poder asignarles semanas"""
+    template_name = 'asistencia/asignar_semanas_serenos.html'
+
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from django.db.models import Q
+        
+        # Obtener todos los serenos
+        serenos = CustomUser.objects.filter(
+            Q(funcion='SERENO') | Q(tipo_funcionario='SERENO')
+        ).exclude(is_active=False).order_by('first_name', 'last_name')
+        
+        anio = int(self.request.GET.get('anio', datetime.now().year))
+        anios = [anio - 1, anio, anio + 1]
+        
+        context.update({
+            'serenos': serenos,
+            'anio': anio,
+            'anios': anios,
+            'funcionario': None,
+        })
+        return context
+
+
+class AsignarSemanasSerenosView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Vista para configurar la rotación semanal de un funcionario sereno"""
+    
+    def test_func(self):
+        return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+
+    def get_semanas_anio(self, anio):
+        """Genera semanas ISO del año con fecha de inicio (lunes) y fin (domingo)"""
+        import calendar as cal_mod
+        semanas = []
+        # El 4 de enero siempre está en la semana ISO 1 del año
+        primer_dia = datetime(anio, 1, 4).date()
+        lunes_primero = primer_dia - timedelta(days=primer_dia.weekday())
+        
+        d = lunes_primero
+        # Recorrer semanas que correspondan o terminen en el año actual
+        while d.year <= anio or (d + timedelta(days=6)).year <= anio:
+            iso_year, iso_week, _ = d.isocalendar()
+            if iso_year < anio:
+                d += timedelta(weeks=1)
+                continue
+            if iso_year > anio:
+                break
+                
+            lunes = d
+            domingo = d + timedelta(days=6)
+            
+            meses_es = {
+                1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr", 5: "May", 6: "Jun",
+                7: "Jul", 8: "Ago", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"
+            }
+            meses_full_es = {
+                1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril", 5: "Mayo", 6: "Junio",
+                7: "Julio", 8: "Agosto", 9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+            }
+            
+            rango = f"{lunes.day:02d} {meses_es[lunes.month]} - {domingo.day:02d} {meses_es[domingo.month]}"
+            mes = meses_full_es[lunes.month]
+            
+            semanas.append({
+                'semana_iso': iso_week,
+                'rango': rango,
+                'mes': mes,
+                'fecha_lunes': lunes.strftime('%Y-%m-%d'),
+                'fecha_domingo': domingo.strftime('%Y-%m-%d')
+            })
+            d += timedelta(weeks=1)
+            
+        return semanas
+
+    def get(self, request, funcionario_id):
+        import json
+        from django.shortcuts import render
+        
+        funcionario = get_object_or_404(CustomUser, pk=funcionario_id)
+        anio = int(request.GET.get('anio', datetime.now().year))
+        anios = [anio - 1, anio, anio + 1]
+        
+        semanas = self.get_semanas_anio(anio)
+        
+        # Cargar asignaciones guardadas
+        asignaciones_qs = SemanaAsignadaSereno.objects.filter(
+            funcionario=funcionario,
+            anio=anio
+        )
+        asignaciones = {a.semana_iso: a.turno for a in asignaciones_qs}
+        
+        context = {
+            'funcionario': funcionario,
+            'anio': anio,
+            'anios': anios,
+            'semanas': semanas,
+            'asignaciones': asignaciones,
+        }
+        return render(request, 'asistencia/asignar_semanas_serenos.html', context)
+
+    def post(self, request, funcionario_id):
+        import json
+        from django.http import JsonResponse
+        from django.db import transaction
+        
+        funcionario = get_object_or_404(CustomUser, pk=funcionario_id)
+        
+        try:
+            data = json.loads(request.body)
+            anio = int(data.get('anio', datetime.now().year))
+            asignaciones_dict = data.get('asignaciones', {})
+            
+            with transaction.atomic():
+                # Borrar asignaciones existentes para este año
+                SemanaAsignadaSereno.objects.filter(
+                    funcionario=funcionario,
+                    anio=anio
+                ).delete()
+                
+                # Crear nuevas asignaciones
+                nuevas_asignaciones = []
+                for sem_str, turno_val in asignaciones_dict.items():
+                    if not turno_val:
+                        continue
+                    sem = int(sem_str)
+                    turno = int(turno_val)
+                    if turno in [1, 2]:
+                        nuevas_asignaciones.append(SemanaAsignadaSereno(
+                            funcionario=funcionario,
+                            anio=anio,
+                            semana_iso=sem,
+                            turno=turno,
+                            asignado_por=request.user
+                        ))
+                
+                if nuevas_asignaciones:
+                    SemanaAsignadaSereno.objects.bulk_create(nuevas_asignaciones)
+                
+                # Recalcular registros de asistencia del funcionario para este año
+                # para aplicar el nuevo turno
+                registros = RegistroAsistencia.objects.filter(
+                    funcionario=funcionario,
+                    fecha__year=anio
+                )
+                for reg in registros:
+                    reg.save()
+                    
+            return JsonResponse({'status': 'success', 'message': 'Asignación de semanas guardada y asistencia recalculada correctamente.'})
+            
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f'Error al guardar asignaciones: {str(e)}'}, status=400)

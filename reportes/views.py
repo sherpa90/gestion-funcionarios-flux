@@ -131,7 +131,7 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 getattr(functorio, 'funcion', None) == 'SERENO' or
                 getattr(functorio, 'tipo_funcionario', None) == 'SERENO'
             )
-            if es_sereno_func:
+            if False:  # Excluido: ahora los serenos se calculan normalmente
                 total_atrasos = 0
                 total_inasistencias = 0
                 total_minutos_retraso = 0
@@ -266,8 +266,6 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         atrasos_mes = RegistroAsistencia.objects.filter(
             estado='RETRASO',
             fecha__year=stats_year
-        ).exclude(
-            Q(funcionario__funcion='SERENO') | Q(funcionario__tipo_funcionario='SERENO')
         ).values('fecha__month').annotate(total=Sum('minutos_retraso')).order_by('fecha__month')
 
         atrasos_data = [0] * 12
@@ -377,7 +375,7 @@ class PDFIndividualView(LoginRequiredMixin, UserPassesTestMixin, View):
             getattr(functorio, 'funcion', None) == 'SERENO' or
             getattr(functorio, 'tipo_funcionario', None) == 'SERENO'
         )
-        if es_sereno_func:
+        if False:  # Excluido: los serenos ahora se calculan normalmente
             total_inasistencias = 0
             total_atrasos = 0
             total_minutos_retraso = 0
@@ -484,7 +482,7 @@ class MiReportePDFView(LoginRequiredMixin, View):
             getattr(functorio, 'funcion', None) == 'SERENO' or
             getattr(functorio, 'tipo_funcionario', None) == 'SERENO'
         )
-        if es_sereno_func:
+        if False:  # Excluido: los serenos ahora se calculan normalmente
             total_inasistencias = 0
             total_atrasos = 0
             total_minutos_retraso = 0
@@ -592,7 +590,7 @@ class PDFColectivoView(LoginRequiredMixin, UserPassesTestMixin, View):
                 getattr(functorio, 'funcion', None) == 'SERENO' or
                 getattr(functorio, 'tipo_funcionario', None) == 'SERENO'
             )
-            if es_sereno_func:
+            if False:  # Excluido: los serenos ahora se calculan normalmente
                 total_atrasos = 0
                 total_inasistencias = 0
                 total_minutos_retraso = 0
@@ -709,12 +707,12 @@ class ExportarExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                 getattr(functorio, 'funcion', None) == 'SERENO' or
                 getattr(functorio, 'tipo_funcionario', None) == 'SERENO'
             )
-            total_inasistencias = registros.filter(estado='AUSENTE').count() if not es_sereno_func else 0
-            total_atrasos = registros.filter(estado='RETRASO').count() if not es_sereno_func else 0
+            total_inasistencias = registros.filter(estado='AUSENTE').count()
+            total_atrasos = registros.filter(estado='RETRASO').count()
             total_minutos_retraso = (
                 registros.filter(estado='RETRASO').aggregate(
                     total=Sum('minutos_retraso'))['total'] or 0
-            ) if not es_sereno_func else 0
+            )
             
             ws.append([
                 functorio.get_full_name(),
@@ -1257,12 +1255,26 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         ano_escolar = AnoEscolar.objects.filter(ano=int(year)).first()
 
         horarios_dict = {}
+        dias_configurados = {}
         for horario in HorarioFuncionario.objects.filter(
             funcionario__in=funcionarios, activo=True
         ).prefetch_related('dias'):
             horarios_dict[horario.funcionario_id] = set(
                 horario.dias.filter(activo=True).values_list('dia_semana', flat=True)
             )
+            for dh in horario.dias.filter(activo=True):
+                dias_configurados[(horario.funcionario_id, dh.dia_semana, dh.semana_tipo)] = True
+
+        from asistencia.models import SemanaAsignadaSereno
+        semanas_asignadas_dict = {}
+        sereno_ids = [f.id for f in funcionarios if getattr(f, 'funcion', None) == 'SERENO' or getattr(f, 'tipo_funcionario', None) == 'SERENO']
+        if sereno_ids:
+            qs = SemanaAsignadaSereno.objects.filter(
+                funcionario_id__in=sereno_ids,
+                anio=int(year)
+            )
+            for sa in qs:
+                semanas_asignadas_dict[(sa.funcionario_id, sa.semana_iso)] = sa.turno
 
         # Agrupar por funcionario y calcular atrasos e inasistencias
         funcionarios_data = []
@@ -1336,7 +1348,19 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                         if not en_ano_escolar:
                             d += timedelta(days=1)
                             continue
-                        if dia_semana in dias_laborales or es_sereno:
+                        # Determinar si es día laboral activo para la fecha d
+                        es_laboral = False
+                        if es_sereno:
+                            iso_year, iso_week, _ = d.isocalendar()
+                            semana_t = semanas_asignadas_dict.get((func.id, iso_week))
+                            if semana_t is None:
+                                semana_t = 1 if iso_week % 2 != 0 else 2
+                            # Ver si existe config activa para este turno y día
+                            es_laboral = (func.id, dia_semana, semana_t) in dias_configurados or (func.id, dia_semana, None) in dias_configurados
+                        else:
+                            es_laboral = dia_semana in dias_laborales
+                            
+                        if es_laboral:
                             ausencias_virtuales += 1
                     d += timedelta(days=1)
 

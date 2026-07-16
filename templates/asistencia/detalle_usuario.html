@@ -52,6 +52,12 @@
                 </button>
             </form>
             {% endif %}
+            {% if es_sereno %}
+            <a href="{% url 'asistencia:asignar_semanas_serenos' usuario.id %}" class="flex-1 lg:w-auto inline-flex items-center justify-center px-5 py-3 border border-indigo-100 text-xs font-black uppercase tracking-widest rounded-xl text-indigo-600 bg-indigo-50 hover:bg-indigo-600 hover:text-white transition-all shadow-sm hover:shadow-indigo-100 group">
+                <i class="fas fa-calendar-alt mr-2.5 group-hover:scale-110 transition-transform"></i>
+                Asignar Semanas
+            </a>
+            {% endif %}
             <a href="{% url 'asistencia:gestion_asistencia' %}" class="flex-1 lg:w-auto inline-flex items-center justify-center px-6 py-3 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 shadow-xl shadow-gray-200 hover:shadow-blue-200 transition-all transform hover:-translate-y-0.5">
                 <i class="fas fa-arrow-left mr-2.5"></i> Volver
             </a>

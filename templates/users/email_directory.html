@@ -4,211 +4,219 @@
 {% block page_title %}Directorio Institucional{% endblock %}
 
 {% block content %}
-<div class="p-4 sm:p-6 space-y-6">
+<div class="p-4 sm:p-6 space-y-4">
+
+    <!-- Premium Page Header -->
+    <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Directorio Institucional</h2>
+            <p class="text-sm font-bold text-gray-400 mt-1 uppercase tracking-wider">Contactos actualizados del personal</p>
+        </div>
+    </div>
 
     <!-- ===================== TABS ===================== -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div class="flex border-b border-gray-100 overflow-x-auto">
             <a href="?tab=usuarios"
-                class="flex-1 min-w-max py-4 px-5 text-center font-semibold text-sm transition-all flex items-center justify-center gap-2
+                class="flex-1 min-w-max py-3 px-4 text-center font-semibold text-sm transition-all flex items-center justify-center gap-2
                       {% if active_tab == 'usuarios' or not active_tab %}text-blue-600 border-b-2 border-blue-600 bg-blue-50/60{% else %}text-gray-500 hover:bg-gray-50 border-b-2 border-transparent{% endif %}">
-                <i class="fa-solid fa-users"></i>
-                <span>Directorio de Correos</span>
+                <i class="fa-solid fa-users text-xs"></i>
+                <span class="text-xs">Directorio de Correos</span>
             </a>
             <a href="?tab=grupos"
-                class="flex-1 min-w-max py-4 px-5 text-center font-semibold text-sm transition-all flex items-center justify-center gap-2
+                class="flex-1 min-w-max py-3 px-4 text-center font-semibold text-sm transition-all flex items-center justify-center gap-2
                       {% if active_tab == 'grupos' %}text-blue-600 border-b-2 border-blue-600 bg-blue-50/60{% else %}text-gray-500 hover:bg-gray-50 border-b-2 border-transparent{% endif %}">
-                <i class="fa-solid fa-envelope-circle-check"></i>
-                <span>Grupos de Correo</span>
+                <i class="fa-solid fa-envelope-circle-check text-xs"></i>
+                <span class="text-xs">Grupos de Correo</span>
             </a>
             <a href="?tab=telefonos"
-                class="flex-1 min-w-max py-4 px-5 text-center font-semibold text-sm transition-all flex items-center justify-center gap-2
+                class="flex-1 min-w-max py-3 px-4 text-center font-semibold text-sm transition-all flex items-center justify-center gap-2
                       {% if active_tab == 'telefonos' %}text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/60{% else %}text-gray-500 hover:bg-gray-50 border-b-2 border-transparent{% endif %}">
-                <i class="fa-solid fa-phone"></i>
-                <span>Directorio Telefónico</span>
+                <i class="fa-solid fa-phone text-xs"></i>
+                <span class="text-xs">Directorio Telefónico</span>
             </a>
         </div>
     </div>
 
     <!-- ===================== TAB 1: USUARIOS ===================== -->
     {% if active_tab == 'usuarios' or not active_tab %}
-    <div class="space-y-5">
+    <div class="space-y-4">
         <!-- Buscador -->
-        <form method="GET" action="{% url 'email_directory' %}" class="flex flex-col sm:flex-row gap-3">
+        <form method="GET" action="{% url 'email_directory' %}" class="flex flex-col sm:flex-row gap-2">
             <input type="hidden" name="tab" value="usuarios">
             <div class="relative flex-1">
                 <input type="text" name="search" value="{{ search_query }}"
                     placeholder="Buscar por nombre, apellido o correo..."
-                    class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-sm">
+                    class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-sm">
             </div>
             <button type="submit"
-                class="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 shadow-sm transition-all flex items-center justify-center gap-2">
-                <i class="fa-solid fa-filter"></i> Buscar
+                class="px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 shadow-sm transition-all flex items-center justify-center gap-1">
+                <i class="fa-solid fa-filter text-xs"></i> Buscar
             </button>
             {% if search_query %}
             <a href="{% url 'email_directory' %}"
-                class="px-5 py-3 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2">
-                <i class="fa-solid fa-xmark"></i> Limpiar
+                class="px-3 py-2 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-all flex items-center justify-center gap-1">
+                <i class="fa-solid fa-xmark text-xs"></i> Limpiar
             </a>
             {% endif %}
         </form>
 
         <!-- Lista de usuarios -->
-        <div class="space-y-3">
+        <div class="space-y-2">
             {% for u in users %}
             {% ifchanged u.first_name.0 %}
-            <div class="flex items-center gap-3 pt-2 pb-1">
-                <div class="w-7 h-7 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
-                    <span class="text-xs font-black text-gray-600 uppercase">{{ u.first_name.0 }}</span>
+            <div class="flex items-center gap-2 pt-1 pb-1">
+                <div class="w-6 h-6 rounded-md bg-gray-200 flex items-center justify-center flex-shrink-0">
+                    <span class="text-[10px] font-black text-gray-600 uppercase">{{ u.first_name.0 }}</span>
                 </div>
                 <div class="h-px bg-gradient-to-r from-gray-200 to-transparent flex-1"></div>
             </div>
             {% endifchanged %}
 
             <div
-                class="bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md hover:border-blue-100 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                class="bg-white border border-gray-100 rounded-xl p-3 hover:shadow-md hover:border-blue-100 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <!-- Info usuario -->
-                <div class="flex items-center gap-3 min-w-0">
+                <div class="flex items-center gap-2 min-w-0">
                     <div
-                        class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex-shrink-0 flex items-center justify-center font-black text-base shadow-md shadow-blue-100">
+                        class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white flex-shrink-0 flex items-center justify-center font-black text-xs shadow-sm">
                         {{ u.first_name.0 }}{{ u.last_name.0 }}</div>
                     <div class="min-w-0">
                         <h3
-                            class="text-sm font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition-colors truncate">
+                            class="text-xs font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition-colors truncate">
                             {{ u.get_full_name }}</h3>
-                        <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                            <span class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{{ u.get_funcion_display|default:u.get_tipo_funcionario_display|default:u.get_role_display }}</span>
+                        <div class="flex items-center gap-1 mt-0.5">
+                            <span class="text-[9px] text-gray-400 font-semibold uppercase tracking-wider">{{ u.get_funcion_display|default:u.get_tipo_funcionario_display|default:u.get_role_display }}</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Correo + acciones -->
-                <div class="flex items-center gap-2 sm:flex-shrink-0">
+                <div class="flex items-center gap-1.5 sm:flex-shrink-0">
                     <div
-                        class="flex-1 sm:flex-initial flex items-center bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 min-w-0 sm:min-w-[220px]">
-                        <i class="fa-solid fa-envelope text-gray-300 mr-2 text-xs flex-shrink-0"></i>
-                        <span class="text-xs font-semibold text-gray-600 truncate select-all">{{ u.email }}</span>
+                        class="flex-1 sm:flex-initial flex items-center bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 min-w-0 sm:min-w-[180px]">
+                        <i class="fa-solid fa-envelope text-gray-300 mr-1.5 text-[10px] flex-shrink-0"></i>
+                        <span class="text-[10px] font-semibold text-gray-600 truncate select-all">{{ u.email }}</span>
                     </div>
                     <button onclick="copyToClipboard('{{ u.email }}', this)"
-                        class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
+                        class="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
                         title="Copiar correo">
-                        <i class="fa-regular fa-copy text-sm"></i>
+                        <i class="fa-regular fa-copy text-[10px]"></i>
                     </button>
                     <a href="mailto:{{ u.email }}"
-                        class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
+                        class="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
                         title="Enviar correo">
-                        <i class="fa-solid fa-paper-plane text-sm"></i>
+                        <i class="fa-solid fa-paper-plane text-[10px]"></i>
                     </a>
                 </div>
             </div>
             {% empty %}
-            <div class="py-20 text-center">
+            <div class="py-16 text-center">
                 <div
-                    class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-gray-200">
-                    <i class="fa-solid fa-users-slash fa-2x"></i>
+                    class="w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center mx-auto mb-3 text-gray-200">
+                    <i class="fa-solid fa-users-slash fa-lg"></i>
                 </div>
-                <h3 class="text-base font-bold text-gray-700">No se encontraron resultados</h3>
-                <p class="text-sm text-gray-400 mt-1">Prueba con otros términos de búsqueda.</p>
+                <h3 class="text-sm font-bold text-gray-700">No se encontraron resultados</h3>
+                <p class="text-xs text-gray-400 mt-1">Prueba con otros términos de búsqueda.</p>
             </div>
             {% endfor %}
         </div>
     </div>
     {% endif %}
 
-    <!-- ===================== TAB 2: GRUPOS DE CORREO ===================== -->
+<!-- ===================== TAB 2: GRUPOS DE CORREO ===================== -->
     {% if active_tab == 'grupos' %}
-    <div class="space-y-5">
+    <div class="space-y-4">
         <!-- Barra superior: búsqueda + botón crear (solo admin) -->
-        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-            <form method="GET" action="{% url 'email_directory' %}" class="flex flex-1 gap-3">
+        <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+            <form method="GET" action="{% url 'email_directory' %}" class="flex flex-1 gap-2">
                 <input type="hidden" name="tab" value="grupos">
                 <div class="relative flex-1">
                     <input type="text" name="grupo_search" value="{{ grupo_search }}"
-                        placeholder="Buscar grupos de correo..."
-                        class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-sm">
+                        placeholder="Buscar grupos..."
+                        class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-sm">
                 </div>
                 <button type="submit"
-                    class="px-5 py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-all flex items-center gap-2 flex-shrink-0">
-                    <i class="fa-solid fa-filter"></i>
+                    class="px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-all flex items-center gap-1 flex-shrink-0">
+                    <i class="fa-solid fa-filter text-xs"></i>
                     <span class="hidden sm:inline">Buscar</span>
                 </button>
                 {% if grupo_search %}
                 <a href="?tab=grupos"
-                    class="px-4 py-3 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-all flex items-center gap-1 flex-shrink-0">
-                    <i class="fa-solid fa-xmark"></i>
+                    class="px-2 py-2 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-all flex items-center gap-1 flex-shrink-0">
+                    <i class="fa-solid fa-xmark text-xs"></i>
                 </a>
                 {% endif %}
             </form>
             {% if user.role == 'ADMIN' %}
             <button onclick="document.getElementById('modal-grupo').classList.remove('hidden')"
-                class="px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-md shadow-blue-100 transition-all flex items-center gap-2 flex-shrink-0">
-                <i class="fa-solid fa-plus"></i>
+                class="px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-md shadow-blue-100 transition-all flex items-center gap-1 flex-shrink-0">
+                <i class="fa-solid fa-plus text-xs"></i>
                 Nuevo Grupo
             </button>
             {% endif %}
         </div>
 
         <!-- Lista de grupos -->
-        <div class="space-y-3">
+        <div class="space-y-2">
             {% for grupo in grupos %}
             <div
-                class="bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md hover:border-blue-100 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div class="flex items-center gap-3 min-w-0">
+                class="bg-white border border-gray-100 rounded-xl p-3 hover:shadow-md hover:border-blue-100 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
                     <div
-                        class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex-shrink-0 flex items-center justify-center shadow-md shadow-blue-100">
-                        <i class="fa-solid fa-envelope-circle-check text-sm"></i>
+                        class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex-shrink-0 flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-envelope-circle-check text-xs"></i>
                     </div>
                     <div class="min-w-0">
                         <h3
-                            class="text-sm font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                            class="text-xs font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
                             {{ grupo.nombre }}</h3>
                         {% if grupo.descripcion %}
-                        <p class="text-xs text-gray-400 truncate mt-0.5">{{ grupo.descripcion }}</p>
+                        <p class="text-[10px] text-gray-400 truncate mt-0.5">{{ grupo.descripcion }}</p>
                         {% endif %}
                     </div>
                 </div>
-                <div class="flex items-center gap-2 flex-shrink-0">
-                    <div class="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 min-w-0">
-                        <i class="fa-solid fa-envelope text-gray-300 mr-2 text-xs flex-shrink-0"></i>
-                        <span class="text-xs font-semibold text-gray-600 truncate select-all max-w-[200px]">{{ grupo.correo }}</span>
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <div class="flex items-center bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 min-w-0">
+                        <i class="fa-solid fa-envelope text-gray-300 mr-1.5 text-[10px] flex-shrink-0"></i>
+                        <span class="text-[10px] font-semibold text-gray-600 truncate select-all max-w-[180px]">{{ grupo.correo }}</span>
                     </div>
                     <button onclick="copyToClipboard('{{ grupo.correo }}', this)"
-                        class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
+                        class="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
                         title="Copiar correo">
-                        <i class="fa-regular fa-copy text-sm"></i>
+                        <i class="fa-regular fa-copy text-[10px]"></i>
                     </button>
                     <a href="mailto:{{ grupo.correo }}"
-                        class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
+                        class="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
                         title="Enviar correo">
-                        <i class="fa-solid fa-paper-plane text-sm"></i>
+                        <i class="fa-solid fa-paper-plane text-[10px]"></i>
                     </a>
                     {% if user.role == 'ADMIN' %}
                     <button
                         onclick="document.getElementById('modal-editar-grupo-{{ grupo.pk }}').classList.remove('hidden')"
-                        class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-yellow-600 hover:text-white hover:border-yellow-600 transition-all"
+                        class="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-lg hover:bg-yellow-600 hover:text-white hover:border-yellow-600 transition-all"
                         title="Editar grupo">
-                        <i class="fa-solid fa-pen text-sm"></i>
+                        <i class="fa-solid fa-pen text-[10px]"></i>
                     </button>
                     <form method="POST" action="{% url 'eliminar_grupo_correo' grupo.pk %}" class="inline">
                         {% csrf_token %}
                         <button type="submit"
-                            class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-red-600 hover:text-white hover:border-red-600 transition-all"
+                            class="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-lg hover:bg-red-600 hover:text-white hover:border-red-600 transition-all"
                             title="Eliminar grupo"
                             onclick="return confirm('¿Está seguro que desea eliminar el grupo {{ grupo.nombre }}?')">
-                            <i class="fa-solid fa-trash text-sm"></i>
+                            <i class="fa-solid fa-trash text-[10px]"></i>
                         </button>
                     </form>
                     {% endif %}
                 </div>
             </div>
             {% empty %}
-            <div class="py-20 text-center">
+            <div class="py-16 text-center">
                 <div
-                    class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-blue-200">
-                    <i class="fa-solid fa-envelope-circle-check fa-2x"></i>
+                    class="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center mx-auto mb-3 text-blue-200">
+                    <i class="fa-solid fa-envelope-circle-check fa-lg"></i>
                 </div>
-                <h3 class="text-base font-bold text-gray-700">Sin grupos de correo</h3>
-                <p class="text-sm text-gray-400 mt-1">
+                <h3 class="text-sm font-bold text-gray-700">Sin grupos de correo</h3>
+                <p class="text-xs text-gray-400 mt-1">
                     {% if user.role == 'ADMIN' %}Haz clic en "Nuevo Grupo" para crear uno.{% else %}Contacta al
                     administrador para crear grupos.{% endif %}
                 </p>
@@ -216,63 +224,64 @@
             {% endfor %}
         </div>
     </div>
+    {% endif %}
 
     <!-- Modal: Crear Grupo de Correo (solo admin) -->
     {% if user.role == 'ADMIN' %}
     <div id="modal-grupo" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"
             onclick="document.getElementById('modal-grupo').classList.add('hidden')"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-5 space-y-4">
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <div
-                        class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center">
-                        <i class="fa-solid fa-envelope-circle-check"></i>
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center">
+                        <i class="fa-solid fa-envelope-circle-check text-xs"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-900 text-base">Nuevo Grupo de Correo</h3>
-                        <p class="text-xs text-gray-400">Solo visible para administradores</p>
+                        <h3 class="font-bold text-gray-900 text-sm">Nuevo Grupo de Correo</h3>
+                        <p class="text-[10px] text-gray-400">Solo visible para administradores</p>
                     </div>
                 </div>
                 <button onclick="document.getElementById('modal-grupo').classList.add('hidden')"
-                    class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
-                    <i class="fa-solid fa-xmark"></i>
+                    class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+                    <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
             </div>
 
-            <form method="POST" action="{% url 'crear_grupo_correo' %}" class="space-y-4">
+            <form method="POST" action="{% url 'crear_grupo_correo' %}" class="space-y-3">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="?tab=grupos">
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Nombre del grupo <span
+                <div class="space-y-1">
+                    <label class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Nombre del grupo <span
                             class="text-red-400">*</span></label>
                     <input type="text" name="nombre" placeholder="ej: Docentes, Directiva..." required
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all">
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all">
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Correo electrónico <span
+                <div class="space-y-1">
+                    <label class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Correo electrónico <span
                             class="text-red-400">*</span></label>
                     <input type="email" name="correo" placeholder="grupo@institucion.cl" required
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all">
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all">
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Descripción <span
+                <div class="space-y-1">
+                    <label class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Descripción <span
                             class="text-gray-400 font-normal normal-case">(opcional)</span></label>
                     <textarea name="descripcion" placeholder="Descripción del grupo..." rows="2"
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all resize-none"></textarea>
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all resize-none"></textarea>
                 </div>
 
-                <div class="flex gap-3 pt-2">
+                <div class="flex gap-2 pt-1">
                     <button type="button" onclick="document.getElementById('modal-grupo').classList.add('hidden')"
-                        class="flex-1 px-4 py-3 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-all">
+                        class="flex-1 px-3 py-2 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-all">
                         Cancelar
                     </button>
                     <button type="submit"
-                        class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-md shadow-blue-100 transition-all flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-plus"></i> Crear grupo
+                        class="flex-1 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-md shadow-blue-100 transition-all flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-plus text-xs"></i> Crear
                     </button>
                 </div>
             </form>
@@ -287,58 +296,58 @@
     <div id="modal-editar-grupo-{{ grupo.pk }}" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"
             onclick="document.getElementById('modal-editar-grupo-{{ grupo.pk }}').classList.add('hidden')"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-5 space-y-3">
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <div
-                        class="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 text-white flex items-center justify-center">
-                        <i class="fa-solid fa-pen"></i>
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 text-white flex items-center justify-center">
+                        <i class="fa-solid fa-pen text-xs"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-900 text-base">Editar Grupo de Correo</h3>
-                        <p class="text-xs text-gray-400">{{ grupo.nombre }}</p>
+                        <h3 class="font-bold text-gray-900 text-sm">Editar Grupo de Correo</h3>
+                        <p class="text-[10px] text-gray-400">{{ grupo.nombre }}</p>
                     </div>
                 </div>
                 <button onclick="document.getElementById('modal-editar-grupo-{{ grupo.pk }}').classList.add('hidden')"
-                    class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
-                    <i class="fa-solid fa-xmark"></i>
+                    class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+                    <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
             </div>
 
-            <form method="POST" action="{% url 'editar_grupo_correo' grupo.pk %}" class="space-y-4">
+            <form method="POST" action="{% url 'editar_grupo_correo' grupo.pk %}" class="space-y-2">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="?tab=grupos">
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Nombre del grupo <span
+                <div class="space-y-1">
+                    <label class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Nombre del grupo <span
                             class="text-red-400">*</span></label>
                     <input type="text" name="nombre" value="{{ grupo.nombre }}" required
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all">
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all">
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Correo electrónico <span
+                <div class="space-y-1">
+                    <label class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Correo electrónico <span
                             class="text-red-400">*</span></label>
                     <input type="email" name="correo" value="{{ grupo.correo }}" required
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all">
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all">
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Descripción <span
+                <div class="space-y-1">
+                    <label class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Descripción <span
                             class="text-gray-400 font-normal normal-case">(opcional)</span></label>
                     <textarea name="descripcion" rows="2"
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all resize-none">{{ grupo.descripcion }}</textarea>
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all resize-none">{{ grupo.descripcion }}</textarea>
                 </div>
 
-                <div class="flex gap-3 pt-2">
+                <div class="flex gap-2 pt-1">
                     <button type="button"
                         onclick="document.getElementById('modal-editar-grupo-{{ grupo.pk }}').classList.add('hidden')"
-                        class="flex-1 px-4 py-3 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-all">
+                        class="flex-1 px-3 py-2 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-all">
                         Cancelar
                     </button>
                     <button type="submit"
-                        class="flex-1 px-4 py-3 bg-gradient-to-r from-yellow-500 to-orange-600 text-white text-sm font-semibold rounded-xl hover:from-yellow-600 hover:to-orange-700 shadow-md shadow-yellow-100 transition-all flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-save"></i> Guardar
+                        class="flex-1 px-3 py-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white text-xs font-semibold rounded-lg hover:from-yellow-600 hover:to-orange-700 shadow-md shadow-yellow-100 transition-all flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-save text-xs"></i> Guardar
                     </button>
                 </div>
             </form>
@@ -349,93 +358,93 @@
 
     <!-- ===================== TAB 3: DIRECTORIO TELEFÓNICO ===================== -->
     {% if active_tab == 'telefonos' %}
-    <div class="space-y-5">
+    <div class="space-y-4">
         <!-- Barra superior: búsqueda + botón crear (solo admin) -->
-        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-            <form method="GET" action="{% url 'email_directory' %}" class="flex flex-1 gap-3">
+        <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+            <form method="GET" action="{% url 'email_directory' %}" class="flex flex-1 gap-2">
                 <input type="hidden" name="tab" value="telefonos">
                 <div class="relative flex-1">
                     <input type="text" name="directorio_search" value="{{ directorio_search }}"
                         placeholder="Buscar por lugar o anexo..."
-                        class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-sm">
+                        class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-sm">
                 </div>
                 <button type="submit"
-                    class="px-5 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-all flex items-center gap-2 flex-shrink-0">
-                    <i class="fa-solid fa-filter"></i>
+                    class="px-3 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-all flex items-center gap-1 flex-shrink-0">
+                    <i class="fa-solid fa-filter text-xs"></i>
                     <span class="hidden sm:inline">Buscar</span>
                 </button>
                 {% if directorio_search %}
                 <a href="?tab=telefonos"
-                    class="px-4 py-3 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-all flex items-center gap-1 flex-shrink-0">
-                    <i class="fa-solid fa-xmark"></i>
+                    class="px-2 py-2 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-all flex items-center gap-1 flex-shrink-0">
+                    <i class="fa-solid fa-xmark text-xs"></i>
                 </a>
                 {% endif %}
             </form>
             {% if user.role == 'ADMIN' %}
             <button onclick="document.getElementById('modal-telefono').classList.remove('hidden')"
-                class="px-5 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white text-sm font-semibold rounded-xl hover:from-indigo-700 hover:to-indigo-800 shadow-md shadow-indigo-100 transition-all flex items-center gap-2 flex-shrink-0">
-                <i class="fa-solid fa-plus"></i>
+                class="px-3 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white text-xs font-semibold rounded-lg hover:from-indigo-700 hover:to-indigo-800 shadow-md shadow-indigo-100 transition-all flex items-center gap-1 flex-shrink-0">
+                <i class="fa-solid fa-plus text-xs"></i>
                 Nuevo Anexo
             </button>
             {% endif %}
         </div>
 
         <!-- Lista del directorio telefónico -->
-        <div class="space-y-3">
+        <div class="space-y-2">
             {% for entrada in directorio %}
             <div
-                class="bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md hover:border-indigo-100 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div class="flex items-center gap-3 min-w-0">
+                class="bg-white border border-gray-100 rounded-xl p-3 hover:shadow-md hover:border-indigo-100 transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
                     <div
-                        class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex-shrink-0 flex items-center justify-center shadow-md shadow-indigo-100">
-                        <i class="fa-solid fa-phone text-sm"></i>
+                        class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex-shrink-0 flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-phone text-xs"></i>
                     </div>
                     <div class="min-w-0">
                         <h3
-                            class="text-sm font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
+                            class="text-xs font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
                             {{ entrada.lugar }}</h3>
                         {% if entrada.descripcion %}
-                        <p class="text-xs text-gray-400 truncate mt-0.5">{{ entrada.descripcion }}</p>
+                        <p class="text-[10px] text-gray-400 truncate mt-0.5">{{ entrada.descripcion }}</p>
                         {% endif %}
                     </div>
                 </div>
-                <div class="flex items-center gap-2 flex-shrink-0">
-                    <div class="flex items-center bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-2.5">
-                        <i class="fa-solid fa-phone text-indigo-300 mr-2 text-xs flex-shrink-0"></i>
-                        <span class="text-sm font-black text-indigo-700 tracking-wider">Anexo {{ entrada.anexo }}</span>
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <div class="flex items-center bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1.5">
+                        <i class="fa-solid fa-phone text-indigo-300 mr-1.5 text-[10px] flex-shrink-0"></i>
+                        <span class="text-xs font-black text-indigo-700 tracking-wider">Anexo {{ entrada.anexo }}</span>
                     </div>
                     <button onclick="copyToClipboard('{{ entrada.anexo }}', this)"
-                        class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all"
+                        class="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-lg hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all"
                         title="Copiar anexo">
-                        <i class="fa-regular fa-copy text-sm"></i>
+                        <i class="fa-regular fa-copy text-[10px]"></i>
                     </button>
                     {% if user.role == 'ADMIN' %}
                     <button
                         onclick="document.getElementById('modal-editar-telefono-{{ entrada.pk }}').classList.remove('hidden')"
-                        class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-yellow-600 hover:text-white hover:border-yellow-600 transition-all"
+                        class="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-lg hover:bg-yellow-600 hover:text-white hover:border-yellow-600 transition-all"
                         title="Editar anexo">
-                        <i class="fa-solid fa-pen text-sm"></i>
+                        <i class="fa-solid fa-pen text-[10px]"></i>
                     </button>
                     <form method="POST" action="{% url 'eliminar_directorio_telefonico' entrada.pk %}" class="inline">
                         {% csrf_token %}
                         <button type="submit"
-                            class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-xl hover:bg-red-600 hover:text-white hover:border-red-600 transition-all"
+                            class="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100 text-gray-400 rounded-lg hover:bg-red-600 hover:text-white hover:border-red-600 transition-all"
                             title="Eliminar anexo"
                             onclick="return confirm('¿Está seguro que desea eliminar el anexo {{ entrada.anexo }} de {{ entrada.lugar }}?')">
-                            <i class="fa-solid fa-trash text-sm"></i>
+                            <i class="fa-solid fa-trash text-[10px]"></i>
                         </button>
                     </form>
                     {% endif %}
                 </div>
             </div>
             {% empty %}
-            <div class="py-20 text-center">
+            <div class="py-16 text-center">
                 <div
-                    class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-200">
-                    <i class="fa-solid fa-phone fa-2x"></i>
+                    class="w-14 h-14 bg-indigo-50 rounded-xl flex items-center justify-center mx-auto mb-3 text-indigo-200">
+                    <i class="fa-solid fa-phone fa-lg"></i>
                 </div>
-                <h3 class="text-base font-bold text-gray-700">Sin entradas telefónicas</h3>
-                <p class="text-sm text-gray-400 mt-1">
+                <h3 class="text-sm font-bold text-gray-700">Sin entradas telefónicas</h3>
+                <p class="text-xs text-gray-400 mt-1">
                     {% if user.role == 'ADMIN' %}Haz clic en "Nuevo Anexo" para agregar uno.{% else %}Contacta al
                     administrador para agregar anexos.{% endif %}
                 </p>
@@ -443,69 +452,69 @@
             {% endfor %}
         </div>
     </div>
+    {% endif %}
 
     <!-- Modal: Agregar Anexo Telefónico (solo admin) -->
     {% if user.role == 'ADMIN' %}
     <div id="modal-telefono" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"
             onclick="document.getElementById('modal-telefono').classList.add('hidden')"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-5 space-y-3">
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <div
-                        class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center">
-                        <i class="fa-solid fa-phone"></i>
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center">
+                        <i class="fa-solid fa-phone text-xs"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-900 text-base">Nuevo Anexo Telefónico</h3>
-                        <p class="text-xs text-gray-400">Solo visible para administradores</p>
+                        <h3 class="font-bold text-gray-900 text-sm">Nuevo Anexo Telefónico</h3>
+                        <p class="text-[10px] text-gray-400">Solo visible para administradores</p>
                     </div>
                 </div>
                 <button onclick="document.getElementById('modal-telefono').classList.add('hidden')"
-                    class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
-                    <i class="fa-solid fa-xmark"></i>
+                    class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+                    <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
             </div>
 
-            <form method="POST" action="{% url 'crear_directorio_telefonico' %}" class="space-y-4">
+            <form method="POST" action="{% url 'crear_directorio_telefonico' %}" class="space-y-2">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="?tab=telefonos">
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Lugar / Dependencia
+                <div class="space-y-1">
+                    <label class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Lugar / Dependencia
                         <span class="text-red-400">*</span></label>
                     <input type="text" name="lugar" placeholder="ej: Dirección, Biblioteca, UTP..." required
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all">
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all">
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Número de Anexo <span
+                <div class="space-y-1">
+                    <label class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Número de Anexo <span
                             class="text-red-400">*</span></label>
                     <input type="text" name="anexo" placeholder="ej: 101, 202..." required
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all">
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all">
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Descripción <span
+                <div class="space-y-1">
+                    <label class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Descripción <span
                             class="text-gray-400 font-normal normal-case">(opcional)</span></label>
                     <textarea name="descripcion" placeholder="Información adicional..." rows="2"
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all resize-none"></textarea>
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all resize-none"></textarea>
                 </div>
 
-                <div class="flex gap-3 pt-2">
+                <div class="flex gap-2 pt-1">
                     <button type="button" onclick="document.getElementById('modal-telefono').classList.add('hidden')"
-                        class="flex-1 px-4 py-3 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-all">
+                        class="flex-1 px-3 py-2 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-all">
                         Cancelar
                     </button>
                     <button type="submit"
-                        class="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white text-sm font-semibold rounded-xl hover:from-indigo-700 hover:to-indigo-800 shadow-md shadow-indigo-100 transition-all flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-plus"></i> Agregar
+                        class="flex-1 px-3 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white text-xs font-semibold rounded-lg hover:from-indigo-700 hover:to-indigo-800 shadow-md shadow-indigo-100 transition-all flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-plus text-xs"></i> Agregar
                     </button>
                 </div>
             </form>
         </div>
     </div>
-    {% endif %}
     {% endif %}
 
     <!-- Modal: Editar Anexo Telefónico (solo admin) -->
@@ -515,59 +524,59 @@
         class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"
             onclick="document.getElementById('modal-editar-telefono-{{ entrada.pk }}').classList.add('hidden')"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-5 space-y-3">
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <div
-                        class="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 text-white flex items-center justify-center">
-                        <i class="fa-solid fa-pen"></i>
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 text-white flex items-center justify-center">
+                        <i class="fa-solid fa-pen text-xs"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-900 text-base">Editar Anexo Telefónico</h3>
-                        <p class="text-xs text-gray-400">{{ entrada.lugar }}</p>
+                        <h3 class="font-bold text-gray-900 text-sm">Editar Anexo Telefónico</h3>
+                        <p class="text-[10px] text-gray-400">{{ entrada.lugar }}</p>
                     </div>
                 </div>
                 <button
                     onclick="document.getElementById('modal-editar-telefono-{{ entrada.pk }}').classList.add('hidden')"
-                    class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
-                    <i class="fa-solid fa-xmark"></i>
+                    class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
+                    <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
             </div>
 
-            <form method="POST" action="{% url 'editar_directorio_telefonico' entrada.pk %}" class="space-y-4">
+            <form method="POST" action="{% url 'editar_directorio_telefonico' entrada.pk %}" class="space-y-2">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="?tab=telefonos">
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Lugar <span
+                <div class="space-y-1">
+                    <label class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Lugar <span
                             class="text-red-400">*</span></label>
                     <input type="text" name="lugar" value="{{ entrada.lugar }}" required
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all">
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all">
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Anexo <span
+                <div class="space-y-1">
+                    <label class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Anexo <span
                             class="text-red-400">*</span></label>
                     <input type="text" name="anexo" value="{{ entrada.anexo }}" required
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all">
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all">
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Descripción <span
+                <div class="space-y-1">
+                    <label class="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">Descripción <span
                             class="text-gray-400 font-normal normal-case">(opcional)</span></label>
                     <textarea name="descripcion" rows="2"
-                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all resize-none">{{ entrada.descripcion }}</textarea>
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all resize-none">{{ entrada.descripcion }}</textarea>
                 </div>
 
-                <div class="flex gap-3 pt-2">
+                <div class="flex gap-2 pt-1">
                     <button type="button"
                         onclick="document.getElementById('modal-editar-telefono-{{ entrada.pk }}').classList.add('hidden')"
-                        class="flex-1 px-4 py-3 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-all">
+                        class="flex-1 px-3 py-2 bg-gray-100 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-all">
                         Cancelar
                     </button>
                     <button type="submit"
-                        class="flex-1 px-4 py-3 bg-gradient-to-r from-yellow-500 to-orange-600 text-white text-sm font-semibold rounded-xl hover:from-yellow-600 hover:to-orange-700 shadow-md shadow-yellow-100 transition-all flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-save"></i> Guardar
+                        class="flex-1 px-3 py-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white text-xs font-semibold rounded-lg hover:from-yellow-600 hover:to-orange-700 shadow-md shadow-yellow-100 transition-all flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-save text-xs"></i> Guardar
                     </button>
                 </div>
             </form>

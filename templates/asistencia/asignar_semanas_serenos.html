@@ -104,6 +104,41 @@
 
             <div class="p-6">
                 <div x-data="asignarSemana({{ funcionario.id }}, {{ anio }}, {{ semanas|safe }}, {{ asignaciones|safe }})" x-init="inicializar()">
+                    
+                    <!-- Panel de Auto-asignación de Rotación -->
+                    <div class="bg-gray-50 rounded-2xl border border-gray-200 p-4 mb-6">
+                        <h4 class="text-xs font-black text-gray-900 uppercase tracking-widest mb-3">
+                            <i class="fas fa-magic text-indigo-600 mr-1"></i> Generar Rotación Alternada
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                            <div>
+                                <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Semana Inicio</label>
+                                <select x-model="autoStartSemana" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 bg-white">
+                                    <option value="">Selecciona...</option>
+                                    <template x-for="semana in semanas" :key="semana.semana_iso">
+                                        <option :value="semana.semana_iso" x-text="'S' + semana.semana_iso + ' (' + semana.rango + ')'"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Turno Inicial</label>
+                                <select x-model="autoInitialTurno" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 bg-white">
+                                    <option value="1">Turno 1 (Impar)</option>
+                                    <option value="2">Turno 2 (Par)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Fecha de Corte (Hasta)</label>
+                                <input type="date" x-model="autoCutoffDate" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-gray-900 bg-white" />
+                            </div>
+                            <div>
+                                <button @click="aplicarRotacion()" class="w-full py-2 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider rounded-xl hover:bg-indigo-700 transition shadow-sm">
+                                    Generar Rotación
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Controles -->
                     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                         <div class="flex items-center gap-2">
@@ -231,6 +266,9 @@ document.addEventListener('alpine:init', () => {
         guardando: false,
         resumenAbierto: false,
         resumen: { t1: 0, t2: 0, libre: 0, total: 0 },
+        autoStartSemana: '',
+        autoInitialTurno: '1',
+        autoCutoffDate: '',
 
         inicializar() {
             // Datos ya cargados desde el contexto
@@ -296,6 +334,59 @@ document.addEventListener('alpine:init', () => {
         mostrarResumen() {
             this.calcularResumen();
             this.resumenAbierto = true;
+        },
+
+        aplicarRotacion() {
+            if (!this.autoStartSemana) {
+                Swal.fire({
+                    title: 'Falta información',
+                    text: 'Debes seleccionar una semana de inicio.',
+                    icon: 'warning',
+                    confirmButtonColor: '#ef4444'
+                });
+                return;
+            }
+            if (!this.autoCutoffDate) {
+                Swal.fire({
+                    title: 'Falta información',
+                    text: 'Debes ingresar una fecha de corte.',
+                    icon: 'warning',
+                    confirmButtonColor: '#ef4444'
+                });
+                return;
+            }
+
+            const startSem = parseInt(this.autoStartSemana);
+            // Reemplazar guiones por barras para que Safari y navegadores antiguos traten la fecha local correctamente
+            const cutoffStr = this.autoCutoffDate.replace(/-/g, '/');
+            const cutoff = new Date(cutoffStr + ' 23:59:59');
+            let currentTurno = parseInt(this.autoInitialTurno);
+
+            let startIndex = this.semanas.findIndex(s => s.semana_iso === startSem);
+            if (startIndex === -1) return;
+
+            // Generar asignaciones desde la semana de inicio en adelante
+            for (let i = startIndex; i < this.semanas.length; i++) {
+                const semana = this.semanas[i];
+                const lunesStr = semana.fecha_lunes.replace(/-/g, '/');
+                const fechaLunes = new Date(lunesStr + ' 00:00:00');
+                
+                if (fechaLunes > cutoff) {
+                    break;
+                }
+
+                this.asignaciones[semana.semana_iso] = currentTurno;
+                currentTurno = currentTurno === 1 ? 2 : 1;
+            }
+
+            this.calcularResumen();
+            Swal.fire({
+                title: '¡Rotación Generada!',
+                text: 'La rotación alternada se ha cargado en el calendario. Recuerda hacer clic en "Guardar Año" para guardar.',
+                icon: 'success',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#111827'
+            });
         },
 
         async guardarAsignaciones() {

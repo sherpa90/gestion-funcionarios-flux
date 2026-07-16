@@ -82,13 +82,29 @@ class DiaHorario(models.Model):
         return f"{self.horario.funcionario.get_full_name()} - {self.get_dia_semana_display()}{sem}"
 
     @staticmethod
-    def get_semana_tipo(fecha):
+    def get_semana_tipo(fecha, funcionario=None):
         """
         Retorna la paridad de la semana (1 para impares, 2 para pares)
-        según el estándar ISO.
+        según el estándar ISO, o la asignación personalizada para serenos.
         """
         if not fecha:
             return 1
+            
+        if funcionario:
+            es_sereno = (
+                getattr(funcionario, 'funcion', None) == 'SERENO' or
+                getattr(funcionario, 'tipo_funcionario', None) == 'SERENO'
+            )
+            if es_sereno:
+                iso_year, iso_week, _ = fecha.isocalendar()
+                asignacion = SemanaAsignadaSereno.objects.filter(
+                    funcionario=funcionario,
+                    anio=iso_year,
+                    semana_iso=iso_week
+                ).first()
+                if asignacion:
+                    return asignacion.turno
+
         num_semana = fecha.isocalendar()[1]
         return 1 if num_semana % 2 != 0 else 2
 
@@ -329,13 +345,7 @@ class RegistroAsistencia(models.Model):
         if not self.hora_entrada_real:
             return 0
 
-        # Los serenos están exentos de control de retraso
-        es_sereno = (
-            getattr(self.funcionario, 'funcion', None) == 'SERENO' or
-            getattr(self.funcionario, 'tipo_funcionario', None) == 'SERENO'
-        )
-        if es_sereno:
-            return 0
+
 
         # dia_semana siempre definido antes de cualquier bifurcación
         dia_semana = self.fecha.weekday()
@@ -363,7 +373,7 @@ class RegistroAsistencia(models.Model):
                 if not self.horario_asignado:
                     return 0
                 # Obtener tipo de semana
-                semana_t = DiaHorario.get_semana_tipo(self.fecha)
+                semana_t = DiaHorario.get_semana_tipo(self.fecha, self.funcionario)
                 # Primero buscar específico para esta semana, si no el universal
                 dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
                 if not dia_horario:
@@ -552,16 +562,7 @@ class RegistroAsistencia(models.Model):
         if not self.horario_asignado:
             return "SIN_HORARIO"
 
-        # Los serenos están exentos de control de asistencia (atrasos y ausencias)
-        es_sereno = (
-            getattr(self.funcionario, 'funcion', None) == 'SERENO' or
-            getattr(self.funcionario, 'tipo_funcionario', None) == 'SERENO'
-        )
-        if es_sereno:
-            # Si marcaron entrada, queda como puntual; si no, no se registra ausencia
-            if self.hora_entrada_real:
-                return "PUNTUAL"
-            return "SIN_DATA"
+
 
         # Verificar si es día festivo (prioridad máxima)
         if DiaFestivo.es_dia_festivo(self.fecha):
@@ -630,7 +631,7 @@ class RegistroAsistencia(models.Model):
 
         # Determinar si es un día laboral activo base en su horario semanal
         dia_semana = self.fecha.weekday()
-        semana_t = DiaHorario.get_semana_tipo(self.fecha)
+        semana_t = DiaHorario.get_semana_tipo(self.fecha, self.funcionario)
         
         # Buscar primero horario específico para esta semana (1 o 2)
         # Si no existe, cae al horario universal (semana_tipo=None)
@@ -774,3 +775,36 @@ class AnoEscolar(models.Model):
             raise ValidationError("La fecha de fin del segundo semestre debe ser posterior a la de inicio.")
         if self.sem2_inicio <= self.sem1_fin:
             raise ValidationError("El segundo semestre debe comenzar después de que termine el primero.")
+
+
+class SemanaAsignadaSereno(models.Model):
+    """Asignación de turno semanal para funcionarios serenos"""
+    funcionario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='semanas_asignadas',
+        help_text="Funcionario sereno al que se asigna la semana"
+    )
+    anio = models.IntegerField(help_text="Año de la semana asignada")
+    semana_iso = models.IntegerField(help_text="Número de semana ISO (1-53)")
+    turno = models.IntegerField(
+        choices=[(1, 'Semana 1 (Impar)'), (2, 'Semana 2 (Par)')],
+        help_text="Turno asignado para esa semana"
+    )
+    fecha_asignacion = models.DateTimeField(auto_now_add=True)
+    observaciones = models.TextField(blank=True, help_text="Notas adicionales sobre la asignación")
+    asignado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='semanas_asignadas_creadas'
+    )
+
+    class Meta:
+        verbose_name = "Semana Asignada a Sereno"
+        verbose_name_plural = "Semanas Asignadas a Serenos"
+        ordering = ['funcionario__last_name', 'anio', 'semana_iso']
+        unique_together = ['funcionario', 'anio', 'semana_iso']
+
+    def __str__(self):
+        return f"{self.funcionario.get_full_name()} - Año {self.anio}, Sem. {self.semana_iso}: Turno {self.turno}"

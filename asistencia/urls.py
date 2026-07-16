@@ -36,12 +36,16 @@ from .views import (
     EliminarHorarioExcepcionalView,
     ReporteDAEM2PDFView,
     ReporteDAEM2ExcelView,
+    AsignarSemanasSerenosView,
+    AsignarSemanasSerenosListaView,
 )
 
 app_name = 'asistencia'
 
 urlpatterns = [
     # Gestión de horarios
+    path("sereno/asignar-semanas/", AsignarSemanasSerenosListaView.as_view(), name="asignar_semanas_serenos_lista"),
+    path("sereno/asignar-semanas/<int:funcionario_id>/", AsignarSemanasSerenosView.as_view(), name="asignar_semanas_serenos"),
     path("horarios/", GestionHorariosView.as_view(), name="gestion_horarios"),
     path("cargar-horarios/", CargaHorariosView.as_view(), name="carga_horarios"),
     path("horario/crear/<int:funcionario_id>/", CrearHorarioView.as_view(), name="crear_horario"),
