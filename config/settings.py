@@ -250,6 +250,29 @@ if SENTRY_DSN:
     )
 
 # Logging Configuration
+# Determine log file path — only enable file logging if the directory exists or DJANGO_LOG_FILE is set
+_LOG_FILE = os.environ.get('DJANGO_LOG_FILE', '')
+if not _LOG_FILE:
+    _log_dir = os.path.join(BASE_DIR, 'logs')
+    if os.path.isdir(_log_dir):
+        _LOG_FILE = os.path.join(_log_dir, 'django.log')
+
+_log_handlers_base = ['console']
+_log_handlers_with_file = ['console']
+
+if _LOG_FILE:
+    _log_handlers_with_file = ['console', 'file']
+
+_file_handler = {}
+if _LOG_FILE:
+    _file_handler = {
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': _LOG_FILE,
+            'formatter': 'verbose',
+        }
+    }
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -272,44 +295,40 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple' if DEBUG else 'json',
         },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': os.environ.get('DJANGO_LOG_FILE', os.path.join(BASE_DIR, 'scratch', 'django.log')),
-            'formatter': 'verbose',
-        },
+        **_file_handler,
     },
     'root': {
-        'handlers': ['console', 'file'] if not DEBUG else ['console'],
+        'handlers': _log_handlers_with_file if not DEBUG else _log_handlers_base,
         'level': 'INFO',
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'] if not DEBUG else ['console'],
+            'handlers': _log_handlers_with_file if not DEBUG else _log_handlers_base,
             'level': 'INFO',
             'propagate': False,
         },
         'audit': {
-            'handlers': ['console', 'file'],
+            'handlers': _log_handlers_with_file,
             'level': 'INFO',
             'propagate': False,
         },
         'liquidaciones': {
-            'handlers': ['console', 'file'] if not DEBUG else ['console'],
+            'handlers': _log_handlers_with_file if not DEBUG else _log_handlers_base,
             'level': 'DEBUG',
             'propagate': False,
         },
         'permisos': {
-            'handlers': ['console', 'file'] if not DEBUG else ['console'],
+            'handlers': _log_handlers_with_file if not DEBUG else _log_handlers_base,
             'level': 'DEBUG',
             'propagate': False,
         },
         'asistencia': {
-            'handlers': ['console', 'file'] if not DEBUG else ['console'],
+            'handlers': _log_handlers_with_file if not DEBUG else _log_handlers_base,
             'level': 'DEBUG',
             'propagate': False,
         },
         'equipos': {
-            'handlers': ['console', 'file'] if not DEBUG else ['console'],
+            'handlers': _log_handlers_with_file if not DEBUG else _log_handlers_base,
             'level': 'DEBUG',
             'propagate': False,
         },
