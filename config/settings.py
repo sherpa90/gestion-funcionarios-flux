@@ -274,7 +274,7 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': '/tmp/django.log',  # <-- Modificado para usar /tmp
+            'filename': os.environ.get('DJANGO_LOG_FILE', os.path.join(BASE_DIR, 'scratch', 'django.log')),
             'formatter': 'verbose',
         },
     },
