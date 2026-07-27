@@ -307,18 +307,18 @@ class RegistroAsistencia(models.Model):
 
     @property
     def horario_dia(self):
-        """Retorna la configuración de horario para el día específico de este registro (considerando excepciones)"""
+        """Retorna la configuración de horario para el día específico de este registro (considerando excepciones y semana_tipo para serenos)"""
+        dia_semana = self.fecha.weekday()
+        semana_t = DiaHorario.get_semana_tipo(self.fecha, self.funcionario)
+
         # PRIORIDAD: Si hay edición manual justificada, usar horario regular (ignorar excepcional)
         if self.justificado_por:
-            # Usar horario regular cuando hay justificación manual
             if not self.horario_asignado:
                 return None
-
-            dia_semana = self.fecha.weekday()
-            try:
-                return self.horario_asignado.dias.get(dia_semana=dia_semana)
-            except Exception:
-                return None
+            dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
+            if not dia_horario:
+                dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo__isnull=True).first()
+            return dia_horario
 
         # Si no hay justificación manual, verificar horario excepcional
         excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
@@ -332,13 +332,11 @@ class RegistroAsistencia(models.Model):
         if not self.horario_asignado:
             return None
 
-        # En Python, weekday() retorna 0 para Lunes y 6 para Domingo
-        dia_semana = self.fecha.weekday()
+        dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
+        if not dia_horario:
+            dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo__isnull=True).first()
 
-        try:
-            return self.horario_asignado.dias.get(dia_semana=dia_semana)
-        except Exception:
-            return None
+        return dia_horario
 
     def calcular_retraso(self):
         """Calcula los minutos de retraso basado en el horario asignado o excepcional"""

@@ -97,15 +97,19 @@
                         <!-- Hora de Entrada -->
                         <div>
                             <label for="{{ form.hora_entrada_real.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                Hora de Entrada Real
+                                Hora de Entrada Real {% if es_sereno %}<span class="text-indigo-600 font-bold">(Evaluada)</span>{% endif %}
                             </label>
                             <div class="mt-1">
                                 {{ form.hora_entrada_real }}
                             </div>
+                            {% if registro.horario_dia and registro.horario_dia.hora_entrada %}
+                            <p class="mt-1 text-xs text-indigo-600 font-medium">
+                                Horario esperado (según asignación de semanas): {{ registro.horario_dia.hora_entrada|time:"H:i" }}
+                            </p>
+                            {% endif %}
                             {% if registro.hora_entrada_real %}
                             <p class="mt-1 text-xs text-gray-500">
-                                Actual: {{ registro.hora_entrada_real|time:"H:i" }}
-                                (Horario esperado: {{ registro.horario_dia.hora_entrada|time:"H:i" }})
+                                Marcación actual: {{ registro.hora_entrada_real|time:"H:i" }}
                             </p>
                             {% endif %}
                             {% if form.hora_entrada_real.errors %}
@@ -114,19 +118,21 @@
                         </div>
 
                         <!-- Hora de Salida -->
-                        <div>
-                            <label for="{{ form.hora_salida_real.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                Hora de Salida Real
+                        <div class="{% if es_sereno %}opacity-60 bg-gray-50 p-3 rounded-xl border border-gray-200{% endif %}">
+                            <label for="{{ form.hora_salida_real.id_for_label }}" class="block text-sm font-medium {% if es_sereno %}text-gray-400{% else %}text-gray-700{% endif %} mb-2">
+                                Hora de Salida Real {% if es_sereno %}<span class="text-gray-400 font-normal">(Referencial - Opcional)</span>{% endif %}
                             </label>
                             <div class="mt-1">
                                 {{ form.hora_salida_real }}
                             </div>
+                            {% if es_sereno %}
+                            <p class="mt-1 text-xs text-gray-400 font-medium italic">
+                                * Para funcionarios serenos solo se evalúa la entrada; la salida no afecta retrasos ni puntualidad.
+                            </p>
+                            {% endif %}
                             {% if registro.hora_salida_real %}
-                            <p class="mt-1 text-xs text-gray-500">
-                                Actual: {{ registro.hora_salida_real|time:"H:i" }}
-                                {% if registro.horario_dia and registro.horario_dia.hora_salida %}
-                                    (Horario esperado: {{ registro.horario_dia.hora_salida|time:"H:i" }})
-                                {% endif %}
+                            <p class="mt-1 text-xs text-gray-400">
+                                Marcación actual: {{ registro.hora_salida_real|time:"H:i" }}
                             </p>
                             {% endif %}
                             {% if form.hora_salida_real.errors %}

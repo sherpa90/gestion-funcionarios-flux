@@ -181,7 +181,7 @@
                                         <tr class="text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
                                             <th class="px-4 py-3 text-left">{% if es_sereno %}Turno{% else %}Fecha{% endif %}</th>
                                             <th class="px-4 py-3 text-left">{% if es_sereno %}Entrada <span class="text-indigo-400">(PM)</span>{% else %}Entrada{% endif %}</th>
-                                            <th class="px-4 py-3 text-left">{% if es_sereno %}Salida <span class="text-amber-400">(AM)</span>{% else %}Salida{% endif %}</th>
+                                            <th class="px-4 py-3 text-left">{% if es_sereno %}Salida <span class="text-gray-400 font-normal">(AM - Referencial)</span>{% else %}Salida{% endif %}</th>
                                             <th class="px-4 py-3 text-left">Horario</th>
                                             <th class="px-4 py-3 text-left">Atraso</th>
                                             <th class="px-4 py-3 text-left">Estado</th>
@@ -213,7 +213,11 @@
                                                         {% if registro.hora_entrada_real %}{{ registro.hora_entrada_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
                                                     </span>
                                                 </div>
+                                                {% if registro.horario_dia and registro.horario_dia.hora_entrada %}
+                                                <div class="text-[9px] font-bold text-indigo-400 uppercase ml-3">Teórico: {{ registro.horario_dia.hora_entrada|time:"H:i" }}</div>
+                                                {% else %}
                                                 <div class="text-[9px] font-bold text-indigo-400 uppercase ml-3">tarde</div>
+                                                {% endif %}
                                                 {% else %}
                                                 <div class="text-xs font-black text-gray-700">
                                                     {% if registro.hora_entrada_real %}{{ registro.hora_entrada_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
@@ -225,13 +229,13 @@
                                             </td>
                                             <td class="px-4 py-4 whitespace-nowrap">
                                                 {% if es_sereno %}
-                                                <div class="flex items-center gap-1">
-                                                    <span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
-                                                    <span class="text-xs font-black text-amber-700">
+                                                <div class="flex items-center gap-1 opacity-60">
+                                                    <span class="w-2 h-2 rounded-full bg-gray-300 inline-block"></span>
+                                                    <span class="text-xs font-bold text-gray-400">
                                                         {% if registro.hora_salida_real %}{{ registro.hora_salida_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
                                                     </span>
                                                 </div>
-                                                <div class="text-[9px] font-bold text-amber-400 uppercase ml-3">madrugada</div>
+                                                <div class="text-[9px] font-medium text-gray-400 uppercase ml-3">madrugada (referencial)</div>
                                                 {% else %}
                                                 <div class="text-xs font-black text-gray-700">
                                                     {% if registro.hora_salida_real %}{{ registro.hora_salida_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}

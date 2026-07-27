@@ -1942,15 +1942,18 @@ class EditarRegistroAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View
     def get(self, request, pk):
         registro = get_object_or_404(RegistroAsistencia, pk=pk)
         form = EditarRegistroAsistenciaForm()
+        es_sereno = (registro.funcionario.funcion == 'SERENO') or (registro.funcionario.tipo_funcionario == 'SERENO')
         context = {
             'registro': registro,
             'form': form,
+            'es_sereno': es_sereno,
         }
         return render(request, 'asistencia/editar_registro_asistencia.html', context)
 
     def post(self, request, pk):
         registro = get_object_or_404(RegistroAsistencia, pk=pk)
         form = EditarRegistroAsistenciaForm(request.POST)
+        es_sereno = (registro.funcionario.funcion == 'SERENO') or (registro.funcionario.tipo_funcionario == 'SERENO')
 
         if form.is_valid():
             hora_entrada = form.cleaned_data.get('hora_entrada_real')
@@ -1978,6 +1981,7 @@ class EditarRegistroAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View
         context = {
             'registro': registro,
             'form': form,
+            'es_sereno': es_sereno,
         }
         return render(request, 'asistencia/editar_registro_asistencia.html', context)
 
