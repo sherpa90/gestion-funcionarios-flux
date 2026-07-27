@@ -255,6 +255,7 @@
     {% endif %}
 </div>
 
+{% if funcionario %}
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('asignarSemana', (funcionarioId, anio, semanasData, asignacionesData) => ({
@@ -440,4 +441,5 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 </script>
+{% endif %}
 {% endblock %}
