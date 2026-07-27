@@ -145,6 +145,10 @@ class HorarioExcepcional(models.Model):
     hora_entrada = models.TimeField(null=True, blank=True, help_text="Hora de entrada obligatoria (dejar en blanco si no aplica entrada)")
     hora_salida = models.TimeField(null=True, blank=True, help_text="Hora de salida autorizada (dejar en blanco si no aplica salida)")
     motivo = models.CharField(max_length=255, help_text="Motivo de este horario excepcional (ej: Día del Profesor, Corte de agua)")
+    es_para_serenos = models.BooleanField(
+        default=False,
+        help_text="Si está marcado, este horario excepcional solo aplica a funcionarios con cargo sereno"
+    )
     creado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -160,6 +164,32 @@ class HorarioExcepcional(models.Model):
 
     def __str__(self):
         return f"{self.fecha} - {self.motivo}"
+
+    def aplica_a_funcionario(self, funcionario):
+        """Verifica si este horario excepcional aplica a un funcionario dado"""
+        if not self.es_para_serenos:
+            return True
+        es_sereno = (
+            getattr(funcionario, 'funcion', None) == 'SERENO' or
+            getattr(funcionario, 'tipo_funcionario', None) == 'SERENO'
+        )
+        return es_sereno
+
+    def aplica_a_funcionario_id(self, funcionario_id):
+        """Versión optimizada que verifica si aplica a un funcionario por ID sin cargar el objeto completo"""
+        if not self.es_para_serenos:
+            return True
+        try:
+            from users.models import CustomUser
+            user = CustomUser.objects.filter(pk=funcionario_id).first()
+            if not user:
+                return False
+            return (
+                getattr(user, 'funcion', None) == 'SERENO' or
+                getattr(user, 'tipo_funcionario', None) == 'SERENO'
+            )
+        except Exception:
+            return False
 
 
 class AlegacionAsistencia(models.Model):
@@ -322,7 +352,7 @@ class RegistroAsistencia(models.Model):
 
         # Si no hay justificación manual, verificar horario excepcional
         excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
-        if excepcional:
+        if excepcional and excepcional.aplica_a_funcionario(self.funcionario):
             class VirtualHorario:
                 def __init__(self, ex):
                     self.hora_entrada = ex.hora_entrada
@@ -363,7 +393,7 @@ class RegistroAsistencia(models.Model):
         else:
             # Verificar horario excepcional
             excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
-            if excepcional:
+            if excepcional and excepcional.aplica_a_funcionario(self.funcionario):
                 if not excepcional.hora_entrada:
                     return 0
                 hora_esperada = excepcional.hora_entrada
@@ -519,10 +549,13 @@ class RegistroAsistencia(models.Model):
 
     @property
     def horario_excepcional(self):
-        """Retorna el horario excepcional para esta fecha si existe"""
+        """Retorna el horario excepcional para esta fecha si existe y aplica a este funcionario"""
         try:
             from .models import HorarioExcepcional
-            return HorarioExcepcional.objects.filter(fecha=self.fecha).first()
+            excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
+            if excepcional and excepcional.aplica_a_funcionario(self.funcionario):
+                return excepcional
+            return None
         except Exception:
             return None
 
@@ -653,7 +686,7 @@ class RegistroAsistencia(models.Model):
 
         # Verificar si hay horario excepcional
         excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
-        if excepcional:
+        if excepcional and excepcional.aplica_a_funcionario(self.funcionario):
             # Un horario excepcional global solo aplica si el usuario ya trabajaba ese día
             tiene_horas = True if excepcional.hora_entrada or excepcional.hora_salida else False
             es_dia_activo = tiene_horas and es_dia_activo_base

@@ -462,7 +462,8 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             fecha__month=mes_int
         )
         for exc in excepcionales_qs:
-            excepcionales_por_fecha[exc.fecha] = exc
+            if exc.aplica_a_funcionario(self.request.user):
+                excepcionales_por_fecha[exc.fecha] = exc
 
         ESTADO_DISPLAY = {
             'DIA_ADMINISTRATIVO': 'Día Administrativo',
