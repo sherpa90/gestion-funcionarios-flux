@@ -1554,10 +1554,8 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 registros_mes_final = []
 
                 primer_dia_mes = datetime(anio, mes, 1).date()
-                if anio == hoy.year and mes == hoy.month:
-                    ultimo_dia_mes = hoy
-                else:
-                    ultimo_dia_mes = (primer_dia_mes + td(days=32)).replace(day=1) - td(days=1)
+                # Usar el último día real del mes para que el mes actual muestre todos sus días
+                ultimo_dia_mes = (primer_dia_mes + td(days=32)).replace(day=1) - td(days=1)
                 
                 d = primer_dia_mes
                 while d <= ultimo_dia_mes:
@@ -1594,9 +1592,9 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                         elif d.weekday() in dias_laborales:
                             # Los serenos no generan ausencias virtuales, pero deben mostrar días hábiles sin registro
                             if not es_sereno:
-                                if d >= usuario.date_joined.date():
+                                if d >= usuario.date_joined.date() and d <= hoy:
                                     registros_mes_final.append(RegistroVirtual(d, 'AUSENTE'))
-                                else:
+                                elif d < usuario.date_joined.date():
                                     registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
                             else:
                                 if d >= usuario.date_joined.date() and d <= hoy:
