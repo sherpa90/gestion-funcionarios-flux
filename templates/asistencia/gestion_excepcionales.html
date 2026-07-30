@@ -100,15 +100,14 @@
                         {% endif %}
                     </div>
 
-                    <!-- Es para serenos -->
-                    <div class="md:col-span-2 flex items-center gap-3">
-                        {{ form.es_para_serenos }}
-                        <label class="text-xs font-semibold text-gray-700 cursor-pointer">
-                            <i class="fas fa-user-shield text-indigo-500 mr-1"></i>
-                            Solo para funcionarios con cargo sereno
+                    <!-- Aplica a -->
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1.5">
+                            <i class="fas fa-users text-indigo-500 mr-1"></i> Aplica a
                         </label>
-                        {% if form.es_para_serenos.errors %}
-                        <p class="text-red-500 text-xs mt-1.5">{{ form.es_para_serenos.errors.0 }}</p>
+                        {{ form.aplica_a }}
+                        {% if form.aplica_a.errors %}
+                        <p class="text-red-500 text-xs mt-1.5">{{ form.aplica_a.errors.0 }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -116,7 +115,7 @@
                 <!-- Info box -->
                 <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 mt-5 flex items-start gap-2">
                     <i class="fas fa-info-circle text-amber-500 mt-0.5 flex-shrink-0 text-sm"></i>
-                    <p class="text-xs text-amber-800">Al guardar, el sistema recalculará automáticamente todos los registros de asistencia de ese día para reflejar el horario excepcional. Puede marcar "Solo para funcionarios con cargo sereno" para que este horario solo aplique a serenos.</p>
+                    <p class="text-xs text-amber-800">Al guardar, el sistema recalculará automáticamente todos los registros de asistencia de ese día para reflejar el horario excepcional. Use el campo "Aplica a" para definir si el horario es para todos los funcionarios, solo funcionarios o solo serenos.</p>
                 </div>
 
                 <button type="submit" class="w-full md:w-auto mt-5 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg">
@@ -190,13 +189,18 @@
                             <p class="text-[9px] text-gray-400">{{ exc.fecha_creacion|date:"d/m/Y H:i" }}</p>
                         </td>
                         <td class="px-4 py-3">
-                            {% if exc.es_para_serenos %}
+                            {% if exc.aplica_a == 'SERENOS' %}
                             <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700">
                                 <i class="fas fa-user-shield text-[10px]"></i>
                                 Serenos
                             </span>
-                            {% else %}
+                            {% elif exc.aplica_a == 'FUNCIONARIOS' %}
                             <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold bg-gray-50 text-gray-600">
+                                <i class="fas fa-user text-[10px]"></i>
+                                Funcionarios
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700">
                                 <i class="fas fa-users text-[10px]"></i>
                                 Todos
                             </span>

@@ -8,7 +8,7 @@ class HorarioExcepcionalForm(forms.ModelForm):
     """Formulario para crear horarios excepcionales globales"""
     class Meta:
         model = HorarioExcepcional
-        fields = ["fecha", "hora_entrada", "hora_salida", "motivo", "es_para_serenos"]
+        fields = ["fecha", "hora_entrada", "hora_salida", "motivo", "aplica_a"]
         widgets = {
             "fecha": forms.DateInput(attrs={
                 "type": "date",
@@ -26,8 +26,8 @@ class HorarioExcepcionalForm(forms.ModelForm):
                 "class": "mt-1 block w-full h-11 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white",
                 "placeholder": "Ej: Corte de agua, Día del Profesor, Emergencia climática..."
             }),
-            "es_para_serenos": forms.CheckboxInput(attrs={
-                "class": "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            "aplica_a": forms.Select(attrs={
+                "class": "mt-1 block w-full h-11 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
             }),
         }
 

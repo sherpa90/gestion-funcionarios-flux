@@ -145,9 +145,16 @@ class HorarioExcepcional(models.Model):
     hora_entrada = models.TimeField(null=True, blank=True, help_text="Hora de entrada obligatoria (dejar en blanco si no aplica entrada)")
     hora_salida = models.TimeField(null=True, blank=True, help_text="Hora de salida autorizada (dejar en blanco si no aplica salida)")
     motivo = models.CharField(max_length=255, help_text="Motivo de este horario excepcional (ej: Día del Profesor, Corte de agua)")
-    es_para_serenos = models.BooleanField(
-        default=False,
-        help_text="Si está marcado, este horario excepcional solo aplica a funcionarios con cargo sereno"
+    APLICA_A_CHOICES = [
+        ('TODOS', 'Todos los funcionarios'),
+        ('FUNCIONARIOS', 'Solo funcionarios (no serenos)'),
+        ('SERENOS', 'Solo serenos'),
+    ]
+    aplica_a = models.CharField(
+        max_length=20,
+        choices=APLICA_A_CHOICES,
+        default='TODOS',
+        help_text="Grupo de funcionarios al que aplica este horario excepcional"
     )
     creado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -167,27 +174,36 @@ class HorarioExcepcional(models.Model):
 
     def aplica_a_funcionario(self, funcionario):
         """Verifica si este horario excepcional aplica a un funcionario dado"""
-        if not self.es_para_serenos:
+        if self.aplica_a == 'TODOS':
             return True
         es_sereno = (
             getattr(funcionario, 'funcion', None) == 'SERENO' or
             getattr(funcionario, 'tipo_funcionario', None) == 'SERENO'
         )
-        return es_sereno
+        if self.aplica_a == 'SERENOS':
+            return es_sereno
+        if self.aplica_a == 'FUNCIONARIOS':
+            return not es_sereno
+        return True
 
     def aplica_a_funcionario_id(self, funcionario_id):
         """Versión optimizada que verifica si aplica a un funcionario por ID sin cargar el objeto completo"""
-        if not self.es_para_serenos:
+        if self.aplica_a == 'TODOS':
             return True
         try:
             from users.models import CustomUser
             user = CustomUser.objects.filter(pk=funcionario_id).first()
             if not user:
                 return False
-            return (
+            es_sereno = (
                 getattr(user, 'funcion', None) == 'SERENO' or
                 getattr(user, 'tipo_funcionario', None) == 'SERENO'
             )
+            if self.aplica_a == 'SERENOS':
+                return es_sereno
+            if self.aplica_a == 'FUNCIONARIOS':
+                return not es_sereno
+            return True
         except Exception:
             return False
 
