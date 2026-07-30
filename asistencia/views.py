@@ -1567,9 +1567,14 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 while d <= ultimo_dia_mes:
                     en_ano_escolar = True
                     if ano_escolar:
-                        en_sem1 = ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin
-                        en_sem2 = ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
-                        en_ano_escolar = en_sem1 or en_sem2
+                        if es_sereno:
+                            # Para funcionarios serenos, el ciclo escolar comprende todo el año escolar (sem1_inicio a sem2_fin), incluyendo fines de semana (Sáb/Dom) y recesos
+                            en_ano_escolar = ano_escolar.sem1_inicio <= d <= ano_escolar.sem2_fin
+                        else:
+                            # Para funcionarios normales, aplica estrictamente a los períodos lectivos de semestres
+                            en_sem1 = ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin
+                            en_sem2 = ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
+                            en_ano_escolar = en_sem1 or en_sem2
 
                     if not en_ano_escolar:
                         d += td(days=1)
@@ -1578,7 +1583,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                     if d in registros_reales_dict:
                         registros_mes_final.append(registros_reales_dict[d])
                     else:
-                        # Para serenos: incluye todos los días (Lunes a Domingo)
+                        # Para serenos: incluye todos los días (Lunes a Domingo, incluyendo sábados y domingos)
                         # Para no serenos: incluye días de semana (Lunes a Viernes)
                         es_dia_laborable_mes = (es_sereno or d.weekday() < 5)
 
