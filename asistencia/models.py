@@ -410,9 +410,24 @@ class RegistroAsistencia(models.Model):
             # Verificar horario excepcional
             excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
             if excepcional and excepcional.aplica_a_funcionario(self.funcionario):
-                if not excepcional.hora_entrada:
-                    return 0
-                hora_esperada = excepcional.hora_entrada
+                if excepcional.hora_entrada:
+                    hora_esperada = excepcional.hora_entrada
+                else:
+                    # Si no hay hora_entrada en excepcional, usar horario regular
+                    if not self.horario_asignado:
+                        return 0
+                    semana_t = DiaHorario.get_semana_tipo(self.fecha, self.funcionario)
+                    dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
+                    if not dia_horario:
+                        dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=None).first()
+                    if dia_horario:
+                        if not dia_horario.activo or not dia_horario.hora_entrada:
+                            return 0
+                        hora_esperada = dia_horario.hora_entrada
+                    else:
+                        hora_esperada = getattr(self.horario_asignado, 'hora_entrada', None)
+                        if not hora_esperada:
+                            return 0
             else:
                 if not self.horario_asignado:
                     return 0

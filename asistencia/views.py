@@ -1714,6 +1714,9 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
             'horario_semanal': horario_semanal,
             'es_sereno': es_sereno,
             'todos_los_usuarios': todos_los_usuarios,
+            'hoy': hoy,
+            'mes_actual': hoy.month,
+            'anio_actual': hoy.year,
             'estadisticas_funcionario': {
                 'total_registros': total_registros,
                 'registros_puntuales': registros_puntuales,
