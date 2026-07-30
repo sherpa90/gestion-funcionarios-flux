@@ -1438,6 +1438,8 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
             'AUSENTE': 'Ausente',
             'FESTIVO': 'Día Festivo',
             'SIN_DATA': 'Sin Datos',
+            'DIA_LIBRE': 'Día Libre',
+            'BAJA': 'Baja',
         }
 
         # Obtener los días laborales del funcionario para marcar ausencias automáticas
@@ -1565,10 +1567,6 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                         en_sem2 = ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
                         en_ano_escolar = en_sem1 or en_sem2
                     
-                    if not es_sereno and d.weekday() >= 5 and d not in registros_reales_dict:
-                        d += td(days=1)
-                        continue
-
                     if not en_ano_escolar:
                         d += td(days=1)
                         continue
@@ -1604,6 +1602,13 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                         elif es_sereno and d.weekday() >= 5:
                             # Fines de semana para serenos: mostrar como DIA_LIBRE
                             registros_mes_final.append(RegistroVirtual(d, 'DIA_LIBRE'))
+                        else:
+                            # Días futuros o no laborales sin otras condiciones
+                            if d >= usuario.date_joined.date() and d <= hoy:
+                                registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
+                            elif d > hoy:
+                                # Días futuros: mostrar como SIN_DATA para visualización
+                                registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
                     
                     d += td(days=1)
 

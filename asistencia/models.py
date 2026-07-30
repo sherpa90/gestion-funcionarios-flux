@@ -703,9 +703,12 @@ class RegistroAsistencia(models.Model):
         # Verificar si hay horario excepcional
         excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
         if excepcional and excepcional.aplica_a_funcionario(self.funcionario):
-            # Un horario excepcional global solo aplica si el usuario ya trabajaba ese día
-            tiene_horas = True if excepcional.hora_entrada or excepcional.hora_salida else False
-            es_dia_activo = tiene_horas and es_dia_activo_base
+            # Un horario excepcional solo anula el día libre si tiene hora de entrada
+            # (para poder calcular retraso). La hora de salida sola no justifica retraso.
+            if excepcional.hora_entrada:
+                es_dia_activo = True
+            else:
+                es_dia_activo = es_dia_activo_base
         else:
             es_dia_activo = es_dia_activo_base
 
