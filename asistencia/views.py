@@ -1592,12 +1592,20 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                         elif usuario.is_on_baja_on_date(d):
                             registros_mes_final.append(RegistroVirtual(d, 'BAJA'))
                         elif d.weekday() in dias_laborales:
-                            # Los serenos no generan ausencias virtuales
+                            # Los serenos no generan ausencias virtuales, pero deben mostrar días hábiles sin registro
                             if not es_sereno:
                                 if d >= usuario.date_joined.date():
                                     registros_mes_final.append(RegistroVirtual(d, 'AUSENTE'))
                                 else:
                                     registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
+                            else:
+                                if d >= usuario.date_joined.date() and d <= hoy:
+                                    registros_mes_final.append(RegistroVirtual(d, 'SIN_MARCACION_ENTRADA'))
+                                elif d < usuario.date_joined.date():
+                                    registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
+                        elif es_sereno and d.weekday() >= 5:
+                            # Fines de semana para serenos: mostrar como DIA_LIBRE
+                            registros_mes_final.append(RegistroVirtual(d, 'DIA_LIBRE'))
                     
                     d += td(days=1)
 

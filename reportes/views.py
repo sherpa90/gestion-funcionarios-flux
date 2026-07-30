@@ -1559,12 +1559,26 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
         ano_escolar = AnoEscolar.objects.filter(ano=int(year)).first()
 
         horarios_dict = {}
+        dias_configurados = {}
         for horario in HorarioFuncionario.objects.filter(
             funcionario__in=funcionarios, activo=True
         ).prefetch_related('dias'):
             horarios_dict[horario.funcionario_id] = set(
                 horario.dias.filter(activo=True).values_list('dia_semana', flat=True)
             )
+            for dh in horario.dias.filter(activo=True):
+                dias_configurados[(horario.funcionario_id, dh.dia_semana, dh.semana_tipo)] = True
+
+        from asistencia.models import SemanaAsignadaSereno
+        semanas_asignadas_dict = {}
+        sereno_ids = [f.id for f in funcionarios if getattr(f, 'funcion', None) == 'SERENO' or getattr(f, 'tipo_funcionario', None) == 'SERENO']
+        if sereno_ids:
+            qs = SemanaAsignadaSereno.objects.filter(
+                funcionario_id__in=sereno_ids,
+                anio=int(year)
+            )
+            for sa in qs:
+                semanas_asignadas_dict[(sa.funcionario_id, sa.semana_iso)] = sa.turno
 
         # Agrupar por funcionario y calcular atrasos e inasistencias
         funcionarios_data = []
@@ -1641,7 +1655,15 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
                         if not en_ano_escolar:
                             d += timedelta(days=1)
                             continue
-                        if dia_semana in dias_laborales or es_sereno:
+                        if es_sereno:
+                            iso_year, iso_week, _ = d.isocalendar()
+                            semana_t = semanas_asignadas_dict.get((func.id, iso_week))
+                            if semana_t is None:
+                                semana_t = 1 if iso_week % 2 != 0 else 2
+                            es_laboral = (func.id, dia_semana, semana_t) in dias_configurados or (func.id, dia_semana, None) in dias_configurados
+                        else:
+                            es_laboral = dia_semana in dias_laborales
+                        if es_laboral:
                             ausencias_virtuales += 1
                     d += timedelta(days=1)
 
