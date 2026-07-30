@@ -1503,6 +1503,12 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
             getattr(usuario, 'tipo_funcionario', None) == 'SERENO' or
             getattr(usuario, 'role', None) == 'SERENO'
         )
+        
+        # Obtener horario actual del funcionario (para usar como referencia)
+        horario_actual = HorarioFuncionario.objects.filter(
+            funcionario=usuario, activo=True
+        ).first()
+        
         for anio in anios_disponibles:
             registros_anio = registros_usuario.filter(fecha__year=anio).order_by('-fecha')
 
