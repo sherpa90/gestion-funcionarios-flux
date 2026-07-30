@@ -1494,7 +1494,11 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
         
         anios_disponibles = sorted(list(set(anios_bd)), reverse=True)
 
-        es_sereno = (usuario.role == 'FUNCIONARIO' and usuario.funcion == 'SERENO') or (usuario.tipo_funcionario == 'SERENO')
+        es_sereno = (
+            getattr(usuario, 'funcion', None) == 'SERENO' or
+            getattr(usuario, 'tipo_funcionario', None) == 'SERENO' or
+            getattr(usuario, 'role', None) == 'SERENO'
+        )
         for anio in anios_disponibles:
             registros_anio = registros_usuario.filter(fecha__year=anio).order_by('-fecha')
 
@@ -1561,54 +1565,43 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 
                 d = primer_dia_mes
                 while d <= ultimo_dia_mes:
-                    en_ano_escolar = True
-                    if ano_escolar:
-                        en_sem1 = ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin
-                        en_sem2 = ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
-                        en_ano_escolar = en_sem1 or en_sem2
-                    
-                    if not en_ano_escolar:
-                        d += td(days=1)
-                        continue
-
                     if d in registros_reales_dict:
                         registros_mes_final.append(registros_reales_dict[d])
                     else:
-                        if d in festivos:
-                            registros_mes_final.append(RegistroVirtual(d, 'FESTIVO', festivos[d]))
-                        elif d in licencias_por_fecha:
-                            tipo_lic = licencias_por_fecha[d].get_tipo_display()
-                            registros_mes_final.append(RegistroVirtual(d, 'LICENCIA_MEDICA', tipo_licencia=tipo_lic))
-                        elif d in permisos_por_fecha:
-                            permiso = permisos_por_fecha[d]
-                            if permiso.dias_solicitados == 0.5:
-                                registros_mes_final.append(RegistroVirtual(d, 'MEDIO_DIA'))
-                            else:
-                                registros_mes_final.append(RegistroVirtual(d, 'DIA_ADMINISTRATIVO'))
-                        elif usuario.is_on_baja_on_date(d):
-                            registros_mes_final.append(RegistroVirtual(d, 'BAJA'))
-                        elif d.weekday() in dias_laborales:
-                            # Días laborales configurados
-                            if d < usuario.date_joined.date():
-                                registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
-                            else:
-                                # d >= usuario.date_joined.date()
-                                if d <= hoy:
-                                    if not es_sereno:
-                                        registros_mes_final.append(RegistroVirtual(d, 'AUSENTE'))
-                                    else:
-                                        registros_mes_final.append(RegistroVirtual(d, 'SIN_MARCACION_ENTRADA'))
+                        # Para serenos: incluye todos los días (Lunes a Domingo)
+                        # Para no serenos: incluye días de semana (Lunes a Viernes)
+                        es_dia_laborable_mes = (es_sereno or d.weekday() < 5)
+
+                        if es_dia_laborable_mes:
+                            if d in festivos:
+                                registros_mes_final.append(RegistroVirtual(d, 'FESTIVO', festivos[d]))
+                            elif d in licencias_por_fecha:
+                                tipo_lic = licencias_por_fecha[d].get_tipo_display()
+                                registros_mes_final.append(RegistroVirtual(d, 'LICENCIA_MEDICA', tipo_licencia=tipo_lic))
+                            elif d in permisos_por_fecha:
+                                permiso = permisos_por_fecha[d]
+                                if permiso.dias_solicitados == 0.5:
+                                    registros_mes_final.append(RegistroVirtual(d, 'MEDIO_DIA'))
                                 else:
-                                    # Día futuro
-                                    if not es_sereno:
-                                        registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
+                                    registros_mes_final.append(RegistroVirtual(d, 'DIA_ADMINISTRATIVO'))
+                            elif usuario.is_on_baja_on_date(d):
+                                registros_mes_final.append(RegistroVirtual(d, 'BAJA'))
+                            else:
+                                if usuario.date_joined and d < usuario.date_joined.date():
+                                    registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
+                                else:
+                                    if d <= hoy:
+                                        if not es_sereno:
+                                            registros_mes_final.append(RegistroVirtual(d, 'AUSENTE'))
+                                        else:
+                                            registros_mes_final.append(RegistroVirtual(d, 'SIN_MARCACION_ENTRADA'))
                                     else:
-                                        registros_mes_final.append(RegistroVirtual(d, 'SIN_MARCACION_ENTRADA'))
-                        elif es_sereno and d.weekday() >= 5:
-                            # Fines de semana para serenos: mostrar como DIA_LIBRE
-                            registros_mes_final.append(RegistroVirtual(d, 'DIA_LIBRE'))
-                        # No se muestra nada para fines de semana de no-serenos
-                    
+                                        # Día futuro en el mes
+                                        if not es_sereno:
+                                            registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
+                                        else:
+                                            registros_mes_final.append(RegistroVirtual(d, 'SIN_MARCACION_ENTRADA'))
+
                     d += td(days=1)
 
                 if registros_mes_final:
