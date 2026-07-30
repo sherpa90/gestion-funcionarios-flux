@@ -207,24 +207,33 @@
                                             </td>
                                             <td class="px-4 py-4 whitespace-nowrap">
                                                 {% if es_sereno %}
-                                                <div class="flex items-center gap-1">
-                                                    <span class="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span>
-                                                    <span class="text-xs font-black text-indigo-700">
-                                                        {% if registro.hora_entrada_real %}{{ registro.hora_entrada_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
+                                                <div class="flex items-center gap-2">
+                                                    <div class="flex items-center gap-1">
+                                                        <span class="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span>
+                                                        <span class="text-xs font-black text-indigo-700">
+                                                            {% if registro.hora_entrada_real %}{{ registro.hora_entrada_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
+                                                        </span>
+                                                    </div>
+                                                    {% if registro.semana_tipo == 1 %}
+                                                    <span class="px-2 py-0.5 rounded-md text-[8px] font-black uppercase bg-indigo-100 text-indigo-700 border border-indigo-200 inline-flex items-center" title="Turno 1 (Semana Impar)">
+                                                        <i class="fas fa-moon text-indigo-500 mr-1 text-[7px]"></i> Turno 1
                                                     </span>
+                                                    {% else %}
+                                                    <span class="px-2 py-0.5 rounded-md text-[8px] font-black uppercase bg-amber-100 text-amber-800 border border-amber-200 inline-flex items-center" title="Turno 2 (Semana Par)">
+                                                        <i class="fas fa-sun text-amber-600 mr-1 text-[7px]"></i> Turno 2
+                                                    </span>
+                                                    {% endif %}
                                                 </div>
-                                                {% if registro.horario_dia and registro.horario_dia.hora_entrada %}
-                                                <div class="text-[9px] font-bold text-indigo-400 uppercase ml-3">Teórico: {{ registro.horario_dia.hora_entrada|time:"H:i" }}</div>
-                                                {% else %}
-                                                <div class="text-[9px] font-bold text-indigo-400 uppercase ml-3">tarde</div>
-                                                {% endif %}
+                                                <div class="text-[9px] font-bold text-indigo-500 uppercase ml-3 mt-0.5">
+                                                    Teórico: {% if registro.hora_entrada_teorica %}{{ registro.hora_entrada_teorica|time:"H:i" }}{% elif registro.horario_dia and registro.horario_dia.hora_entrada %}{{ registro.horario_dia.hora_entrada|time:"H:i" }}{% else %}-{% endif %}
+                                                </div>
                                                 {% else %}
                                                 <div class="text-xs font-black text-gray-700">
                                                     {% if registro.hora_entrada_real %}{{ registro.hora_entrada_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
                                                 </div>
-                                                {% if registro.horario_dia and registro.horario_dia.hora_entrada %}
-                                                <div class="text-[9px] font-bold text-gray-400 uppercase">Teórico: {{ registro.horario_dia.hora_entrada|time:"H:i" }}</div>
-                                                {% endif %}
+                                                <div class="text-[9px] font-bold text-gray-400 uppercase mt-0.5">
+                                                    Teórico: {% if registro.hora_entrada_teorica %}{{ registro.hora_entrada_teorica|time:"H:i" }}{% elif registro.horario_dia and registro.horario_dia.hora_entrada %}{{ registro.horario_dia.hora_entrada|time:"H:i" }}{% else %}-{% endif %}
+                                                </div>
                                                 {% endif %}
                                             </td>
                                             <td class="px-4 py-4 whitespace-nowrap">
@@ -235,14 +244,16 @@
                                                         {% if registro.hora_salida_real %}{{ registro.hora_salida_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
                                                     </span>
                                                 </div>
-                                                <div class="text-[9px] font-medium text-gray-400 uppercase ml-3">madrugada (referencial)</div>
+                                                <div class="text-[9px] font-medium text-gray-400 uppercase ml-3">
+                                                    Teórico: {% if registro.hora_salida_teorica %}{{ registro.hora_salida_teorica|time:"H:i" }}{% elif registro.horario_dia and registro.horario_dia.hora_salida %}{{ registro.horario_dia.hora_salida|time:"H:i" }}{% else %}madrugada{% endif %}
+                                                </div>
                                                 {% else %}
                                                 <div class="text-xs font-black text-gray-700">
                                                     {% if registro.hora_salida_real %}{{ registro.hora_salida_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
                                                 </div>
-                                                {% if registro.horario_dia and registro.horario_dia.hora_salida %}
-                                                <div class="text-[9px] font-bold text-gray-400 uppercase">Teórico: {{ registro.horario_dia.hora_salida|time:"H:i" }}</div>
-                                                {% endif %}
+                                                <div class="text-[9px] font-bold text-gray-400 uppercase mt-0.5">
+                                                    Teórico: {% if registro.hora_salida_teorica %}{{ registro.hora_salida_teorica|time:"H:i" }}{% elif registro.horario_dia and registro.horario_dia.hora_salida %}{{ registro.horario_dia.hora_salida|time:"H:i" }}{% else %}-{% endif %}
+                                                </div>
                                                 {% endif %}
                                             </td>
                                             <td class="px-4 py-4 whitespace-nowrap">

@@ -1454,7 +1454,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
 
         class RegistroVirtual:
             """Registro virtual para días con permiso/licencia o ausencias sin marcación"""
-            def __init__(self, fecha, estado, nombre_festivo=None, tipo_licencia=None):
+            def __init__(self, fecha, estado, nombre_festivo=None, tipo_licencia=None, horario_dia=None):
                 self.fecha = fecha
                 self.estado = estado
                 self.minutos_retraso = 0
@@ -1466,6 +1466,10 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 self.nombre_festivo = nombre_festivo
                 self._estado_display = ESTADO_DISPLAY.get(estado, estado)
                 self._tipo_licencia = tipo_licencia
+                self.horario_dia = horario_dia
+                self.semana_tipo = None
+                self.hora_entrada_teorica = None
+                self.hora_salida_teorica = None
             @property
             def pk(self):
                 return None
@@ -1621,6 +1625,41 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
 
                 if registros_mes_final:
                     registros_mes_final.sort(key=lambda r: r.fecha)
+
+                    # Enriquecer registros con turno (semana_tipo) y horario teórico de entrada
+                    for reg in registros_mes_final:
+                        d_fecha = reg.fecha
+                        dia_sem = d_fecha.weekday()
+                        semana_t = DiaHorario.get_semana_tipo(d_fecha, usuario)
+                        reg.semana_tipo = semana_t
+                        
+                        horario_ref = getattr(reg, 'horario_asignado', None) or horario_actual
+                        dh = None
+                        if horario_ref:
+                            dh = horario_ref.dias.filter(dia_semana=dia_sem, semana_tipo=semana_t).first()
+                            if not dh:
+                                dh = horario_ref.dias.filter(dia_semana=dia_sem, semana_tipo__isnull=True).first()
+                            reg.horario_dia = dh
+
+                        h_entrada_teorica = None
+                        h_salida_teorica = None
+
+                        if dh and dh.hora_entrada:
+                            h_entrada_teorica = dh.hora_entrada
+                            h_salida_teorica = dh.hora_salida
+                        elif horario_ref and horario_ref.hora_entrada:
+                            h_entrada_teorica = horario_ref.hora_entrada
+                            h_salida_teorica = horario_ref.hora_salida
+                        else:
+                            if es_sereno:
+                                h_entrada_teorica = datetime.strptime("20:00" if semana_t == 1 else "08:00", "%H:%M").time()
+                                h_salida_teorica = datetime.strptime("08:00" if semana_t == 1 else "20:00", "%H:%M").time()
+                            else:
+                                h_entrada_teorica = datetime.strptime("07:55", "%H:%M").time()
+                                h_salida_teorica = datetime.strptime("17:00", "%H:%M").time()
+
+                        reg.hora_entrada_teorica = h_entrada_teorica
+                        reg.hora_salida_teorica = h_salida_teorica
                     
                     minutos_retraso_mes = sum(r.minutos_retraso for r in registros_mes_final if hasattr(r, 'minutos_retraso') and r.minutos_retraso > 0)
                     total_minutos_retraso_anio += minutos_retraso_mes
