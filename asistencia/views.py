@@ -1655,7 +1655,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                             h_salida_teorica = dh.hora_salida
                         elif horario_ref and horario_ref.hora_entrada:
                             h_entrada_teorica = horario_ref.hora_entrada
-                            h_salida_teorica = horario_ref.hora_salida
+                            h_salida_teorica = None  # La salida viene de DiaHorario, no del horario principal
                         else:
                             if es_sereno:
                                 h_entrada_teorica = datetime.strptime("20:00" if semana_t == 1 else "08:00", "%H:%M").time()
