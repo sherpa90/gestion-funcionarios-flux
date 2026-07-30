@@ -1565,6 +1565,16 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 
                 d = primer_dia_mes
                 while d <= ultimo_dia_mes:
+                    en_ano_escolar = True
+                    if ano_escolar:
+                        en_sem1 = ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin
+                        en_sem2 = ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
+                        en_ano_escolar = en_sem1 or en_sem2
+
+                    if not en_ano_escolar:
+                        d += td(days=1)
+                        continue
+
                     if d in registros_reales_dict:
                         registros_mes_final.append(registros_reales_dict[d])
                     else:
