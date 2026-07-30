@@ -1567,14 +1567,9 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 while d <= ultimo_dia_mes:
                     en_ano_escolar = True
                     if ano_escolar:
-                        if es_sereno:
-                            # Serenos prestan servicio continuo durante todo el ciclo del año escolar (incluyendo fines de semana y recesos)
-                            en_ano_escolar = ano_escolar.sem1_inicio <= d <= ano_escolar.sem2_fin
-                        else:
-                            # Funcionarios docentes/asistentes sólo durante períodos lectivos de semestres
-                            en_sem1 = ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin
-                            en_sem2 = ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
-                            en_ano_escolar = en_sem1 or en_sem2
+                        en_sem1 = ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin
+                        en_sem2 = ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
+                        en_ano_escolar = en_sem1 or en_sem2
 
                     if not en_ano_escolar:
                         d += td(days=1)
