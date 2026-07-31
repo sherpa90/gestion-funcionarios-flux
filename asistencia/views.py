@@ -1645,6 +1645,9 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                             dh = horario_ref.dias.filter(dia_semana=dia_sem, semana_tipo=semana_t).first()
                             if not dh:
                                 dh = horario_ref.dias.filter(dia_semana=dia_sem, semana_tipo__isnull=True).first()
+                        
+                        # Solo asignar horario_dia a registros virtuales (instancias de RegistroVirtual)
+                        if hasattr(reg, '__class__') and reg.__class__.__name__ == 'RegistroVirtual':
                             reg.horario_dia = dh
 
                         h_entrada_teorica = None
