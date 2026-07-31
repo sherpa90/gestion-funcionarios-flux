@@ -127,7 +127,7 @@
                 <!-- Months Content -->
                 <div class="divide-y divide-gray-50">
                     {% for mes_num, datos_mes in datos_anio.registros_por_mes.items %}
-                    <div x-data="{ open: {{ mes_num }} == {{ mes_actual }} and {{ anio }} == {{ anio_actual }} }" class="group">
+                    <div x-data="{ open: false }" class="group">
                         <div @click="open = !open" 
                              class="px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-blue-50/20 transition-all">
                             <div class="flex items-center gap-4">
