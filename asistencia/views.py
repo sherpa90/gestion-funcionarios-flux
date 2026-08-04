@@ -1454,7 +1454,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
 
         class RegistroVirtual:
             """Registro virtual para días con permiso/licencia o ausencias sin marcación"""
-            def __init__(self, fecha, estado, nombre_festivo=None, tipo_licencia=None, horario_dia=None):
+            def __init__(self, fecha, estado, nombre_festivo=None, tipo_licencia=None, horario_dia=None, permiso=None):
                 self.fecha = fecha
                 self.estado = estado
                 self.minutos_retraso = 0
@@ -1470,8 +1470,19 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 self.semana_tipo = None
                 self.hora_entrada_teorica = None
                 self.hora_salida_teorica = None
+                self._permiso = permiso
             @property
             def pk(self):
+                return None
+            @property
+            def permiso_detalle(self):
+                if self._permiso and self._permiso.dias_solicitados == 0.5:
+                    return {
+                        'es_medio_dia': True,
+                        'jornada': self._permiso.jornada,
+                        'jornada_display': self._permiso.get_jornada_display(),
+                        'dias': self._permiso.dias_solicitados,
+                    }
                 return None
             def get_estado_display(self):
                 if self.estado == 'FESTIVO' and self.nombre_festivo:
@@ -1606,9 +1617,15 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                             elif d in permisos_por_fecha:
                                 permiso = permisos_por_fecha[d]
                                 if permiso.dias_solicitados == 0.5:
-                                    registros_mes_final.append(RegistroVirtual(d, 'MEDIO_DIA'))
+                                    # Medio día: verificar si hay marcación real (el día no tiene RegistroAsistencia)
+                                    # Cuando NO hay registro real, evaluar si la jornada trabajada está ausente
+                                    # jornada AM → libre en la mañana, trabaja en la tarde → sin salida real → ausente
+                                    # jornada PM → libre en la tarde, trabaja en la mañana → sin entrada real → ausente
+                                    # Como estamos en el bloque "no hay registro real", no hay marcaciones.
+                                    # Por tanto: si es AM o PM y no hay marcaciones → AUSENTE
+                                    registros_mes_final.append(RegistroVirtual(d, 'AUSENTE', permiso=permiso))
                                 else:
-                                    registros_mes_final.append(RegistroVirtual(d, 'DIA_ADMINISTRATIVO'))
+                                    registros_mes_final.append(RegistroVirtual(d, 'DIA_ADMINISTRATIVO', permiso=permiso))
                             elif usuario.is_on_baja_on_date(d):
                                 registros_mes_final.append(RegistroVirtual(d, 'BAJA'))
                             else:

@@ -192,7 +192,7 @@
                                     </thead>
                                     <tbody class="divide-y divide-gray-50">
                                         {% for registro in datos_mes.registros %}
-                                        <tr class="group/row transition-colors {% if es_sereno %}hover:bg-indigo-950/5{% else %}hover:bg-gray-50/50{% endif %}">
+                                        <tr class="group/row transition-colors {% if registro.estado == 'AUSENTE' %}bg-red-50/80 hover:bg-red-100/60{% elif registro.estado == 'SIN_DATA' %}bg-gray-50/60 hover:bg-gray-100/40{% elif registro.estado == 'DIA_ADMINISTRATIVO' %}bg-purple-50/60 hover:bg-purple-100/40{% elif es_sereno %}hover:bg-indigo-950/5{% else %}hover:bg-gray-50/50{% endif %}">
                                             <td class="px-4 py-4 whitespace-nowrap">
                                                 {% if es_sereno %}
                                                 <div class="flex items-center gap-1.5">
@@ -305,11 +305,11 @@
                                                     </span>
                                                 {% elif registro.estado == 'AUSENTE' %}
                                                     <div class="flex flex-col gap-1">
-                                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-red-100 text-red-800 border border-red-200 shadow-sm">
+                                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-red-200 text-red-900 border border-red-300 shadow-sm">
                                                             <i class="fas fa-times-circle mr-1.5 text-[8px]"></i> Ausente
                                                         </span>
                                                         {% if registro.permiso_detalle and registro.permiso_detalle.es_medio_dia %}
-                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-black uppercase bg-indigo-50 text-indigo-700 border border-indigo-200" title="Tiene medio día administrativo {{ registro.permiso_detalle.jornada }} aprobado">
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-black uppercase bg-indigo-50 text-indigo-700 border border-indigo-200" title="Tiene medio día administrativo {{ registro.permiso_detalle.jornada }} aprobado pero sin marcación">
                                                             <i class="fas fa-adjust mr-1 text-[7px]"></i> ½ día {{ registro.permiso_detalle.jornada }} adm.
                                                         </span>
                                                         {% endif %}

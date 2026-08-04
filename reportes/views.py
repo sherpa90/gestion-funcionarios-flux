@@ -1339,6 +1339,10 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                         if d in festivos or d in licencias_func or d in permisos_func:
                             d += timedelta(days=1)
                             continue
+                        # Si el funcionario estaba de baja en este día, no contar como ausencia
+                        if func.is_on_baja_on_date(d):
+                            d += timedelta(days=1)
+                            continue
                         en_ano_escolar = True
                         if ano_escolar:
                             en_ano_escolar = (
@@ -1644,6 +1648,10 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
                             d += timedelta(days=1)
                             continue
                         if d in festivos or d in licencias_func or d in permisos_func:
+                            d += timedelta(days=1)
+                            continue
+                        # Si el funcionario estaba de baja en este día, no contar como ausencia
+                        if func.is_on_baja_on_date(d):
                             d += timedelta(days=1)
                             continue
                         en_ano_escolar = True
