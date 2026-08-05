@@ -1,4 +1,4 @@
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, FormView, TemplateView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, FormView, TemplateView, DetailView
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy, reverse
@@ -10,8 +10,8 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.core.management import call_command
 from django.core.management import call_command
 from django import forms
-from .models import CustomUser
-from .forms import UserCreateForm, UserEditForm, BulkUserImportForm, UserBajaForm, UserAltaForm
+from .models import CustomUser, BajaPeriodo
+from .forms import UserCreateForm, UserEditForm, BulkUserImportForm, UserBajaForm, UserAltaForm, BajaPeriodoForm
 import openpyxl
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -22,9 +22,10 @@ from io import BytesIO
 from core.security import audit_log
 from admin_dashboard.utils import registrar_log, get_client_ip
 
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, date
+import json
 
 class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = CustomUser
@@ -241,6 +242,124 @@ class UserAltaView(LoginRequiredMixin, UserPassesTestMixin, FormView):
         
         messages.success(self.request, f'{usuario.get_full_name()} fue dado de alta desde {alta_date.strftime("%d/%m/%Y")}.')
         return redirect('user_list')
+
+
+class BajaPeriodoListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Lista de periodos de baja para un funcionario específico"""
+    model = BajaPeriodo
+    template_name = 'users/baja_periodo_list.html'
+    context_object_name = 'periodos'
+    
+    def test_func(self):
+        return self.request.user.role in ['SECRETARIA', 'ADMIN']
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['usuario'] = get_object_or_404(CustomUser, pk=self.kwargs['pk'])
+        return context
+    
+    def get_queryset(self):
+        return BajaPeriodo.objects.filter(usuario=self.kwargs['pk']).order_by('-fecha_inicio')
+
+
+class BajaPeriodoCalendarView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """Vista de calendario para gestionar periodos de baja"""
+    template_name = 'users/baja_periodo_calendar.html'
+    
+    def test_func(self):
+        return self.request.user.role in ['SECRETARIA', 'ADMIN']
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        usuario = get_object_or_404(CustomUser, pk=self.kwargs['pk'])
+        context['usuario'] = usuario
+        
+        periodos_activos = BajaPeriodo.objects.filter(
+            usuario=usuario,
+            estado='ACTIVO'
+        ).order_by('fecha_inicio')
+        
+        context['periodos'] = periodos_activos
+        context['periodos_baja_activos'] = list(periodos_activos)
+        
+        periodos_json = []
+        for p in periodos_activos:
+            periodos_json.append({
+                'id': p.id,
+                'motivo': p.motivo,
+                'fecha_inicio': p.fecha_inicio.isoformat(),
+                'fecha_termino': p.fecha_termino.isoformat() if p.fecha_termino else None,
+                'justificacion': p.justificacion,
+            })
+        context['periodos_json'] = json.dumps(periodos_json)
+        
+        return context
+
+
+class BajaPeriodoCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """Crear un nuevo periodo de baja"""
+    model = BajaPeriodo
+    form_class = BajaPeriodoForm
+    template_name = 'users/baja_periodo_form.html'
+    
+    def test_func(self):
+        return self.request.user.role in ['SECRETARIA', 'ADMIN']
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['usuario'] = get_object_or_404(CustomUser, pk=self.kwargs['pk'])
+        return context
+    
+    def form_valid(self, form):
+        usuario = get_object_or_404(CustomUser, pk=self.kwargs['pk'])
+        periodo = form.save(commit=False)
+        periodo.usuario = usuario
+        periodo.creado_por = self.request.user
+        periodo.save()
+        
+        registrar_log(
+            usuario=self.request.user,
+            tipo='CREATE',
+            accion='Creación de Periodo de Baja',
+            descripcion=f'Se creó periodo de baja para {usuario.get_full_name()} - {form.cleaned_data["motivo"]}',
+            ip_address=get_client_ip(self.request)
+        )
+        
+        messages.success(self.request, f'Se creó el periodo de baja para {form.cleaned_data["motivo"]}.')
+        return redirect('baja_periodo_list', pk=usuario.pk)
+
+
+class BajaPeriodoUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """Editar un periodo de baja"""
+    model = BajaPeriodo
+    form_class = BajaPeriodoForm
+    template_name = 'users/baja_periodo_form.html'
+    
+    def test_func(self):
+        return self.request.user.role in ['SECRETARIA', 'ADMIN']
+    
+    def get_success_url(self):
+        return reverse('baja_periodo_list', kwargs={'pk': self.object.usuario.pk})
+
+
+class BajaPeriodoDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    """Eliminar un periodo de baja"""
+    model = BajaPeriodo
+    template_name = 'users/baja_periodo_confirm_delete.html'
+    
+    def test_func(self):
+        return self.request.user.role in ['SECRETARIA', 'ADMIN']
+    
+    def get_success_url(self):
+        return reverse('baja_periodo_list', kwargs={'pk': self.object.usuario.pk})
+    
+    def delete(self, request, *args, **kwargs):
+        periodo = self.get_object()
+        usuario = periodo.usuario
+        respuesta = super().delete(request, *args, **kwargs)
+        
+        messages.success(self.request, 'Periodo de baja eliminado exitosamente.')
+        return respuesta
 
 
 class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):

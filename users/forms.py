@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from .models import CustomUser
+from .models import CustomUser, BajaPeriodo
 
 
 class UserCreateForm(forms.ModelForm):
@@ -232,3 +232,38 @@ class UserAltaForm(forms.Form):
         label='Fecha de alta',
         widget=forms.DateInput(attrs={'type': 'date', 'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'})
     )
+
+
+class BajaPeriodoForm(forms.ModelForm):
+    """Formulario para crear/editar un periodo de baja"""
+    
+    class Meta:
+        model = BajaPeriodo
+        fields = ['motivo', 'fecha_inicio', 'fecha_termino', 'justificacion']
+        widgets = {
+            'motivo': forms.Select(attrs={
+                'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'
+            }),
+            'fecha_inicio': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'
+            }),
+            'fecha_termino': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'
+            }),
+            'justificacion': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm'
+            }),
+        }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha_inicio = cleaned_data.get('fecha_inicio')
+        fecha_termino = cleaned_data.get('fecha_termino')
+        
+        if fecha_termino and fecha_inicio and fecha_termino < fecha_inicio:
+            raise forms.ValidationError('La fecha de término no puede ser anterior a la fecha de inicio')
+        
+        return cleaned_data

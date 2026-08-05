@@ -128,10 +128,10 @@
         </div>
         {% endif %}
         {% if estadisticas.dias_libre > 0 %}
-        <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5">
-            <i class="fas fa-bed text-gray-500 text-[10px]"></i>
-            <span class="text-[10px] font-bold text-gray-600 uppercase">Libre</span>
-            <span class="text-sm font-black text-gray-700">{{ estadisticas.dias_libre }}</span>
+        <div class="flex items-center gap-2 bg-green-50 border border-green-200 rounded-full px-3 py-1.5">
+            <i class="fas fa-bed text-green-500 text-[10px]"></i>
+            <span class="text-[10px] font-bold text-green-600 uppercase">Libre</span>
+            <span class="text-sm font-black text-green-700">{{ estadisticas.dias_libre }}</span>
         </div>
         {% endif %}
         {% if estadisticas.dias_baja > 0 %}
@@ -276,7 +276,7 @@
                                 {% elif reg.estado == 'DIA_FESTIVO' %}bg-indigo-50/50 border-indigo-100
                                 {% elif reg.estado == 'JUSTIFICADO' %}bg-blue-50/50 border-blue-100
                                 {% elif reg.estado == 'SIN_MARCACION_ENTRADA' %}bg-orange-50/50 border-orange-200
-                                {% elif reg.estado == 'DIA_LIBRE' %}bg-gray-100/50 border-gray-200 opacity-70
+                                {% elif reg.estado == 'DIA_LIBRE' %}bg-green-100/50 border-green-200 opacity-70
                                 {% else %}bg-gray-50/50 border-gray-100
                                 {% endif %}
                             {% elif dia.es_falta_sin_registro %}bg-red-100 border-red-400 ring-1 ring-red-200
@@ -421,8 +421,8 @@
                                     <i class="fas fa-star text-[7px] mr-0.5"></i>Feriado
                                 </div>
                                 {% elif reg.estado == 'DIA_LIBRE' %}
-                                <div class="text-[9px] font-bold text-gray-500 mt-1">
-                                    <i class="fas fa-bed text-[7px] mr-0.5"></i>Día Libre
+                                <div class="text-[9px] font-bold text-green-500 mt-1">
+                                    <i class="fas fa-bed text-[7px] mr-0.5 text-green-500"></i>Día Libre
                                 </div>
                                 {% elif reg.estado == 'SIN_DATA' %}
                                 <div class="text-[9px] font-bold text-gray-400 mt-1 italic">
@@ -495,7 +495,7 @@
                                 {% elif reg.estado == 'MEDIO_DIA' %}bg-violet-50/30 border-violet-200 border-l-4
                                 {% elif reg.estado == 'DIA_FESTIVO' %}bg-indigo-50/30 border-indigo-200
                                 {% elif reg.estado == 'JUSTIFICADO' %}bg-blue-50/30 border-blue-200
-                                {% elif reg.estado == 'DIA_LIBRE' %}bg-gray-100/50 border-gray-300
+                                {% elif reg.estado == 'DIA_LIBRE' %}bg-green-50/70 border-green-300
                                 {% else %}border-gray-200
                                 {% endif %}
                         {% elif dia.es_falta_sin_registro %}bg-red-100 border-red-500 border-l-4
@@ -673,9 +673,9 @@
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-700">Just.</span>
                                     {% elif reg.estado == 'SIN_MARCACION_ENTRADA' %}
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-orange-100 text-orange-700">Sin E.</span>
-                                    {% elif reg.estado == 'DIA_LIBRE' %}
-                                    <span class="px-2 py-1 rounded-md text-xs font-bold bg-gray-100 text-gray-600">Libre</span>
-                                    {% elif reg.estado == 'SIN_DATA' %}
+{% elif reg.estado == 'DIA_LIBRE' %}
+                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-green-100 text-green-700">Libre</span>
+                                 {% elif reg.estado == 'SIN_DATA' %}
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-gray-100 text-gray-400 italic">S/D</span>
                                     {% else %}
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-gray-100 text-gray-600">{{ reg.estado|truncatechars:6 }}</span>

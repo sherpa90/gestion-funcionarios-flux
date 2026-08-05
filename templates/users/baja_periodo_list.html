@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Periodos de Baja{% endblock %}
+
+{% block content %}
+<div class="p-3 sm:p-4 lg:p-6 max-w-[1600px] mx-auto">
+    <div class="mb-6 sm:mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div>
+            <nav class="flex mb-4 bg-gray-50/50 w-fit px-3 py-1.5 rounded-xl border border-gray-100" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                    <li class="inline-flex items-center">
+                        <a href="{% url 'user_list' %}" class="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-blue-600 transition-colors">
+                            <i class="fas fa-users mr-2"></i> Usuarios
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-300 text-[8px] mx-1"></i>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">{{ usuario.get_full_name }}</span>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-300 text-[8px] mx-1"></i>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">Periodos de Baja</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="text-2xl sm:text-3xl font-black text-gray-900">Periodos de Baja - {{ usuario.get_full_name }}</h1>
+            <p class="mt-2 text-sm text-gray-500">{{ usuario.run }}</p>
+        </div>
+        <a href="{% url 'user_list' %}" class="inline-flex items-center justify-center px-5 py-3 border border-gray-200 text-xs font-black uppercase tracking-widest rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-all">
+            <i class="fas fa-arrow-left mr-2"></i> Volver
+        </a>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-black text-gray-900">Periodos de Baja Registrados</h2>
+            <a href="{% url 'baja_periodo_create' usuario.id %}" class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all">
+                <i class="fas fa-plus mr-2"></i> Nuevo Periodo
+            </a>
+        </div>
+
+        {% if periodos %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-100">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-black text-gray-600 uppercase tracking-widest">Motivo</th>
+                        <th class="px-4 py-3 text-left text-xs font-black text-gray-600 uppercase tracking-widest">Inicio</th>
+                        <th class="px-4 py-3 text-left text-xs font-black text-gray-600 uppercase tracking-widest">Fin</th>
+                        <th class="px-4 py-3 text-left text-xs font-black text-gray-600 uppercase tracking-widest">Estado</th>
+                        <th class="px-4 py-3 text-right text-xs font-black text-gray-600 uppercase tracking-widest">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for periodo in periodos %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="text-sm font-medium text-gray-900">{{ periodo.motivo }}</span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="text-sm text-gray-700">{{ periodo.fecha_inicio|date:"d/m/Y" }}</span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="text-sm text-gray-700">{% if periodo.fecha_termino %}{{ periodo.fecha_termino|date:"d/m/Y" }}{% else %}Indefinido{% endif %}</span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            {% if periodo.activo %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">Activo</span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-800">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{% url 'baja_periodo_edit' periodo.pk %}" class="text-gray-400 hover:text-blue-600">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'baja_periodo_delete' periodo.pk %}" class="text-gray-400 hover:text-red-600">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-calendar-times text-gray-400 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-black text-gray-900 mb-2">Sin Periodos de Baja</h3>
+            <p class="text-gray-500 mb-4">Este funcionario no tiene periodos de baja registrados.</p>
+            <a href="{% url 'baja_periodo_create' usuario.id %}" class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all">
+                <i class="fas fa-plus mr-2"></i> Agregar Primer Periodo
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

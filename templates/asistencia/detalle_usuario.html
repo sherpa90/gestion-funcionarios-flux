@@ -192,7 +192,7 @@
                                     </thead>
                                     <tbody class="divide-y divide-gray-50">
                                         {% for registro in datos_mes.registros %}
-                                        <tr class="group/row transition-colors {% if registro.estado == 'AUSENTE' %}bg-red-50/80 hover:bg-red-100/60{% elif registro.estado == 'SIN_DATA' %}bg-gray-50/60 hover:bg-gray-100/40{% elif registro.estado == 'DIA_ADMINISTRATIVO' %}bg-purple-50/60 hover:bg-purple-100/40{% elif es_sereno %}hover:bg-indigo-950/5{% else %}hover:bg-gray-50/50{% endif %}">
+                                        <tr class="group/row transition-colors {% if registro.estado == 'AUSENTE' %}bg-red-50/80 hover:bg-red-100/60{% elif registro.estado == 'SIN_DATA' %}bg-gray-50/60 hover:bg-gray-100/40{% elif registro.estado == 'DIA_LIBRE' %}bg-green-50/60 hover:bg-green-100/40{% elif registro.estado == 'DIA_ADMINISTRATIVO' %}bg-purple-50/60 hover:bg-purple-100/40{% elif es_sereno %}hover:bg-indigo-950/5{% else %}hover:bg-gray-50/50{% endif %}">
                                             <td class="px-4 py-4 whitespace-nowrap">
                                                 {% if es_sereno %}
                                                 <div class="flex items-center gap-1.5">
@@ -354,8 +354,8 @@
                                                         <i class="fas fa-star mr-1.5 text-[8px]"></i> Festivo
                                                     </span>
                                                 {% elif registro.estado == 'DIA_LIBRE' %}
-                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-gray-100 text-gray-700 border border-gray-200 shadow-sm">
-                                                        <i class="fas fa-bed mr-1.5 text-[8px]"></i> Día Libre
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-green-100 text-green-800 border border-green-200 shadow-sm">
+                                                        <i class="fas fa-bed mr-1.5 text-green-800 text-[8px]"></i> Día Libre
                                                     </span>
                                                 {% elif registro.estado == 'SIN_DATA' %}
                                                     <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-slate-100 text-slate-600 border border-slate-200 shadow-sm italic">

@@ -1,0 +1,354 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Calendario de Baja{% endblock %}
+
+{% block extra_head %}
+<style>
+    .calendar-day {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+    }
+    
+    .calendar-day:hover {
+        background-color: #f1f5f9;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    
+    .calendar-day.today {
+        background-color: #dbeafe;
+        border-color: #93c5fd;
+        position: relative;
+    }
+    
+    .calendar-day.today::after {
+        content: '';
+        position: absolute;
+        bottom: 2px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 6px;
+        height: 6px;
+        background-color: #3b82f6;
+        border-radius: 50%;
+    }
+    
+    .calendar-day.has-periodo {
+        background-color: #fef3c7;
+        border-color: #fcd34d;
+    }
+    
+    .calendar-day.has-periodo:hover {
+        background-color: #fde68a;
+    }
+    
+    .calendar-day.sunday {
+        background-color: #fce7f3;
+        border-color: #f0c6e7;
+    }
+    
+    .calendar-day.sunday:hover {
+        background-color: #fbcfe8;
+    }
+    
+    .day-number {
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+    
+    .modal-open {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+    }
+    
+    .modal-content {
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 24px;
+        max-width: 90vw;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-3 sm:p-4 lg:p-6 max-w-[1600px] mx-auto">
+    <div class="mb-6 sm:mb-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div>
+            <nav class="flex mb-4 bg-gray-50/50 w-fit px-3 py-1.5 rounded-xl border border-gray-100" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                    <li class="inline-flex items-center">
+                        <a href="{% url 'user_list' %}" class="inline-flex items-center text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-blue-600 transition-colors">
+                            <i class="fas fa-users mr-2"></i> Usuarios
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-300 text-[8px] mx-1"></i>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400">{{ usuario.get_full_name }}</span>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-300 text-[8px] mx-1"></i>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Calendario de Baja</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Calendario de Baja - {{ usuario.get_full_name }}</h1>
+            <p class="mt-2 text-sm text-gray-500">{{ usuario.run }}</p>
+            <p class="mt-1 text-sm text-gray-600">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span> Día activo
+                </span>
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                    <span class="w-2 h-2 bg-amber-500 rounded-full mr-1"></span> Con baja
+                </span>
+            </p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'baja_periodo_list' usuario.id %}" class="inline-flex items-center justify-center px-4 py-2 border border-gray-200 text-xs font-bold uppercase tracking-widest rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-all">
+                <i class="fas fa-list mr-2"></i> Lista
+            </a>
+            <button id="btn-nuevo-periodo" class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all">
+                <i class="fas fa-plus mr-2"></i> Nuevo Periodo
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-6">
+        <div class="flex gap-4 mb-4">
+            <button id="btn-prev-month" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+                <i class="fas fa-chevron-left text-gray-600"></i>
+            </button>
+            <h2 class="text-xl font-bold text-gray-900 flex-1 flex items-center justify-center">
+                <span id="month-year">Cargando...</span>
+            </h2>
+            <button id="btn-next-month" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+                <i class="fas fa-chevron-right text-gray-600"></i>
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden">
+            <div class="bg-gray-100 text-center py-3 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                Dom
+            </div>
+            <div class="bg-gray-100 text-center py-3 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                LUN
+            </div>
+            <div class="bg-gray-100 text-center py-3 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                Mar
+            </div>
+            <div class="bg-gray-100 text-center py-3 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                Mié
+            </div>
+            <div class="bg-gray-100 text-center py-3 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                JUE
+            </div>
+            <div class="bg-gray-100 text-center py-3 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                VIE
+            </div>
+            <div class="bg-gray-100 text-center py-3 font-bold text-gray-700 text-sm uppercase tracking-wider">
+                SAB
+            </div>
+        </div>
+        
+        <div id="calendar-grid" class="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden mt-2"></div>
+    </div>
+</div>
+
+<div id="modal-nuevo-periodo" class="hidden modal-open">
+    <div class="modal-content">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-gray-900">Crear Periodo de Baja</h3>
+            <button id="modal-close" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'baja_periodo_create' usuario.id %}">
+            {% csrf_token %}
+            <input type="hidden" id="selected-date" name="fecha_inicio" required>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Motivo *</label>
+                <select name="motivo" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Seleccionar...</option>
+                    <option value="Licencia">Licencia</option>
+                    <option value="Baja médica">Baja médica</option>
+                    <option value="Vacaciones">Vacaciones</option>
+                    <option value="Capacitación">Capacitación</option>
+                    <option value="Reemplazo">Reemplazo</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Inicio *</label>
+                <input type="date" name="fecha_inicio" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="modal-date">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Término (opcional)</label>
+                <input type="date" name="fecha_termino" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Justificación (opcional)</label>
+                <textarea name="justificacion" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+            </div>
+            
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                <div class="flex">
+                    <i class="fas fa-triangle-exclamation text-amber-500 mr-2 mt-0.5"></i>
+                    <div class="text-sm text-amber-700">
+                        <p class="font-medium">Importante:</p>
+                        <p>Selecciona el día de inicio en el calendario o usa el selector de fecha.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-3 pt-4">
+                <button type="button" id="modal-cancel" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    Cancelar
+                </button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Crear Periodo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarGrid = document.getElementById('calendar-grid');
+        const monthYear = document.getElementById('month-year');
+        const modal = document.getElementById('modal-nuevo-periodo');
+        const modalDate = document.getElementById('modal-date');
+        const selectedDate = document.getElementById('selected-date');
+        
+        let currentDate = new Date();
+        const periodosData = {{ periodos_json|safe }};
+        
+        function getDaysInMonth(date) {
+            return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+        }
+        
+        function getFirstDayOfMonth(date) {
+            return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+        }
+        
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        function getPeriodoForDate(checkDate) {
+            return periodosData.find(p => {
+                const start = new Date(p.fecha_inicio);
+                const end = p.fecha_termino ? new Date(p.fecha_termino) : null;
+                const check = new Date(checkDate);
+                check.setHours(0, 0, 0, 0);
+                start.setHours(0, 0, 0, 0);
+                if (end) end.setHours(0, 0, 0, 0);
+                return start <= check && (!end || check <= end);
+            });
+        }
+        
+        function renderCalendar() {
+            calendarGrid.innerHTML = '';
+            
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const daysInMonth = getDaysInMonth(currentDate);
+            const firstDay = getFirstDayOfMonth(currentDate);
+            
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                               'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            monthYear.textContent = `${monthNames[month]} ${year}`;
+            
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'bg-gray-50 border border-gray-200';
+                emptyDay.innerHTML = '<div class="p-2 text-center text-gray-400 text-sm">--</div>';
+                calendarGrid.appendChild(emptyDay);
+            }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dateStr = formatDate(date);
+                
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day bg-white p-2 cursor-pointer';
+                
+                const isToday = date.toDateString() === new Date().toDateString();
+                if (isToday) dayDiv.classList.add('today');
+                
+                const dayOfWeek = date.getDay();
+                if (dayOfWeek === 0) dayDiv.classList.add('sunday');
+                
+                const periodo = getPeriodoForDate(date);
+                if (periodo) {
+                    dayDiv.classList.add('has-periodo');
+                }
+                
+                dayDiv.innerHTML = `<div class="day-number">${day}</div>`;
+                
+                dayDiv.addEventListener('click', function() {
+                    modalDate.value = dateStr;
+                    selectedDate.value = dateStr;
+                    modal.classList.remove('hidden');
+                    modalDate.focus();
+                });
+                
+                calendarGrid.appendChild(dayDiv);
+            }
+        }
+        
+        document.getElementById('btn-prev-month').addEventListener('click', function() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+        
+        document.getElementById('btn-next-month').addEventListener('click', function() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+        
+        document.getElementById('btn-nuevo-periodo').addEventListener('click', function() {
+            const today = new Date();
+            const dateInput = formatDate(today);
+            modalDate.value = dateInput;
+            selectedDate.value = dateInput;
+            modal.classList.remove('hidden');
+            modalDate.focus();
+        });
+        
+        document.getElementById('modal-close').addEventListener('click', function() {
+            modal.classList.add('hidden');
+        });
+        
+        document.getElementById('modal-cancel').addEventListener('click', function() {
+            modal.classList.add('hidden');
+        });
+        
+        renderCalendar();
+    });
+</script>
+{% endblock %}

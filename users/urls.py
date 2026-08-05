@@ -4,7 +4,9 @@ from .views import (
     BulkUserImportView, download_template, ResetUserPasswordView, ChangeOwnPasswordView,
     AdminChangePasswordView, EmailDirectoryView, CrearGrupoCorreoView, CrearDirectorioTelefonicoView,
     EditarGrupoCorreoView, EliminarGrupoCorreoView, EditarDirectorioTelefonicoView, EliminarDirectorioTelefonicoView,
-    BackupExportUsersView, BackupRestoreUsersView, UserRecalculateBalancesView, UserResetAnioNuevoView
+    BackupExportUsersView, BackupRestoreUsersView, UserRecalculateBalancesView, UserResetAnioNuevoView,
+    BajaPeriodoListView, BajaPeriodoCreateView, BajaPeriodoUpdateView, BajaPeriodoDeleteView,
+    BajaPeriodoCalendarView
 )
 
 urlpatterns = [
@@ -30,4 +32,10 @@ urlpatterns = [
     path('respaldo/restaurar/', BackupRestoreUsersView.as_view(), name='backup_restore_users'),
     path('recalcular-saldos/', UserRecalculateBalancesView.as_view(), name='recalculate_all_balances'),
     path('reset-anio-nuevo/', UserResetAnioNuevoView.as_view(), name='user_reset_anio_nuevo'),
+    # Periodos de baja
+    path('<int:pk>/bajas/', BajaPeriodoListView.as_view(), name='baja_periodo_list'),
+    path('<int:pk>/baja/calendario/', BajaPeriodoCalendarView.as_view(), name='baja_periodo_calendar'),
+    path('<int:pk>/bajas/crear/', BajaPeriodoCreateView.as_view(), name='baja_periodo_create'),
+    path('baja/<int:pk>/editar/', BajaPeriodoUpdateView.as_view(), name='baja_periodo_edit'),
+    path('baja/<int:pk>/eliminar/', BajaPeriodoDeleteView.as_view(), name='baja_periodo_delete'),
 ]

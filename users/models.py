@@ -155,14 +155,26 @@ class CustomUser(AbstractUser):
         return self.dias_disponibles
 
     def is_on_baja_on_date(self, fecha):
-        """Verifica si el funcionario está de baja en una fecha específica."""
-        if not self.is_on_leave or not self.baja_date:
-            return False
+        """Verifica si el funcionario está de baja en una fecha específica.
         
-        if self.alta_date and fecha >= self.alta_date:
-            return False
+        Considera tanto la baja global (is_on_leave, baja_date, alta_date) 
+        como los periodos de baja específicos definidos en BajaPeriodo.
+        """
+        from django.utils import timezone
         
-        return fecha >= self.baja_date
+        # Verificar periodos de baja específicos primero
+        for periodo in self.baja_periodos.filter(estado='ACTIVO'):
+            if periodo.fecha_inicio <= fecha:
+                if periodo.fecha_termino is None or fecha <= periodo.fecha_termino:
+                    return True
+        
+        # Verificar baja global
+        if self.is_on_leave or self.baja_date:
+            if self.alta_date and fecha >= self.alta_date:
+                return False
+            return self.baja_date is not None and fecha >= self.baja_date
+        
+        return False
 
     def save(self, *args, **kwargs):
         # Normalizar el RUT antes de guardar (con puntos para formato chileno)
@@ -218,6 +230,67 @@ class CustomUser(AbstractUser):
         de término de contrato).
         """
         return self.is_active and self.is_on_leave
+
+
+class BajaPeriodo(models.Model):
+    """Periodo de baja para funcionarios (útil para reemplazos temporales)"""
+    
+    ESTADO_CHOICES = [
+        ('ACTIVO', 'Activo'),
+        ('INACTIVO', 'Inactivo'),
+    ]
+    
+    MOTIVO_CHOICES = [
+        ('Reemplazo', 'Reemplazo'),
+        ('Licencia', 'Licencia'),
+        ('Baja médica', 'Baja médica'),
+        ('Vacaciones', 'Vacaciones'),
+        ('Capacitación', 'Capacitación'),
+        ('Otro', 'Otro'),
+    ]
+    
+    usuario = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='baja_periodos',
+        help_text="Funcionario al que se aplica este período de baja"
+    )
+    motivo = models.CharField(max_length=100, choices=MOTIVO_CHOICES, help_text="Motivo de la baja")
+    fecha_inicio = models.DateField(help_text="Fecha de inicio de la baja")
+    fecha_termino = models.DateField(null=True, blank=True, help_text="Fecha de fin de la baja (opcional si es indefinida)")
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='ACTIVO')
+    justificacion = models.TextField(blank=True, help_text="Justificación adicional")
+    creado_por = models.ForeignKey(
+        'CustomUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='bajas_creadas',
+        limit_choices_to={'role__in': ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']}
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Periodo de Baja"
+        verbose_name_plural = "Periodos de Baja"
+        ordering = ['-fecha_inicio']
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(fecha_termino__isnull=True) | models.Q(fecha_termino__gte=models.F('fecha_inicio')),
+                name='check_fecha_termino_gte_inicio'
+            )
+        ]
+    
+    def __str__(self):
+        estado_str = "hasta" if self.fecha_termino else "(indefinido)"
+        return f"{self.usuario.get_full_name()} - {self.motivo} ({self.fecha_inicio} {estado_str} {self.fecha_termino or ''})"
+    
+    @property
+    def activo(self):
+        """Verifica si el período está activo"""
+        from django.utils import timezone
+        hoy = timezone.now().date()
+        return self.estado == 'ACTIVO' and self.fecha_inicio <= hoy and (self.fecha_termino is None or hoy <= self.fecha_termino)
 
 
 class DirectorioTelefonico(models.Model):

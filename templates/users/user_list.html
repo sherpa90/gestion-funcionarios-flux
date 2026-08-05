@@ -430,13 +430,15 @@
                           <div class="row-menu-wrap">
                               <button type="button" class="btn-icon"><i class="fas fa-ellipsis-v"></i></button>
                               <div class="row-menu-content">
-                                  <a href="{% url 'reset_user_password' user.pk %}" class="row-menu-item"><i class="fas fa-key text-amber-500"></i> Restablecer Clave</a>
+                                  <a href="{% url 'asistencia:detalle_usuario' user_id=user.pk %}" class="row-menu-item"><i class="fas fa-clock text-blue-500"></i> Ver Asistencia</a>
+                                  <a href="{% url 'reset_user_password' user.pk %}" class="row-menu-item"><i class="fas fa-key text-amber-500"></i> Reset Clave</a>
                                   <a href="{% url 'admin_change_password' user.pk %}" class="row-menu-item"><i class="fas fa-lock text-green-500"></i> Asignar Clave Manual</a>
                                   {% if user.is_on_leave %}
                                   <a href="{% url 'user_alta' user.pk %}" class="row-menu-item"><i class="fas fa-user-check text-emerald-500"></i> Dar de Alta</a>
                                   {% else %}
                                   <a href="{% url 'user_baja' user.pk %}" class="row-menu-item"><i class="fas fa-user-clock text-rose-500"></i> Dar de Baja</a>
                                   {% endif %}
+                                  <a href="{% url 'baja_periodo_calendar' user.pk %}" class="row-menu-item"><i class="fas fa-calendar-alt text-purple-500"></i> Periodos de Baja</a>
                                   {% if request.user.role == 'ADMIN' %}
                                   <hr style="border:none; border-top:1px solid #f1f5f9; margin:0.25rem 0;">
                                   <a href="{% url 'user_delete' user.pk %}" class="row-menu-item danger"><i class="fas fa-trash-alt"></i> Borrar Sistema</a>
@@ -502,6 +504,7 @@
                   <div class="row-menu-wrap" style="flex:1;">
                       <button type="button" class="btn-action" style="width:100%; height:100%; background:#f8fafc; color:#475569; border:1px solid #cbd5e1;">Menú <i class="fas fa-chevron-up" style="margin-left:0.2rem; font-size:0.7em;"></i></button>
                       <div class="row-menu-content" style="bottom:100%; right:0; width:min-content; min-width:160px; transform:translateY(-5px);">
+                          <a href="{% url 'asistencia:detalle_usuario' user_id=user.pk %}" class="row-menu-item"><i class="fas fa-clock text-blue-500"></i> Ver Asistencia</a>
                           <a href="{% url 'reset_user_password' user.pk %}" class="row-menu-item"><i class="fas fa-key text-amber-500"></i> Reset Clave</a>
                           <a href="{% url 'admin_change_password' user.pk %}" class="row-menu-item"><i class="fas fa-lock text-green-500"></i> Asignar Manual</a>
                           {% if user.is_on_leave %}
@@ -509,6 +512,7 @@
                           {% else %}
                           <a href="{% url 'user_baja' user.pk %}" class="row-menu-item"><i class="fas fa-user-clock text-rose-500"></i> Dar de Baja</a>
                           {% endif %}
+                          <a href="{% url 'baja_periodo_calendar' user.pk %}" class="row-menu-item"><i class="fas fa-calendar-alt text-purple-500"></i> Periodos de Baja</a>
                           {% if request.user.role == 'ADMIN' %}
                           <hr style="border:none; border-top:1px solid #f1f5f9; margin:0.25rem 0;">
                           <a href="{% url 'user_delete' user.pk %}" class="row-menu-item danger"><i class="fas fa-trash-alt"></i> Borrar</a>
