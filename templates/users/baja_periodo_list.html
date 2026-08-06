@@ -67,8 +67,8 @@
                         <td class="px-4 py-3 whitespace-nowrap">
                             <span class="text-sm text-gray-700">{% if periodo.fecha_termino %}{{ periodo.fecha_termino|date:"d/m/Y" }}{% else %}Indefinido{% endif %}</span>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            {% if periodo.activo %}
+<td class="px-4 py-3 whitespace-nowrap">
+                            {% if periodo.estado == 'ACTIVO' %}
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">Activo</span>
                             {% else %}
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-800">Inactivo</span>

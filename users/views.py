@@ -338,6 +338,11 @@ class BajaPeriodoUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView)
     def test_func(self):
         return self.request.user.role in ['SECRETARIA', 'ADMIN']
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['usuario'] = self.object.usuario
+        return context
+    
     def get_success_url(self):
         return reverse('baja_periodo_list', kwargs={'pk': self.object.usuario.pk})
 
