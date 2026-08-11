@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import TemplateView, View
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import TemplateView, View, UpdateView
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.http import JsonResponse, FileResponse, Http404
@@ -13,6 +13,7 @@ import os
 from datetime import datetime
 from licencias.models import LicenciaMedica
 from liquidaciones.models import Liquidacion
+from core.models import SystemSettings
 
 class SecureFileDownloadView(LoginRequiredMixin, View):
     """
@@ -178,3 +179,23 @@ class HealthCheckView(View):
         status_code = 200 if health_data['status'] == 'healthy' else 503
 
         return JsonResponse(health_data, status=status_code)
+
+
+class SystemSettingsView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    Vista para configurar notificaciones del sistema.
+    Solo accesible por ADMIN.
+    """
+    model = SystemSettings
+    template_name = 'core/system_settings.html'
+    fields = ['notifications_enabled', 'liquidations_notifications_enabled', 'attendance_notifications_enabled']
+    
+    def test_func(self):
+        return self.request.user.role == 'ADMIN'
+    
+    def get_object(self, queryset=None):
+        return SystemSettings.get_solo()
+    
+    def get_success_url(self):
+        messages.success(self.request, 'Configuración actualizada correctamente.')
+        return self.request.path

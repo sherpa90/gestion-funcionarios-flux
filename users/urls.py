@@ -8,6 +8,7 @@ from .views import (
     BajaPeriodoListView, BajaPeriodoCreateView, BajaPeriodoUpdateView, BajaPeriodoDeleteView,
     BajaPeriodoCalendarView
 )
+from core.views import SystemSettingsView
 
 urlpatterns = [
     path('', UserListView.as_view(), name='user_list'),
@@ -22,6 +23,7 @@ urlpatterns = [
     path('<int:user_id>/reset-password/', ResetUserPasswordView.as_view(), name='reset_user_password'),
     path('<int:user_id>/cambiar-password/', AdminChangePasswordView.as_view(), name='admin_change_password'),
     path('cambiar-password/', ChangeOwnPasswordView.as_view(), name='change_password'),
+    path('configuracion/', SystemSettingsView.as_view(), name='system_settings'),
     path('crear-grupo-correo/', CrearGrupoCorreoView.as_view(), name='crear_grupo_correo'),
     path('crear-directorio-telefonico/', CrearDirectorioTelefonicoView.as_view(), name='crear_directorio_telefonico'),
     path('editar-grupo-correo/<int:grupo_id>/', EditarGrupoCorreoView.as_view(), name='editar_grupo_correo'),
@@ -32,7 +34,6 @@ urlpatterns = [
     path('respaldo/restaurar/', BackupRestoreUsersView.as_view(), name='backup_restore_users'),
     path('recalcular-saldos/', UserRecalculateBalancesView.as_view(), name='recalculate_all_balances'),
     path('reset-anio-nuevo/', UserResetAnioNuevoView.as_view(), name='user_reset_anio_nuevo'),
-    # Periodos de baja
     path('<int:pk>/bajas/', BajaPeriodoListView.as_view(), name='baja_periodo_list'),
     path('<int:pk>/baja/calendario/', BajaPeriodoCalendarView.as_view(), name='baja_periodo_calendar'),
     path('<int:pk>/bajas/crear/', BajaPeriodoCreateView.as_view(), name='baja_periodo_create'),
