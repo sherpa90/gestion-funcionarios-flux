@@ -3,6 +3,7 @@ import logging
 from django.core.mail import send_mail, send_mass_mail
 from django.conf import settings
 from users.models import CustomUser
+from core.models import SystemSettings
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,10 @@ class AsyncMassEmailThread(threading.Thread):
 
 def notify_director_new_request(solicitud):
     """Notifica a todos los directores de una nueva solicitud de día administrativo."""
-    directores = CustomUser.objects.filter(role='DIRECTOR', is_active=True, email__isnull=False)
+    settings_obj = SystemSettings.get_solo()
+    if not settings_obj.notifications_enabled:
+        return
+    directores = CustomUser.objects.filter(role='DIRECTOR', is_active=True, email__isnull=False, notifications_disabled=False)
     correos_directores = [d.email for d in directores if d.email]
     
     if not correos_directores:
@@ -58,7 +62,6 @@ def notify_director_new_request(solicitud):
         f"Por favor revise el sistema para aprobar o rechazar esta solicitud."
     )
     
-    # Enviar un correo a cada director
     datatuple = (
         (subject, message, settings.DEFAULT_FROM_EMAIL, [email])
         for email in correos_directores
@@ -67,14 +70,20 @@ def notify_director_new_request(solicitud):
 
 def notify_user_request_status(solicitud):
     """Notifica al funcionario sobre la respuesta de su solicitud."""
-    email = solicitud.usuario.email
+    settings_obj = SystemSettings.get_solo()
+    if not settings_obj.notifications_enabled:
+        return
+    usuario = solicitud.usuario
+    if usuario.notifications_disabled:
+        return
+    email = usuario.email
     if not email:
         return
 
     estado = solicitud.get_estado_display().lower()
     subject = f"Resolución de su Solicitud de Permiso"
     message = (
-        f"Hola {solicitud.usuario.first_name},\n\n"
+        f"Hola {usuario.first_name},\n\n"
         f"Su solicitud de permiso para la fecha {solicitud.fecha_inicio} ha sido {estado}.\n\n"
     )
     if solicitud.estado == 'RECHAZADO' and solicitud.motivo_rechazo:
@@ -86,7 +95,10 @@ def notify_user_request_status(solicitud):
 
 def notify_all_users_liquidaciones(mes, anio):
     """Notifica a todos los funcionarios activos que se cargaron las liquidaciones."""
-    funcionarios = CustomUser.objects.filter(is_active=True, email__isnull=False)
+    settings_obj = SystemSettings.get_solo()
+    if not settings_obj.liquidations_notifications_enabled:
+        return
+    funcionarios = CustomUser.objects.filter(is_active=True, email__isnull=False, notifications_disabled=False)
     correos = [f.email for f in funcionarios if f.email]
     
     if not correos:
@@ -111,7 +123,10 @@ def notify_all_users_liquidaciones(mes, anio):
 
 def notify_all_users_asistencia():
     """Notifica a todos los funcionarios activos que se cargó la asistencia."""
-    funcionarios = CustomUser.objects.filter(is_active=True, email__isnull=False)
+    settings_obj = SystemSettings.get_solo()
+    if not settings_obj.attendance_notifications_enabled:
+        return
+    funcionarios = CustomUser.objects.filter(is_active=True, email__isnull=False, notifications_disabled=False)
     correos = [f.email for f in funcionarios if f.email]
     
     if not correos:

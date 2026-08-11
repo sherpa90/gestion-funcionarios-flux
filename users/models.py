@@ -122,6 +122,7 @@ class CustomUser(AbstractUser):
     is_on_leave = models.BooleanField(default=False, help_text="Si está marcado, el funcionario está de baja")
     baja_date = models.DateField(null=True, blank=True, help_text="Fecha de inicio de la baja")
     alta_date = models.DateField(null=True, blank=True, help_text="Fecha de alta/reingreso")
+    notifications_disabled = models.BooleanField(default=False, help_text="Si está marcado, se silenciarán las notificaciones por correo")
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['run', 'first_name', 'last_name']

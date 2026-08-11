@@ -42,7 +42,7 @@ class CustomUserChangeForm(UserChangeForm):
         model = CustomUser
         fields = ('email', 'run', 'first_name', 'last_name', 'role', 
                   'tipo_funcionario', 'funcion', 'dias_disponibles', 'is_active', 
-                  'is_staff', 'groups', 'user_permissions')
+                  'is_staff', 'groups', 'user_permissions', 'notifications_disabled')
 
 
 class PasswordChangeForm(UserChangeForm):
@@ -68,24 +68,33 @@ class CustomUserAdmin(BaseUserAdmin):
     add_form = CustomUserCreationForm
     change_password_form = PasswordChangeForm
     
-    list_display = ('email', 'run', 'first_name', 'last_name', 'telefono', 'role', 'funcion', 'dias_disponibles', 'is_active', 'is_staff')
-    list_filter = ('role', 'is_active', 'is_staff', 'tipo_funcionario', 'funcion')
+    list_display = ('email', 'run', 'first_name', 'last_name', 'telefono', 'role', 'funcion', 'dias_disponibles', 'notifications_disabled', 'is_active', 'is_staff')
+    list_filter = ('role', 'is_active', 'is_staff', 'tipo_funcionario', 'funcion', 'notifications_disabled')
     search_fields = ('email', 'run', 'first_name', 'last_name', 'telefono')
     ordering = ('last_name', 'first_name')
-    actions = ['recalculate_balance']
+    actions = ['recalculate_balance', 'disable_notifications', 'enable_notifications']
 
     def recalculate_balance(self, request, queryset):
-        """Acción de admin para recalcular el saldo de días de los usuarios seleccionados."""
         count = 0
         for user in queryset:
             user.recalculate_dias_disponibles()
             count += 1
         self.message_user(request, f"Se recalcularon los saldos de {count} usuarios exitosamente.")
     recalculate_balance.short_description = "Recalcular Saldos Administrativos"
+
+    def disable_notifications(self, request, queryset):
+        count = queryset.update(notifications_disabled=True)
+        self.message_user(request, f"Se deshabilitaron notificaciones para {count} usuarios.")
+    disable_notifications.short_description = "Silenciar Notificaciones"
+
+    def enable_notifications(self, request, queryset):
+        count = queryset.update(notifications_disabled=False)
+        self.message_user(request, f"Se habilitaron notificaciones para {count} usuarios.")
+    enable_notifications.short_description = "Habilitar Notificaciones"
     
     fieldsets = (
         ('Información Personal', {
-            'fields': ('email', 'run', 'first_name', 'last_name', 'telefono')
+            'fields': ('email', 'run', 'first_name', 'last_name', 'telefono', 'notifications_disabled')
         }),
         ('Rol y Permisos', {
             'fields': ('role', 'tipo_funcionario', 'funcion', 'dias_disponibles', 
