@@ -85,7 +85,10 @@ class SolicitudCreateView(LoginRequiredMixin, CreateView):
         )
         messages.success(self.request, 'Solicitud enviada para aprobación.')
 
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        from core.emails import notify_director_new_request
+        notify_director_new_request(self.object)
+        return response
 
 class SolicitudBypassView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     """Vista para que Secretaria ingrese permisos directamente (sin aprobación)"""
@@ -130,7 +133,10 @@ class SolicitudBypassView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             form.instance.created_by = self.request.user
             
             messages.success(self.request, f'Solicitud registrada exitosamente para {usuario.get_full_name()}. Pendiente de aprobación.')
-            return super().form_valid(form)
+            response = super().form_valid(form)
+            from core.emails import notify_director_new_request
+            notify_director_new_request(self.object)
+            return response
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -375,6 +381,8 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
                     descripcion=f'Se aprobó permiso de {solicitud.usuario.get_full_name()} ({solicitud.dias_solicitados} días)',
                     ip_address=get_client_ip(request)
                 )
+                from core.emails import notify_user_request_status
+                notify_user_request_status(solicitud)
                 if is_ajax:
                     return JsonResponse({
                         'success': True,
@@ -400,6 +408,8 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
                 descripcion=f'Se rechazó permiso de {solicitud.usuario.get_full_name()}',
                 ip_address=get_client_ip(request)
             )
+            from core.emails import notify_user_request_status
+            notify_user_request_status(solicitud)
             if is_ajax:
                 return JsonResponse({
                     'success': True,

@@ -793,6 +793,8 @@ class CargaHorariosView(LoginRequiredMixin, UserPassesTestMixin, FormView):
                     descripcion=f'Se cargaron {registros_creados} registros desde Excel',
                     ip_address=get_client_ip(self.request)
                 )
+                from core.emails import notify_all_users_asistencia
+                notify_all_users_asistencia()
             else:
                 messages.warning(self.request, "No se encontraron registros válidos para procesar.")
 
@@ -1012,6 +1014,8 @@ class CargaRegistrosAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Form
                     descripcion=f'Se cargaron {registros_creados} registros de asistencia desde reloj control',
                     ip_address=get_client_ip(self.request)
                 )
+                from core.emails import notify_all_users_asistencia
+                notify_all_users_asistencia()
             elif not errores:
                 messages.warning(self.request, "No se encontraron registros válidos para procesar.")
 

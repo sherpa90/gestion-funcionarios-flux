@@ -268,6 +268,8 @@ class CargaLiquidacionesView(LoginRequiredMixin, UserPassesTestMixin, FormView):
             if processed_count > 0:
                 logger.info(f"PDF processing completed successfully. Processed: {processed_count} liquidations")
                 messages.success(self.request, "Proceso de carga finalizado.")
+                from core.emails import notify_all_users_liquidaciones
+                notify_all_users_liquidaciones(mes, anio)
             elif not errors:
                 messages.warning(self.request, "No se encontraron liquidaciones válidas en el archivo.")
 
