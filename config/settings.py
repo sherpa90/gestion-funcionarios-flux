@@ -228,6 +228,7 @@ SOCIALACCOUNT_PROVIDERS = {
 # Domain restriction for Google login
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_QUERY_EMAIL = True  # Prevent auto-registration
+SOCIALACCOUNT_ADAPTER = 'core.adapter.CustomSocialAccountAdapter'
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
