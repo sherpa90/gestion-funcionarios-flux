@@ -227,7 +227,11 @@ SOCIALACCOUNT_PROVIDERS = {
 
 # Domain restriction for Google login
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
-SOCIALACCOUNT_QUERY_EMAIL = True  # Prevent auto-registration
+SOCIALACCOUNT_QUERY_EMAIL = True
+# Google ya verificó el email — no re-verificar vía correo
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
+# Bloquar auto-registro: solo usuarios pre-existentes pueden hacer login
+SOCIALACCOUNT_AUTO_SIGNUP = False
 SOCIALACCOUNT_ADAPTER = 'core.adapter.CustomSocialAccountAdapter'
 ACCOUNT_ADAPTER = 'core.adapter.CustomAccountAdapter'
 
