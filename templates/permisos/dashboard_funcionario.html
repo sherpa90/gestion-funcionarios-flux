@@ -582,6 +582,7 @@
                     <th>Días Solicitados</th>
                     <th>Fecha Término</th>
                     <th>Estado</th>
+                    <th>Jefatura</th>
                     <th>Observaciones</th>
                     <th>Acciones</th>
                 </tr>
@@ -606,6 +607,15 @@
                         {% elif solicitud.estado == 'RECHAZADO' %}<span class="badge b-rechazado"><i class="fas fa-times-circle"></i> Rechazado</span>
                         {% elif solicitud.estado == 'CANCELADO' %}<span class="badge b-cancelado"><i class="fas fa-ban"></i> Cancelado</span>
                         {% else %}<span class="badge b-pendiente"><i class="fas fa-hourglass-half"></i> Pendiente</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if solicitud.aprobado_por %}
+                            <span class="badge b-info" style="font-size:0.75rem; padding:0.25rem 0.5rem;">
+                                <i class="fas fa-user-check"></i> {{ solicitud.aprobado_por.get_full_name|default:solicitud.aprobado_por.first_name }}
+                            </span>
+                        {% else %}
+                            <span style="color:#cbd5e1; font-style:italic;">-</span>
+                        {% endif %}
                     </td>
                     <td style="font-size:0.8rem; line-height:1.4;">
                         {% if solicitud.observacion %}

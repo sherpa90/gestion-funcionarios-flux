@@ -174,6 +174,7 @@
                         <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cargo</th>
                         <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Periodo</th>
                         <th class="px-3 py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">Días</th>
+                        <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jefatura</th>
                         <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Estado</th>
                         <th class="px-3 py-2 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest">Acciones</th>
                     </tr>
@@ -212,6 +213,16 @@
                                 <span class="text-[9px] text-blue-600 font-black">{% if solicitud.jornada == 'AM' %}AM{% elif solicitud.jornada == 'PM' %}PM{% endif %}</span>
                                 {% endif %}
                             </span>
+                        </td>
+                        <td class="px-3 py-2">
+                            {% if solicitud.aprobado_por %}
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-medium text-gray-700">{{ solicitud.aprobado_por.get_full_name }}</span>
+                                <span class="text-[10px] text-gray-400">({{ solicitud.aprobado_por.get_role_display|default:solicitud.aprobado_por.get_tipo_funcionario_display|default:"—" }})</span>
+                            </div>
+                            {% else %}
+                            <span class="text-[10px] text-gray-400">—</span>
+                            {% endif %}
                         </td>
                         <td class="px-3 py-2">
                             {% if solicitud.estado == 'APROBADO' %}
@@ -280,6 +291,14 @@
                             <span class="text-[8px] text-blue-600 font-black block -mt-0.5">{{ solicitud.jornada }}</span>
                             {% endif %}
                         </div>
+                        <!-- Jefatura -->
+                        {% if solicitud.aprobado_por %}
+                        <div class="text-xs text-gray-600 text-center">
+                            {{ solicitud.aprobado_por.get_full_name }}
+                        </div>
+                        {% else %}
+                        <span class="text-[10px] text-gray-400">—</span>
+                        {% endif %}
                         <!-- Estado -->
                         {% if solicitud.estado == 'APROBADO' %}
                         <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-emerald-100 text-emerald-700">OK</span>

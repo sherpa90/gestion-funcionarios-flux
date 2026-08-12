@@ -430,20 +430,11 @@
                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                         <span class="font-medium text-slate-800 truncate max-w-[120px] sm:max-w-none">{{ user.first_name }}</span>
                     </div>
-                    <a href="{% url 'change_password' %}" class="flex items-center px-3 py-2 text-xs font-medium text-slate-400 hover:text-white rounded-lg hover:bg-slate-900 mb-1">
-                        <i class="fa-solid fa-key fa-fw mr-3 text-slate-500"></i><span>Cambiar Contraseña</span>
-                    </a>
                     {% if user.role == 'ADMIN' %}
                     <a href="{% url 'system_settings' %}" class="flex items-center px-2 py-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900">
                         <i class="fa-solid fa-cog fa-fw text-base"></i>
                     </a>
                     {% endif %}
-                    <form action="{% url 'logout' %}" method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="w-full flex items-center px-3 py-2 text-xs font-medium text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-900">
-                            <i class="fa-solid fa-arrow-right-from-bracket fa-fw mr-3 text-slate-500"></i><span>Cerrar Sesión</span>
-                        </button>
-                    </form>
                     {% endif %}
                 </div>
             </header>

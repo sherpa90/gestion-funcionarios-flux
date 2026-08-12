@@ -371,6 +371,7 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
         if action == 'approve':
             if solicitud.usuario.dias_disponibles >= solicitud.dias_solicitados:
                 solicitud.estado = 'APROBADO'
+                solicitud.aprobado_por = request.user
                 solicitud.usuario.dias_disponibles -= solicitud.dias_solicitados
                 solicitud.usuario.save()
                 solicitud.save()
@@ -400,6 +401,7 @@ class SolicitudActionView(LoginRequiredMixin, UserPassesTestMixin, View):
         elif action == 'reject':
             solicitud.estado = 'RECHAZADO'
             solicitud.motivo_rechazo = request.POST.get('motivo_rechazo', '')
+            solicitud.aprobado_por = request.user
             solicitud.save()
             registrar_log(
                 usuario=request.user,
