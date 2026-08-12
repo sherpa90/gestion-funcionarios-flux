@@ -1,0 +1,95 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conectando con Google - FLUX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+        @keyframes backgroundShift {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        .spinner {
+            border: 3px solid rgba(59, 130, 246, 0.15);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            animation: spin 0.75s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .card {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+    </style>
+</head>
+<body class="h-full flex items-center justify-center p-4">
+    <div class="card w-full max-w-sm rounded-2xl p-8 text-center relative z-10">
+
+        <!-- Logo FLUX -->
+        <div class="flex justify-center mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-lg">
+                <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Spinner de carga -->
+        <div class="flex justify-center mb-5">
+            <div class="spinner"></div>
+        </div>
+
+        <h1 class="text-xl font-bold text-gray-900 mb-2">Conectando con Google</h1>
+        <p class="text-sm text-gray-500 mb-6">Serás redirigido automáticamente…</p>
+
+        <!--
+            Formulario que allauth espera: POST a la misma URL con process=login.
+            Se auto-envía mediante JavaScript — el usuario nunca ve esta página.
+        -->
+        <form id="google-auth-form" method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="process" value="login">
+
+            {# Fallback manual por si JavaScript está deshabilitado #}
+            <noscript>
+                <button type="submit"
+                        class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white
+                               font-semibold rounded-xl transition-all duration-200 shadow-md">
+                    Continuar con Google
+                </button>
+            </noscript>
+        </form>
+
+        <p class="text-xs text-gray-400 mt-4">
+            © {% now "Y" %} Colegio Los Alerces. Todos los derechos reservados.
+        </p>
+    </div>
+
+    <script>
+        // Auto-submit inmediato: el usuario hace clic en "Google" en el login
+        // y es redirigido a Google directamente sin ver esta página intermedia.
+        document.getElementById('google-auth-form').submit();
+    </script>
+</body>
+</html>
