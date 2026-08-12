@@ -199,3 +199,27 @@ class SystemSettingsView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def get_success_url(self):
         messages.success(self.request, 'Configuración actualizada correctamente.')
         return self.request.path
+
+
+class SocialAccountSignupView(TemplateView):
+    """
+    Vista para mostrar mensaje cuando el usuario de Google no está registrado.
+    Allauth se configura para no permitir auto-registro.
+    """
+    template_name = 'core/social_account_signup.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        email = self.request.session.get('social_login_email', '')
+        context['email'] = email
+        return context
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.user.is_authenticated:
+            messages.error(
+                self.request,
+                "Su cuenta de Google no está registrada en el sistema. "
+                "Por favor, contacte al administrador para ser agregado."
+            )
+            return redirect('login')
+        return super().dispatch(request, *args, **kwargs)

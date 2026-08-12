@@ -122,6 +122,8 @@ urlpatterns = [
     path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
+    # Social authentication URLs
+    path('accounts/', include('allauth.urls')),
     path('permisos/', include('permisos.urls')),
     path('licencias/', include('licencias.urls')),
     path('reportes/', include('reportes.urls')),
