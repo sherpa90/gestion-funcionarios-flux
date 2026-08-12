@@ -229,6 +229,7 @@ SOCIALACCOUNT_PROVIDERS = {
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_QUERY_EMAIL = True  # Prevent auto-registration
 SOCIALACCOUNT_ADAPTER = 'core.adapter.CustomSocialAccountAdapter'
+ACCOUNT_ADAPTER = 'core.adapter.CustomAccountAdapter'
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
