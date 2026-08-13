@@ -15,6 +15,9 @@ echo "Database started"
 # Run migrations
 python manage.py migrate --noinput
 
+# Ensure Google OAuth SocialApp exists
+python manage.py ensure_google_social_app
+
 # Start gunicorn
 # Ensure gunicorn is installed or fallback/fail early
 if ! command -v gunicorn &> /dev/null; then
