@@ -49,35 +49,6 @@ class CustomLoginView(LoginView):
     
     def get_success_url(self):
         return reverse_lazy('dashboard')
-    
-    def form_invalid(self, form):
-        # Verificar si el usuario está bloqueado manualmente
-        username = form.cleaned_data.get('username')
-        if username:
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            try:
-                user = User.objects.get(email=username)
-                
-                # El usuario ya está bloqueado manualmente
-                if user.is_blocked:
-                    messages.error(self.request, 'Su cuenta ha sido bloqueada permanentemente. Por favor, contacte al administrador.')
-            except User.DoesNotExist:
-                pass
-            
-            # Verificar intentos fallidos de Axes
-            try:
-                from axes.models import AccessAttempt
-                limit = getattr(settings, 'AXES_FAILURE_LIMIT', 6)
-                attempt = AccessAttempt.objects.filter(username__iexact=username).first()
-                if attempt and attempt.failures_since_start > 0:
-                    faltan = limit - attempt.failures_since_start
-                    if faltan > 0:
-                        messages.warning(self.request, f"Credenciales incorrectas. Te quedan {faltan} intentos antes del bloqueo de seguridad.")
-            except Exception:
-                pass
-                
-        return super().form_invalid(form)
 
 class DashboardView(LoginRequiredMixin, View):
     def get(self, request):

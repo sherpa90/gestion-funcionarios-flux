@@ -214,11 +214,6 @@ SOCIALACCOUNT_PROVIDERS = {
             'profile',
             'email',
         ],
-        'APP': {
-            'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
-            'secret': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
-            'key': '',
-        },
         'AUTH_PARAMS': {
             'access_type': 'online',
             'prompt': 'select_account',
