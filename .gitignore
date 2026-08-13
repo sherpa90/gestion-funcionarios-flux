@@ -171,3 +171,10 @@ temp/
 # Secrets
 secrets.json
 config/secrets.py
+
+# Sensitive scripts
+crear_admin.py
+change_mrosas_password.py
+recrear_admin.py
+import_users_excel.py
+debug_*.py
