@@ -160,9 +160,12 @@ staticfiles/
 # Logs
 logs/
 
-# Temporary files
-tmp/
-temp/
+# Temporary scripts
+create_user.py
+promote_user.py
+security_check.py
+debug_*.py
+debug_asistencia.py
 
 # Backup files
 *.bak
