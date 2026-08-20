@@ -1,358 +1,517 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Gestión de Fallas - FLUX{% endblock %}
-{% block page_title %}Control de Averías y Fallas{% endblock %}
+{% block title %}Bitácora de Soporte y Fallas TI - FLUX{% endblock %}
+{% block page_title %}Bitácora y Gestión de Soporte TI{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-slate-50">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-
-        <!-- Header mínimo -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900 tracking-tight">Gestión de Fallas</h1>
-                <p class="text-sm text-gray-500 font-medium mt-1">Panel de control y resolución de averías</p>
+<div class="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                <i class="fa-solid fa-clipboard-list text-lg"></i>
             </div>
-            <div class="flex items-center gap-2">
-                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-gray-900 text-white">
-                    {{ total_fallas }} totales
-                </span>
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Bitácora & Soporte TI</h2>
+                <p class="text-xs sm:text-sm text-slate-500 font-medium">Registro cronológico de actividades, tickets de soporte y averías.</p>
             </div>
         </div>
 
+        <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+            <!-- Selector de Mes -->
+            <form method="GET" action="{% url 'gestion_fallas' %}" class="flex items-center gap-2">
+                <div class="relative">
+                    <select name="mes" onchange="this.form.submit()"
+                        class="pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none">
+                        {% for m in meses_disponibles %}
+                        <option value="{{ m.codigo }}" {% if m.seleccionado %}selected{% endif %}>{{ m.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+
+            <a href="{% url 'reporte_bitacora_pdf' %}?mes={{ mes_seleccionado }}" target="_blank"
+                class="inline-flex items-center px-3.5 py-2 text-xs font-semibold rounded-xl text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition-all shadow-sm">
+                <i class="fa-solid fa-file-pdf mr-2 text-rose-600"></i> Exportar PDF ({{ nombre_mes_seleccionado }})
+            </a>
+            <button type="button" onclick="document.getElementById('modal-crear-ticket').classList.remove('hidden')"
+                class="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20 transition-all">
+                <i class="fa-solid fa-plus mr-1.5"></i> Nueva Actividad / Ticket
+            </button>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex items-center gap-2 border-b border-slate-200 pb-2">
+        <button type="button" onclick="cambiarTab('tab-bitacora')" id="btn-tab-bitacora"
+            class="tab-btn px-4 py-2 text-xs sm:text-sm font-bold rounded-xl bg-slate-900 text-white shadow-sm transition-all flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-check"></i>
+            <span>Bitácora de Tickets ({{ stats_tickets.total }})</span>
+        </button>
+        <button type="button" onclick="cambiarTab('tab-fallas')" id="btn-tab-fallas"
+            class="tab-btn px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-100 transition-all flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+            <span>Fallas Reportadas ({{ total_fallas }})</span>
+            {% if total_reportadas > 0 %}
+            <span class="w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center font-bold">
+                {{ total_reportadas }}
+            </span>
+            {% endif %}
+        </button>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 1: BITÁCORA DE ACTIVIDADES Y TICKETS TI    -->
+    <!-- ============================================== -->
+    <div id="tab-bitacora" class="tab-content space-y-6">
+        <!-- Monthly Widgets -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+                <div class="flex items-center justify-between text-slate-400 mb-1">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Actividades Mes</span>
+                    <i class="fa-solid fa-list-check text-sm text-blue-500"></i>
+                </div>
+                <div class="text-2xl font-black text-slate-900">{{ stats_tickets.total }}</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">En {{ nombre_mes_seleccionado }}</div>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+                <div class="flex items-center justify-between text-emerald-500 mb-1">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">Resueltos</span>
+                    <i class="fa-solid fa-circle-check text-sm"></i>
+                </div>
+                <div class="text-2xl font-black text-emerald-600">{{ stats_tickets.resueltos }}</div>
+                <div class="text-[11px] text-emerald-600/80 mt-0.5">Atención finalizada</div>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+                <div class="flex items-center justify-between text-amber-500 mb-1">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-700">En Proceso</span>
+                    <i class="fa-solid fa-spinner text-sm"></i>
+                </div>
+                <div class="text-2xl font-black text-amber-600">{{ stats_tickets.en_proceso }}</div>
+                <div class="text-[11px] text-amber-600/80 mt-0.5">En curso / desarrollo</div>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+                <div class="flex items-center justify-between text-rose-500 mb-1">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-rose-700">Pendientes</span>
+                    <i class="fa-solid fa-clock text-sm"></i>
+                </div>
+                <div class="text-2xl font-black text-rose-600">{{ stats_tickets.pendientes }}</div>
+                <div class="text-[11px] text-rose-600/80 mt-0.5">Por atender</div>
+            </div>
+        </div>
+
+        <!-- Filters Bar -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+            <form method="GET" action="{% url 'gestion_fallas' %}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+                <input type="hidden" name="mes" value="{{ mes_seleccionado }}">
+                <div class="lg:col-span-5">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" name="search" value="{{ search|default:'' }}"
+                            class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                            placeholder="Buscar en bitácora por funcionario, lugar o descripción...">
+                    </div>
+                </div>
+                <div class="lg:col-span-3">
+                    <select name="categoria" onchange="this.form.submit()"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white outline-none">
+                        <option value="">Todas las Categorías</option>
+                        {% for val, lab in CATEGORIA_CHOICES %}
+                        <option value="{{ val }}" {% if categoria_filtro == val %}selected{% endif %}>{{ lab }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="lg:col-span-3">
+                    <select name="estado" onchange="this.form.submit()"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white outline-none">
+                        <option value="">Todos los Estados</option>
+                        {% for val, lab in ESTADO_CHOICES %}
+                        <option value="{{ val }}" {% if estado_filtro == val %}selected{% endif %}>{{ lab }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="lg:col-span-1 flex items-center justify-end">
+                    <button type="submit" class="w-full py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-colors">
+                        <i class="fa-solid fa-filter"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tickets List -->
+        {% if tickets %}
+        <div class="space-y-4">
+            {% for t in tickets %}
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:border-blue-200 transition-all group">
+                <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs">
+                            #{{ t.id }}
+                        </span>
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900 leading-tight">{{ t.titulo }}</h3>
+                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-xs text-slate-500 font-medium">
+                                <span><i class="fa-regular fa-calendar text-slate-400 mr-1"></i>{{ t.fecha_actividad|date:"d/m/Y" }}{% if t.hora_actividad %} a las {{ t.hora_actividad|time:"H:i" }} hrs{% endif %}</span>
+                                <span>&bull;</span>
+                                <span class="text-blue-700 font-semibold"><i class="fa-solid fa-tag text-blue-400 mr-1"></i>{{ t.get_categoria_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        {% if t.estado == 'RESUELTO' %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <i class="fa-solid fa-circle-check mr-1.5 text-emerald-500"></i> Resuelto
+                        </span>
+                        {% elif t.estado == 'EN_PROCESO' %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <i class="fa-solid fa-spinner mr-1.5 text-amber-500"></i> En Proceso
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <i class="fa-solid fa-clock mr-1.5 text-rose-500"></i> Pendiente
+                        </span>
+                        {% endif %}
+
+                        {% if user.role == 'ADMIN' %}
+                        <form method="POST" action="{% url 'eliminar_ticket_bitacora' t.id %}" onsubmit="return confirm('¿Eliminar este ticket de la bitácora?')" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Info Badges -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-3 bg-slate-50/60 p-3 rounded-xl border border-slate-100 text-xs">
+                    <div>
+                        <span class="font-bold text-slate-400 uppercase text-[10px] block">Funcionario Atendido</span>
+                        {% if t.funcionario %}
+                        <span class="font-bold text-slate-800"><i class="fa-solid fa-user text-slate-400 mr-1"></i>{{ t.funcionario.get_full_name }}</span>
+                        {% else %}
+                        <span class="text-slate-400 italic">General / Institucional</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <span class="font-bold text-slate-400 uppercase text-[10px] block">Lugar / Ubicación</span>
+                        <span class="font-semibold text-slate-800">
+                            <i class="fa-solid fa-location-dot text-slate-400 mr-1"></i>
+                            {{ t.lugar.nombre|default:t.lugar_personalizado|default:"No especificado" }}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="font-bold text-slate-400 uppercase text-[10px] block">Implemento / Equipo</span>
+                        {% if t.equipo %}
+                        <span class="font-semibold text-slate-800"><i class="fa-solid fa-laptop text-slate-400 mr-1"></i>{{ t.equipo.marca }} {{ t.equipo.modelo|default:'' }} (#{{ t.equipo.numero_inventario|default:'S/N' }})</span>
+                        {% else %}
+                        <span class="text-slate-400 italic">Sin equipo específico</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Details & Resolution -->
+                <div class="space-y-2 text-xs sm:text-sm">
+                    <div>
+                        <strong class="text-slate-900 font-bold text-xs">¿Qué se hizo / Problema reportado:</strong>
+                        <p class="text-slate-700 mt-0.5 leading-relaxed bg-white p-3 rounded-xl border border-slate-100">{{ t.descripcion }}</p>
+                    </div>
+                    {% if t.resolucion %}
+                    <div>
+                        <strong class="text-emerald-900 font-bold text-xs">Resolución / Solución aplicada:</strong>
+                        <p class="text-emerald-800 mt-0.5 leading-relaxed bg-emerald-50/50 p-3 rounded-xl border border-emerald-100/80">{{ t.resolucion }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-12 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center mx-auto mb-3">
+                <i class="fa-solid fa-clipboard-list text-2xl"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800">No hay tickets registrados en este mes</h3>
+            <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">No hay registros de actividades TI en {{ nombre_mes_seleccionado }}.</p>
+            <div class="mt-4">
+                <button type="button" onclick="document.getElementById('modal-crear-ticket').classList.remove('hidden')"
+                    class="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-700 transition-all">
+                    <i class="fa-solid fa-plus mr-1.5"></i> Registrar Primera Actividad
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 2: GESTIÓN DE FALLAS REPORTADAS            -->
+    <!-- ============================================== -->
+    <div id="tab-fallas" class="tab-content hidden space-y-6">
         <!-- Estadísticas compactas -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4">
-                <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
                 <div>
-                    <div class="text-xl font-black text-gray-900">{{ total_reportadas }}</div>
-                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Reportadas</div>
+                    <div class="text-2xl font-black text-slate-900">{{ total_reportadas }}</div>
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Reportadas</div>
                 </div>
             </div>
-            <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4">
-                <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
-                    <i class="fas fa-cog text-amber-600"></i>
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                    <i class="fa-solid fa-wrench"></i>
                 </div>
                 <div>
-                    <div class="text-xl font-black text-gray-900">{{ total_en_revision }}</div>
-                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">En Reparación</div>
+                    <div class="text-2xl font-black text-slate-900">{{ total_en_revision }}</div>
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">En Reparación</div>
                 </div>
             </div>
-            <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-4">
-                <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                    <i class="fas fa-check-circle text-emerald-600"></i>
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                    <i class="fa-solid fa-circle-check"></i>
                 </div>
                 <div>
-                    <div class="text-xl font-black text-gray-900">{{ total_reparadas }}</div>
-                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Reparadas</div>
+                    <div class="text-2xl font-black text-slate-900">{{ total_reparadas }}</div>
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Reparadas</div>
                 </div>
             </div>
         </div>
 
-        <!-- Filtros -->
-        <div class="bg-white rounded-2xl border border-gray-100 p-2 shadow-sm">
-            <div class="flex flex-col sm:flex-row gap-3">
-                <div class="relative flex-1">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                    <input type="text" id="busqueda-fallas" placeholder="Buscar por equipo, funcionario o descripción..."
-                           class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900/5 focus:border-gray-300 transition-all text-sm font-medium">
+        <!-- Fallas Reportadas -->
+        <div class="space-y-4">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Averías Pendientes de Atención</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {% for falla in fallas_reportadas %}
+                <div class="bg-white rounded-2xl border border-rose-200 p-5 shadow-xs">
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-base">{{ falla.equipo.marca }} {{ falla.equipo.modelo }}</h4>
+                            <p class="text-xs text-slate-400">INV: #{{ falla.equipo.numero_inventario }} &middot; {{ falla.equipo.get_tipo_display }}</p>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            Reportada
+                        </span>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-xl text-xs text-slate-700 mb-3 border border-slate-100">
+                        <strong class="text-[10px] text-slate-400 uppercase block mb-0.5">Problema reportado:</strong>
+                        "{{ falla.descripcion }}"
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                        <span><i class="fa-solid fa-user mr-1"></i>{{ falla.funcionario.get_full_name }}</span>
+                        <form action="{% url 'actualizar_estado_falla' falla.id %}" method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="estado" value="EN_REVISION">
+                            <button type="submit" class="px-3 py-1.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-lg transition-colors">
+                                <i class="fa-solid fa-wrench mr-1"></i> Iniciar Reparación
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <select id="filtro-estado" onchange="filtrarEstado(this.value)"
-                        class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900/5 focus:border-gray-300 transition-all text-sm font-medium">
-                    <option value="">Todos los estados</option>
-                    <option value="REPORTADA">Reportadas</option>
-                    <option value="EN_REVISION">En Reparación</option>
-                    <option value="REPARADA">Reparadas</option>
-                    <option value="BAJA">De Baja</option>
-                    <option value="DENEGADA">No Procede</option>
-                </select>
+                {% empty %}
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400">
+                    No hay nuevas fallas reportadas por funcionarios.
+                </div>
+                {% endfor %}
             </div>
         </div>
 
-        <!-- Secciones agrupadas por estado -->
-        <div class="space-y-10">
-
-            <!-- REPORTADAS -->
-            <section id="seccion-reportadas">
-                <div class="flex items-center gap-3 mb-5">
-                    <div class="w-2 h-8 bg-red-500 rounded-full"></div>
-                    <h2 class="text-lg font-black text-gray-900 tracking-tight">Con Fallas</h2>
-                    <span class="px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-xs font-black">
-                        {{ total_reportadas }}
-                    </span>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {% for falla in fallas_reportadas %}
-                    <div class="falla-card group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300"
-                         data-estado="{{ falla.estado }}"
-                         data-equipo="{{ falla.equipo.marca }} {{ falla.equipo.modelo }}"
-                         data-funcionario="{{ falla.funcionario.get_full_name }}"
-                         data-descripcion="{{ falla.descripcion }}">
-                        <div class="p-5 sm:p-6">
-                            <div class="flex items-start justify-between gap-4 mb-4">
-                                <div class="flex items-start gap-4">
-                                    <div class="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0">
-                                        <i class="fas fa-desktop"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="text-base font-black text-gray-900 leading-tight">
-                                            {{ falla.equipo.marca }} {{ falla.equipo.modelo }}
-                                        </h3>
-                                        <p class="text-xs font-bold text-gray-400 mt-0.5">
-                                            #{{ falla.equipo.numero_inventario }} &middot; {{ falla.equipo.get_tipo_display }}
-                                        </p>
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            <i class="fas fa-user mr-1"></i>{{ falla.funcionario.get_full_name }}
-                                        </p>
-                                    </div>
-                                </div>
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest bg-red-50 text-red-700 border border-red-100 flex-shrink-0">
-                                    Reportada
-                                </span>
-                            </div>
-
-                            <div class="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
-                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Problema</p>
-                                <p class="text-sm text-gray-700 font-medium leading-relaxed line-clamp-3">
-                                    "{{ falla.descripcion }}"
-                                </p>
-                            </div>
-
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                                    {{ falla.fecha_reporte|date:"d M Y - H:i" }}
-                                </span>
-                                <form action="{% url 'actualizar_estado_falla' falla.id %}" method="POST" class="flex items-center gap-2">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="estado" value="EN_REVISION">
-                                    <input type="hidden" name="comentarios_tecnicos" value="">
-                                    <button type="submit" class="inline-flex items-center gap-2 px-3 py-2 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-black transition-all shadow-sm">
-                                        <i class="fas fa-wrench"></i>
-                                        Iniciar Reparación
-                                    </button>
-                                </form>
-                            </div>
+        <!-- En Reparación -->
+        <div class="space-y-4">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Equipos en Reparación / Taller</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {% for falla in fallas_en_revision %}
+                <div class="bg-white rounded-2xl border border-amber-200 p-5 shadow-xs">
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-base">{{ falla.equipo.marca }} {{ falla.equipo.modelo }}</h4>
+                            <p class="text-xs text-slate-400">INV: #{{ falla.equipo.numero_inventario }} &middot; {{ falla.equipo.get_tipo_display }}</p>
                         </div>
+                        <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            En Reparación
+                        </span>
                     </div>
-                    {% empty %}
-                    <div class="lg:col-span-2 bg-white rounded-2xl border border-dashed border-gray-200 p-8 text-center">
-                        <p class="text-sm font-bold text-gray-400">Sin fallas reportadas</p>
+
+                    <div class="bg-slate-50 p-3 rounded-xl text-xs text-slate-700 mb-3 border border-slate-100">
+                        <strong class="text-[10px] text-slate-400 uppercase block mb-0.5">Problema:</strong>
+                        "{{ falla.descripcion }}"
                     </div>
-                    {% endfor %}
-                </div>
-            </section>
 
-            <!-- EN REVISIÓN -->
-            <section id="seccion-revision">
-                <div class="flex items-center gap-3 mb-5">
-                    <div class="w-2 h-8 bg-amber-500 rounded-full"></div>
-                    <h2 class="text-lg font-black text-gray-900 tracking-tight">En Reparación</h2>
-                    <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-black">
-                        {{ total_en_revision }}
-                    </span>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {% for falla in fallas_en_revision %}
-                    <div class="falla-card group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300"
-                         data-estado="{{ falla.estado }}"
-                         data-equipo="{{ falla.equipo.marca }} {{ falla.equipo.modelo }}"
-                         data-funcionario="{{ falla.funcionario.get_full_name }}"
-                         data-descripcion="{{ falla.descripcion }}">
-                        <div class="p-5 sm:p-6">
-                            <div class="flex items-start justify-between gap-4 mb-4">
-                                <div class="flex items-start gap-4">
-                                    <div class="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0">
-                                        <i class="fas fa-desktop"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="text-base font-black text-gray-900 leading-tight">
-                                            {{ falla.equipo.marca }} {{ falla.equipo.modelo }}
-                                        </h3>
-                                        <p class="text-xs font-bold text-gray-400 mt-0.5">
-                                            #{{ falla.equipo.numero_inventario }} &middot; {{ falla.equipo.get_tipo_display }}
-                                        </p>
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            <i class="fas fa-user mr-1"></i>{{ falla.funcionario.get_full_name }}
-                                        </p>
-                                    </div>
-                                </div>
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-700 border border-amber-100 flex-shrink-0">
-                                    En Reparación
-                                </span>
-                            </div>
-
-                            {% if falla.descripcion %}
-                            <div class="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
-                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Problema</p>
-                                <p class="text-sm text-gray-700 font-medium leading-relaxed line-clamp-3">
-                                    "{{ falla.descripcion }}"
-                                </p>
-                            </div>
-                            {% endif %}
-
-                            {% if falla.comentarios_tecnicos %}
-                            <div class="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
-                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Solución Técnica</p>
-                                <p class="text-sm text-gray-700 font-medium leading-relaxed line-clamp-3">
-                                    {{ falla.comentarios_tecnicos }}
-                                </p>
-                            </div>
-                            {% endif %}
-
-                            <div class="bg-white rounded-xl border border-gray-200 p-4">
-                                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Actualizar Estado</p>
-                                <form action="{% url 'actualizar_estado_falla' falla.id %}" method="POST" class="space-y-3">
-                                    {% csrf_token %}
-                                    <div class="flex flex-col sm:flex-row gap-2">
-                                        <select name="estado" class="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-gray-900/5 focus:border-gray-300 transition-all">
-                                            {% for code, label in ESTADO_FALLA_CHOICES %}
-                                            <option value="{{ code }}" {% if falla.estado == code %}selected{% endif %}>
-                                                {{ label }}
-                                            </option>
-                                            {% endfor %}
-                                        </select>
-                                        <button type="submit" class="px-4 py-2 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-lg hover:bg-black transition-all shadow-sm whitespace-nowrap">
-                                            Guardar
-                                        </button>
-                                    </div>
-                                    <textarea name="comentarios_tecnicos" rows="2" placeholder="Agregar comentario técnico (opcional)..."
-                                              class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-gray-900/5 focus:border-gray-300 transition-all resize-none">{{ falla.comentarios_tecnicos }}</textarea>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="lg:col-span-2 bg-white rounded-2xl border border-dashed border-gray-200 p-8 text-center">
-                        <p class="text-sm font-bold text-gray-400">Sin equipos en reparación</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </section>
-
-            <!-- REPARADAS -->
-            <section id="seccion-reparadas">
-                <div class="flex items-center gap-3 mb-5">
-                    <div class="w-2 h-8 bg-emerald-500 rounded-full"></div>
-                    <h2 class="text-lg font-black text-gray-900 tracking-tight">Reparadas</h2>
-                    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-black">
-                        {{ total_reparadas }}
-                    </span>
-                </div>
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="border-b border-gray-100">
-                                    <th class="px-6 py-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-400">Equipo</th>
-                                    <th class="px-6 py-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-400">Funcionario</th>
-                                    <th class="px-6 py-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-400">Descripción</th>
-                                    <th class="px-6 py-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-400">Resolución</th>
-                                    <th class="px-6 py-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-400">Fecha</th>
-                                    <th class="px-6 py-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-400">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-50">
-                                {% for falla in fallas_reparadas %}
-                                <tr class="group hover:bg-gray-50/50 transition-colors">
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400">
-                                                <i class="fas fa-desktop text-xs"></i>
-                                            </div>
-                                            <div>
-                                                <div class="text-sm font-black text-gray-900">{{ falla.equipo.marca }} {{ falla.equipo.modelo }}</div>
-                                                <div class="text-[10px] font-bold text-gray-400">#{{ falla.equipo.numero_inventario }}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-600">
-                                        {{ falla.funcionario.get_full_name }}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                                        {{ falla.descripcion }}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                                        {{ falla.comentarios_tecnicos|default:"-" }}
-                                    </td>
-                                    <td class="px-6 py-4 text-xs font-bold text-gray-400">
-                                        {{ falla.fecha_reporte|date:"d M Y" }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                            Reparada
-                                        </span>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="6" class="px-6 py-8 text-center text-sm font-bold text-gray-400">
-                                        Sin fallas reparadas
-                                    </td>
-                                </tr>
+                    <form action="{% url 'actualizar_estado_falla' falla.id %}" method="POST" class="space-y-2">
+                        {% csrf_token %}
+                        <div class="flex gap-2">
+                            <select name="estado" class="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold">
+                                {% for code, label in ESTADO_FALLA_CHOICES %}
+                                <option value="{{ code }}" {% if falla.estado == code %}selected{% endif %}>{{ label }}</option>
                                 {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                            </select>
+                            <button type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors">
+                                Guardar
+                            </button>
+                        </div>
+                        <textarea name="comentarios_tecnicos" rows="2" placeholder="Detalle técnico de la solución aplicada..."
+                            class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white">{{ falla.comentarios_tecnicos }}</textarea>
+                    </form>
                 </div>
-            </section>
-
+                {% empty %}
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400">
+                    No hay equipos en reparación actualmente.
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
 
+<!-- Modal: Crear Ticket Bitácora -->
+<div id="modal-crear-ticket" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i class="fa-solid fa-clipboard-plus"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Registrar Actividad / Ticket TI</h3>
+                    <p class="text-xs text-slate-500">Completa los detalles de lo realizado en el establecimiento.</p>
+                </div>
+            </div>
+            <button type="button" onclick="document.getElementById('modal-crear-ticket').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{% url 'crear_ticket_bitacora' %}" class="mt-4 space-y-4">
+            {% csrf_token %}
+            <!-- Título -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Título de la Actividad *</label>
+                <input type="text" name="titulo" placeholder="Ej: Configuración de proyector, Reparación de PC sala 4, etc." required
+                    class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- Categoría -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Categoría *</label>
+                    <select name="categoria" required
+                        class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-blue-100">
+                        {% for val, lab in CATEGORIA_CHOICES %}
+                        <option value="{{ val }}">{{ lab }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Estado -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Estado *</label>
+                    <select name="estado" required
+                        class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-blue-100">
+                        {% for val, lab in ESTADO_CHOICES %}
+                        <option value="{{ val }}" {% if val == 'RESUELTO' %}selected{% endif %}>{{ lab }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- Funcionario Enfocado -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Funcionario Enfocado (Opcional)</label>
+                    <select name="funcionario_id"
+                        class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-blue-100">
+                        <option value="">— Ninguno / Soporte General —</option>
+                        {% for func in funcionarios %}
+                        <option value="{{ func.id }}">{{ func.get_full_name }} ({{ func.get_role_display }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Lugar / Ubicación -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Lugar Registrado</label>
+                    <select name="lugar_id"
+                        class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-blue-100">
+                        <option value="">— Seleccionar Lugar —</option>
+                        {% for lug in lugares %}
+                        <option value="{{ lug.id }}">{{ lug.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <!-- Lugar Personalizado -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Otro Lugar (si no figura arriba)</label>
+                    <input type="text" name="lugar_personalizado" placeholder="Ej: Pasillo pabellón B"
+                        class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm outline-none focus:bg-white">
+                </div>
+
+                <!-- Fecha -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Fecha Actividad *</label>
+                    <input type="date" name="fecha_actividad" value="{{ hoy|date:'Y-m-d' }}" required
+                        class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm outline-none focus:bg-white">
+                </div>
+
+                <!-- Equipo Involucrado -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Equipo (Opcional)</label>
+                    <select name="equipo_id"
+                        class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium outline-none focus:bg-white">
+                        <option value="">— Ninguno —</option>
+                        {% for eq in equipos %}
+                        <option value="{{ eq.id }}">{{ eq.get_tipo_display }}: {{ eq.marca }} {{ eq.modelo|default:'' }} (#{{ eq.numero_inventario|default:'S/N' }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- ¿Qué se hizo? -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">¿Qué es lo que se hizo? / Detalle de la tarea *</label>
+                <textarea name="descripcion" rows="3" required placeholder="Describe qué intervención se realizó, motivo, hallazgos..."
+                    class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm outline-none focus:bg-white focus:ring-2 focus:ring-blue-100"></textarea>
+            </div>
+
+            <!-- Solución / Resolución -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Resolución / Solución Implementada (Opcional)</label>
+                <textarea name="resolucion" rows="2" placeholder="Cómo quedó resuelto o qué pasos pendientes quedan..."
+                    class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm outline-none focus:bg-white focus:ring-2 focus:ring-blue-100"></textarea>
+            </div>
+
+            <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('modal-crear-ticket').classList.add('hidden')"
+                    class="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-200 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 transition-all">
+                    <i class="fa-solid fa-check mr-1.5"></i> Guardar en Bitácora
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
-function filtrarEstado(estado) {
-    const cards = document.querySelectorAll('.falla-card, tbody tr');
+function cambiarTab(tabId) {
+    document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+    document.getElementById(tabId).classList.remove("hidden");
 
-    cards.forEach(card => {
-        if (!estado || card.dataset.estado === estado) {
-            card.style.display = '';
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(10px)';
-            setTimeout(() => {
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-                card.style.transition = 'all 0.3s ease';
-            }, 30);
-        } else {
-            card.style.display = 'none';
-        }
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("bg-slate-900", "text-white", "shadow-sm");
+        btn.classList.add("text-slate-600", "hover:bg-slate-100");
     });
+
+    const activeBtn = tabId === "tab-bitacora" ? document.getElementById("btn-tab-bitacora") : document.getElementById("btn-tab-fallas");
+    activeBtn.classList.add("bg-slate-900", "text-white", "shadow-sm");
+    activeBtn.classList.remove("text-slate-600", "hover:bg-slate-100");
 }
-
-document.getElementById('busqueda-fallas').addEventListener('input', function(e) {
-    const searchTerm = e.target.value.toLowerCase();
-    const cards = document.querySelectorAll('.falla-card, tbody tr');
-
-    cards.forEach(card => {
-        const equipo = (card.dataset.equipo || '').toLowerCase();
-        const funcionario = (card.dataset.funcionario || '').toLowerCase();
-        const descripcion = (card.dataset.descripcion || '').toLowerCase();
-        const text = card.textContent.toLowerCase();
-
-        const match = equipo.includes(searchTerm) ||
-                      funcionario.includes(searchTerm) ||
-                      descripcion.includes(searchTerm) ||
-                      text.includes(searchTerm);
-
-        card.style.display = match ? '' : 'none';
-    });
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    const cards = document.querySelectorAll('.falla-card');
-    cards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(10px)';
-        setTimeout(() => {
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-            card.style.transition = 'all 0.4s ease';
-        }, index * 80);
-    });
-});
 </script>
-
 {% endblock %}

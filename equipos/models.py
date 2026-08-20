@@ -191,7 +191,7 @@ class Equipo(models.Model):
 
 
 class PrestamoEquipo(models.Model):
-    """Modelo para registrar préstamos de equipos"""
+    """Modelo para registrar préstamos de equipos (permanentes o diarios)"""
     
     equipo = models.ForeignKey(
         Equipo,
@@ -211,6 +211,15 @@ class PrestamoEquipo(models.Model):
         null=True,
         blank=True,
         verbose_name='Fecha de Devolución'
+    )
+    fecha_devolucion_real = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha y Hora de Devolución Real'
+    )
+    es_prestamo_diario = models.BooleanField(
+        default=False,
+        verbose_name='¿Es Préstamo Diario?'
     )
     observaciones = models.TextField(
         blank=True,
@@ -233,7 +242,8 @@ class PrestamoEquipo(models.Model):
         ordering = ['-fecha_asignacion']
     
     def __str__(self):
-        return f"{self.equipo} -> {self.funcionario}"
+        tipo_str = " (Diario)" if self.es_prestamo_diario else ""
+        return f"{self.equipo} -> {self.funcionario}{tipo_str}"
     
     def save(self, *args, **kwargs):
         # Actualizar estado del equipo
@@ -241,7 +251,7 @@ class PrestamoEquipo(models.Model):
             self.equipo.estado = 'ASIGNADO'
             self.equipo.save()
         else:
-            if self.fecha_devolucion:
+            if self.fecha_devolucion or self.fecha_devolucion_real:
                 self.equipo.estado = 'DISPONIBLE'
                 self.equipo.save()
         super().save(*args, **kwargs)
@@ -378,3 +388,129 @@ class HitoMantenimiento(models.Model):
 
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.equipo} ({self.fecha})"
+
+
+class TicketBitacora(models.Model):
+    """Modelo para el Sistema de Tickets y Bitácora General de Actividades TI"""
+    
+    CATEGORIA_CHOICES = [
+        ('SOPORTE_FUNCIONARIO', 'Soporte a Funcionario'),
+        ('MANTENIMIENTO_EQUIPO', 'Mantenimiento / Reparación de Equipo'),
+        ('AUDIOVISUAL_SALAS', 'Configuración / Instalación Audiovisual'),
+        ('REDES_CONECTIVIDAD', 'Redes / Conectividad / Wifi'),
+        ('SOFTWARE_PLATAFORMAS', 'Software / Cuentas / Plataformas'),
+        ('IMPRESION_FOTOCOPIA', 'Impresión / Escáner / Fotocopia'),
+        ('REVISION_PREVENTIVA', 'Revisión Preventiva'),
+        ('OTRO', 'Otra Actividad / Requerimiento'),
+    ]
+    
+    ESTADO_CHOICES = [
+        ('RESUELTO', 'Resuelto / Finalizado'),
+        ('EN_PROCESO', 'En Proceso'),
+        ('PENDIENTE', 'Pendiente / Abierto'),
+    ]
+    
+    PRIORIDAD_CHOICES = [
+        ('NORMAL', 'Normal'),
+        ('ALTA', 'Alta'),
+        ('URGENTE', 'Urgente'),
+    ]
+    
+    titulo = models.CharField(
+        max_length=200,
+        verbose_name='Título / Asunto'
+    )
+    descripcion = models.TextField(
+        verbose_name='¿Qué se hizo? (Descripción del trabajo)'
+    )
+    categoria = models.CharField(
+        max_length=40,
+        choices=CATEGORIA_CHOICES,
+        default='SOPORTE_FUNCIONARIO',
+        verbose_name='Categoría de Actividad'
+    )
+    lugar = models.ForeignKey(
+        LugarEquipo,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tickets',
+        verbose_name='Lugar / Ubicación'
+    )
+    lugar_personalizado = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name='Lugar Personalizado (si no está en lista)'
+    )
+    funcionario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tickets_atendidos',
+        verbose_name='Funcionario Atendido / Solicitante'
+    )
+    equipo = models.ForeignKey(
+        Equipo,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tickets_bitacora',
+        verbose_name='Equipo Involucrado (Opcional)'
+    )
+    falla_asociada = models.ForeignKey(
+        FallaEquipo,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tickets_derivados',
+        verbose_name='Falla Reportada Asociada'
+    )
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default='RESUELTO',
+        verbose_name='Estado del Ticket'
+    )
+    prioridad = models.CharField(
+        max_length=20,
+        choices=PRIORIDAD_CHOICES,
+        default='NORMAL',
+        verbose_name='Prioridad'
+    )
+    fecha_actividad = models.DateField(
+        verbose_name='Fecha de la Actividad'
+    )
+    hora_actividad = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name='Hora de la Actividad'
+    )
+    resolucion = models.TextField(
+        blank=True,
+        verbose_name='Detalle de Resolución / Observaciones Finales'
+    )
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='tickets_registrados_bitacora',
+        verbose_name='Registrado por'
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Ticket / Bitácora TI'
+        verbose_name_plural = 'Tickets y Bitácora TI'
+        ordering = ['-fecha_actividad', '-fecha_creacion']
+
+    def __str__(self):
+        func_name = self.funcionario.get_full_name() if self.funcionario else 'General'
+        return f"[{self.fecha_actividad}] {self.titulo} - {func_name}"
+
+    @property
+    def lugar_display(self):
+        if self.lugar:
+            return self.lugar.nombre
+        return self.lugar_personalizado or 'Sin especificar'

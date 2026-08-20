@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Préstamos Diarios - FLUX{% endblock %}
+{% block page_title %}Control de Préstamos Diarios{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-xl bg-amber-500 flex items-center justify-center text-white shadow-md shadow-amber-500/20">
+                <i class="fa-solid fa-handshake text-lg"></i>
+            </div>
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Préstamos Diarios de Equipamiento</h2>
+                <p class="text-xs sm:text-sm text-slate-500 font-medium">Control en tiempo real de implementos prestados durante la jornada.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+            <!-- Selector de Mes -->
+            <form method="GET" action="{% url 'prestamos_diarios' %}" class="flex items-center gap-2">
+                <div class="relative">
+                    <select name="mes" onchange="this.form.submit()"
+                        class="pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 focus:bg-white focus:ring-2 focus:ring-amber-200 outline-none">
+                        {% for m in meses_disponibles %}
+                        <option value="{{ m.codigo }}" {% if m.seleccionado %}selected{% endif %}>{{ m.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+
+            <a href="{% url 'reporte_prestamos_diarios_pdf' %}?mes={{ mes_seleccionado }}" target="_blank"
+                class="inline-flex items-center px-3.5 py-2 text-xs font-semibold rounded-xl text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition-all shadow-sm">
+                <i class="fa-solid fa-file-pdf mr-2 text-rose-600"></i> Exportar PDF ({{ nombre_mes_seleccionado }})
+            </a>
+            <button type="button" onclick="document.getElementById('form-nuevo-prestamo').scrollIntoView({behavior: 'smooth'})"
+                class="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-xl text-white bg-slate-900 hover:bg-black shadow-sm transition-all">
+                <i class="fa-solid fa-plus mr-1.5"></i> Nuevo Préstamo
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Stats Widget -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-5 rounded-2xl shadow-md shadow-amber-500/10">
+            <div class="flex items-center justify-between opacity-80 mb-2 text-xs font-semibold uppercase tracking-wider">
+                <span>En Préstamo Hoy (Activos)</span>
+                <i class="fa-solid fa-clock text-base"></i>
+            </div>
+            <div class="text-3xl font-black">{{ prestamos_activos_hoy.count }}</div>
+            <div class="text-xs opacity-90 mt-1">Implementos en poder de funcionarios ahora</div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+            <div class="flex items-center justify-between text-slate-400 mb-2 text-xs font-semibold uppercase tracking-wider">
+                <span>Total Préstamos en {{ nombre_mes_seleccionado }}</span>
+                <i class="fa-solid fa-calendar-check text-base text-blue-500"></i>
+            </div>
+            <div class="text-3xl font-black text-slate-900">{{ total_mes }}</div>
+            <div class="text-xs text-slate-400 mt-1">{{ devueltos_mes }} devueltos correctamente</div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+            <div class="flex items-center justify-between text-slate-400 mb-2 text-xs font-semibold uppercase tracking-wider">
+                <span>Implementos Disponibles</span>
+                <i class="fa-solid fa-boxes-stacked text-base text-emerald-500"></i>
+            </div>
+            <div class="text-3xl font-black text-emerald-600">{{ equipos_disponibles.count }}</div>
+            <div class="text-xs text-slate-400 mt-1">Listos en inventario para entregar</div>
+        </div>
+    </div>
+
+    <!-- Section: Implementos Actualmente en Préstamo (HOY) -->
+    <div class="bg-white rounded-2xl border border-amber-200/80 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 bg-amber-50/70 border-b border-amber-100 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <span class="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></span>
+                <h3 class="text-sm sm:text-base font-bold text-slate-900">Implementos Actualmente en Préstamo (En Curso)</h3>
+            </div>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-200 text-amber-900">
+                {{ prestamos_activos_hoy.count }} en uso
+            </span>
+        </div>
+
+        {% if prestamos_activos_hoy %}
+        <div class="divide-y divide-slate-100">
+            {% for p in prestamos_activos_hoy %}
+            <div class="p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-amber-50/30 transition-colors">
+                <div class="flex items-start sm:items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-100/70 text-amber-700 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid {% if p.equipo.tipo == 'LAPTOP' %}fa-laptop{% elif p.equipo.tipo == 'PROYECTOR' %}fa-video{% elif p.equipo.tipo == 'PARLANTE' %}fa-volume-high{% elif p.equipo.tipo == 'CONTROL_REMOTO' %}fa-gamepad{% elif p.equipo.tipo == 'LAPIZ_INTERACTIVO' %}fa-pen-clip{% elif p.equipo.tipo == 'TABLET' %}fa-tablet-screen-button{% else %}fa-box{% endif %} text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-base font-bold text-slate-900">{{ p.equipo.marca }} {{ p.equipo.modelo|default:'' }}</span>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">INV: #{{ p.equipo.numero_inventario|default:'S/N' }}</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-500">
+                            <span><i class="fa-solid fa-user text-slate-400 mr-1"></i><strong>{{ p.funcionario.get_full_name }}</strong> ({{ p.funcionario.get_role_display }})</span>
+                            <span><i class="fa-regular fa-clock text-slate-400 mr-1"></i>Entregado a las {{ p.fecha_asignacion|date:"H:i" }} hrs</span>
+                            {% if p.observaciones %}
+                            <span class="text-slate-600 italic"><i class="fa-solid fa-comment-dots text-slate-400 mr-1"></i>"{{ p.observaciones }}"</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+                    <form method="POST" action="{% url 'terminar_prestamo_diario' p.id %}" onsubmit="return confirm('¿Confirmar devolución y recepción de este equipo?')">
+                        {% csrf_token %}
+                        <button type="submit"
+                            class="inline-flex items-center px-4 py-2 text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300/80 rounded-xl transition-all shadow-xs">
+                            <i class="fa-solid fa-circle-check mr-1.5 text-emerald-600"></i> Terminar Préstamo / Recibir
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-8 text-center">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-2">
+                <i class="fa-solid fa-check text-xl"></i>
+            </div>
+            <h4 class="text-sm font-bold text-slate-800">No hay préstamos pendientes hoy</h4>
+            <p class="text-xs text-slate-400 mt-0.5">Todos los implementos entregados han sido devueltos o no se han realizado entregas en esta jornada.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Section: Formulario Préstamo Rápido -->
+    <div id="form-nuevo-prestamo" class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+        <div class="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i class="fa-solid fa-plus text-sm"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900">Registrar Nuevo Préstamo Diario</h3>
+        </div>
+
+        <form method="POST" action="{% url 'crear_prestamo_diario' %}" class="grid grid-cols-1 md:grid-cols-12 gap-4">
+            {% csrf_token %}
+            <!-- Funcionario -->
+            <div class="md:col-span-4">
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Funcionario Solicitante *</label>
+                <select name="funcionario_id" required
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none">
+                    <option value="">— Seleccionar Funcionario —</option>
+                    {% for f in funcionarios %}
+                    <option value="{{ f.id }}">{{ f.get_full_name }} ({{ f.get_role_display }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Equipo -->
+            <div class="md:col-span-4">
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Implemento / Equipo Disponible *</label>
+                <select name="equipo_id" required
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none">
+                    <option value="">— Seleccionar Implemento —</option>
+                    {% for eq in equipos_disponibles %}
+                    <option value="{{ eq.id }}">{{ eq.get_tipo_display }} - {{ eq.marca }} {{ eq.modelo|default:'' }} (#{{ eq.numero_inventario|default:'S/N' }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="md:col-span-4">
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Observaciones / Lugar de Uso</label>
+                <input type="text" name="observaciones" placeholder="Ej: Sala 12, Proyección clase de historia..."
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none">
+            </div>
+
+            <div class="md:col-span-12 flex justify-end">
+                <button type="submit"
+                    class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-500/20 transition-all">
+                    <i class="fa-solid fa-handshake mr-1.5"></i> Registrar Entrega
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Section: Historial del Mes -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 bg-slate-50/80 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+                <h3 class="text-sm sm:text-base font-bold text-slate-900">Bitácora Mensual de Préstamos Diarios</h3>
+                <p class="text-xs text-slate-500 font-medium">Registros del periodo: <strong>{{ nombre_mes_seleccionado }}</strong></p>
+            </div>
+            <span class="text-xs font-semibold text-slate-500">
+                Total del mes: <strong class="text-slate-900 font-bold">{{ prestamos_mes.count }}</strong> entregas
+            </span>
+        </div>
+
+        {% if prestamos_mes %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/50 border-b border-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        <th class="px-5 py-3">Fecha / Hora</th>
+                        <th class="px-4 py-3">Funcionario</th>
+                        <th class="px-4 py-3">Implemento</th>
+                        <th class="px-4 py-3">Estado</th>
+                        <th class="px-4 py-3">Hora Devolución</th>
+                        <th class="px-4 py-3">Observaciones</th>
+                        <th class="px-4 py-3 text-right">Acción</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-xs sm:text-sm">
+                    {% for p in prestamos_mes %}
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="px-5 py-3 whitespace-nowrap font-medium text-slate-800">
+                            {{ p.fecha_asignacion|date:"d/m/Y - H:i" }}
+                        </td>
+                        <td class="px-4 py-3 font-semibold text-slate-900">
+                            {{ p.funcionario.get_full_name }}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-slate-800">{{ p.equipo.get_tipo_display }}: {{ p.equipo.marca }} {{ p.equipo.modelo|default:'' }}</div>
+                            <div class="text-[11px] text-slate-400 font-mono">#{{ p.equipo.numero_inventario|default:'S/N' }}</div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            {% if p.activo %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>En Uso
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Devuelto
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-slate-600">
+                            {% if p.fecha_devolucion_real %}
+                            {{ p.fecha_devolucion_real|date:"d/m/Y H:i" }}
+                            {% elif p.fecha_devolucion %}
+                            {{ p.fecha_devolucion|date:"d/m/Y" }}
+                            {% else %}
+                            <span class="text-amber-600 font-medium">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-slate-500 text-xs">
+                            {{ p.observaciones|default:"-" }}
+                        </td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap">
+                            {% if p.activo %}
+                            <form method="POST" action="{% url 'terminar_prestamo_diario' p.id %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-emerald-600 hover:text-emerald-800 font-bold text-xs">
+                                    <i class="fa-solid fa-check mr-1"></i> Recibir
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-slate-300 text-xs">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-xs text-slate-400">
+            No se registran préstamos diarios en el mes de {{ nombre_mes_seleccionado }}.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

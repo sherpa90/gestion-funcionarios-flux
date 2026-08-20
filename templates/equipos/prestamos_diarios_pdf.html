@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ titulo }}</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 1.2cm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: Arial, sans-serif;
+                font-size: 7px;
+                color: #888;
+            }
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 8px;
+            color: #333;
+            line-height: 1.3;
+        }
+        .header {
+            border-bottom: 2px solid #d97706;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .header h1 {
+            font-size: 15px;
+            color: #b45309;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        .header .subtitle {
+            font-size: 9px;
+            color: #666;
+        }
+        .header .meta {
+            text-align: right;
+            font-size: 8px;
+            color: #777;
+        }
+        .summary-bar {
+            background-color: #fffbeb;
+            border: 1px solid #fef3c7;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 25px;
+        }
+        .summary-item {
+            font-size: 9px;
+        }
+        .summary-item strong {
+            font-size: 11px;
+            color: #92400e;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+            font-size: 7.5px;
+        }
+        th {
+            background-color: #d97706;
+            color: white;
+            padding: 6px 4px;
+            text-align: left;
+            text-transform: uppercase;
+            font-size: 6.5px;
+            letter-spacing: 0.3px;
+            border: 1px solid #b45309;
+        }
+        td {
+            border: 1px solid #e5e7eb;
+            padding: 5px 4px;
+            vertical-align: middle;
+        }
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 6px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge-activo {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+        .badge-devuelto {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .footer {
+            margin-top: 15px;
+            padding-top: 8px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            font-size: 7px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>Reporte de Préstamos Diarios de Equipamiento</h1>
+            <div class="subtitle">FLUX - Gestión de Inventario y Recursos Tecnológicos &bull; Periodo: <strong>{{ nombre_mes }}</strong></div>
+        </div>
+        <div class="meta">
+            <div><strong>Emisión:</strong> {{ fecha_emision|date:"d/m/Y H:i" }}</div>
+            <div><strong>Generado por:</strong> {{ generado_por.get_full_name }}</div>
+        </div>
+    </div>
+
+    <div class="summary-bar">
+        <div class="summary-item">Total Préstamos: <strong>{{ total }}</strong></div>
+        <div class="summary-item">Devueltos: <strong>{{ devueltos }}</strong></div>
+        <div class="summary-item">En Préstamo Activo: <strong>{{ activos }}</strong></div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 12%;">Fecha / Hora Entrega</th>
+                <th style="width: 22%;">Funcionario</th>
+                <th style="width: 10%;">RUT</th>
+                <th style="width: 20%;">Implemento / Equipo</th>
+                <th style="width: 9%;">N° Inventario</th>
+                <th style="width: 9%;">Estado</th>
+                <th style="width: 11%;">Hora Devolución</th>
+                <th style="width: 16%;">Observaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in prestamos %}
+            <tr>
+                <td>{{ p.fecha_asignacion|date:"d/m/Y H:i" }}</td>
+                <td><strong>{{ p.funcionario.get_full_name }}</strong></td>
+                <td style="font-family: monospace;">{{ p.funcionario.run|default:"-" }}</td>
+                <td>{{ p.equipo.get_tipo_display }}: {{ p.equipo.marca }} {{ p.equipo.modelo|default:"" }}</td>
+                <td style="font-family: monospace; font-weight: bold;">#{{ p.equipo.numero_inventario|default:"S/N" }}</td>
+                <td>
+                    {% if p.activo %}
+                    <span class="badge badge-activo">En Curso</span>
+                    {% else %}
+                    <span class="badge badge-devuelto">Devuelto</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if p.fecha_devolucion_real %}
+                    {{ p.fecha_devolucion_real|date:"d/m/Y H:i" }}
+                    {% elif p.fecha_devolucion %}
+                    {{ p.fecha_devolucion|date:"d/m/Y" }}
+                    {% else %}
+                    <span style="color: #b45309;">Pendiente</span>
+                    {% endif %}
+                </td>
+                <td>{{ p.observaciones|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 15px; color: #888;">
+                    No se registran préstamos diarios durante el mes de {{ nombre_mes }}.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <div>FLUX - Sistema de Gestión Escolar y Administrativa</div>
+        <div>Control Oficial de Préstamos Diarios de Recursos</div>
+    </div>
+</body>
+</html>
