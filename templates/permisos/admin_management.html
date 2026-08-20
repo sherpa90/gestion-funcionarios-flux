@@ -216,10 +216,7 @@
                         </td>
                         <td class="px-3 py-2">
                             {% if solicitud.aprobado_por %}
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-medium text-gray-700 truncate max-w-[110px]">{{ solicitud.aprobado_por.first_name }} {{ solicitud.aprobado_por.last_name|slice:":1" }}.</span>
-                                <span class="text-[10px] text-gray-400">({{ solicitud.aprobado_por.get_role_display|default:solicitud.aprobado_por.get_tipo_funcionario_display|default:"—" }})</span>
-                            </div>
+                            <span class="text-xs font-medium text-gray-700 truncate max-w-[110px]">{{ solicitud.aprobado_por.first_name }} {{ solicitud.aprobado_por.last_name|slice:":1" }}.</span>
                             {% else %}
                             <span class="text-[10px] text-gray-400">—</span>
                             {% endif %}

@@ -285,6 +285,7 @@
                 </a>
                 {% endif %}
 
+
                 <!-- Gestión de Permisos -->
                 {% if user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' or user.role == 'SECRETARIA' or user.role == 'ADMIN' %}
                 <div class="pt-3 pb-1">
@@ -300,25 +301,16 @@
                     <i class="fa-solid fa-user-plus fa-fw mr-3 text-slate-400 text-xs"></i><span>Día Adm. Funcionario</span>
                 </a>
                 {% endif %}
-                {% endif %}
-
-                <!-- Administración -->
-                {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' %}
-                <div class="pt-3 pb-1">
-                    <p class="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Administración</p>
-                </div>
-                {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
-                <a href="{% url 'user_list' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
-                    <i class="fa-solid fa-users-gear fa-fw mr-3 text-slate-400 text-xs"></i><span>Usuarios</span>
-                </a>
-                {% endif %}
                 <a href="{% url 'admin_management' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
                     <i class="fa-solid fa-calendar-check fa-fw mr-3 text-slate-400 text-xs"></i><span>Permisos</span>
                 </a>
-                <a href="{% url 'licencia_admin_list' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
-                    <i class="fa-solid fa-notes-medical fa-fw mr-3 text-slate-400 text-xs"></i><span>Licencias</span>
-                </a>
+                {% endif %}
+
+                <!-- Equipamiento -->
                 {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                <div class="pt-3 pb-1">
+                    <p class="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Equipamiento</p>
+                </div>
                 {% if user.role != 'SECRETARIA' %}
                 <a href="{% url 'inventario_equipos' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
                     <i class="fa-solid fa-boxes-stacked fa-fw mr-3 text-slate-400 text-xs"></i><span>Inventario</span>
@@ -337,11 +329,43 @@
                     {% endif %}
                 </a>
                 {% endif %}
+                {% endif %}
+
+                <!-- Administración -->
+                {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' %}
+                <div class="pt-3 pb-1">
+                    <p class="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Administración</p>
+                </div>
                 <a href="{% url 'admin_liquidaciones_overview' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
                     <i class="fa-solid fa-coins fa-fw mr-3 text-slate-400 text-xs"></i><span>Liquidaciones</span>
                 </a>
                 {% endif %}
+
+                <!-- Gestión de Usuarios -->
+                {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                <div class="pt-3 pb-1">
+                    <p class="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Gestión de Usuarios</p>
+                </div>
+                <a href="{% url 'user_list' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
+                    <i class="fa-solid fa-users-gear fa-fw mr-3 text-slate-400 text-xs"></i><span>Usuarios</span>
+                </a>
+                {% endif %}
+
+                <!-- Licencias -->
+                {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' %}
+                <div class="pt-3 pb-1">
+                    <p class="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Licencias</p>
+                </div>
+                <a href="{% url 'licencia_admin_list' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
+                    <i class="fa-solid fa-notes-medical fa-fw mr-3 text-slate-400 text-xs"></i><span>Licencias</span>
+                </a>
+                {% endif %}
+
+                <!-- Sistema -->
                 {% if user.role == 'ADMIN' %}
+                <div class="pt-3 pb-1">
+                    <p class="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Sistema</p>
+                </div>
                 <a href="{% url 'admin_dashboard:system_backup' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
                     <i class="fa-solid fa-server fa-fw mr-3 text-slate-400 text-xs"></i><span>Respaldo BD</span>
                 </a>
@@ -351,7 +375,6 @@
                 <a href="{% url 'admin_dashboard:logs' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
                     <i class="fa-solid fa-terminal fa-fw mr-3 text-slate-400 text-xs"></i><span>Logs Sistema</span>
                 </a>
-                {% endif %}
                 {% endif %}
 
                 {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
@@ -565,23 +588,31 @@
                 {% endif %}
                 {% endif %}
 
-                <!-- Administración -->
-                {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' %}
+                <!-- Gestión de Permisos -->
+                {% if user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' or user.role == 'SECRETARIA' or user.role == 'ADMIN' %}
                 <div class="pt-3 pb-1">
-                    <p class="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Administración</p>
+                    <p class="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Gestión de Permisos</p>
                 </div>
-                {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
-                <a href="{% url 'user_list' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
-                    <i class="fa-solid fa-users-gear fa-fw mr-3 text-slate-400 text-xs"></i><span>Usuarios</span>
+                {% if user.role != 'ADMIN' %}
+                <a href="{% url 'solicitudes_admin' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
+                    <i class="fa-solid fa-circle-check fa-fw mr-3 text-slate-400 text-xs"></i><span>Aprobar Solicitudes</span>
+                </a>
+                {% endif %}
+                {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' %}
+                <a href="{% url 'solicitud_bypass' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
+                    <i class="fa-solid fa-user-plus fa-fw mr-3 text-slate-400 text-xs"></i><span>Día Adm. Funcionario</span>
                 </a>
                 {% endif %}
                 <a href="{% url 'admin_management' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
                     <i class="fa-solid fa-calendar-check fa-fw mr-3 text-slate-400 text-xs"></i><span>Permisos</span>
                 </a>
-                <a href="{% url 'licencia_admin_list' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
-                    <i class="fa-solid fa-notes-medical fa-fw mr-3 text-slate-400 text-xs"></i><span>Licencias</span>
-                </a>
+                {% endif %}
+
+                <!-- Equipamiento -->
                 {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                <div class="pt-3 pb-1">
+                    <p class="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Equipamiento</p>
+                </div>
                 {% if user.role != 'SECRETARIA' %}
                 <a href="{% url 'inventario_equipos' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
                     <i class="fa-solid fa-boxes-stacked fa-fw mr-3 text-slate-400 text-xs"></i><span>Inventario</span>
@@ -600,11 +631,43 @@
                     {% endif %}
                 </a>
                 {% endif %}
+                {% endif %}
+
+                <!-- Administración -->
+                {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' %}
+                <div class="pt-3 pb-1">
+                    <p class="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Administración</p>
+                </div>
                 <a href="{% url 'admin_liquidaciones_overview' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
                     <i class="fa-solid fa-coins fa-fw mr-3 text-slate-400 text-xs"></i><span>Liquidaciones</span>
                 </a>
                 {% endif %}
+
+                <!-- Gestión de Usuarios -->
+                {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' %}
+                <div class="pt-3 pb-1">
+                    <p class="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Gestión de Usuarios</p>
+                </div>
+                <a href="{% url 'user_list' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
+                    <i class="fa-solid fa-users-gear fa-fw mr-3 text-slate-400 text-xs"></i><span>Usuarios</span>
+                </a>
+                {% endif %}
+
+                <!-- Licencias -->
+                {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' %}
+                <div class="pt-3 pb-1">
+                    <p class="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Licencias</p>
+                </div>
+                <a href="{% url 'licencia_admin_list' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
+                    <i class="fa-solid fa-notes-medical fa-fw mr-3 text-slate-400 text-xs"></i><span>Licencias</span>
+                </a>
+                {% endif %}
+
+                <!-- Sistema -->
                 {% if user.role == 'ADMIN' %}
+                <div class="pt-3 pb-1">
+                    <p class="px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Sistema</p>
+                </div>
                 <a href="{% url 'admin_dashboard:system_backup' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
                     <i class="fa-solid fa-server fa-fw mr-3 text-slate-400 text-xs"></i><span>Respaldo BD</span>
                 </a>
@@ -614,7 +677,6 @@
                 <a href="{% url 'admin_dashboard:logs' %}" class="sidebar-link flex items-center px-3 py-2 rounded-lg">
                     <i class="fa-solid fa-terminal fa-fw mr-3 text-slate-400 text-xs"></i><span>Logs Sistema</span>
                 </a>
-                {% endif %}
                 {% endif %}
 
                 {% if user.role == 'ADMIN' or user.role == 'SECRETARIA' or user.role == 'DIRECTOR' or user.role == 'DIRECTIVO' %}
