@@ -217,7 +217,7 @@
                         <td class="px-3 py-2">
                             {% if solicitud.aprobado_por %}
                             <div class="flex items-center gap-2">
-                                <span class="text-xs font-medium text-gray-700">{{ solicitud.aprobado_por.get_full_name }}</span>
+                                <span class="text-xs font-medium text-gray-700 truncate max-w-[110px]">{{ solicitud.aprobado_por.first_name }} {{ solicitud.aprobado_por.last_name|slice:":1" }}.</span>
                                 <span class="text-[10px] text-gray-400">({{ solicitud.aprobado_por.get_role_display|default:solicitud.aprobado_por.get_tipo_funcionario_display|default:"—" }})</span>
                             </div>
                             {% else %}
@@ -293,8 +293,8 @@
                         </div>
                         <!-- Jefatura -->
                         {% if solicitud.aprobado_por %}
-                        <div class="text-xs text-gray-600 text-center">
-                            {{ solicitud.aprobado_por.get_full_name }}
+                        <div class="text-xs text-gray-600 text-center truncate max-w-[70px]">
+                            {{ solicitud.aprobado_por.first_name }} {{ solicitud.aprobado_por.last_name|slice:":1" }}.
                         </div>
                         {% else %}
                         <span class="text-[10px] text-gray-400">—</span>
