@@ -1606,7 +1606,11 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                         continue
 
                     if d in registros_reales_dict:
-                        registros_mes_final.append(registros_reales_dict[d])
+                        registro = registros_reales_dict[d]
+                        if not usuario.es_dia_activo(d) and not registro.hora_entrada_real:
+                            registros_mes_final.append(RegistroVirtual(d, 'DIA_LIBRE'))
+                        else:
+                            registros_mes_final.append(registro)
                     else:
                         # Para serenos: incluye todos los días (Lunes a Domingo, incluyendo sábados y domingos)
                         # Para no serenos: incluye días de semana (Lunes a Viernes)
@@ -1635,6 +1639,8 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                             else:
                                 if usuario.date_joined and d < usuario.date_joined.date():
                                     registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
+                                elif not usuario.es_dia_activo(d):
+                                    registros_mes_final.append(RegistroVirtual(d, 'DIA_LIBRE'))
                                 else:
                                     if d <= hoy:
                                         if not es_sereno:

@@ -232,6 +232,59 @@ class CustomUser(AbstractUser):
         """
         return self.is_active and self.is_on_leave
 
+    def es_dia_activo(self, fecha):
+        """
+        Determina si una fecha dada es un día laboral activo para el funcionario.
+        """
+        from asistencia.models import HorarioFuncionario, DiaHorario, HorarioExcepcional
+        
+        # Primero, obtener su horario activo
+        horario_actual = HorarioFuncionario.objects.filter(
+            funcionario=self, activo=True
+        ).first()
+        
+        dia_semana = fecha.weekday()
+        
+        # Determinar si es sereno
+        es_sereno = (
+            getattr(self, 'funcion', None) == 'SERENO' or
+            getattr(self, 'tipo_funcionario', None) == 'SERENO' or
+            getattr(self, 'role', None) == 'SERENO'
+        )
+        
+        if horario_actual:
+            semana_t = DiaHorario.get_semana_tipo(fecha, self)
+            
+            # Buscar primero horario específico para esta semana (1 o 2)
+            dia_horario = horario_actual.dias.filter(
+                dia_semana=dia_semana, 
+                semana_tipo=semana_t
+            ).first()
+            
+            if not dia_horario:
+                dia_horario = horario_actual.dias.filter(
+                    dia_semana=dia_semana, 
+                    semana_tipo__isnull=True
+                ).first()
+            
+            if dia_horario:
+                es_dia_activo_base = dia_horario.activo
+            else:
+                es_dia_activo_base = True if es_sereno else dia_semana < 5
+        else:
+            es_dia_activo_base = True if es_sereno else dia_semana < 5
+            
+        # Verificar si hay horario excepcional
+        excepcional = HorarioExcepcional.objects.filter(fecha=fecha).first()
+        if excepcional and excepcional.aplica_a_funcionario(self):
+            if excepcional.hora_entrada:
+                return True
+            else:
+                return es_dia_activo_base
+        else:
+            return es_dia_activo_base
+
+
 
 class BajaPeriodo(models.Model):
     """Periodo de baja para funcionarios (útil para reemplazos temporales)"""
