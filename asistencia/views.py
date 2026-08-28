@@ -365,19 +365,33 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
         mes_int = int(mes)
         anio_int = int(anio)
 
+        # Permitir a roles con permisos ver el calendario de otro funcionario
+        ROLES_PRIVILEGIADOS = ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
+        target_user_id = self.request.GET.get('user_id')
+        if target_user_id and self.request.user.role in ROLES_PRIVILEGIADOS:
+            from django.shortcuts import get_object_or_404
+            from users.models import CustomUser as _CustomUser
+            usuario_objetivo = get_object_or_404(_CustomUser, pk=target_user_id)
+            context['usuario_visto'] = usuario_objetivo
+            context['viendo_otro_usuario'] = True
+        else:
+            usuario_objetivo = self.request.user
+            context['usuario_visto'] = self.request.user
+            context['viendo_otro_usuario'] = False
+
         # Determinar si el funcionario es sereno
-        es_sereno = (self.request.user.role == 'FUNCIONARIO' and self.request.user.funcion == 'SERENO') or (self.request.user.tipo_funcionario == 'SERENO')
+        es_sereno = (usuario_objetivo.role == 'FUNCIONARIO' and usuario_objetivo.funcion == 'SERENO') or (usuario_objetivo.tipo_funcionario == 'SERENO')
 
         # Filtrar registros del usuario actual con select_related optimizado
         registros_qs = RegistroAsistencia.objects.filter(
-            funcionario=self.request.user,
+            funcionario=usuario_objetivo,
             fecha__year=anio,
             fecha__month=mes
         ).select_related('horario_asignado')
 
         # Horario asignado actual para determinar días laborales
         horario_actual = HorarioFuncionario.objects.filter(
-            funcionario=self.request.user, activo=True
+            funcionario=usuario_objetivo, activo=True
         ).first()
 
         dias_configurados = {}
@@ -409,7 +423,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
         ultimo_dia_mes = (primer_dia_mes + td(days=32)).replace(day=1) - td(days=1)
 
         permisos_qs = SolicitudPermiso.objects.filter(
-            usuario=self.request.user,
+            usuario=usuario_objetivo,
             estado='APROBADO',
             fecha_inicio__lte=ultimo_dia_mes
         ).filter(
@@ -429,7 +443,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
 
         # Consultar licencias médicas para este mes
         licencias_qs = LicenciaMedica.objects.filter(
-            usuario=self.request.user,
+            usuario=usuario_objetivo,
             fecha_inicio__lte=ultimo_dia_mes
         )
 
@@ -462,7 +476,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             fecha__month=mes_int
         )
         for exc in excepcionales_qs:
-            if exc.aplica_a_funcionario(self.request.user):
+            if exc.aplica_a_funcionario(usuario_objetivo):
                 excepcionales_por_fecha[exc.fecha] = exc
 
         ESTADO_DISPLAY = {
@@ -489,6 +503,17 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             @property
             def pk(self):
                 return None
+            @property
+            def falta_entrada(self):
+                ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
+                return not self.hora_entrada_real and self.estado not in ESTADOS_EXCLUIDOS
+            @property
+            def falta_salida(self):
+                ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
+                return not self.hora_salida_real and self.estado not in ESTADOS_EXCLUIDOS
+            @property
+            def tiene_olvido_marcacion(self):
+                return self.falta_entrada or self.falta_salida
             def get_estado_display(self):
                 return self._estado_display
             def obtener_tipo_licencia_o_permiso(self):
@@ -524,19 +549,19 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                                 registro = RegistroVirtual('MEDIO_DIA')
                             else:
                                 registro = RegistroVirtual('DIA_ADMINISTRATIVO')
-                    elif self.request.user.is_on_baja_on_date(fecha):
+                    elif usuario_objetivo.is_on_baja_on_date(fecha):
                         if not registro or registro.estado == 'AUSENTE':
                             registro = RegistroVirtual('BAJA')
 
                     # No es falta si hay registro (real o virtual), festivo, o no es día escolar
                     # O si la fecha es anterior a su ingreso al establecimiento
-                    es_posterior_a_ingreso = fecha >= self.request.user.date_joined.date()
+                    es_posterior_a_ingreso = fecha >= usuario_objetivo.date_joined.date()
                     if not es_posterior_a_ingreso and not registro:
                         registro = RegistroVirtual('SIN_DATA')
 
                     # Determinar si el día es activo en el horario del funcionario
                     dia_semana = fecha.weekday()
-                    semana_t = DiaHorario.get_semana_tipo(fecha, self.request.user)
+                    semana_t = DiaHorario.get_semana_tipo(fecha, usuario_objetivo)
 
                     # Buscar primero horario específico para esta semana (1 o 2)
                     # Si no existe, cae al horario universal (semana_tipo=None)
@@ -558,8 +583,21 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                     else:
                         es_dia_activo = es_dia_activo_base
 
-                    # Falta sin registro solo si era un día laboral activo y no hay marcación
-                    es_falta_sin_registro = es_pasado and es_dia_activo and not registro and not es_festivo and es_dia_escolar and es_posterior_a_ingreso
+                    # Falta sin registro: día laboral pasado (antes de hoy), activo, sin festivo, en año escolar
+                    es_falta_sin_registro = (
+                        fecha < today and es_dia_activo and not registro
+                        and not es_festivo and es_dia_escolar and es_posterior_a_ingreso
+                    )
+
+                    # Asignar registro virtual según si el día es pasado o futuro
+                    if not registro and es_dia_activo and es_posterior_a_ingreso and not es_festivo and es_dia_escolar:
+                        if fecha < today:
+                            # Día laboral pasado sin marcación → AUSENTE
+                            registro = RegistroVirtual('AUSENTE')
+                        elif fecha > today:
+                            # Día laboral futuro sin marcación → SIN_DATA
+                            registro = RegistroVirtual('SIN_DATA')
+                        # El día de hoy sin marcación: se deja como None (la jornada aún no termina)
 
                     # Un día es "laboral" para el calendario si es activo en horario O si hay registro real
                     es_laboral = es_dia_activo or (registro is not None and registro.estado not in ['SIN_DATA', 'DIA_LIBRE'])
@@ -635,7 +673,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
         ]
         anios_con_registros = list(RegistroAsistencia.objects.filter(
-            funcionario=self.request.user
+            funcionario=usuario_objetivo
         ).values_list('fecha__year', flat=True).distinct().order_by('-fecha__year'))
         
         # Si no hay registros, mostrar años por defecto (actual y anterior)
@@ -660,7 +698,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
 
         # Para el resumen semanal, usamos la paridad de HOY
         from django.utils import timezone
-        semana_actual_t = DiaHorario.get_semana_tipo(timezone.now().date(), self.request.user)
+        semana_actual_t = DiaHorario.get_semana_tipo(timezone.now().date(), usuario_objetivo)
         context["semana_tipo_actual"] = semana_actual_t
 
         for i in range(dias_totales):
@@ -717,7 +755,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                         continue
                     
                     dia_semana = fecha.weekday()
-                    semana_t = DiaHorario.get_semana_tipo(fecha, self.request.user)
+                    semana_t = DiaHorario.get_semana_tipo(fecha, usuario_objetivo)
                     
                     dia_h_obj = dias_configurados.get((dia_semana, semana_t))
                     if not dia_h_obj:
@@ -1479,6 +1517,17 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
             def pk(self):
                 return None
             @property
+            def falta_entrada(self):
+                ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
+                return not self.hora_entrada_real and self.estado not in ESTADOS_EXCLUIDOS
+            @property
+            def falta_salida(self):
+                ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
+                return not self.hora_salida_real and self.estado not in ESTADOS_EXCLUIDOS
+            @property
+            def tiene_olvido_marcacion(self):
+                return self.falta_entrada or self.falta_salida
+            @property
             def permiso_detalle(self):
                 if self._permiso and self._permiso.dias_solicitados == 0.5:
                     return {
@@ -1642,17 +1691,12 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                                 elif not usuario.es_dia_activo(d):
                                     registros_mes_final.append(RegistroVirtual(d, 'DIA_LIBRE'))
                                 else:
-                                    if d <= hoy:
-                                        if not es_sereno:
-                                            registros_mes_final.append(RegistroVirtual(d, 'AUSENTE'))
-                                        else:
-                                            registros_mes_final.append(RegistroVirtual(d, 'SIN_MARCACION_ENTRADA'))
+                                    # Fechas pasadas (estrictamente antes de hoy) → AUSENTE
+                                    # Hoy y fechas futuras → SIN_DATA (la jornada aún no ha ocurrido)
+                                    if d < hoy:
+                                        registros_mes_final.append(RegistroVirtual(d, 'AUSENTE'))
                                     else:
-                                        # Día futuro en el mes
-                                        if not es_sereno:
-                                            registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
-                                        else:
-                                            registros_mes_final.append(RegistroVirtual(d, 'SIN_MARCACION_ENTRADA'))
+                                        registros_mes_final.append(RegistroVirtual(d, 'SIN_DATA'))
 
                     d += td(days=1)
 

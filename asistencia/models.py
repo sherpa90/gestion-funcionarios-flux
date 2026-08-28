@@ -348,8 +348,22 @@ class RegistroAsistencia(models.Model):
         ordering = ["-fecha", "funcionario__last_name"]
         unique_together = ["funcionario", "fecha"]
 
-    def __str__(self):
-        return f"{self.funcionario.get_full_name()} - {self.fecha} - {self.get_estado_display()}"
+    @property
+    def falta_entrada(self):
+        """Retorna True si el registro no tiene hora de entrada y el estado no es permiso/licencia/libre/baja/festivo"""
+        ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
+        return not self.hora_entrada_real and self.estado not in ESTADOS_EXCLUIDOS
+
+    @property
+    def falta_salida(self):
+        """Retorna True si el registro no tiene hora de salida y el estado no es permiso/licencia/libre/baja/festivo"""
+        ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
+        return not self.hora_salida_real and self.estado not in ESTADOS_EXCLUIDOS
+
+    @property
+    def tiene_olvido_marcacion(self):
+        """Retorna True si falta entrada o salida en un día laboral que no es permiso/licencia"""
+        return self.falta_entrada or self.falta_salida
 
     @property
     def horario_dia(self):

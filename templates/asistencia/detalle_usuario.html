@@ -99,6 +99,10 @@
                 class="whitespace-nowrap flex items-center px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300">
                 <i class="fas fa-calendar-week mr-2.5"></i> Horario Semanal
             </button>
+            <a href="{% url 'asistencia:mi_asistencia' %}?user_id={{ usuario.id }}"
+               class="whitespace-nowrap flex items-center px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 text-indigo-600 hover:bg-indigo-50">
+                <i class="fas fa-calendar-alt mr-2.5"></i> Ver Calendario
+            </a>
         </div>
 
         <!-- Tab 1: Registros de Asistencia -->
@@ -192,7 +196,7 @@
                                     </thead>
                                     <tbody class="divide-y divide-gray-50">
                                         {% for registro in datos_mes.registros %}
-                                        <tr class="group/row transition-colors {% if registro.estado == 'AUSENTE' %}bg-red-50/80 hover:bg-red-100/60{% elif registro.estado == 'SIN_DATA' %}bg-gray-50/60 hover:bg-gray-100/40{% elif registro.estado == 'DIA_LIBRE' %}bg-green-50/60 hover:bg-green-100/40{% elif registro.estado == 'DIA_ADMINISTRATIVO' %}bg-purple-50/60 hover:bg-purple-100/40{% elif es_sereno %}hover:bg-indigo-950/5{% else %}hover:bg-gray-50/50{% endif %}">
+                                        <tr class="group/row transition-colors {% if registro.tiene_olvido_marcacion and registro.estado != 'AUSENTE' %}bg-amber-50/80 hover:bg-amber-100/60 border-l-4 border-l-amber-400{% elif registro.estado == 'AUSENTE' %}bg-red-50/80 hover:bg-red-100/60{% elif registro.estado == 'SIN_DATA' %}bg-gray-50/60 hover:bg-gray-100/40{% elif registro.estado == 'DIA_LIBRE' %}bg-green-50/60 hover:bg-green-100/40{% elif registro.estado == 'DIA_ADMINISTRATIVO' %}bg-purple-50/60 hover:bg-purple-100/40{% elif es_sereno %}hover:bg-indigo-950/5{% else %}hover:bg-gray-50/50{% endif %}">
                                             <td class="px-4 py-4 whitespace-nowrap">
                                                 {% if es_sereno %}
                                                 <div class="flex items-center gap-1.5">
@@ -211,7 +215,7 @@
                                                     <div class="flex items-center gap-1">
                                                         <span class="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span>
                                                         <span class="text-xs font-black text-indigo-700">
-                                                            {% if registro.hora_entrada_real %}{{ registro.hora_entrada_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
+                                                            {% if registro.hora_entrada_real %}{{ registro.hora_entrada_real|time:"H:i" }}{% elif registro.falta_entrada %}<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black text-amber-700 bg-amber-100 border border-amber-300" title="Sin marcación de entrada (Posible olvido)"><i class="fas fa-exclamation-triangle mr-1 text-[8px] text-amber-600"></i> Sin entrada</span>{% else %}<span class="text-gray-300">-</span>{% endif %}
                                                         </span>
                                                     </div>
                                                     {% if registro.semana_tipo == 1 %}
@@ -229,7 +233,7 @@
                                                 </div>
                                                 {% else %}
                                                 <div class="text-xs font-black text-gray-700">
-                                                    {% if registro.hora_entrada_real %}{{ registro.hora_entrada_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
+                                                    {% if registro.hora_entrada_real %}{{ registro.hora_entrada_real|time:"H:i" }}{% elif registro.falta_entrada %}<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black text-amber-700 bg-amber-100 border border-amber-300" title="Sin marcación de entrada (Posible olvido)"><i class="fas fa-exclamation-triangle mr-1 text-[8px] text-amber-600"></i> Sin entrada</span>{% else %}<span class="text-gray-300">-</span>{% endif %}
                                                 </div>
                                                 <div class="text-[9px] font-bold text-gray-400 uppercase mt-0.5">
                                                     Teórico: {% if registro.hora_entrada_teorica %}{{ registro.hora_entrada_teorica|time:"H:i" }}{% elif registro.horario_dia and registro.horario_dia.hora_entrada %}{{ registro.horario_dia.hora_entrada|time:"H:i" }}{% else %}-{% endif %}
@@ -241,7 +245,7 @@
                                                 <div class="flex items-center gap-1 opacity-60">
                                                     <span class="w-2 h-2 rounded-full bg-gray-300 inline-block"></span>
                                                     <span class="text-xs font-bold text-gray-400">
-                                                        {% if registro.hora_salida_real %}{{ registro.hora_salida_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
+                                                        {% if registro.hora_salida_real %}{{ registro.hora_salida_real|time:"H:i" }}{% elif registro.falta_salida %}<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black text-amber-700 bg-amber-100 border border-amber-300 opacity-100" title="Sin marcación de salida (Posible olvido)"><i class="fas fa-exclamation-triangle mr-1 text-[8px] text-amber-600"></i> Sin salida</span>{% else %}<span class="text-gray-300">-</span>{% endif %}
                                                     </span>
                                                 </div>
                                                 <div class="text-[9px] font-medium text-gray-400 uppercase ml-3">
@@ -249,7 +253,7 @@
                                                 </div>
                                                 {% else %}
                                                 <div class="text-xs font-black text-gray-700">
-                                                    {% if registro.hora_salida_real %}{{ registro.hora_salida_real|time:"H:i" }}{% else %}<span class="text-gray-300">-</span>{% endif %}
+                                                    {% if registro.hora_salida_real %}{{ registro.hora_salida_real|time:"H:i" }}{% elif registro.falta_salida %}<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black text-amber-700 bg-amber-100 border border-amber-300" title="Sin marcación de salida (Posible olvido)"><i class="fas fa-exclamation-triangle mr-1 text-[8px] text-amber-600"></i> Sin salida</span>{% else %}<span class="text-gray-300">-</span>{% endif %}
                                                 </div>
                                                 <div class="text-[9px] font-bold text-gray-400 uppercase mt-0.5">
                                                     Teórico: {% if registro.hora_salida_teorica %}{{ registro.hora_salida_teorica|time:"H:i" }}{% elif registro.horario_dia and registro.horario_dia.hora_salida %}{{ registro.horario_dia.hora_salida|time:"H:i" }}{% else %}-{% endif %}
