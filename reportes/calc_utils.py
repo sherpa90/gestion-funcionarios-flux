@@ -32,16 +32,23 @@ def _reevaluar_medio_dia(registro, permisos_por_fecha, fecha):
     return None
 
 
-def _es_ausencia_real(registro):
+def _es_ausencia_real(registro, usuario=None, fecha=None):
     """
-    Un registro se considera ausencia real cuando:
-    - el estado es AUSENTE, y
-    - NO tiene justificación manual
-    (siguiendo la regla: si no marca entrada o salida, es ausente a menos que sea justificado)
+    Un registro se considera ausencia real (inasistencia) cuando:
+    - el estado es AUSENTE o SIN_MARCACION_ENTRADA, y
+    - NO tiene justificación manual,
+    O bien cuando el funcionario olvidó la salida (tiene entrada pero no salida)
+    y NO tiene justificación manual. Esto cubre el caso típico: marcó entrada AM
+    pero olvidó marcar salida, lo que implica que no completó la jornada.
     """
     if getattr(registro, 'justificacion_manual', False):
         return False
-    return registro.estado in ('AUSENTE', 'SIN_MARCACION_ENTRADA')
+    if registro.estado in ('AUSENTE', 'SIN_MARCACION_ENTRADA'):
+        return True
+    # Olvido de salida: tiene entrada pero no salida → inasistencia
+    if registro.hora_entrada_real and not registro.hora_salida_real:
+        return True
+    return False
 
 
 def calcular_inasistencias_reales(usuario, fecha_inicio_calc=None, fecha_fin_calc=None):
