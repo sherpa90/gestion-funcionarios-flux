@@ -129,6 +129,11 @@ def calcular_inasistencias_reales(usuario, fecha_inicio_calc=None, fecha_fin_cal
     inasistencias = 0
     d = inicio
     while d <= fin:
+        # Si el funcionario está de baja en este día, no es ausencia
+        if usuario.is_on_baja_on_date(d):
+            d += timedelta(days=1)
+            continue
+
         # Festivos y licencias siempre se excluyen
         if d in festivos or d in dias_licencia:
             d += timedelta(days=1)
