@@ -1284,91 +1284,11 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             # Calcular atrasos (minutos acumulado mensual)
             total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
 
-            # Inasistencias en BD (estado guardado como AUSENTE)
-            ausencias_db = func_registros.filter(estado='AUSENTE').count()
-
-            # Pre-cargar licencias y permisos del funcionario para el mes
-            licencias_func = set()
-            for lic in LicenciaMedica.objects.filter(
-                usuario=func, fecha_inicio__lte=ultimo_dia_mes
-            ):
-                fin_lic = lic.fecha_inicio + timedelta(days=lic.dias - 1)
-                inicio = max(lic.fecha_inicio, primer_dia_mes)
-                fin = min(fin_lic, ultimo_dia_mes)
-                d_lic = inicio
-                while d_lic <= fin:
-                    licencias_func.add(d_lic)
-                    d_lic += timedelta(days=1)
-
-            permisos_func = set()
-            for perm in SolicitudPermiso.objects.filter(
-                usuario=func, estado='APROBADO',
-                fecha_inicio__lte=ultimo_dia_mes
-            ).filter(
-                Q(fecha_termino__gte=primer_dia_mes) | Q(fecha_termino__isnull=True)
-            ):
-                inicio = max(perm.fecha_inicio, primer_dia_mes)
-                fin = perm.fecha_termino or ultimo_dia_mes
-                fin = min(fin, ultimo_dia_mes)
-                d_perm = inicio
-                while d_perm <= fin:
-                    permisos_func.add(d_perm)
-                    d_perm += timedelta(days=1)
-
-            # Inasistencias virtuales: días laborales pasados sin ningún registro
-            # y sin cobertura de licencia/permiso (igual a lo que muestra la vista)
-            fechas_con_registro = set(func_registros.values_list('fecha', flat=True))
-            es_sereno = (func.funcion == 'SERENO') or (func.tipo_funcionario == 'SERENO')
-            
-            # Si no tiene horario, no debe tener atrasos ni inasistencias (aplica a todos)
-            tiene_horario = func.id in horarios_dict
-            if not tiene_horario:
-                total_atrasos = 0
-                total_inasistencias = 0
-            else:
-                dias_laborales = horarios_dict.get(func.id, set())
-
-                ausencias_virtuales = 0
-                d = primer_dia_mes
-                while d <= ultimo_dia:
-                    if d not in fechas_con_registro and d >= func.date_joined.date():
-                        dia_semana = d.weekday()
-                        if dia_semana >= 5 and not es_sereno:
-                            d += timedelta(days=1)
-                            continue
-                        if d in festivos or d in licencias_func or d in permisos_func:
-                            d += timedelta(days=1)
-                            continue
-                        # Si el funcionario estaba de baja en este día, no contar como ausencia
-                        if func.is_on_baja_on_date(d):
-                            d += timedelta(days=1)
-                            continue
-                        en_ano_escolar = True
-                        if ano_escolar:
-                            en_ano_escolar = (
-                                ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin or
-                                ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
-                            )
-                        if not en_ano_escolar:
-                            d += timedelta(days=1)
-                            continue
-                        # Determinar si es día laboral activo para la fecha d
-                        es_laboral = False
-                        if es_sereno:
-                            iso_year, iso_week, _ = d.isocalendar()
-                            semana_t = semanas_asignadas_dict.get((func.id, iso_week))
-                            if semana_t is None:
-                                semana_t = 1 if iso_week % 2 != 0 else 2
-                            # Ver si existe config activa para este turno y día
-                            es_laboral = (func.id, dia_semana, semana_t) in dias_configurados or (func.id, dia_semana, None) in dias_configurados
-                        else:
-                            es_laboral = dia_semana in dias_laborales
-                            
-                        if es_laboral:
-                            ausencias_virtuales += 1
-                    d += timedelta(days=1)
-
-                total_inasistencias = ausencias_db + ausencias_virtuales
+            # Inasistencias: usar helper que aplica la lógica actualizada
+            # (medio día administrativo no cuenta como ausencia; si no marca entrada/salida
+            #  y no está justificado, cuenta como ausencia).
+            from .calc_utils import calcular_inasistencias_reales
+            total_inasistencias = calcular_inasistencias_reales(func, primer_dia_mes, ultimo_dia)
 
             # Solo incluir si tiene inasistencias injustificadas o atrasos acumulados >= 60 minutos
             if total_inasistencias > 0 or total_atrasos >= 60:
@@ -1592,90 +1512,11 @@ class ExportarDAEMPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
             # Calcular atrasos (minutos acumulado mensual)
             total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
 
-            # Inasistencias en BD (estado guardado como AUSENTE)
-            ausencias_db = func_registros.filter(estado='AUSENTE').count()
-
-            # Pre-cargar licencias y permisos del funcionario para excluirlos
-            from permisos.models import SolicitudPermiso
-            from licencias.models import LicenciaMedica
-
-            licencias_func = set()
-            for lic in LicenciaMedica.objects.filter(
-                usuario=func, fecha_inicio__lte=ultimo_dia_mes
-            ):
-                fin_lic = lic.fecha_inicio + timedelta(days=lic.dias - 1)
-                inicio = max(lic.fecha_inicio, primer_dia_mes)
-                fin = min(fin_lic, ultimo_dia_mes)
-                d_lic = inicio
-                while d_lic <= fin:
-                    licencias_func.add(d_lic)
-                    d_lic += timedelta(days=1)
-
-            permisos_func = set()
-            for perm in SolicitudPermiso.objects.filter(
-                usuario=func, estado='APROBADO',
-                fecha_inicio__lte=ultimo_dia_mes
-            ).filter(
-                Q(fecha_termino__gte=primer_dia_mes) | Q(fecha_termino__isnull=True)
-            ):
-                inicio = max(perm.fecha_inicio, primer_dia_mes)
-                fin = perm.fecha_termino or ultimo_dia_mes
-                fin = min(fin, ultimo_dia_mes)
-                d_perm = inicio
-                while d_perm <= fin:
-                    permisos_func.add(d_perm)
-                    d_perm += timedelta(days=1)
-
-            # Inasistencias virtuales: días laborales pasados sin ningún registro
-            # y sin cobertura de licencia/permiso (igual a lo que muestra la vista)
-            fechas_con_registro = set(func_registros.values_list('fecha', flat=True))
-            es_sereno = (func.funcion == 'SERENO') or (func.tipo_funcionario == 'SERENO')
-            
-            # Si no tiene horario, no debe tener atrasos ni inasistencias (aplica a todos)
-            tiene_horario = func.id in horarios_dict
-            if not tiene_horario:
-                total_atrasos = 0
-                total_inasistencias = 0
-            else:
-                dias_laborales = horarios_dict.get(func.id, set())
-
-                ausencias_virtuales = 0
-                d = primer_dia_mes
-                while d <= ultimo_dia:
-                    if d not in fechas_con_registro and d >= func.date_joined.date():
-                        dia_semana = d.weekday()
-                        if dia_semana >= 5 and not es_sereno:
-                            d += timedelta(days=1)
-                            continue
-                        if d in festivos or d in licencias_func or d in permisos_func:
-                            d += timedelta(days=1)
-                            continue
-                        # Si el funcionario estaba de baja en este día, no contar como ausencia
-                        if func.is_on_baja_on_date(d):
-                            d += timedelta(days=1)
-                            continue
-                        en_ano_escolar = True
-                        if ano_escolar:
-                            en_ano_escolar = (
-                                ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin or
-                                ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
-                            )
-                        if not en_ano_escolar:
-                            d += timedelta(days=1)
-                            continue
-                        if es_sereno:
-                            iso_year, iso_week, _ = d.isocalendar()
-                            semana_t = semanas_asignadas_dict.get((func.id, iso_week))
-                            if semana_t is None:
-                                semana_t = 1 if iso_week % 2 != 0 else 2
-                            es_laboral = (func.id, dia_semana, semana_t) in dias_configurados or (func.id, dia_semana, None) in dias_configurados
-                        else:
-                            es_laboral = dia_semana in dias_laborales
-                        if es_laboral:
-                            ausencias_virtuales += 1
-                    d += timedelta(days=1)
-
-                total_inasistencias = ausencias_db + ausencias_virtuales
+            # Inasistencias: usar helper que aplica la lógica actualizada
+            # (medio día administrativo no cuenta como ausencia; si no marca entrada/salida
+            #  y no está justificado, cuenta como ausencia).
+            from .calc_utils import calcular_inasistencias_reales
+            total_inasistencias = calcular_inasistencias_reales(func, primer_dia_mes, ultimo_dia)
 
             # Solo incluir si tiene inasistencias injustificadas o atrasos acumulados >= 60 minutos
             if total_inasistencias > 0 or total_atrasos >= 60:

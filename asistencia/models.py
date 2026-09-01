@@ -665,42 +665,50 @@ class RegistroAsistencia(models.Model):
                     # Solo cuenta retraso si marcó en la jornada que SÍ trabaja
                     if permiso.jornada == 'AM':
                         # Tiene libre en la mañana, trabaja en la tarde
-                        # Sin marcación de salida → ausente en la jornada laboral (tarde)
+                        # Si no marcó entrada AM y no marcó salida PM: ausencia total → AUSENTE
+                        # Si no marcó entrada pero sí salida PM: ausencia en entrada
+                        # Si marcó entrada pero no salida PM: ausencia en la jornada laboral (tarde) → AUSENTE
+                        # Si marcó entrada y salida: evaluar retraso en PM
                         # El medio día AM administrativo sigue vigente (accessible via permiso_detalle)
+                        if not self.hora_entrada_real and not self.hora_salida_real:
+                            return "JUSTIFICADO" if self.justificacion_manual else "AUSENTE"
+                        if not self.hora_entrada_real:
+                            # No marcó entrada AM → es su día libre AM, no es ausencia
+                            return "JUSTIFICADO" if self.justificacion_manual else "MEDIO_DIA"
                         if not self.hora_salida_real:
                             return "JUSTIFICADO" if self.justificacion_manual else "AUSENTE"
-                        if self.hora_entrada_real:
-                            # Si marcó entrada, verificar si fue en la tarde (después de 12:00)
-                            if self.hora_entrada_real.hour >= 12:
-                                # Marcó en su jornada laboral (tarde) - verificar si fue puntual respecto a las 14:00
-                                minutos_reales = self.hora_entrada_real.hour * 60 + self.hora_entrada_real.minute
-                                # Hora de referencia para la tarde: 14:00 (2 PM)
-                                minutos_referencia = 14 * 60
-                                diferencia = minutos_reales - minutos_referencia
-                                if diferencia > 0:
-                                    self.minutos_retraso = max(0, diferencia)
-                                return "MEDIO_DIA"
-                            else:
-                                # Marcó en la mañana pero tiene permiso AM - no debería contar retraso
-                                return "MEDIO_DIA"
+                        # Si marcó entrada, verificar si fue en la tarde (después de 12:00)
+                        if self.hora_entrada_real.hour >= 12:
+                            # Marcó en su jornada laboral (tarde) - verificar si fue puntual respecto a las 14:00
+                            minutos_reales = self.hora_entrada_real.hour * 60 + self.hora_entrada_real.minute
+                            # Hora de referencia para la tarde: 14:00 (2 PM)
+                            minutos_referencia = 14 * 60
+                            diferencia = minutos_reales - minutos_referencia
+                            if diferencia > 0:
+                                self.minutos_retraso = max(0, diferencia)
+                            return "MEDIO_DIA"
                         else:
-                            # Tiene salida pero no entrada → sin marcación de entrada
-                            return "JUSTIFICADO" if self.justificacion_manual else "SIN_MARCACION_ENTRADA"
+                            # Marcó en la mañana pero tiene permiso AM - no debería contar retraso
+                            return "MEDIO_DIA"
 
                     elif permiso.jornada == 'PM':
                         # Tiene libre en la tarde, trabaja en la mañana
-                        # Sin marcación de salida → ausente en la jornada laboral (mañana)
+                        # Si no marcó entrada AM y no marcó salida PM: ausencia total → AUSENTE
+                        # Si marcó entrada pero no salida PM: es su día libre PM, no es ausencia
+                        # Si no marcó entrada pero sí salida PM: ausencia en entrada
+                        # Si marcó entrada y salida: evaluar retraso en AM
                         # El medio día PM administrativo sigue vigente (accessible via permiso_detalle)
-                        if not self.hora_salida_real:
+                        if not self.hora_entrada_real and not self.hora_salida_real:
                             return "JUSTIFICADO" if self.justificacion_manual else "AUSENTE"
-                        if self.hora_entrada_real:
-                            # Verificar retraso solo respecto a la mañana
-                            retraso = self.calcular_retraso()
-                            self.minutos_retraso = retraso
-                            return "MEDIO_DIA"
-                        else:
-                            # Tiene salida pero no entrada → sin marcación de entrada
+                        if not self.hora_salida_real:
+                            # No marcó salida PM → es su día libre PM, no es ausencia
+                            return "JUSTIFICADO" if self.justificacion_manual else "MEDIO_DIA"
+                        if not self.hora_entrada_real:
                             return "JUSTIFICADO" if self.justificacion_manual else "SIN_MARCACION_ENTRADA"
+                        # Verificar retraso solo respecto a la mañana
+                        retraso = self.calcular_retraso()
+                        self.minutos_retraso = retraso
+                        return "MEDIO_DIA"
                 else:
                     # Día completo administrativo
                     return "DIA_ADMINISTRATIVO"

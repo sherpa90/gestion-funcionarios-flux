@@ -1656,8 +1656,31 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
 
                     if d in registros_reales_dict:
                         registro = registros_reales_dict[d]
-                        if not usuario.es_dia_activo(d) and not registro.hora_entrada_real:
+                        if es_sereno and not usuario.es_dia_activo(d) and not registro.hora_entrada_real:
                             registros_mes_final.append(RegistroVirtual(d, 'DIA_LIBRE'))
+                        elif d in permisos_por_fecha and permisos_por_fecha[d].dias_solicitados == 0.5 and registro.estado in ['AUSENTE', 'SIN_MARCACION_ENTRADA']:
+                            # Reevaluar al vuelo: si tiene medio día administrativo y el estado guardado es AUSENTE/SIN_MARCACION_ENTRADA,
+                            # aplicar la nueva lógica del modelo que ya maneja este caso
+                            permiso = permisos_por_fecha[d]
+                            entrada = registro.hora_entrada_real
+                            salida = registro.hora_salida_real
+                            if not entrada and not salida:
+                                registro.estado = 'AUSENTE'
+                            elif permiso.jornada == 'AM':
+                                if not entrada:
+                                    registro.estado = 'MEDIO_DIA'
+                                elif not salida:
+                                    registro.estado = 'AUSENTE'
+                                else:
+                                    registro.estado = 'MEDIO_DIA'
+                            else:
+                                if not salida:
+                                    registro.estado = 'MEDIO_DIA'
+                                elif not entrada:
+                                    registro.estado = 'SIN_MARCACION_ENTRADA'
+                                else:
+                                    registro.estado = 'MEDIO_DIA'
+                            registros_mes_final.append(registro)
                         else:
                             registros_mes_final.append(registro)
                     else:
