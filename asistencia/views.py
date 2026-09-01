@@ -498,6 +498,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 self.horas_trabajadas = None
                 self.horario_asignado = None
                 self.alegacion = None
+                self.justificacion_manual = False
                 self._estado_display = ESTADO_DISPLAY.get(estado, estado)
                 self._tipo_licencia = tipo_licencia
             @property
@@ -505,10 +506,14 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 return None
             @property
             def falta_entrada(self):
+                if getattr(self, 'justificacion_manual', False) or self.estado == 'JUSTIFICADO':
+                    return False
                 ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
                 return not self.hora_entrada_real and self.estado not in ESTADOS_EXCLUIDOS
             @property
             def falta_salida(self):
+                if getattr(self, 'justificacion_manual', False) or self.estado == 'JUSTIFICADO':
+                    return False
                 ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
                 return not self.hora_salida_real and self.estado not in ESTADOS_EXCLUIDOS
             @property
@@ -1505,6 +1510,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 self.minutos_trabajados = None
                 self.horario_asignado = None
                 self.alegacion = None
+                self.justificacion_manual = False
                 self.nombre_festivo = nombre_festivo
                 self._estado_display = ESTADO_DISPLAY.get(estado, estado)
                 self._tipo_licencia = tipo_licencia
@@ -1518,10 +1524,14 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 return None
             @property
             def falta_entrada(self):
+                if getattr(self, 'justificacion_manual', False) or self.estado == 'JUSTIFICADO':
+                    return False
                 ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
                 return not self.hora_entrada_real and self.estado not in ESTADOS_EXCLUIDOS
             @property
             def falta_salida(self):
+                if getattr(self, 'justificacion_manual', False) or self.estado == 'JUSTIFICADO':
+                    return False
                 ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
                 return not self.hora_salida_real and self.estado not in ESTADOS_EXCLUIDOS
             @property

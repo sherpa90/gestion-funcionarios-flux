@@ -350,13 +350,17 @@ class RegistroAsistencia(models.Model):
 
     @property
     def falta_entrada(self):
-        """Retorna True si el registro no tiene hora de entrada y el estado no es permiso/licencia/libre/baja/festivo"""
+        """Retorna True si el registro no tiene hora de entrada y el estado no es permiso/licencia/libre/baja/festivo/justificado"""
+        if getattr(self, 'justificacion_manual', False) or self.estado == 'JUSTIFICADO':
+            return False
         ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
         return not self.hora_entrada_real and self.estado not in ESTADOS_EXCLUIDOS
 
     @property
     def falta_salida(self):
-        """Retorna True si el registro no tiene hora de salida y el estado no es permiso/licencia/libre/baja/festivo"""
+        """Retorna True si el registro no tiene hora de salida y el estado no es permiso/licencia/libre/baja/festivo/justificado"""
+        if getattr(self, 'justificacion_manual', False) or self.estado == 'JUSTIFICADO':
+            return False
         ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
         return not self.hora_salida_real and self.estado not in ESTADOS_EXCLUIDOS
 
