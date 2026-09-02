@@ -319,9 +319,16 @@
                                                         {% endif %}
                                                     </div>
                                                 {% elif registro.estado == 'MEDIO_DIA' %}
-                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-indigo-100 text-indigo-800 border border-indigo-200 shadow-sm">
-                                                        <i class="fas fa-adjust mr-1.5 text-[8px]"></i> Medio Día
-                                                    </span>
+                                                    <div class="flex flex-col gap-1">
+                                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-indigo-100 text-indigo-800 border border-indigo-200 shadow-sm">
+                                                            <i class="fas fa-adjust mr-1.5 text-[8px]"></i> Medio Día
+                                                        </span>
+                                                        {% if registro.permiso_detalle and registro.permiso_detalle.es_medio_dia %}
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-black uppercase bg-indigo-50 text-indigo-700 border border-indigo-200" title="Medio día administrativo {{ registro.permiso_detalle.jornada_display }}">
+                                                            <i class="fas fa-sun mr-1 text-[7px]"></i> {{ registro.permiso_detalle.jornada }}
+                                                        </span>
+                                                        {% endif %}
+                                                    </div>
                                                 {% elif registro.estado == 'DIA_ADMINISTRATIVO' %}
                                                     <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-purple-100 text-purple-800 border border-purple-200 shadow-sm">
                                                         <i class="fas fa-calendar-check mr-1.5 text-[8px]"></i> Administrativo
@@ -594,6 +601,26 @@
                     <p class="text-xl font-black text-gray-900">{{ estadisticas_funcionario.total_minutos_retraso }}</p>
                     <span class="text-[8px] font-bold text-gray-400">minutos</span>
                 </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:border-rose-200 transition-all">
+            <div class="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                <i class="fas fa-user-times text-rose-500"></i>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Ausencias</p>
+                <p class="text-xl font-black text-gray-900">{{ estadisticas_funcionario.registros_ausentes }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4 group hover:border-amber-200 transition-all">
+            <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                <i class="fas fa-exclamation-triangle text-amber-500"></i>
+            </div>
+            <div>
+                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Sin Marcaciones</p>
+                <p class="text-xl font-black text-gray-900">{{ estadisticas_funcionario.registros_sin_marcacion }}</p>
             </div>
         </div>
     </div>

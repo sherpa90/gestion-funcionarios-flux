@@ -540,6 +540,24 @@
                 </div>
                 {% endif %}
             </div>
+
+            <!-- Ausencias y Sin Marcaciones del Mes -->
+            <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.15); display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem;">
+                <div style="background:rgba(255,255,255,0.12); border-radius:0.75rem; padding:0.6rem 0.75rem;">
+                    <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
+                        <i class="fas fa-user-times" style="font-size:0.75rem; color:#fecaca;"></i>
+                        <span style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85;">Ausencias del Mes</span>
+                    </div>
+                    <span style="font-size:1.1rem; font-weight:900; color:#fff;">{{ ausencias_mes }}</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.12); border-radius:0.75rem; padding:0.6rem 0.75rem;">
+                    <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
+                        <i class="fas fa-exclamation-triangle" style="font-size:0.75rem; color:#fde68a;"></i>
+                        <span style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85;">Sin Marcaciones</span>
+                    </div>
+                    <span style="font-size:1.1rem; font-weight:900; color:#fff;">{{ sin_marcacion_mes }}</span>
+                </div>
+            </div>
         </div>
     </div>
 

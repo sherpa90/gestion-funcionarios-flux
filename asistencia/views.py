@@ -1476,6 +1476,13 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
         registros_puntuales = registros_usuario.filter(estado='PUNTUAL').count()
         registros_retraso = registros_usuario.filter(estado='RETRASO').count()
         registros_ausentes = registros_usuario.filter(estado='AUSENTE').count()
+        # Sin marcación: solo entrada o solo salida
+        registros_sin_marcacion = registros_usuario.filter(estado__in=['SIN_MARCACION_ENTRADA']).count()
+        registros_sin_marcacion += sum(
+            1 for r in registros_usuario
+            if r.estado not in ('SIN_MARCACION_ENTRADA', 'AUSENTE')
+            and r.hora_entrada_real and not r.hora_salida_real
+        )
         total_minutos_retraso = sum(r.minutos_retraso for r in registros_usuario if r.minutos_retraso > 0)
 
         ESTADO_DISPLAY = {
@@ -1879,6 +1886,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 'registros_puntuales': registros_puntuales,
                 'registros_retraso': 0 if es_sereno else registros_retraso,
                 'registros_ausentes': 0 if es_sereno else registros_ausentes,
+                'registros_sin_marcacion': 0 if es_sereno else registros_sin_marcacion,
                 'total_minutos_retraso': 0 if es_sereno else total_minutos_retraso,
                 'anios_con_asistencia': len(anios_disponibles),
                 'promedio_por_anio': round(total_registros / len(anios_disponibles), 1) if anios_disponibles else 0,
