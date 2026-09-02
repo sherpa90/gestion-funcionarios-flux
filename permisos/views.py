@@ -197,20 +197,30 @@ class SolicitudListView(LoginRequiredMixin, ListView):
             funcionario=self.request.user,
             fecha__year=now.year,
             fecha__month=now.month,
-        )
+        ).select_related('funcionario')
+        
         total_retraso_mes = registros_mes_qs.filter(estado='RETRASO').aggregate(total=Sum('minutos_retraso'))['total'] or 0
         context['total_retraso_mes'] = total_retraso_mes
 
-        # Ausencias del mes: solo días sin entrada y sin salida
-        ausencias_mes = registros_mes_qs.filter(estado='AUSENTE').count()
+        # Ausencias del mes: calcular al vuelo (sin entrada y sin salida, no justificado)
+        ausencias_mes = sum(
+            1 for r in registros_mes_qs
+            if not r.hora_entrada_real and not r.hora_salida_real
+            and not getattr(r, 'justificacion_manual', False)
+            and r.estado != 'JUSTIFICADO'
+        )
         context['ausencias_mes'] = ausencias_mes
 
-        # Sin marcación del mes: solo entrada o solo salida
-        sin_marcacion_mes = registros_mes_qs.filter(estado='SIN_MARCACION_ENTRADA').count()
-        sin_marcacion_mes += sum(
+        # Sin marcación del mes: calcular al vuelo (solo entrada o solo salida, no justificado)
+        sin_marcacion_mes = sum(
             1 for r in registros_mes_qs
-            if r.estado not in ('SIN_MARCACION_ENTRADA', 'AUSENTE')
-            and r.hora_entrada_real and not r.hora_salida_real
+            if (
+                (r.hora_entrada_real and not r.hora_salida_real) or
+                (not r.hora_entrada_real and r.hora_salida_real)
+            )
+            and not getattr(r, 'justificacion_manual', False)
+            and r.estado != 'JUSTIFICADO'
+            and not (not r.hora_entrada_real and not r.hora_salida_real)
         )
         context['sin_marcacion_mes'] = sin_marcacion_mes
 

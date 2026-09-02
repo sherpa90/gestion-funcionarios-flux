@@ -4,7 +4,8 @@ from .views import (
     ReporteMensualDiasAdministrativosView, ReporteMensualDiasAdministrativosExcelView,
     ExportarDAEMExcelView, ExportarDAEMPDFView, MiReportePDFView,
     ExportarHorariosExcelView, ExportarHorariosPDFView, MiHorarioPDFView,
-    ExportarHorarioIndividualPDFView, ExportarJustificacionesExcelView, ExportarJustificacionesPDFView
+    ExportarHorarioIndividualPDFView, ExportarJustificacionesExcelView, ExportarJustificacionesPDFView,
+    ExportarCLAExcelView, ExportarCLAPDFView
 )
 
 urlpatterns = [
@@ -23,5 +24,7 @@ urlpatterns = [
     path('pdf/mi-horario/', MiHorarioPDFView.as_view(), name='mi_horario_pdf'),
     path('excel/justificaciones/', ExportarJustificacionesExcelView.as_view(), name='reportes_justificaciones_excel'),
     path('pdf/justificaciones/', ExportarJustificacionesPDFView.as_view(), name='reportes_justificaciones_pdf'),
-]
+    path('cla-excel/', ExportarCLAExcelView.as_view(), name='reportes_cla_excel'),
+    path('cla-pdf/', ExportarCLAPDFView.as_view(), name='reportes_cla_pdf'),
+    ]
 

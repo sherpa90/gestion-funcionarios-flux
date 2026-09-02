@@ -661,6 +661,59 @@
   </div>
 </div>
 
+<div id="modal-cla" class="rep-overlay" onclick="if(event.target===this)closeModal('cla')">
+  <div class="rep-modal">
+    <span class="rep-modal-handle"></span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
+      <h3 style="margin:0;display:flex;align-items:center;gap:.5rem;">
+        <span style="background:#f3f4f6;color:#374151;border-radius:.5rem;padding:.3rem .5rem;font-size:.85rem;"><i class="fas fa-file-alt"></i></span>
+        Informe de Asistencia Laboral - CLA
+      </h3>
+      <button onclick="closeModal('cla')" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:.25rem;"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="rep-form-group">
+      <label>Tipo de Funcionario</label>
+      <select id="m-cla-tipo">
+        <option value="DOCENTE">Docentes</option>
+        <option value="ASISTENTE">Asistentes de la Educación</option>
+      </select>
+    </div>
+    <div class="rep-form-group">
+      <label>Año</label>
+      <select id="m-cla-year">
+        {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="rep-form-group">
+      <label>Mes</label>
+      <select id="m-cla-mes">
+        <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
+        <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
+        <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
+        <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
+        <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
+        <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
+        <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
+        <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
+        <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
+        <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
+        <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
+        <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
+      </select>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#16a34a,#15803d); margin-top: 0;"
+          onclick="window.location.href='{% url 'reportes_cla_excel' %}?tipo='+document.getElementById('m-cla-tipo').value+'&year='+document.getElementById('m-cla-year').value+'&mes='+document.getElementById('m-cla-mes').value; closeModal('cla')">
+          <i class="fas fa-file-excel"></i> Excel
+        </button>
+        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#dc2626,#b91c1c); margin-top: 0;"
+          onclick="window.open('{% url 'reportes_cla_pdf' %}?tipo='+document.getElementById('m-cla-tipo').value+'&year='+document.getElementById('m-cla-year').value+'&mes='+document.getElementById('m-cla-mes').value, '_blank'); closeModal('cla')">
+          <i class="fas fa-file-pdf"></i> PDF
+        </button>
+    </div>
+  </div>
+</div>
+
 <!-- Main page -->
 <div class="rep-page" style="padding: 0 1rem; margin-bottom: 2rem;">
   <div style="max-width:1200px;margin:0 auto;">
@@ -706,6 +759,9 @@
             </button>
             <button class="rep-export-btn h-9 px-3 w-[8rem] bg-slate-700 text-white hover:bg-slate-800 shadow-sm" onclick="openModal('daem3')">
               <i class="fas fa-file-alt"></i> <span>DAEM3</span>
+            </button>
+            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-teal-700 text-white hover:bg-teal-800 shadow-sm" onclick="openModal('cla')">
+              <i class="fas fa-file-alt"></i> <span>CLA</span>
             </button>
             <button class="rep-export-btn h-9 px-3 w-[8rem] bg-purple-600 text-white hover:bg-purple-700 shadow-sm" onclick="openModal('mensual')">
               <i class="fas fa-calendar-alt"></i> <span>Mensual</span>
