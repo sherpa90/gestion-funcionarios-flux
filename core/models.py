@@ -16,6 +16,8 @@ class SystemSettings(models.Model):
     notifications_enabled = models.BooleanField(default=True, help_text="Desactivando silencia todas las notificaciones por correo")
     liquidations_notifications_enabled = models.BooleanField(default=True, help_text="Notificar cuando se suben liquidaciones")
     attendance_notifications_enabled = models.BooleanField(default=True, help_text="Notificar cuando se cargan asistencias")
+    director_daily_summary_enabled = models.BooleanField(default=False, help_text="Enviar resumen diario de días administrativos y licencias a directores")
+    director_daily_summary_time = models.CharField(max_length=5, default='07:45', help_text="Hora de envío del resumen diario (HH:MM)")
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

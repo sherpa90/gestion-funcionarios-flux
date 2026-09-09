@@ -54,6 +54,25 @@
                         </span>
                     </div>
                 </div>
+
+                <div class="border-l-4 border-amber-500 pl-4">
+                    <h2 class="text-lg font-semibold text-slate-800 mb-3">Resumen Diario para Directores</h2>
+                    <p class="text-sm text-slate-600 mb-3">Envía un correo diario a los directores con el resumen de funcionarios con día administrativo, medio día o licencia médica.</p>
+                    <div class="flex items-start gap-3 mb-3">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="director_daily_summary_enabled" value="true" {% if form.director_daily_summary_enabled.value %}checked{% endif %} class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:h-5 after:w-5 after:rounded-full after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                        <span class="text-sm text-slate-800">
+                            <strong class="block">Habilitar resumen diario a directores</strong>
+                            <span class="text-slate-500">Se ejecuta de lunes a viernes, solo en periodo escolar</span>
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-3 ml-14">
+                        <label class="text-sm text-slate-700">Hora de envío:</label>
+                        <input type="time" name="director_daily_summary_time" value="{% if form.director_daily_summary_time.value %}{{ form.director_daily_summary_time.value }}{% else %}07:45{% endif %}" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
             </div>
 
             <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-lg">

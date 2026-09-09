@@ -159,7 +159,7 @@ class SystemSettingsView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     """
     model = SystemSettings
     template_name = 'core/system_settings.html'
-    fields = ['notifications_enabled', 'liquidations_notifications_enabled', 'attendance_notifications_enabled']
+    fields = ['notifications_enabled', 'liquidations_notifications_enabled', 'attendance_notifications_enabled', 'director_daily_summary_enabled', 'director_daily_summary_time']
     
     def test_func(self):
         return self.request.user.role == 'ADMIN'
