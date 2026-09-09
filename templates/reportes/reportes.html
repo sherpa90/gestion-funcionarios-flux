@@ -1,1463 +1,1382 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Reportes Generales y Estadísticas{% endblock %}
 
 {% block content %}
-<style>
-  /* ─── Design tokens ─── */
-  :root {
-    --rep-radius: 1rem;
-    --rep-shadow: 0 1px 3px 0 rgba(0,0,0,.08), 0 1px 2px -1px rgba(0,0,0,.06);
-  }
+<div class="p-3 sm:p-4 lg:p-6 max-w-[1600px] mx-auto space-y-6">
 
-  /* ─── Layout ─── */
-  .rep-container {
-    width: 100%;
-    max-width: 1400px;
-    margin: 0;
-  }
-
-  /* CSS de respaldo para asegurar scroll */
-  html, body {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-  }
-
-  /* ─── Card ─── */
-  .rep-card {
-    background: #fff;
-    border-radius: var(--rep-radius);
-    box-shadow: var(--rep-shadow);
-    border: 1px solid #eef0f4;
-  }
-
-  /* ─── Avatar ─── */
-  .rep-avatar {
-    width: 2.5rem; height: 2.5rem; border-radius: 50%;
-    background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%);
-    color: #3b5bdb; font-weight: 700; font-size: .85rem;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; border: 2px solid #fff;
-    box-shadow: 0 0 0 2px #e0e7ff;
-  }
-
-  /* ─── Badge ─── */
-  .rep-badge {
-    display: inline-flex; align-items: center; justify-content: center;
-    min-width: 2rem; padding: .2rem .55rem; border-radius: 999px;
-    font-size: .72rem; font-weight: 700; line-height: 1;
-  }
-  .rep-badge-neutral  { background: #f1f5f9; color: #64748b; }
-  .rep-badge-red      { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-  .rep-badge-amber    { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
-  .rep-badge-blue     { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
-  .rep-badge-purple   { background: #faf5ff; color: #7c3aed; border: 1px solid #ddd6fe; }
-
-  /* ─── Progress bar ─── */
-  .rep-bar-track {
-    background: #e2e8f0; border-radius: 999px; height: 6px; overflow: hidden; flex: 1;
-  }
-  .rep-bar-fill { height: 100%; border-radius: 999px; transition: width .5s ease; }
-  .rep-bar-green  { background: linear-gradient(90deg, #34d399, #10b981); }
-  .rep-bar-amber  { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
-  .rep-bar-red    { background: linear-gradient(90deg, #f87171, #ef4444); }
-
-  /* ─── Export modal overlay ─── */
-  .rep-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(15,23,42,.45);
-    z-index: 9000; backdrop-filter: blur(2px); align-items: flex-end;
-    justify-content: center;
-  }
-  .rep-overlay.open { display: flex; animation: fadeInOverlay .18s ease; }
-  @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
-  @media (min-width: 640px) { .rep-overlay { align-items: center; } }
-
-  .rep-modal {
-    background: #fff; border-radius: 1.25rem 1.25rem 0 0;
-    padding: 1.5rem; width: 100%; max-width: 420px;
-    animation: slideUp .22s cubic-bezier(.4,0,.2,1);
-    box-shadow: 0 -8px 40px -4px rgba(0,0,0,.18);
-  }
-  @media (min-width: 640px) {
-    .rep-modal { border-radius: 1.25rem; animation: popIn .2s cubic-bezier(.4,0,.2,1); }
-  }
-  @keyframes slideUp  { from { transform: translateY(100%); } to { transform: none; } }
-  @keyframes popIn    { from { transform: scale(.95); opacity: 0; } to { transform: none; opacity: 1; } }
-
-  .rep-modal-handle {
-    width: 2.5rem; height: 4px; background: #e2e8f0; border-radius: 999px;
-    margin: 0 auto .75rem; display: block;
-  }
-  @media (min-width: 640px) { .rep-modal-handle { display: none; } }
-  .rep-modal h3 { font-size: 1rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; }
-
-  /* ─── Modal form ─── */
-  .rep-form-group { margin-bottom: .85rem; }
-  .rep-form-group label {
-    display: block; font-size: .7rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .05em; color: #64748b; margin-bottom: .35rem;
-  }
-  .rep-form-group select {
-    width: 100%; padding: .55rem .75rem; border: 1.5px solid #e2e8f0;
-    border-radius: .65rem; font-size: .875rem; color: #1e293b;
-    background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right .75rem center;
-    -webkit-appearance: none; appearance: none; padding-right: 2.25rem;
-    transition: border-color .15s, box-shadow .15s;
-  }
-  .rep-form-group select:focus {
-    outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.12);
-  }
-  .rep-modal-btn {
-    width: 100%; padding: .7rem 1rem; border-radius: .75rem; font-size: .875rem;
-    font-weight: 700; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: .5rem;
-    transition: transform .12s ease, opacity .12s ease; color: #fff; margin-top: .5rem;
-  }
-  .rep-modal-btn:active { transform: scale(.97); opacity: .9; }
-
-/* ─── Export trigger buttons ─── */
-.rep-export-btn {
-   display: inline-flex; align-items: center; gap: .45rem;
-   padding: .55rem .9rem; border-radius: .75rem; font-size: .80rem;
-   font-weight: 600; border: none; cursor: pointer; color: #fff !important;
-   transition: transform .12s ease, box-shadow .15s ease; white-space: nowrap;
-   width: 8rem !important;
- }
-.rep-export-btn:hover { transform: translateY(-1px); }
-.rep-export-btn:active { transform: scale(.97); }
-
-  /* ─── Filter form ─── */
-  .rep-filter-input, .rep-filter-select {
-    width: 100%; height: 2.75rem; padding: 0 .85rem;
-    border: 1.5px solid #e2e8f0; border-radius: .75rem;
-    font-size: .875rem; color: #1e293b; background: #f8fafc;
-    transition: border-color .15s, box-shadow .15s; box-sizing: border-box;
-  }
-  .rep-filter-select {
-    -webkit-appearance: none; appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right .75rem center;
-    background-color: #f8fafc; padding-right: 2.25rem;
-  }
-  .rep-filter-input:focus, .rep-filter-select:focus {
-    outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.12);
-    background: #fff;
-  }
-  .rep-search-wrap { position: relative; }
-  .rep-search-icon {
-    position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
-    color: #94a3b8; font-size: .8rem; pointer-events: none;
-  }
-  .rep-search-wrap .rep-filter-input { padding-left: 0.85rem; }
-  .rep-filter-label {
-    display: block; font-size: .7rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .05em; color: #94a3b8; margin-bottom: .3rem;
-  }
-
-  /* ─── Filter grid ─── */
-  .rep-filter-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: .65rem;
-  }
-  .rep-filter-row2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: .65rem;
-  }
-  .rep-filter-row3 {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: .65rem;
-    align-items: end;
-  }
-  @media (min-width: 700px) {
-    .rep-filter-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      align-items: end;
-    }
-    .rep-search-wrap { flex: 2; min-width: 300px; }
-    .rep-filter-row2 { flex: 1; min-width: 150px; }
-    .rep-filter-row3 { flex: 1; min-width: 150px; }
-    .rep-filter-row2 { display: contents; }
-    .rep-filter-row3 { display: contents; }
-  }
-
-  /* ─── Mobile/desktop switch ─── */
-  .rep-mobile-view  { display: block; }
-  .rep-desktop-view { display: none; }
-  @media (min-width: 900px) {
-    .rep-mobile-view  { display: none; }
-    .rep-desktop-view { display: block; }
-  }
-
-  /* ─── Mobile employee cards ─── */
-  .emp-card {
-    padding: 1rem; border-bottom: 1px solid #f1f5f9;
-  }
-  .emp-card:last-child { border-bottom: none; }
-  .emp-stat-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-top: .85rem;
-  }
-  .emp-stat-box {
-    background: #f8fafc; border: 1px solid #f1f5f9; border-radius: .75rem;
-    padding: .65rem .75rem; display: flex; flex-direction: column; align-items: center;
-  }
-  .emp-stat-label {
-    font-size: .65rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .05em; color: #94a3b8; margin-bottom: .2rem;
-  }
-  .emp-stat-value { font-size: 1.15rem; font-weight: 800; }
-  .emp-bar-section {
-    margin-top: .75rem; background: #f8fafc; border: 1px solid #f1f5f9;
-    border-radius: .75rem; padding: .75rem;
-  }
-  .emp-bar-header {
-    display: flex; justify-content: space-between; margin-bottom: .5rem;
-    font-size: .72rem; font-weight: 600; color: #64748b;
-  }
-  .emp-licencia-row {
-    display: flex; align-items: center; justify-content: space-between;
-    background: #faf5ff; border: 1px solid #ede9fe; border-radius: .75rem;
-    padding: .65rem .85rem; margin-top: .65rem;
-  }
-  .emp-lic-label { font-size: .72rem; font-weight: 700; color: #7c3aed;
-    display: flex; align-items: center; gap: .4rem; }
-  .emp-lic-stats { display: flex; gap: .6rem; align-items: center; }
-  .emp-lic-stat { text-align: center; }
-  .emp-lic-stat .lbl { font-size: .6rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .04em; color: #94a3b8; display: block; }
-  .emp-lic-stat .val { font-size: .95rem; font-weight: 800; color: #1e293b; display: block; }
-  .emp-lic-divider { width: 1px; height: 1.5rem; background: #ddd6fe; }
-
-  /* ─── Desktop table ─── */
-  .rep-table { min-width: 860px; width: 100%; border-collapse: collapse; }
-  .rep-table thead th {
-    padding: .85rem 1.1rem; font-size: .7rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .06em; color: #64748b; background: #f8fafc;
-    cursor: pointer; white-space: nowrap; user-select: none;
-    transition: background .15s, color .15s;
-  }
-  .rep-table thead th:hover { background: #f1f5f9; color: #3b4fce; }
-  .rep-table tbody tr { transition: background .12s; }
-  .rep-table tbody tr:hover { background: #fafbff; }
-  .rep-table td { padding: .9rem 1.1rem; border-bottom: 1px solid #f1f5f9; font-size: .875rem; }
-  .rep-table tbody tr:last-child td { border-bottom: none; }
-
-  .sort-arrow { opacity: .3; transition: opacity .15s; font-size: .7rem; margin-left: .3rem; }
-  th:hover .sort-arrow { opacity: .7; }
-  .sort-arrow.active { opacity: 1; color: #6366f1; }
-
-  /* ─── Header export buttons area ─── */
-  .rep-exports {
-    display: flex; flex-wrap: wrap; gap: .5rem; align-items: center;
-    margin-top: .75rem;
-  }
-  @media (min-width: 640px) { .rep-exports { margin-top: 0; } }
-
-  /* ─── Tabs ─── */
-  .rep-tabs {
-    display: flex; gap: .5rem; margin-bottom: 1.25rem;
-    background: #fff; padding: .4rem; border-radius: .85rem;
-    border: 1px solid #eef0f4; box-shadow: var(--rep-shadow);
-  }
-  .rep-tab {
-    flex: 1; padding: .65rem; border-radius: .6rem;
-    font-size: .85rem; font-weight: 700; color: #64748b;
-    border: none; background: transparent; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: .5rem;
-    transition: all .2s;
-  }
-  .rep-tab.active {
-    background: #6366f1; color: #fff;
-    box-shadow: 0 4px 12px -2px rgba(99,102,241,0.35);
-  }
-  .rep-tab-content { display: none; }
-  .rep-tab-content.active { display: block; animation: fadeIn .3s ease; }
-
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-/* ─── Stats Grid ─── */
-   .stats-grid {
-     display: grid; grid-template-columns: 1fr; gap: 1.5rem;
-   }
-  
-  .chart-card {
-    padding: 1.25rem; background: #fff; border-radius: var(--rep-radius);
-    border: 1px solid #eef0f4; box-shadow: var(--rep-shadow);
-    display: flex; flex-direction: column;
-  }
-  @media (min-width: 640px) { .chart-card { padding: 1.5rem; } }
-
-  .chart-header {
-    display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;
-    flex-wrap: wrap; gap: .75rem;
-  }
-  .chart-title { font-size: 0.95rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: .6rem; }
-  .chart-icon { 
-    width: 2rem; height: 2rem; border-radius: .5rem; 
-    display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
-    flex-shrink: 0;
-  }
-  .chart-container {
-    height: 250px; width: 100%; position: relative;
-  }
-  @media (min-width: 640px) { .chart-container { height: 300px; } }
-
-  /* ─── Custom modal colors ─── */
-  .btn-indigo { background: linear-gradient(135deg, #6366f1, #4f46e5); }
-</style>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- Modals -->
-<div id="modal-horarios" class="rep-overlay" onclick="if(event.target===this)closeModal('horarios')">
-  <div class="rep-modal">
-    <span class="rep-modal-handle"></span>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
-      <h3 style="margin:0;display:flex;align-items:center;gap:.5rem;">
-        <span style="background:#eef2ff;color:#4f46e5;border-radius:.5rem;padding:.3rem .5rem;font-size:.85rem;"><i class="fas fa-calendar-week"></i></span>
-        Reporte de Horarios
-      </h3>
-      <button onclick="closeModal('horarios')" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:.25rem;"><i class="fas fa-times"></i></button>
+  <!-- ========================================== -->
+  <!-- 1. HEADER HERO BANNER                      -->
+  <!-- ========================================== -->
+  <div class="bg-white p-5 sm:p-7 rounded-3xl border border-slate-200/80 shadow-sm relative z-30">
+    <!-- Soft Decorative Glow (contained overflow inside this wrapper) -->
+    <div class="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
+      <div class="absolute top-0 right-0 -mr-16 -mt-16 w-72 h-72 bg-gradient-to-br from-blue-100/60 to-indigo-100/40 rounded-full blur-3xl"></div>
     </div>
-    <p style="font-size: .85rem; color: #64748b; margin-bottom: 1.25rem;">Selecciona el formato para descargar el horario semanal de todo el personal.</p>
-    
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#4ade80,#16a34a); margin-top: 0;"
-          onclick="window.location.href='{% url 'exportar_horarios' %}'; closeModal('horarios')">
-          <i class="fas fa-file-excel"></i> Excel
+
+    <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <!-- Title & Subtitle -->
+      <div class="flex items-start sm:items-center gap-4">
+        <div class="w-13 h-13 sm:w-14 sm:h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 flex-shrink-0">
+          <i class="fa-solid fa-chart-pie text-white text-xl"></i>
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Reportes Institucionales</h1>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-wider">
+              Consolidado
+            </span>
+            {% if filtros.year %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+              Año {{ filtros.year }}
+            </span>
+            {% else %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+              Todos los años
+            </span>
+            {% endif %}
+          </div>
+          <p class="text-xs sm:text-sm text-slate-500 font-medium">
+            Supervisión integral de días administrativos, licencias médicas, asistencia y puntualidad.
+          </p>
+        </div>
+      </div>
+
+      <!-- Export Actions Center -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Direct Quick Exports -->
+        <button type="button" onclick="openModal('excel')"
+                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all transform hover:-translate-y-0.5 cursor-pointer">
+          <i class="fa-solid fa-file-excel"></i>
+          <span>Excel General</span>
         </button>
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#f87171,#dc2626); margin-top: 0;"
-          onclick="window.open('{% url 'exportar_horarios_pdf' %}', '_blank'); closeModal('horarios')">
-          <i class="fas fa-file-pdf"></i> PDF
-        </button>
-    </div>
-  </div>
-</div>
-<div id="modal-asistencia" class="rep-overlay" onclick="if(event.target===this)closeModal('asistencia')">
-  <div class="rep-modal">
-    <span class="rep-modal-handle"></span>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
-      <h3 style="margin:0;display:flex;align-items:center;gap:.5rem;">
-        <span style="background:#fff1f2;color:#e11d48;border-radius:.5rem;padding:.3rem .5rem;font-size:.85rem;"><i class="fas fa-clipboard-check"></i></span>
-        DAEM2
-      </h3>
-      <button onclick="closeModal('asistencia')" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:.25rem;"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="rep-form-group">
-      <label>Año</label>
-      <select id="m-asistencia-year">
-        {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="rep-form-group">
-      <label>Mes</label>
-      <select id="m-asistencia-mes">
-        <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
-        <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
-        <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
-        <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
-        <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
-        <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
-        <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
-        <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
-        <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
-        <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
-        <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
-        <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
-      </select>
-    </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#16a34a,#15803d); margin-top: 0;"
-          onclick="window.location.href='{% url 'asistencia:reporte_daem2_excel' %}?year='+document.getElementById('m-asistencia-year').value+'&mes='+document.getElementById('m-asistencia-mes').value; closeModal('asistencia')">
-          <i class="fas fa-file-excel"></i> Excel
-        </button>
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#dc2626,#b91c1c); margin-top: 0;"
-          onclick="window.open('{% url 'asistencia:reporte_daem2_pdf' %}?year='+document.getElementById('m-asistencia-year').value+'&mes='+document.getElementById('m-asistencia-mes').value, '_blank'); closeModal('asistencia')">
-          <i class="fas fa-file-pdf"></i> PDF
-        </button>
-    </div>
-  </div>
-</div>
 
-<div id="modal-mensual" class="rep-overlay" onclick="if(event.target===this)closeModal('mensual')">
-  <div class="rep-modal">
-    <span class="rep-modal-handle"></span>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
-      <h3 style="margin:0;display:flex;align-items:center;gap:.5rem;">
-        <span style="background:#f5f3ff;color:#7c3aed;border-radius:.5rem;padding:.3rem .5rem;font-size:.85rem;"><i class="fas fa-calendar-alt"></i></span>
-        Reporte Mensual
-      </h3>
-      <button onclick="closeModal('mensual')" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:.25rem;"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="rep-form-group">
-      <label>Año</label>
-      <select id="m-mensual-year">
-        <option value="">— Todos —</option>
-        {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="rep-form-group">
-      <label>Mes</label>
-      <select id="m-mensual-mes">
-        <option value="">— Todos —</option>
-        <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
-        <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
-        <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
-        <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
-        <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
-        <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
-        <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
-        <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
-        <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
-        <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
-        <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
-        <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
-      </select>
-    </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#16a34a,#15803d); margin-top: 0;"
-          onclick="window.location.href='{% url 'reportes_mensual_dias_administrativos_excel' %}?year='+document.getElementById('m-mensual-year').value+'&mes='+document.getElementById('m-mensual-mes').value; closeModal('mensual')">
-          <i class="fas fa-file-excel"></i> Excel
+        <button type="button" onclick="openModal('pdf')"
+                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all transform hover:-translate-y-0.5 cursor-pointer">
+          <i class="fa-solid fa-file-pdf"></i>
+          <span>PDF Colectivo</span>
         </button>
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#7c3aed,#5b21b6); margin-top: 0;"
-          onclick="window.open('{% url 'reportes_mensual_dias_administrativos' %}?year='+document.getElementById('m-mensual-year').value+'&mes='+document.getElementById('m-mensual-mes').value, '_blank'); closeModal('mensual')">
-          <i class="fas fa-file-pdf"></i> PDF
-        </button>
-    </div>
-  </div>
-</div>
 
-<div id="modal-daem" class="rep-overlay" onclick="if(event.target===this)closeModal('daem')">
-  <div class="rep-modal">
-    <span class="rep-modal-handle"></span>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
-      <h3 style="margin:0;display:flex;align-items:center;gap:.5rem;">
-        <span style="background:#eff6ff;color:#2563eb;border-radius:.5rem;padding:.3rem .5rem;font-size:.85rem;"><i class="fas fa-file-excel"></i></span>
-        Reporte DAEM
-      </h3>
-      <button onclick="closeModal('daem')" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:.25rem;"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="rep-form-group">
-      <label>Año</label>
-      <select id="m-daem-year">
-        <option value="">— Todos —</option>
-        {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="rep-form-group">
-      <label>Mes</label>
-      <select id="m-daem-mes">
-        <option value="">— Todos —</option>
-        <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
-        <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
-        <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
-        <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
-        <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
-        <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
-        <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
-        <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
-        <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
-        <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
-        <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
-        <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
-      </select>
-    </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#16a34a,#15803d); margin-top: 0;"
-          onclick="window.location.href='{% url 'reportes_daem_excel' %}?year='+document.getElementById('m-daem-year').value+'&mes='+document.getElementById('m-daem-mes').value; closeModal('daem')">
-          <i class="fas fa-file-excel"></i> Excel
-        </button>
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#0284c7,#0369a1); margin-top: 0;"
-          onclick="window.open('{% url 'reportes_daem_pdf' %}?year='+document.getElementById('m-daem-year').value+'&mes='+document.getElementById('m-daem-mes').value, '_blank'); closeModal('daem')">
-          <i class="fas fa-file-pdf"></i> PDF
-        </button>
-    </div>
-  </div>
-</div>
-
-<div id="modal-excel" class="rep-overlay" onclick="if(event.target===this)closeModal('excel')">
-  <div class="rep-modal">
-    <span class="rep-modal-handle"></span>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
-      <h3 style="margin:0;display:flex;align-items:center;gap:.5rem;">
-        <span style="background:#f0fdf4;color:#16a34a;border-radius:.5rem;padding:.3rem .5rem;font-size:.85rem;"><i class="fas fa-file-excel"></i></span>
-        Exportar Excel
-      </h3>
-      <button onclick="closeModal('excel')" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:.25rem;"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="rep-form-group">
-      <label>Año</label>
-      <select id="m-excel-year">
-        <option value="">— Todos —</option>
-        {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="rep-form-group">
-      <label>Mes</label>
-      <select id="m-excel-mes">
-        <option value="">— Todos —</option>
-        <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
-        <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
-        <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
-        <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
-        <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
-        <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
-        <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
-        <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
-        <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
-        <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
-        <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
-        <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
-      </select>
-    </div>
-    <button class="rep-modal-btn" style="background:linear-gradient(135deg,#4ade80,#16a34a);"
-      onclick="window.location.href='{% url 'reportes_excel' %}?year='+document.getElementById('m-excel-year').value+'&mes='+document.getElementById('m-excel-mes').value; closeModal('excel')">
-      <i class="fas fa-download"></i> Descargar Excel
-    </button>
-  </div>
-</div>
-
-<div id="modal-pdf" class="rep-overlay" onclick="if(event.target===this)closeModal('pdf')">
-  <div class="rep-modal">
-    <span class="rep-modal-handle"></span>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
-      <h3 style="margin:0;display:flex;align-items:center;gap:.5rem;">
-        <span style="background:#fff1f2;color:#dc2626;border-radius:.5rem;padding:.3rem .5rem;font-size:.85rem;"><i class="fas fa-file-pdf"></i></span>
-        Exportar PDF
-      </h3>
-      <button onclick="closeModal('pdf')" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:.25rem;"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="rep-form-group">
-      <label>Año</label>
-      <select id="m-pdf-year">
-        <option value="">— Todos —</option>
-        {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="rep-form-group">
-      <label>Mes</label>
-      <select id="m-pdf-mes">
-        <option value="">— Todos —</option>
-        <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
-        <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
-        <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
-        <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
-        <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
-        <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
-        <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
-        <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
-        <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
-        <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
-        <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
-        <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
-      </select>
-    </div>
-    <button class="rep-modal-btn" style="background:linear-gradient(135deg,#f87171,#dc2626);"
-      onclick="window.open('{% url 'reportes_pdf_colectivo' %}?year='+document.getElementById('m-pdf-year').value+'&mes='+document.getElementById('m-pdf-mes').value, '_blank'); closeModal('pdf')">
-      <i class="fas fa-external-link-alt"></i> Generar PDF Colectivo
-    </button>
-  </div>
-</div>
-
-<div id="modal-justificaciones" class="rep-overlay" onclick="if(event.target===this)closeModal('justificaciones')">
-  <div class="rep-modal">
-    <span class="rep-modal-handle"></span>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
-      <h3 style="margin:0;display:flex;align-items:center;gap:.5rem;">
-        <span style="background:#fef3c7;color:#92400e;border-radius:.5rem;padding:.3rem .5rem;font-size:.85rem;"><i class="fas fa-check-circle"></i></span>
-        Justificaciones Aprobadas
-      </h3>
-      <button onclick="closeModal('justificaciones')" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:.25rem;"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="rep-form-group">
-      <label>Año</label>
-      <select id="m-justificaciones-year">
-        <option value="">— Todos —</option>
-        {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="rep-form-group">
-      <label>Mes</label>
-      <select id="m-justificaciones-mes">
-        <option value="">— Todos —</option>
-        <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
-        <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
-        <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
-        <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
-        <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
-        <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
-        <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
-        <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
-        <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
-        <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
-        <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
-        <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
-      </select>
-    </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#16a34a,#15803d); margin-top: 0;"
-          onclick="window.location.href='{% url 'reportes_justificaciones_excel' %}?year='+document.getElementById('m-justificaciones-year').value+'&mes='+document.getElementById('m-justificaciones-mes').value; closeModal('justificaciones')">
-          <i class="fas fa-file-excel"></i> Excel
-        </button>
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#dc2626,#b91c1c); margin-top: 0;"
-          onclick="window.open('{% url 'reportes_justificaciones_pdf' %}?year='+document.getElementById('m-justificaciones-year').value+'&mes='+document.getElementById('m-justificaciones-mes').value, '_blank'); closeModal('justificaciones')">
-          <i class="fas fa-file-pdf"></i> PDF
-        </button>
-    </div>
-  </div>
-</div>
-
-<div id="modal-daem3" class="rep-overlay" onclick="if(event.target===this)closeModal('daem3')">
-  <div class="rep-modal">
-    <span class="rep-modal-handle"></span>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
-      <h3 style="margin:0;display:flex;align-items:center;gap:.5rem;">
-        <span style="background:#f3f4f6;color:#374151;border-radius:.5rem;padding:.3rem .5rem;font-size:.85rem;"><i class="fas fa-file-alt"></i></span>
-        Informe de Asistencia Laboral - DAEM3
-      </h3>
-      <button onclick="closeModal('daem3')" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:.25rem;"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="rep-form-group">
-      <label>Tipo de Funcionario</label>
-      <select id="m-daem3-tipo">
-        <option value="DOCENTE">Docentes</option>
-        <option value="ASISTENTE">Asistentes de la Educación</option>
-      </select>
-    </div>
-    <div class="rep-form-group">
-      <label>Año</label>
-      <select id="m-daem3-year">
-        {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="rep-form-group">
-      <label>Mes</label>
-      <select id="m-daem3-mes">
-        <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
-        <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
-        <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
-        <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
-        <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
-        <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
-        <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
-        <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
-        <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
-        <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
-        <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
-        <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
-      </select>
-    </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#16a34a,#15803d); margin-top: 0;"
-          onclick="window.location.href='{% url 'reportes_daem_excel' %}?tipo='+document.getElementById('m-daem3-tipo').value+'&year='+document.getElementById('m-daem3-year').value+'&mes='+document.getElementById('m-daem3-mes').value; closeModal('daem3')">
-          <i class="fas fa-file-excel"></i> Excel
-        </button>
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#dc2626,#b91c1c); margin-top: 0;"
-          onclick="window.open('{% url 'reportes_daem_pdf' %}?tipo='+document.getElementById('m-daem3-tipo').value+'&year='+document.getElementById('m-daem3-year').value+'&mes='+document.getElementById('m-daem3-mes').value, '_blank'); closeModal('daem3')">
-          <i class="fas fa-file-pdf"></i> PDF
-        </button>
-    </div>
-  </div>
-</div>
-
-<div id="modal-cla" class="rep-overlay" onclick="if(event.target===this)closeModal('cla')">
-  <div class="rep-modal">
-    <span class="rep-modal-handle"></span>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;">
-      <h3 style="margin:0;display:flex;align-items:center;gap:.5rem;">
-        <span style="background:#f3f4f6;color:#374151;border-radius:.5rem;padding:.3rem .5rem;font-size:.85rem;"><i class="fas fa-file-alt"></i></span>
-        Informe de Asistencia Laboral - CLA
-      </h3>
-      <button onclick="closeModal('cla')" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:.25rem;"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="rep-form-group">
-      <label>Tipo de Funcionario</label>
-      <select id="m-cla-tipo">
-        <option value="DOCENTE">Docentes</option>
-        <option value="ASISTENTE">Asistentes de la Educación</option>
-      </select>
-    </div>
-    <div class="rep-form-group">
-      <label>Año</label>
-      <select id="m-cla-year">
-        {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="rep-form-group">
-      <label>Mes</label>
-      <select id="m-cla-mes">
-        <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
-        <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
-        <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
-        <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
-        <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
-        <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
-        <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
-        <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
-        <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
-        <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
-        <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
-        <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
-      </select>
-    </div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#16a34a,#15803d); margin-top: 0;"
-          onclick="window.location.href='{% url 'reportes_cla_excel' %}?tipo='+document.getElementById('m-cla-tipo').value+'&year='+document.getElementById('m-cla-year').value+'&mes='+document.getElementById('m-cla-mes').value; closeModal('cla')">
-          <i class="fas fa-file-excel"></i> Excel
-        </button>
-        <button class="rep-modal-btn" style="background:linear-gradient(135deg,#dc2626,#b91c1c); margin-top: 0;"
-          onclick="window.open('{% url 'reportes_cla_pdf' %}?tipo='+document.getElementById('m-cla-tipo').value+'&year='+document.getElementById('m-cla-year').value+'&mes='+document.getElementById('m-cla-mes').value, '_blank'); closeModal('cla')">
-          <i class="fas fa-file-pdf"></i> PDF
-        </button>
-    </div>
-  </div>
-</div>
-
-<!-- Main page -->
-<div class="rep-page" style="padding: 0 1rem; margin-bottom: 2rem;">
-  <div style="max-width:1200px;margin:0 auto;">
-
-    <!-- Header -->
-    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mb-8 relative overflow-hidden">
-      <!-- Decorative background -->
-      <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-50 rounded-full opacity-50 blur-3xl"></div>
-      
-      <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <!-- Title Section -->
-        <div class="flex items-center gap-5">
-          <!-- Mobile Menu Toggle (Visible only on mobile since top_bar is hidden) -->
-          <button onclick="document.getElementById('mobile-menu').classList.remove('hidden')" 
-                  class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
-            <i class="fas fa-bars"></i>
+        <!-- Dropdown / More Reports Menu -->
+        <div class="relative inline-block text-left" x-data="{ open: false }" @click.away="open = false">
+          <button type="button" @click="open = !open"
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition-all cursor-pointer">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Más Informes</span>
+            <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
           </button>
 
-          <div class="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
-            <i class="fas fa-chart-line text-white text-xl"></i>
-          </div>
-          <div>
-            <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Reportes Generales</h1>
-            <div class="flex items-center gap-2 mt-1">
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-wider">
-                Consolidado Institucional
-              </span>
-              <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest hidden sm:inline">Días Administrativos y Licencias</span>
+          <div x-show="open"
+               x-transition:enter="transition ease-out duration-100"
+               x-transition:enter-start="transform opacity-0 scale-95"
+               x-transition:enter-end="transform opacity-100 scale-100"
+               x-transition:leave="transition ease-in duration-75"
+               x-transition:leave-start="transform opacity-100 scale-100"
+               x-transition:leave-end="transform opacity-0 scale-95"
+               class="absolute right-0 mt-2 w-72 max-w-[90vw] rounded-2xl bg-white border border-slate-200 shadow-2xl py-2 z-50 focus:outline-none ring-1 ring-black/5"
+               style="display: none;">
+            
+            <div class="px-3.5 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center justify-between">
+              <span>Asistencia & Horarios</span>
+              <i class="fa-solid fa-clock text-[10px] text-slate-300"></i>
             </div>
+            
+            <button type="button" @click="open = false; openModal('horarios')"
+                    class="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-700 flex items-center gap-3 transition-colors cursor-pointer">
+              <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs flex-shrink-0">
+                <i class="fa-solid fa-calendar-week"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="truncate font-bold">Horarios Semanales</p>
+                <p class="text-[10px] text-slate-400 font-normal">Excel y PDF por funcionario</p>
+              </div>
+            </button>
+
+            <button type="button" @click="open = false; openModal('daem')"
+                    class="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-700 flex items-center gap-3 transition-colors cursor-pointer">
+              <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs flex-shrink-0">
+                <i class="fa-solid fa-file-invoice"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="truncate font-bold">Informe DAEM (General)</p>
+                <p class="text-[10px] text-slate-400 font-normal">Consolidado mensual</p>
+              </div>
+            </button>
+
+            <button type="button" @click="open = false; openModal('asistencia')"
+                    class="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-700 flex items-center gap-3 transition-colors cursor-pointer">
+              <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs flex-shrink-0">
+                <i class="fa-solid fa-clipboard-check"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="truncate font-bold">Informe DAEM 2 (Asistencia)</p>
+                <p class="text-[10px] text-slate-400 font-normal">Detalle de atrasos e inasistencias</p>
+              </div>
+            </button>
+
+            <button type="button" @click="open = false; openModal('daem3')"
+                    class="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-700 flex items-center gap-3 transition-colors cursor-pointer">
+              <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-xs flex-shrink-0">
+                <i class="fa-solid fa-file-signature"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="truncate font-bold">Informe DAEM 3</p>
+                <p class="text-[10px] text-slate-400 font-normal">Docentes / Asistentes</p>
+              </div>
+            </button>
+
+            <button type="button" @click="open = false; openModal('cla')"
+                    class="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-700 flex items-center gap-3 transition-colors cursor-pointer">
+              <div class="w-7 h-7 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center text-xs flex-shrink-0">
+                <i class="fa-solid fa-building-columns"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="truncate font-bold">Informe CLA</p>
+                <p class="text-[10px] text-slate-400 font-normal">Asistencia laboral CLA</p>
+              </div>
+            </button>
+
+            <div class="my-1.5 border-t border-slate-100"></div>
+
+            <div class="px-3.5 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center justify-between">
+              <span>Permisos & Justificaciones</span>
+              <i class="fa-solid fa-calendar-check text-[10px] text-slate-300"></i>
+            </div>
+
+            <button type="button" @click="open = false; openModal('mensual')"
+                    class="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-700 flex items-center gap-3 transition-colors cursor-pointer">
+              <div class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs flex-shrink-0">
+                <i class="fa-solid fa-calendar-alt"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="truncate font-bold">Mensual Días Administrativos</p>
+                <p class="text-[10px] text-slate-400 font-normal">Control mensual de saldos</p>
+              </div>
+            </button>
+
+            <button type="button" @click="open = false; openModal('justificaciones')"
+                    class="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-700 flex items-center gap-3 transition-colors cursor-pointer">
+              <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs flex-shrink-0">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="truncate font-bold">Justificaciones Aprobadas</p>
+                <p class="text-[10px] text-slate-400 font-normal">Excel y PDF de justificaciones</p>
+              </div>
+            </button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
 
-<!-- Export Buttons Area -->
-        <div class="flex flex-wrap gap-2 justify-start lg:justify-end max-w-full lg:max-w-2xl">
-            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm" onclick="openModal('horarios')">
-              <i class="fas fa-calendar-week"></i> <span>Horarios</span>
-            </button>
-            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-blue-600 text-white hover:bg-blue-700 shadow-sm" onclick="openModal('daem')">
-              <i class="fas fa-file-excel"></i> <span>DAEM</span>
-            </button>
-            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-rose-600 text-white hover:bg-rose-700 shadow-sm" onclick="openModal('asistencia')">
-              <i class="fas fa-clipboard-check"></i> <span>DAEM2</span>
-            </button>
-            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-slate-700 text-white hover:bg-slate-800 shadow-sm" onclick="openModal('daem3')">
-              <i class="fas fa-file-alt"></i> <span>DAEM3</span>
-            </button>
-            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-teal-700 text-white hover:bg-teal-800 shadow-sm" onclick="openModal('cla')">
-              <i class="fas fa-file-alt"></i> <span>CLA</span>
-            </button>
-            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-purple-600 text-white hover:bg-purple-700 shadow-sm" onclick="openModal('mensual')">
-              <i class="fas fa-calendar-alt"></i> <span>Mensual</span>
-            </button>
-            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm" onclick="openModal('excel')">
-              <i class="fas fa-file-excel"></i> <span>Excel</span>
-            </button>
-            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-red-600 text-white hover:bg-red-700 shadow-sm" onclick="openModal('pdf')">
-              <i class="fas fa-file-pdf"></i> <span>PDF</span>
-            </button>
-            <button class="rep-export-btn h-9 px-3 w-[8rem] bg-amber-600 text-white hover:bg-amber-700 shadow-sm" onclick="openModal('justificaciones')">
-              <i class="fas fa-check-circle"></i> <span>Justificaciones</span>
-            </button>
+  <!-- ========================================== -->
+  <!-- 2. KPI SUMMARY METRICS CARDS               -->
+  <!-- ========================================== -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 relative z-10">
+    <!-- Funcionarios -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3.5 hover:border-blue-200 transition-all">
+      <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+        <i class="fa-solid fa-users text-sm"></i>
+      </div>
+      <div class="min-w-0">
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Funcionarios</p>
+        <p class="text-lg sm:text-xl font-black text-slate-900">{{ kpi_summary.total_funcionarios }}</p>
+      </div>
+    </div>
+
+    <!-- Días Usados -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3.5 hover:border-indigo-200 transition-all">
+      <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 flex-shrink-0">
+        <i class="fa-solid fa-calendar-check text-sm"></i>
+      </div>
+      <div class="min-w-0">
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Días Adm. Usados</p>
+        <div class="flex items-baseline gap-1.5">
+          <p class="text-lg sm:text-xl font-black text-slate-900">{{ kpi_summary.total_dias_usados|floatformat:1 }}</p>
+          <span class="text-[10px] text-slate-400 font-semibold truncate">prom. {{ kpi_summary.promedio_dias_disponibles }} disp.</span>
         </div>
       </div>
     </div>
 
-    <!-- Divider -->
-    <div class="border-b border-gray-200 mb-6"></div>
+    <!-- Licencias Médicas -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3.5 hover:border-purple-200 transition-all">
+      <div class="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 flex-shrink-0">
+        <i class="fa-solid fa-notes-medical text-sm"></i>
+      </div>
+      <div class="min-w-0">
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Licencias Médicas</p>
+        <div class="flex items-baseline gap-1.5">
+          <p class="text-lg sm:text-xl font-black text-slate-900">{{ kpi_summary.total_licencias }}</p>
+          <span class="text-[10px] text-slate-400 font-semibold truncate">({{ kpi_summary.total_dias_licencias }} días)</span>
+        </div>
+      </div>
+    </div>
 
-    <!-- Tabs -->
-    <div class="rep-tabs">
-      <button class="rep-tab active" onclick="switchTab('listado', this)">
-        <i class="fas fa-list-ul"></i> Listado
+    <!-- Atrasos -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3.5 hover:border-amber-200 transition-all">
+      <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 flex-shrink-0">
+        <i class="fa-solid fa-clock text-sm"></i>
+      </div>
+      <div class="min-w-0">
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Atrasos</p>
+        <div class="flex items-baseline gap-1.5">
+          <p class="text-lg sm:text-xl font-black {% if kpi_summary.total_atrasos > 0 %}text-amber-600{% else %}text-slate-900{% endif %}">
+            {{ kpi_summary.total_atrasos }}
+          </p>
+          <span class="text-[10px] text-slate-400 font-semibold truncate">({{ kpi_summary.total_minutos_atraso }} min)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inasistencias -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3.5 hover:border-rose-200 transition-all col-span-2 sm:col-span-1">
+      <div class="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 flex-shrink-0">
+        <i class="fa-solid fa-user-xmark text-sm"></i>
+      </div>
+      <div class="min-w-0">
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Inasistencias</p>
+        <p class="text-lg sm:text-xl font-black {% if kpi_summary.total_inasistencias > 0 %}text-rose-600{% else %}text-slate-900{% endif %}">
+          {{ kpi_summary.total_inasistencias }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 3. TABS CONTROLLER                         -->
+  <!-- ========================================== -->
+  <div class="flex items-center justify-between flex-wrap gap-4 border-b border-slate-200/80 pb-3">
+    <div class="inline-flex p-1 bg-slate-200/70 rounded-2xl shadow-inner gap-1">
+      <button type="button" id="tab-btn-listado" onclick="switchMainTab('listado')"
+              class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white text-slate-900 shadow-sm">
+        <i class="fa-solid fa-table-list text-blue-600"></i>
+        <span>Listado Consolidado</span>
+        <span class="px-1.5 py-0.5 rounded-full bg-slate-100 text-[10px] text-slate-600">{{ total_count }}</span>
       </button>
-      <button class="rep-tab" onclick="switchTab('estadisticas', this)">
-        <i class="fas fa-chart-pie"></i> Estadísticas
+      <button type="button" id="tab-btn-estadisticas" onclick="switchMainTab('estadisticas')"
+              class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900">
+        <i class="fa-solid fa-chart-line text-indigo-500"></i>
+        <span>Gráficos y Estadísticas</span>
       </button>
     </div>
 
-    <!-- Tab Content: Listado -->
-    <div id="tab-listado" class="rep-tab-content active">
+    <!-- Items per page dropdown quick select (if in listado tab) -->
+    <div class="flex items-center gap-2 text-xs text-slate-500">
+      <span class="font-medium hidden sm:inline">Mostrar:</span>
+      <select onchange="changePageSize(this.value)" class="text-xs bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500/20 font-medium">
+        <option value="25" {% if paginate_by == '25' %}selected{% endif %}>25 por pág.</option>
+        <option value="50" {% if paginate_by == '50' %}selected{% endif %}>50 por pág.</option>
+        <option value="100" {% if paginate_by == '100' %}selected{% endif %}>100 por pág.</option>
+        <option value="todos" {% if paginate_by == 'todos' %}selected{% endif %}>Todos</option>
+      </select>
+    </div>
+  </div>
 
-    <!-- Filter -->
-    <div class="rep-card" style="padding:1rem;margin-bottom:1rem;">
-      <form method="get">
-        <div class="rep-filter-grid">
-          <div class="rep-search-wrap">
-            <input class="rep-filter-input" type="text" name="search" value="{{ filtros.search }}" placeholder="Buscar por nombre o RUN…" autocomplete="off">
+  <!-- ========================================== -->
+  <!-- 4. TAB 1: LISTADO CONSOLIDADO              -->
+  <!-- ========================================== -->
+  <div id="tab-content-listado" class="space-y-4">
+
+    <!-- Search & Filter Card -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm">
+      <form method="get" id="filter-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+        <!-- Keep hidden sort & paginate_by -->
+        <input type="hidden" name="sort" value="{{ current_sort }}">
+        <input type="hidden" name="paginate_by" value="{{ paginate_by }}">
+
+        <!-- Search Bar (5 cols) -->
+        <div class="sm:col-span-2 lg:col-span-4">
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 ml-0.5">
+            Búsqueda de Funcionario
+          </label>
+          <div class="relative">
+            <input type="text" name="search" value="{{ filtros.search }}" placeholder="Nombre, apellido o RUN..."
+                   class="w-full pl-9 pr-8 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none font-medium">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+            {% if filtros.search %}
+            <a href="?{% if filtros.year %}year={{ filtros.year }}&{% endif %}{% if filtros.mes %}mes={{ filtros.mes }}&{% endif %}"
+               class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
+              <i class="fa-solid fa-circle-xmark"></i>
+            </a>
+            {% endif %}
           </div>
-          <div class="rep-filter-row2">
-            <div>
-              <div class="rep-filter-label">Año</div>
-              <select class="rep-filter-select" name="year">
-                <option value="">Todos los años</option>
-                {% for y in years %}
-                <option value="{{ y }}" {% if filtros.year|stringformat:"s" == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div>
-              <div class="rep-filter-label">Mes</div>
-              <select class="rep-filter-select" name="mes">
-                <option value="">Todos</option>
-                <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
-                <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
-                <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
-                <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
-                <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
-                <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
-                <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
-                <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
-                <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
-                <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
-                <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
-                <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
-              </select>
-            </div>
-          </div>
-          <div class="rep-filter-row3">
-            <div>
-              <div class="rep-filter-label">Desde</div>
-              <input class="rep-filter-input" type="date" name="fecha_inicio" value="{{ filtros.fecha_inicio }}">
-            </div>
-            <button type="submit"
-              style="height:2.75rem;padding:0 1.25rem;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:.75rem;font-weight:700;font-size:.875rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;white-space:nowrap;box-sizing:border-box;">
-              <i class="fas fa-filter"></i> Filtrar
-            </button>
-          </div>
+        </div>
+
+        <!-- Year Selector (2 cols) -->
+        <div class="lg:col-span-2">
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 ml-0.5">Año</label>
+          <select name="year" class="w-full py-2 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none font-medium">
+            <option value="" {% if not filtros.year %}selected{% endif %}>— Todos los años —</option>
+            {% for y in years %}
+            <option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Month Selector (2 cols) -->
+        <div class="lg:col-span-2">
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 ml-0.5">Mes</label>
+          <select name="mes" class="w-full py-2 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none font-medium">
+            <option value="" {% if not filtros.mes %}selected{% endif %}>— Todos los meses —</option>
+            <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
+            <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
+            <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
+            <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
+            <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
+            <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
+            <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
+            <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
+            <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
+            <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
+            <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
+            <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
+          </select>
+        </div>
+
+        <!-- Date Range Desde (2 cols) -->
+        <div class="lg:col-span-2">
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 ml-0.5">Desde</label>
+          <input type="date" name="fecha_inicio" value="{{ filtros.fecha_inicio }}"
+                 class="w-full py-2 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none font-medium">
+        </div>
+
+        <!-- Buttons (2 cols) -->
+        <div class="sm:col-span-2 lg:col-span-2 flex gap-2">
+          <button type="submit"
+                  class="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all">
+            <i class="fa-solid fa-filter text-[10px]"></i>
+            <span>Filtrar</span>
+          </button>
+          {% if filtros.search or filtros.mes or filtros.fecha_inicio or filtros.fecha_fin %}
+          <a href="{% url 'reportes' %}"
+             class="inline-flex items-center justify-center px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all"
+             title="Limpiar filtros">
+            <i class="fa-solid fa-rotate-left"></i>
+          </a>
+          {% endif %}
         </div>
       </form>
     </div>
 
-    <!-- Results count -->
-    {% if empleados_data %}
-    <p style="font-size:.78rem;color:#94a3b8;font-weight:600;margin-bottom:.6rem;padding-left:.2rem;">
-      {{ empleados_data|length }} funcionario{% if empleados_data|length != 1 %}s{% endif %} encontrado{% if empleados_data|length != 1 %}s{% endif %}
-    </p>
-    {% endif %}
-
-    <!-- MOBILE CARDS -->
-    <div class="rep-card rep-mobile-view" style="overflow:hidden;">
-      {% for empleado in empleados_data %}
-      <div class="emp-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:.75rem;">
-          <div style="display:flex;align-items:center;gap:.75rem;min-width:0;">
-            <div class="rep-avatar">
-              {{ empleado.funcionario.first_name|first }}{{ empleado.funcionario.last_name|first }}
-            </div>
-            <div style="min-width:0;">
-              <div style="font-weight:700;font-size:.9rem;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ empleado.funcionario.get_full_name }}</div>
-              <div style="font-size:.72rem;color:#94a3b8;font-weight:500;margin-top:.05rem;">RUN: {{ empleado.funcionario.run }}</div>
-            </div>
-          </div>
-<div style="display:flex; gap:.4rem;">
-             <a href="{% url 'reporte_prestamos_pdf' empleado.funcionario.id %}"
-                target="_blank"
-                style="flex-shrink:0;width:1.9rem;height:1.9rem;border-radius:.5rem;background:#eef2ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;font-size:.75rem;text-decoration:none;border:1px solid #c7d2fe;">
-               <i class="fas fa-laptop" style="font-size:.75rem;"></i>
-             </a>
-             <a href="{% url 'exportar_horario_individual_pdf' empleado.funcionario.id %}"
-                target="_blank"
-                style="flex-shrink:0;width:1.9rem;height:1.9rem;border-radius:.5rem;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:.75rem;text-decoration:none;border:1px solid #fecaca;">
-               <i class="fas fa-file-pdf" style="font-size:.75rem;"></i>
-             </a>
-             <a href="{% url 'reportes_pdf_individual' empleado.funcionario.id %}?year={{ filtros.year }}&mes={{ filtros.mes }}&search={{ filtros.search }}"
-                target="_blank"
-                style="flex-shrink:0;width:1.9rem;height:1.9rem;border-radius:.5rem;background:#faf5ff;color:#7c3aed;display:flex;align-items:center;justify-content:center;font-size:.75rem;text-decoration:none;border:1px solid #ddd6fe;">
-               <i class="fas fa-file-pdf" style="font-size:.75rem;"></i>
-             </a>
-           </div>
-        </div>
-        <div class="emp-stat-grid">
-          <div class="emp-stat-box">
-            <span class="emp-stat-label">Inasistencias</span>
-            <span class="emp-stat-value" style="color:{% if empleado.total_inasistencias > 0 %}#dc2626{% else %}#64748b{% endif %};">{{ empleado.total_inasistencias }}</span>
-          </div>
-          <div class="emp-stat-box">
-            <span class="emp-stat-label">Atrasos</span>
-            <span class="emp-stat-value" style="color:{% if empleado.total_atrasos > 0 %}#d97706{% else %}#64748b{% endif %};">{{ empleado.total_atrasos }}</span>
-          </div>
-        </div>
-        <div class="emp-bar-section">
-          <div class="emp-bar-header">
-            <span style="font-weight:700;color:#475569;">Días Administrativos</span>
-            <span style="color:#4f46e5;font-weight:700;">{{ empleado.dias_usados|floatformat:1 }} usados</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:.6rem;">
-            <div class="rep-bar-track">
-              <div class="rep-bar-fill {% if empleado.dias_disponibles < 2 %}rep-bar-red{% elif empleado.dias_disponibles < 4 %}rep-bar-amber{% else %}rep-bar-green{% endif %}"
-                style="width:{% widthratio empleado.dias_disponibles 6 100 %}%"></div>
-            </div>
-            <span style="font-size:.9rem;font-weight:800;min-width:2.25rem;text-align:right;color:{% if empleado.dias_disponibles < 2 %}#dc2626{% elif empleado.dias_disponibles < 4 %}#d97706{% else %}#059669{% endif %};">
-              {{ empleado.dias_disponibles|floatformat:1 }}
-            </span>
-          </div>
-          <div style="display:flex;justify-content:space-between;margin-top:.3rem;font-size:.65rem;color:#cbd5e1;font-weight:600;">
-            <span>0 días restantes</span><span>6 máx.</span>
-          </div>
-        </div>
-        <div class="emp-licencia-row">
-          <span class="emp-lic-label"><i class="fas fa-notes-medical"></i> Licencias</span>
-          <div class="emp-lic-stats">
-            <div class="emp-lic-stat">
-              <span class="lbl">Total</span>
-              <span class="val">{{ empleado.total_licencias }}</span>
-            </div>
-            <div class="emp-lic-divider"></div>
-            <div class="emp-lic-stat">
-              <span class="lbl">Días</span>
-              <span class="val">{{ empleado.dias_licencias }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      {% empty %}
-      <div style="padding:3rem 1.5rem;text-align:center;">
-        <div style="width:3.5rem;height:3.5rem;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;margin:0 auto .85rem;">
-          <i class="fas fa-search" style="color:#cbd5e1;font-size:1.25rem;"></i>
-        </div>
-        <p style="font-weight:700;color:#475569;margin:0;">Sin resultados</p>
-        <p style="font-size:.82rem;color:#94a3b8;margin:.3rem 0 0;">Intenta ajustar los filtros</p>
-      </div>
-      {% endfor %}
-    </div>
-
-    <!-- DESKTOP TABLE -->
-    <div class="rep-card rep-desktop-view" style="overflow:hidden;">
-      <div style="overflow-x:auto;">
-        <table class="rep-table">
+    <!-- Desktop Data Table -->
+    <div class="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
           <thead>
-            <tr>
-              <th style="text-align:left;"
-                onclick="sortTable('{% if current_sort == 'name' %}name_desc{% else %}name{% endif %}','{{ filtros.search }}','{{ filtros.year }}','{{ filtros.mes }}','{{ filtros.fecha_inicio }}','{{ filtros.fecha_fin }}')">
-                Funcionario
-                <i class="fas {% if current_sort == 'name' %}fa-sort-alpha-down sort-arrow active{% elif current_sort == 'name_desc' %}fa-sort-alpha-up sort-arrow active{% else %}fa-sort sort-arrow{% endif %}"></i>
+            <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <!-- Funcionario -->
+              <th scope="col" class="py-3 px-4 cursor-pointer hover:bg-slate-100/70 transition-colors" onclick="applySort('{% if current_sort == 'name' %}name_desc{% else %}name{% endif %}')">
+                <div class="flex items-center gap-1.5">
+                  <span>Funcionario</span>
+                  <i class="fa-solid {% if current_sort == 'name' %}fa-arrow-down-a-z text-blue-600{% elif current_sort == 'name_desc' %}fa-arrow-up-z-a text-blue-600{% else %}fa-sort text-slate-300{% endif %} text-xs"></i>
+                </div>
               </th>
-              <th style="text-align:center;"
-                onclick="sortTable('{% if current_sort == 'inasistencias' %}inasistencias_asc{% else %}inasistencias{% endif %}','{{ filtros.search }}','{{ filtros.year }}','{{ filtros.mes }}','{{ filtros.fecha_inicio }}','{{ filtros.fecha_fin }}')">
-                Inasistencias
-                <i class="fas {% if current_sort == 'inasistencias' %}fa-sort-numeric-down sort-arrow active{% elif current_sort == 'inasistencias_asc' %}fa-sort-numeric-up sort-arrow active{% else %}fa-sort sort-arrow{% endif %}"></i>
+
+              <!-- Inasistencias -->
+              <th scope="col" class="py-3 px-3 text-center cursor-pointer hover:bg-slate-100/70 transition-colors" onclick="applySort('{% if current_sort == 'inasistencias' %}inasistencias_asc{% else %}inasistencias{% endif %}')">
+                <div class="flex items-center justify-center gap-1.5">
+                  <span>Inasistencias</span>
+                  <i class="fa-solid {% if current_sort == 'inasistencias' %}fa-arrow-down-9-1 text-rose-600{% elif current_sort == 'inasistencias_asc' %}fa-arrow-up-1-9 text-rose-600{% else %}fa-sort text-slate-300{% endif %} text-xs"></i>
+                </div>
               </th>
-              <th style="text-align:center;"
-                onclick="sortTable('{% if current_sort == 'atrasos' %}atrasos_asc{% else %}atrasos{% endif %}','{{ filtros.search }}','{{ filtros.year }}','{{ filtros.mes }}','{{ filtros.fecha_inicio }}','{{ filtros.fecha_fin }}')">
-                Atrasos
-                <i class="fas {% if current_sort == 'atrasos' %}fa-sort-numeric-down sort-arrow active{% elif current_sort == 'atrasos_asc' %}fa-sort-numeric-up sort-arrow active{% else %}fa-sort sort-arrow{% endif %}"></i>
+
+              <!-- Atrasos -->
+              <th scope="col" class="py-3 px-3 text-center cursor-pointer hover:bg-slate-100/70 transition-colors" onclick="applySort('{% if current_sort == 'atrasos' %}atrasos_asc{% else %}atrasos{% endif %}')">
+                <div class="flex items-center justify-center gap-1.5">
+                  <span>Atrasos</span>
+                  <i class="fa-solid {% if current_sort == 'atrasos' %}fa-arrow-down-9-1 text-amber-600{% elif current_sort == 'atrasos_asc' %}fa-arrow-up-1-9 text-amber-600{% else %}fa-sort text-slate-300{% endif %} text-xs"></i>
+                </div>
               </th>
-              <th style="text-align:center;min-width:160px;"
-                onclick="sortTable('{% if current_sort == 'dias' %}dias_asc{% else %}dias{% endif %}','{{ filtros.search }}','{{ filtros.year }}','{{ filtros.mes }}','{{ filtros.fecha_inicio }}','{{ filtros.fecha_fin }}')">
-                Días Disp.
-                <i class="fas {% if current_sort == 'dias' %}fa-sort-numeric-down sort-arrow active{% elif current_sort == 'dias_asc' %}fa-sort-numeric-up sort-arrow active{% else %}fa-sort sort-arrow{% endif %}"></i>
+
+              <!-- Días Disponibles -->
+              <th scope="col" class="py-3 px-4 min-w-[180px] cursor-pointer hover:bg-slate-100/70 transition-colors" onclick="applySort('{% if current_sort == 'dias' %}dias_asc{% else %}dias{% endif %}')">
+                <div class="flex items-center gap-1.5">
+                  <span>Días Adm. Disponibles</span>
+                  <i class="fa-solid {% if current_sort == 'dias' %}fa-arrow-down-9-1 text-blue-600{% elif current_sort == 'dias_asc' %}fa-arrow-up-1-9 text-blue-600{% else %}fa-sort text-slate-300{% endif %} text-xs"></i>
+                </div>
               </th>
-              <th style="text-align:center;"
-                onclick="sortTable('{% if current_sort == 'dias_usados' %}dias_usados_asc{% else %}dias_usados{% endif %}','{{ filtros.search }}','{{ filtros.year }}','{{ filtros.mes }}','{{ filtros.fecha_inicio }}','{{ filtros.fecha_fin }}')">
-                Usados
-                <i class="fas {% if current_sort == 'dias_usados' %}fa-sort-numeric-down sort-arrow active{% elif current_sort == 'dias_usados_asc' %}fa-sort-numeric-up sort-arrow active{% else %}fa-sort sort-arrow{% endif %}"></i>
+
+              <!-- Días Usados -->
+              <th scope="col" class="py-3 px-3 text-center cursor-pointer hover:bg-slate-100/70 transition-colors" onclick="applySort('{% if current_sort == 'dias_usados' %}dias_usados_asc{% else %}dias_usados{% endif %}')">
+                <div class="flex items-center justify-center gap-1.5">
+                  <span>Usados</span>
+                  <i class="fa-solid {% if current_sort == 'dias_usados' %}fa-arrow-down-9-1 text-indigo-600{% elif current_sort == 'dias_usados_asc' %}fa-arrow-up-1-9 text-indigo-600{% else %}fa-sort text-slate-300{% endif %} text-xs"></i>
+                </div>
               </th>
-              <th style="text-align:center;"
-                onclick="sortTable('{% if current_sort == 'licencias' %}licencias_asc{% else %}licencias{% endif %}','{{ filtros.search }}','{{ filtros.year }}','{{ filtros.mes }}','{{ filtros.fecha_inicio }}','{{ filtros.fecha_fin }}')">
-                Licencias
-                <i class="fas {% if current_sort == 'licencias' %}fa-sort-numeric-down sort-arrow active{% elif current_sort == 'licencias_asc' %}fa-sort-numeric-up sort-arrow active{% else %}fa-sort sort-arrow{% endif %}"></i>
+
+              <!-- Licencias Médicas -->
+              <th scope="col" class="py-3 px-3 text-center cursor-pointer hover:bg-slate-100/70 transition-colors" onclick="applySort('{% if current_sort == 'licencias' %}licencias_asc{% else %}licencias{% endif %}')">
+                <div class="flex items-center justify-center gap-1.5">
+                  <span>Licencias</span>
+                  <i class="fa-solid {% if current_sort == 'licencias' %}fa-arrow-down-9-1 text-purple-600{% elif current_sort == 'licencias_asc' %}fa-arrow-up-1-9 text-purple-600{% else %}fa-sort text-slate-300{% endif %} text-xs"></i>
+                </div>
               </th>
-              <th style="text-align:center;"
-                onclick="sortTable('{% if current_sort == 'dias_licencias' %}dias_licencias_asc{% else %}dias_licencias{% endif %}','{{ filtros.search }}','{{ filtros.year }}','{{ filtros.mes }}','{{ filtros.fecha_inicio }}','{{ filtros.fecha_fin }}')">
-                Días Lic.
-                <i class="fas {% if current_sort == 'dias_licencias' %}fa-sort-numeric-down sort-arrow active{% elif current_sort == 'dias_licencias_asc' %}fa-sort-numeric-up sort-arrow active{% else %}fa-sort sort-arrow{% endif %}"></i>
+
+              <!-- Días Licencia -->
+              <th scope="col" class="py-3 px-3 text-center cursor-pointer hover:bg-slate-100/70 transition-colors" onclick="applySort('{% if current_sort == 'dias_licencias' %}dias_licencias_asc{% else %}dias_licencias{% endif %}')">
+                <div class="flex items-center justify-center gap-1.5">
+                  <span>Días Lic.</span>
+                  <i class="fa-solid {% if current_sort == 'dias_licencias' %}fa-arrow-down-9-1 text-purple-600{% elif current_sort == 'dias_licencias_asc' %}fa-arrow-up-1-9 text-purple-600{% else %}fa-sort text-slate-300{% endif %} text-xs"></i>
+                </div>
               </th>
-              <th style="text-align:right;">Acciones</th>
+
+              <!-- Acciones -->
+              <th scope="col" class="py-3 px-4 text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody>
-            {% for empleado in empleados_data %}
-            <tr>
-              <td>
-                <div style="display:flex;align-items:center;gap:.75rem;">
-                  <div class="rep-avatar">
-                    {{ empleado.funcionario.first_name|first }}{{ empleado.funcionario.last_name|first }}
+          <tbody class="divide-y divide-slate-100 text-xs">
+            {% for emp in empleados_data %}
+            <tr class="hover:bg-blue-50/30 transition-colors">
+              <!-- Funcionario Column -->
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-slate-100 to-slate-200 border border-slate-300 flex items-center justify-center text-slate-700 font-bold text-xs flex-shrink-0">
+                    {{ emp.funcionario.first_name|first }}{{ emp.funcionario.last_name|first }}
                   </div>
-                  <div>
-                    <div style="font-weight:600;color:#0f172a;font-size:.875rem;">{{ empleado.funcionario.get_full_name }}</div>
-                    <div style="font-size:.72rem;color:#94a3b8;margin-top:.1rem;">{{ empleado.funcionario.run }}</div>
+                  <div class="min-w-0">
+                    <p class="font-bold text-slate-900 text-xs sm:text-sm truncate leading-snug">{{ emp.funcionario.get_full_name }}</p>
+                    <div class="flex items-center gap-2 text-[11px] text-slate-400 font-medium mt-0.5">
+                      <span>RUN: {{ emp.funcionario.run }}</span>
+                      {% if emp.cargo %}
+                      <span>•</span>
+                      <span class="truncate max-w-[150px] text-slate-500">{{ emp.cargo }}</span>
+                      {% endif %}
+                    </div>
                   </div>
                 </div>
               </td>
-              <td style="text-align:center;">
-                <span class="rep-badge {% if empleado.total_inasistencias > 0 %}rep-badge-red{% else %}rep-badge-neutral{% endif %}">{{ empleado.total_inasistencias }}</span>
+
+              <!-- Inasistencias -->
+              <td class="py-3 px-3 text-center">
+                {% if emp.total_inasistencias > 0 %}
+                <span class="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-xs font-black bg-rose-50 text-rose-700 border border-rose-200">
+                  {{ emp.total_inasistencias }}
+                </span>
+                {% else %}
+                <span class="text-slate-300 font-semibold">—</span>
+                {% endif %}
               </td>
-              <td style="text-align:center;">
-                <span class="rep-badge {% if empleado.total_atrasos > 0 %}rep-badge-amber{% else %}rep-badge-neutral{% endif %}">{{ empleado.total_atrasos }}</span>
+
+              <!-- Atrasos -->
+              <td class="py-3 px-3 text-center">
+                {% if emp.total_atrasos > 0 %}
+                <span class="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-xs font-black bg-amber-50 text-amber-700 border border-amber-200" title="{{ emp.total_minutos_retraso }} minutos acumulados">
+                  {{ emp.total_atrasos }}
+                </span>
+                {% else %}
+                <span class="text-slate-300 font-semibold">—</span>
+                {% endif %}
               </td>
-              <td>
-                <div style="display:flex;align-items:center;gap:.6rem;">
-                  <div class="rep-bar-track" style="min-width:5rem;flex:1;">
-                    <div class="rep-bar-fill {% if empleado.dias_disponibles < 2 %}rep-bar-red{% elif empleado.dias_disponibles < 4 %}rep-bar-amber{% else %}rep-bar-green{% endif %}"
-                      style="width:{% widthratio empleado.dias_disponibles 6 100 %}%"></div>
+
+              <!-- Días Disponibles Progress Bar -->
+              <td class="py-3 px-4">
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between text-[11px] font-bold">
+                    <span class="{% if emp.dias_disponibles < 2 %}text-rose-600{% elif emp.dias_disponibles < 4 %}text-amber-600{% else %}text-emerald-700{% endif %}">
+                      {{ emp.dias_disponibles|floatformat:1 }} disp.
+                    </span>
+                    <span class="text-slate-400 text-[10px]">tope 6.0</span>
                   </div>
-                  <span style="font-weight:800;font-size:.875rem;min-width:2rem;text-align:right;color:{% if empleado.dias_disponibles < 2 %}#dc2626{% elif empleado.dias_disponibles < 4 %}#d97706{% else %}#059669{% endif %};">
-                    {{ empleado.dias_disponibles|floatformat:1 }}
-                  </span>
+                  <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/60">
+                    <div class="h-full rounded-full transition-all duration-300 {% if emp.dias_disponibles < 2 %}bg-rose-500{% elif emp.dias_disponibles < 4 %}bg-amber-500{% else %}bg-emerald-500{% endif %}"
+                         style="width: {% widthratio emp.dias_disponibles 6 100 %}%"></div>
+                  </div>
                 </div>
               </td>
-              <td style="text-align:center;">
-                <span class="rep-badge rep-badge-blue">{{ empleado.dias_usados|floatformat:1 }}</span>
+
+              <!-- Días Usados -->
+              <td class="py-3 px-3 text-center">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold {% if emp.dias_usados > 0 %}bg-indigo-50 text-indigo-700 border border-indigo-100{% else %}text-slate-400{% endif %}">
+                  {{ emp.dias_usados|floatformat:1 }}
+                </span>
               </td>
-              <td style="text-align:center;">
-                <span class="rep-badge {% if empleado.total_licencias > 0 %}rep-badge-purple{% else %}rep-badge-neutral{% endif %}">{{ empleado.total_licencias }}</span>
+
+              <!-- Licencias (Cantidad) -->
+              <td class="py-3 px-3 text-center">
+                {% if emp.total_licencias > 0 %}
+                <span class="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                  {{ emp.total_licencias }}
+                </span>
+                {% else %}
+                <span class="text-slate-300 font-semibold">—</span>
+                {% endif %}
               </td>
-              <td style="text-align:center;font-weight:600;color:{% if empleado.dias_licencias > 0 %}#1e293b{% else %}#cbd5e1{% endif %};">
-                {{ empleado.dias_licencias }}
+
+              <!-- Días de Licencia -->
+              <td class="py-3 px-3 text-center font-bold {% if emp.dias_licencias > 0 %}text-slate-700{% else %}text-slate-300{% endif %}">
+                {% if emp.dias_licencias > 0 %}{{ emp.dias_licencias }}{% else %}—{% endif %}
               </td>
-<td style="text-align:right;">
-                 <div style="display:flex; justify-content:flex-end; gap:0.4rem;">
-                   <a href="{% url 'reporte_prestamos_pdf' empleado.funcionario.id %}"
-                     target="_blank"
-                     style="display:inline-flex;align-items:center;gap:.25rem;padding:.3rem .5rem;font-size:.65rem;font-weight:600;color:#4f46e5;background:#eef2ff;border:1px solid #c7d2fe;border-radius:.4rem;text-decoration:none;transition:background .15s;"
-                     onmouseover="this.style.background='#e0e7ff'" onmouseout="this.style.background='#eef2ff'">
-                     <i class="fas fa-laptop" style="font-size:.7rem;"></i> Préstamos
-                   </a>
-                   <a href="{% url 'exportar_horario_individual_pdf' empleado.funcionario.id %}"
-                     target="_blank"
-                     style="display:inline-flex;align-items:center;gap:.25rem;padding:.3rem .5rem;font-size:.65rem;font-weight:600;color:#dc2626;background:#fee2e2;border:1px solid #fecaca;border-radius:.4rem;text-decoration:none;transition:background .15s;"
-                     onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
-                     <i class="fas fa-file-pdf" style="font-size:.7rem;"></i> Horario
-                   </a>
-                   <a href="{% url 'reportes_pdf_individual' empleado.funcionario.id %}?year={{ filtros.year }}&mes={{ filtros.mes }}&search={{ filtros.search }}"
-                     target="_blank"
-                     style="display:inline-flex;align-items:center;gap:.25rem;padding:.3rem .5rem;font-size:.65rem;font-weight:600;color:#7c3aed;background:#faf5ff;border:1px solid #ddd6fe;border-radius:.4rem;text-decoration:none;transition:background .15s;"
-                     onmouseover="this.style.background='#f3e8ff'" onmouseout="this.style.background='#faf5ff'">
-                     <i class="fas fa-file-pdf" style="font-size:.7rem;"></i> Adm.
-                   </a>
-                 </div>
-               </td>
+
+              <!-- Action Links -->
+              <td class="py-3 px-4 text-right">
+                <div class="inline-flex items-center gap-1.5 justify-end">
+                  <a href="{% url 'reporte_prestamos_pdf' emp.funcionario.id %}" target="_blank"
+                     class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                     title="Comprobante Préstamos">
+                    <i class="fa-solid fa-laptop text-xs"></i>
+                  </a>
+                  <a href="{% url 'exportar_horario_individual_pdf' emp.funcionario.id %}" target="_blank"
+                     class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-all"
+                     title="Horario Funcionario PDF">
+                    <i class="fa-solid fa-calendar-day text-xs"></i>
+                  </a>
+                  <a href="{% url 'reportes_pdf_individual' emp.funcionario.id %}?year={{ filtros.year }}&mes={{ filtros.mes }}&search={{ filtros.search }}" target="_blank"
+                     class="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-purple-50 transition-all"
+                     title="Reporte Días Adm. PDF">
+                    <i class="fa-solid fa-file-pdf text-xs"></i>
+                  </a>
+                </div>
+              </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="9" style="padding:4rem 1.5rem;text-align:center;">
-                <div style="width:3.5rem;height:3.5rem;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;margin:0 auto .85rem;">
-                  <i class="fas fa-search" style="color:#cbd5e1;font-size:1.25rem;"></i>
-                </div>
-                <p style="font-weight:700;color:#475569;margin:0;">Sin resultados</p>
-                <p style="font-size:.82rem;color:#94a3b8;margin:.3rem 0 0;">Intenta ajustar los filtros</p>
+              <td colspan="8" class="py-12 text-center text-slate-400">
+                <i class="fa-solid fa-user-slash text-3xl mb-3 text-slate-300 block"></i>
+                <p class="font-bold text-sm text-slate-700">No se encontraron funcionarios</p>
+                <p class="text-xs text-slate-400 mt-1">Prueba ajustando los términos de búsqueda o filtros.</p>
               </td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-      {% if empleados_data %}
-      <div style="padding:.75rem 1.1rem;border-top:1px solid #f1f5f9;background:#f8fafc;font-size:.75rem;color:#94a3b8;font-weight:600;">
-        {{ empleados_data|length }} registro{% if empleados_data|length != 1 %}s{% endif %} en total
+    </div>
+
+    <!-- Mobile Cards View -->
+    <div class="block md:hidden space-y-3">
+      {% for emp in empleados_data %}
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-3">
+        <!-- User Info Header -->
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center text-slate-700 font-bold text-xs flex-shrink-0">
+              {{ emp.funcionario.first_name|first }}{{ emp.funcionario.last_name|first }}
+            </div>
+            <div class="min-w-0">
+              <p class="font-bold text-slate-900 text-sm truncate">{{ emp.funcionario.get_full_name }}</p>
+              <p class="text-[11px] text-slate-400">RUN: {{ emp.funcionario.run }}</p>
+            </div>
+          </div>
+          <!-- Mobile Row Action Icons -->
+          <div class="flex items-center gap-1">
+            <a href="{% url 'reporte_prestamos_pdf' emp.funcionario.id %}" target="_blank"
+               class="w-7 h-7 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 text-xs">
+              <i class="fa-solid fa-laptop"></i>
+            </a>
+            <a href="{% url 'exportar_horario_individual_pdf' emp.funcionario.id %}" target="_blank"
+               class="w-7 h-7 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 text-xs">
+              <i class="fa-solid fa-calendar-day"></i>
+            </a>
+            <a href="{% url 'reportes_pdf_individual' emp.funcionario.id %}?year={{ filtros.year }}&mes={{ filtros.mes }}" target="_blank"
+               class="w-7 h-7 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 text-xs">
+              <i class="fa-solid fa-file-pdf"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Metric Badges Row -->
+        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+          <div class="bg-slate-50 p-2 rounded-xl border border-slate-100">
+            <span class="block text-[9px] font-bold text-slate-400 uppercase">Inasistencias</span>
+            <span class="font-black {% if emp.total_inasistencias > 0 %}text-rose-600{% else %}text-slate-700{% endif %}">
+              {{ emp.total_inasistencias }}
+            </span>
+          </div>
+          <div class="bg-slate-50 p-2 rounded-xl border border-slate-100">
+            <span class="block text-[9px] font-bold text-slate-400 uppercase">Atrasos</span>
+            <span class="font-black {% if emp.total_atrasos > 0 %}text-amber-600{% else %}text-slate-700{% endif %}">
+              {{ emp.total_atrasos }}
+            </span>
+          </div>
+          <div class="bg-slate-50 p-2 rounded-xl border border-slate-100">
+            <span class="block text-[9px] font-bold text-slate-400 uppercase">Licencias</span>
+            <span class="font-black {% if emp.total_licencias > 0 %}text-purple-600{% else %}text-slate-700{% endif %}">
+              {{ emp.total_licencias }} <span class="text-[10px] text-slate-400">({{ emp.dias_licencias }}d)</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Administrative Days Progress Bar -->
+        <div class="bg-slate-50/70 p-2.5 rounded-xl border border-slate-100 space-y-1.5">
+          <div class="flex justify-between items-center text-xs font-bold">
+            <span class="text-slate-600">Días Administrativos:</span>
+            <span class="{% if emp.dias_disponibles < 2 %}text-rose-600{% elif emp.dias_disponibles < 4 %}text-amber-600{% else %}text-emerald-700{% endif %}">
+              {{ emp.dias_disponibles|floatformat:1 }} disp. / {{ emp.dias_usados|floatformat:1 }} usados
+            </span>
+          </div>
+          <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+            <div class="h-full rounded-full {% if emp.dias_disponibles < 2 %}bg-rose-500{% elif emp.dias_disponibles < 4 %}bg-amber-500{% else %}bg-emerald-500{% endif %}"
+                 style="width: {% widthratio emp.dias_disponibles 6 100 %}%"></div>
+          </div>
+        </div>
       </div>
-      {% endif %}
+      {% empty %}
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-8 text-center text-slate-400">
+        <i class="fa-solid fa-user-slash text-2xl mb-2 text-slate-300 block"></i>
+        <p class="font-bold text-sm text-slate-700">Sin resultados</p>
+      </div>
+      {% endfor %}
     </div>
 
+    <!-- ========================================== -->
+    <!-- PAGINATION BAR                             -->
+    <!-- ========================================== -->
+    {% if is_paginated %}
+    <div class="bg-white rounded-2xl border border-slate-200/80 px-4 py-3 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+      <p class="text-slate-500 font-medium">
+        Mostrando funcionario <span class="font-bold text-slate-800">{{ page_obj.start_index }}</span> a <span class="font-bold text-slate-800">{{ page_obj.end_index }}</span> de <span class="font-bold text-slate-800">{{ total_count }}</span>
+      </p>
 
+      <div class="flex items-center gap-1">
+        {% if page_obj.has_previous %}
+        <a href="?page=1{% if filtros.search %}&search={{ filtros.search }}{% endif %}{% if filtros.year %}&year={{ filtros.year }}{% endif %}{% if filtros.mes %}&mes={{ filtros.mes }}{% endif %}{% if filtros.fecha_inicio %}&fecha_inicio={{ filtros.fecha_inicio }}{% endif %}{% if filtros.fecha_fin %}&fecha_fin={{ filtros.fecha_fin }}{% endif %}&sort={{ current_sort }}&paginate_by={{ paginate_by }}"
+           class="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium" title="Primera">
+          <i class="fa-solid fa-angles-left text-[10px]"></i>
+        </a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if filtros.search %}&search={{ filtros.search }}{% endif %}{% if filtros.year %}&year={{ filtros.year }}{% endif %}{% if filtros.mes %}&mes={{ filtros.mes }}{% endif %}{% if filtros.fecha_inicio %}&fecha_inicio={{ filtros.fecha_inicio }}{% endif %}{% if filtros.fecha_fin %}&fecha_fin={{ filtros.fecha_fin }}{% endif %}&sort={{ current_sort }}&paginate_by={{ paginate_by }}"
+           class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium">
+          Anterior
+        </a>
+        {% endif %}
+
+        <span class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-bold border border-blue-100">
+          Pág. {{ page_obj.number }} de {{ paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if filtros.search %}&search={{ filtros.search }}{% endif %}{% if filtros.year %}&year={{ filtros.year }}{% endif %}{% if filtros.mes %}&mes={{ filtros.mes }}{% endif %}{% if filtros.fecha_inicio %}&fecha_inicio={{ filtros.fecha_inicio }}{% endif %}{% if filtros.fecha_fin %}&fecha_fin={{ filtros.fecha_fin }}{% endif %}&sort={{ current_sort }}&paginate_by={{ paginate_by }}"
+           class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium">
+          Siguiente
+        </a>
+        <a href="?page={{ paginator.num_pages }}{% if filtros.search %}&search={{ filtros.search }}{% endif %}{% if filtros.year %}&year={{ filtros.year }}{% endif %}{% if filtros.mes %}&mes={{ filtros.mes }}{% endif %}{% if filtros.fecha_inicio %}&fecha_inicio={{ filtros.fecha_inicio }}{% endif %}{% if filtros.fecha_fin %}&fecha_fin={{ filtros.fecha_fin }}{% endif %}&sort={{ current_sort }}&paginate_by={{ paginate_by }}"
+           class="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium" title="Última">
+          <i class="fa-solid fa-angles-right text-[10px]"></i>
+        </a>
+        {% endif %}
+      </div>
     </div>
+    {% endif %}
 
-<!-- Tab Content: Estadísticas -->
-     <div id="tab-estadisticas" class="rep-tab-content">
-       <div class="stats-grid">
-         <!-- Chart: Permisos Administrativos -->
-         <div class="chart-card">
-           <div class="chart-header">
-             <div class="chart-title">
-               <div class="chart-icon" style="background:#eef2ff; color:#4f46e5;"><i class="fas fa-calendar-check"></i></div>
-               Permisos Administrativos
-             </div>
-             <div style="font-size:.7rem; font-weight:700; color:#94a3b8; background:#f8fafc; padding:.25rem .5rem; border-radius:.4rem; border:1px solid #e2e8f0; text-transform:uppercase; letter-spacing:0.02em;">
-               Año {{ stats.year }}
-             </div>
-           </div>
-           <div class="chart-container">
-             <canvas id="chartPermisos"></canvas>
-           </div>
-           <div style="margin-top:1.25rem; display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid #f1f5f9;">
-             <span style="font-size:.75rem; color:#64748b; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;">Días totales</span>
-             <span style="font-size:1.25rem; font-weight:900; color:#4f46e5; font-family:system-ui;">{{ stats.total_permisos_anual|floatformat:1 }}</span>
-           </div>
-         </div>
+  </div>
 
-         <!-- Chart: Licencias Médicas -->
-         <div class="chart-card">
-           <div class="chart-header">
-             <div class="chart-title">
-               <div class="chart-icon" style="background:#faf5ff; color:#7c3aed;"><i class="fas fa-notes-medical"></i></div>
-               Licencias Médicas
-             </div>
-             <div style="font-size:.7rem; font-weight:700; color:#94a3b8; background:#f8fafc; padding:.25rem .5rem; border-radius:.4rem; border:1px solid #e2e8f0; text-transform:uppercase; letter-spacing:0.02em;">
-               Año {{ stats.year }}
-             </div>
-           </div>
-           <div class="chart-container">
-             <canvas id="chartLicencias"></canvas>
-           </div>
-           <div style="margin-top:1.25rem; display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid #f1f5f9;">
-             <span style="font-size:.75rem; color:#64748b; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;">Días totales</span>
-             <span style="font-size:1.25rem; font-weight:900; color:#7c3aed; font-family:system-ui;">{{ stats.total_licencias_anual }}</span>
-           </div>
-         </div>
+  <!-- ========================================== -->
+  <!-- 5. TAB 2: GRÁFICOS Y ESTADÍSTICAS          -->
+  <!-- ========================================== -->
+  <div id="tab-content-estadisticas" class="hidden space-y-5">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <!-- Chart 1: Permisos Administrativos -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-calendar-check"></i>
+              </div>
+              <h3 class="font-bold text-slate-800 text-sm">Permisos Administrativos</h3>
+            </div>
+            <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Año {{ stats.year }}</span>
+          </div>
+          <div class="h-56 relative w-full">
+            <canvas id="chartPermisos"></canvas>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-baseline">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Anual</span>
+          <span class="text-xl font-black text-indigo-600">{{ stats.total_permisos_anual|floatformat:1 }} <span class="text-xs font-semibold text-slate-400">días</span></span>
+        </div>
+      </div>
 
-         <!-- Chart: Atrasos Mensuales -->
-         <div class="chart-card">
-           <div class="chart-header">
-             <div class="chart-title">
-               <div class="chart-icon" style="background:#fffbeb; color:#d97706;"><i class="fas fa-clock"></i></div>
-               Atrasos Mensuales
-             </div>
-             <div style="font-size:.7rem; font-weight:700; color:#94a3b8; background:#f8fafc; padding:.25rem .5rem; border-radius:.4rem; border:1px solid #e2e8f0; text-transform:uppercase; letter-spacing:0.02em;">
-               Año {{ stats.year }}
-             </div>
-           </div>
-           <div class="chart-container">
-             <canvas id="chartAtrasos"></canvas>
-           </div>
-           <div style="margin-top:1.25rem; display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid #f1f5f9;">
-             <span style="font-size:.75rem; color:#64748b; font-weight:600; text-transform:uppercase; letter-spacing:0.03em;">Minutos totales</span>
-             <span style="font-size:1.25rem; font-weight:900; color:#d97706; font-family:system-ui;">{{ stats.total_atrasos_anual }}</span>
-           </div>
-         </div>
-       </div>
-     </div>
+      <!-- Chart 2: Licencias Médicas -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-notes-medical"></i>
+              </div>
+              <h3 class="font-bold text-slate-800 text-sm">Licencias Médicas</h3>
+            </div>
+            <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Año {{ stats.year }}</span>
+          </div>
+          <div class="h-56 relative w-full">
+            <canvas id="chartLicencias"></canvas>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-baseline">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Anual</span>
+          <span class="text-xl font-black text-purple-600">{{ stats.total_licencias_anual }} <span class="text-xs font-semibold text-slate-400">días</span></span>
+        </div>
+      </div>
+
+      <!-- Chart 3: Atrasos Mensuales -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-clock"></i>
+              </div>
+              <h3 class="font-bold text-slate-800 text-sm">Minutos de Atraso</h3>
+            </div>
+            <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Año {{ stats.year }}</span>
+          </div>
+          <div class="h-56 relative w-full">
+            <canvas id="chartAtrasos"></canvas>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-baseline">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Anual</span>
+          <span class="text-xl font-black text-amber-600">{{ stats.total_atrasos_anual }} <span class="text-xs font-semibold text-slate-400">minutos</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
 
 
+<!-- ======================================================= -->
+<!-- 6. MODALES DE EXPORTACIÓN (MODERNOS & ACCESIBLES)         -->
+<!-- ======================================================= -->
+
+<!-- Modal: Horarios -->
+<div id="modal-horarios" class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+          <i class="fa-solid fa-calendar-week"></i>
+        </div>
+        <h3 class="font-bold text-slate-900 text-sm">Reporte de Horarios</h3>
+      </div>
+      <button type="button" onclick="closeModal('horarios')" class="text-slate-400 hover:text-slate-600 text-sm">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <p class="text-xs text-slate-500">Selecciona el formato para descargar el consolidado semanal de horarios de todo el personal.</p>
+    <div class="grid grid-cols-2 gap-3 pt-2">
+      <button type="button" onclick="window.location.href='{% url 'exportar_horarios' %}'; closeModal('horarios')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-excel"></i> Excel
+      </button>
+      <button type="button" onclick="window.open('{% url 'exportar_horarios_pdf' %}', '_blank'); closeModal('horarios')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-pdf"></i> PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: DAEM (General) -->
+<div id="modal-daem" class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+          <i class="fa-solid fa-file-invoice"></i>
+        </div>
+        <h3 class="font-bold text-slate-900 text-sm">Informe DAEM</h3>
+      </div>
+      <button type="button" onclick="closeModal('daem')" class="text-slate-400 hover:text-slate-600 text-sm">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <select id="m-daem-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="">— Todos —</option>
+          {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <select id="m-daem-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="">— Todos —</option>
+          <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
+          <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
+          <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
+          <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
+          <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
+          <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
+          <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
+          <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
+          <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
+          <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
+          <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
+          <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 pt-2">
+      <button type="button" onclick="window.location.href='{% url 'reportes_daem_excel' %}?year='+document.getElementById('m-daem-year').value+'&mes='+document.getElementById('m-daem-mes').value; closeModal('daem')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-excel"></i> Excel
+      </button>
+      <button type="button" onclick="window.open('{% url 'reportes_daem_pdf' %}?year='+document.getElementById('m-daem-year').value+'&mes='+document.getElementById('m-daem-mes').value, '_blank'); closeModal('daem')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-pdf"></i> PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: DAEM 2 (Asistencia) -->
+<div id="modal-asistencia" class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
+          <i class="fa-solid fa-clipboard-check"></i>
+        </div>
+        <h3 class="font-bold text-slate-900 text-sm">Informe DAEM 2 (Asistencia)</h3>
+      </div>
+      <button type="button" onclick="closeModal('asistencia')" class="text-slate-400 hover:text-slate-600 text-sm">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <select id="m-asistencia-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <select id="m-asistencia-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
+          <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
+          <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
+          <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
+          <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
+          <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
+          <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
+          <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
+          <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
+          <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
+          <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
+          <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 pt-2">
+      <button type="button" onclick="window.location.href='{% url 'asistencia:reporte_daem2_excel' %}?year='+document.getElementById('m-asistencia-year').value+'&mes='+document.getElementById('m-asistencia-mes').value; closeModal('asistencia')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-excel"></i> Excel
+      </button>
+      <button type="button" onclick="window.open('{% url 'asistencia:reporte_daem2_pdf' %}?year='+document.getElementById('m-asistencia-year').value+'&mes='+document.getElementById('m-asistencia-mes').value, '_blank'); closeModal('asistencia')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-pdf"></i> PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: DAEM 3 (Personal Docente / Asistente) -->
+<div id="modal-daem3" class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-xs">
+          <i class="fa-solid fa-file-signature"></i>
+        </div>
+        <h3 class="font-bold text-slate-900 text-sm">Informe DAEM 3</h3>
+      </div>
+      <button type="button" onclick="closeModal('daem3')" class="text-slate-400 hover:text-slate-600 text-sm">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Tipo de Personal</label>
+        <select id="m-daem3-tipo" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="DOCENTE">Docentes</option>
+          <option value="ASISTENTE">Asistentes de la Educación</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <select id="m-daem3-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <select id="m-daem3-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
+          <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
+          <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
+          <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
+          <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
+          <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
+          <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
+          <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
+          <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
+          <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
+          <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
+          <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 pt-2">
+      <button type="button" onclick="window.location.href='{% url 'reportes_daem_excel' %}?tipo='+document.getElementById('m-daem3-tipo').value+'&year='+document.getElementById('m-daem3-year').value+'&mes='+document.getElementById('m-daem3-mes').value; closeModal('daem3')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-excel"></i> Excel
+      </button>
+      <button type="button" onclick="window.open('{% url 'reportes_daem_pdf' %}?tipo='+document.getElementById('m-daem3-tipo').value+'&year='+document.getElementById('m-daem3-year').value+'&mes='+document.getElementById('m-daem3-mes').value, '_blank'); closeModal('daem3')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-pdf"></i> PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: CLA -->
+<div id="modal-cla" class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center text-xs">
+          <i class="fa-solid fa-building-columns"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-slate-900 text-sm">Informe CLA</h3>
+          <p class="text-[10px] text-slate-500">Atrasos, inasistencias y omisiones (sin entrada/salida/ambas)</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeModal('cla')" class="text-slate-400 hover:text-slate-600 text-sm">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Tipo de Personal</label>
+        <select id="m-cla-tipo" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="DOCENTE">Docentes</option>
+          <option value="ASISTENTE">Asistentes de la Educación</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <select id="m-cla-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <select id="m-cla-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
+          <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
+          <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
+          <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
+          <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
+          <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
+          <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
+          <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
+          <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
+          <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
+          <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
+          <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 pt-2">
+      <button type="button" onclick="window.location.href='{% url 'reportes_cla_excel' %}?tipo='+document.getElementById('m-cla-tipo').value+'&year='+document.getElementById('m-cla-year').value+'&mes='+document.getElementById('m-cla-mes').value; closeModal('cla')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-excel"></i> Excel
+      </button>
+      <button type="button" onclick="window.open('{% url 'reportes_cla_pdf' %}?tipo='+document.getElementById('m-cla-tipo').value+'&year='+document.getElementById('m-cla-year').value+'&mes='+document.getElementById('m-cla-mes').value, '_blank'); closeModal('cla')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-teal-700 hover:bg-teal-800 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-pdf"></i> PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Mensual Días Administrativos -->
+<div id="modal-mensual" class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs">
+          <i class="fa-solid fa-calendar-alt"></i>
+        </div>
+        <h3 class="font-bold text-slate-900 text-sm">Reporte Mensual Días Adm.</h3>
+      </div>
+      <button type="button" onclick="closeModal('mensual')" class="text-slate-400 hover:text-slate-600 text-sm">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <select id="m-mensual-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="">— Todos —</option>
+          {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <select id="m-mensual-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="">— Todos —</option>
+          <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
+          <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
+          <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
+          <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
+          <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
+          <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
+          <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
+          <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
+          <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
+          <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
+          <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
+          <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 pt-2">
+      <button type="button" onclick="window.location.href='{% url 'reportes_mensual_dias_administrativos_excel' %}?year='+document.getElementById('m-mensual-year').value+'&mes='+document.getElementById('m-mensual-mes').value; closeModal('mensual')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-excel"></i> Excel
+      </button>
+      <button type="button" onclick="window.open('{% url 'reportes_mensual_dias_administrativos' %}?year='+document.getElementById('m-mensual-year').value+'&mes='+document.getElementById('m-mensual-mes').value, '_blank'); closeModal('mensual')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-pdf"></i> PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Excel General -->
+<div id="modal-excel" class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+          <i class="fa-solid fa-file-excel"></i>
+        </div>
+        <h3 class="font-bold text-slate-900 text-sm">Exportar Consolidado Excel</h3>
+      </div>
+      <button type="button" onclick="closeModal('excel')" class="text-slate-400 hover:text-slate-600 text-sm">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <select id="m-excel-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="">— Todos —</option>
+          {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <select id="m-excel-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="">— Todos —</option>
+          <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
+          <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
+          <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
+          <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
+          <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
+          <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
+          <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
+          <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
+          <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
+          <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
+          <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
+          <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
+        </select>
+      </div>
+    </div>
+    <button type="button" onclick="window.location.href='{% url 'reportes_excel' %}?year='+document.getElementById('m-excel-year').value+'&mes='+document.getElementById('m-excel-mes').value; closeModal('excel')"
+            class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 shadow-sm transition-all">
+      <i class="fa-solid fa-download"></i> Descargar Archivo Excel
+    </button>
+  </div>
+</div>
+
+<!-- Modal: PDF Colectivo -->
+<div id="modal-pdf" class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
+          <i class="fa-solid fa-file-pdf"></i>
+        </div>
+        <h3 class="font-bold text-slate-900 text-sm">Exportar PDF Colectivo</h3>
+      </div>
+      <button type="button" onclick="closeModal('pdf')" class="text-slate-400 hover:text-slate-600 text-sm">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <select id="m-pdf-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="">— Todos —</option>
+          {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <select id="m-pdf-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="">— Todos —</option>
+          <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
+          <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
+          <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
+          <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
+          <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
+          <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
+          <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
+          <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
+          <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
+          <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
+          <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
+          <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
+        </select>
+      </div>
+    </div>
+    <button type="button" onclick="window.open('{% url 'reportes_pdf_colectivo' %}?year='+document.getElementById('m-pdf-year').value+'&mes='+document.getElementById('m-pdf-mes').value, '_blank'); closeModal('pdf')"
+            class="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center gap-2 shadow-sm transition-all">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir Documento PDF
+    </button>
+  </div>
+</div>
+
+<!-- Modal: Justificaciones Aprobadas -->
+<div id="modal-justificaciones" class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h3 class="font-bold text-slate-900 text-sm">Justificaciones Aprobadas</h3>
+      </div>
+      <button type="button" onclick="closeModal('justificaciones')" class="text-slate-400 hover:text-slate-600 text-sm">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <select id="m-justificaciones-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="">— Todos —</option>
+          {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <select id="m-justificaciones-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
+          <option value="">— Todos —</option>
+          <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
+          <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
+          <option value="3"  {% if filtros.mes == '3'  %}selected{% endif %}>Marzo</option>
+          <option value="4"  {% if filtros.mes == '4'  %}selected{% endif %}>Abril</option>
+          <option value="5"  {% if filtros.mes == '5'  %}selected{% endif %}>Mayo</option>
+          <option value="6"  {% if filtros.mes == '6'  %}selected{% endif %}>Junio</option>
+          <option value="7"  {% if filtros.mes == '7'  %}selected{% endif %}>Julio</option>
+          <option value="8"  {% if filtros.mes == '8'  %}selected{% endif %}>Agosto</option>
+          <option value="9"  {% if filtros.mes == '9'  %}selected{% endif %}>Septiembre</option>
+          <option value="10" {% if filtros.mes == '10' %}selected{% endif %}>Octubre</option>
+          <option value="11" {% if filtros.mes == '11' %}selected{% endif %}>Noviembre</option>
+          <option value="12" {% if filtros.mes == '12' %}selected{% endif %}>Diciembre</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 pt-2">
+      <button type="button" onclick="window.location.href='{% url 'reportes_justificaciones_excel' %}?year='+document.getElementById('m-justificaciones-year').value+'&mes='+document.getElementById('m-justificaciones-mes').value; closeModal('justificaciones')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-excel"></i> Excel
+      </button>
+      <button type="button" onclick="window.open('{% url 'reportes_justificaciones_pdf' %}?year='+document.getElementById('m-justificaciones-year').value+'&mes='+document.getElementById('m-justificaciones-mes').value, '_blank'); closeModal('justificaciones')"
+              class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center gap-2 transition-all">
+        <i class="fa-solid fa-file-pdf"></i> PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- 7. SCRIPTS: MODALES, TABS, ORDENAMIENTO & CHARTS         -->
+<!-- ======================================================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Script inmediato para asegurar scroll disponible
-  (function() {
-    // Forzar restauración inmediata del scroll
-    document.body.style.overflow = '';
-    document.body.style.overflowY = 'auto';
-    document.body.style.overflowX = 'hidden';
-    document.documentElement.style.overflow = '';
-    document.documentElement.style.overflowY = 'auto';
-    document.documentElement.style.overflowX = 'hidden';
+  // Manejo de Modales Limpios (sin tocar scroll de body)
+  function openModal(id) {
+    const el = document.getElementById('modal-' + id);
+    if (el) el.classList.remove('hidden');
+  }
 
-    // Cerrar cualquier modal que pueda estar abierto
-    var overlays = document.querySelectorAll('.rep-overlay');
-    for (var i = 0; i < overlays.length; i++) {
-      overlays[i].classList.remove('open');
+  function closeModal(id) {
+    const el = document.getElementById('modal-' + id);
+    if (el) el.classList.add('hidden');
+  }
+
+  // Cerrar modal al presionar Escape o clic en backdrop
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('[id^="modal-"]').forEach(m => m.classList.add('hidden'));
     }
+  });
 
-    console.log('Scroll restaurado inmediatamente');
-  })();
+  document.querySelectorAll('[id^="modal-"]').forEach(m => {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.add('hidden');
+      }
+    });
+  });
 
-  function sortTable(sort, search, year, mes, inicio, fin) {
+  // Control de Pestañas
+  function switchMainTab(tab) {
+    const contentListado = document.getElementById('tab-content-listado');
+    const contentEstadisticas = document.getElementById('tab-content-estadisticas');
+    const btnListado = document.getElementById('tab-btn-listado');
+    const btnEstadisticas = document.getElementById('tab-btn-estadisticas');
+
+    if (tab === 'listado') {
+      contentListado.classList.remove('hidden');
+      contentEstadisticas.classList.add('hidden');
+
+      btnListado.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white text-slate-900 shadow-sm";
+      btnEstadisticas.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900";
+    } else {
+      contentListado.classList.add('hidden');
+      contentEstadisticas.classList.remove('hidden');
+
+      btnEstadisticas.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white text-slate-900 shadow-sm";
+      btnListado.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900";
+
+      initReportCharts();
+    }
+  }
+
+  // Ordenamiento Dinámico manteniendo filtros
+  function applySort(sortValue) {
     const url = new URL(window.location.href);
-    url.searchParams.set('sort', sort);
-    if (search) url.searchParams.set('search', search);
-    else url.searchParams.delete('search');
-    if (year) url.searchParams.set('year', year);
-    else url.searchParams.delete('year');
-    if (mes) url.searchParams.set('mes', mes);
-    else url.searchParams.delete('mes');
-    if (inicio) url.searchParams.set('fecha_inicio', inicio);
-    else url.searchParams.delete('fecha_inicio');
-    if (fin) url.searchParams.set('fecha_fin', fin);
-    else url.searchParams.delete('fecha_fin');
+    url.searchParams.set('sort', sortValue);
+    url.searchParams.set('page', '1');
     window.location.href = url.toString();
   }
 
-  function openModal(id) {
-    document.getElementById('modal-' + id).classList.add('open');
-    document.body.style.overflow = 'hidden';
-    document.body.style.paddingRight = '15px'; // Compensar scrollbar
-  }
-  function closeModal(id) {
-    var modal = document.getElementById('modal-' + id);
-    if (modal) {
-      modal.classList.remove('open');
-    }
-    // Forzar restauración del scroll
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-    document.documentElement.style.overflow = '';
-  }
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      document.querySelectorAll('.rep-overlay.open').forEach(function(el) {
-        el.classList.remove('open');
-      });
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
-    }
-  });
-
-  // Asegurar que el scroll se restaure al cargar la página
-  document.addEventListener('DOMContentLoaded', function() {
-    // Forzar restauración del scroll
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-    document.documentElement.style.overflow = '';
-    document.documentElement.style.paddingRight = '';
-
-    // Cerrar cualquier modal que pueda estar abierto
-    document.querySelectorAll('.rep-overlay.open').forEach(function(el) {
-      el.classList.remove('open');
-    });
-
-    console.log('Scroll restaurado al cargar la página');
-  });
-
-  // Prevenir que el scroll se quede bloqueado
-  window.addEventListener('beforeunload', function() {
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
-    document.documentElement.style.overflow = '';
-    document.documentElement.style.paddingRight = '';
-  });
-
-  // Función de emergencia para restaurar scroll
-  window.forceScrollRestore = function() {
-    document.body.style.overflow = '';
-    document.body.style.overflowY = 'auto';
-    document.body.style.overflowX = 'hidden';
-    document.body.style.paddingRight = '';
-    document.documentElement.style.overflow = '';
-    document.documentElement.style.overflowY = 'auto';
-    document.documentElement.style.overflowX = 'hidden';
-    document.documentElement.style.paddingRight = '';
-
-    // Cerrar todos los modales
-    document.querySelectorAll('.rep-overlay').forEach(function(el) {
-      el.classList.remove('open');
-    });
-
-    console.log('Scroll restaurado manualmente - todos los estilos aplicados');
-  };
-
-  // Pestañas
-  function switchTab(id, btn) {
-    document.querySelectorAll('.rep-tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.rep-tab').forEach(el => el.classList.remove('active'));
-    
-    document.getElementById('tab-' + id).classList.add('active');
-    btn.classList.add('active');
-
-    // Re-renderizar gráficos si es necesario
-    if (id === 'estadisticas') {
-      initCharts();
-    }
+  // Cambio de Paginación Dinámica
+  function changePageSize(size) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('paginate_by', size);
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
   }
 
-// Gráficos
-   let chartPermisos = null;
-   let chartLicencias = null;
-   let chartAtrasos = null;
+  // ==========================================
+  // Gráficos Chart.js con Paleta FLUX
+  // ==========================================
+  let chartPermisos = null;
+  let chartLicencias = null;
+  let chartAtrasos = null;
 
-   function initCharts() {
-     const ctxPermisos = document.getElementById('chartPermisos').getContext('2d');
-     const ctxLicencias = document.getElementById('chartLicencias').getContext('2d');
-     const ctxAtrasos = document.getElementById('chartAtrasos').getContext('2d');
-    
-     const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    
-     if (chartPermisos) chartPermisos.destroy();
-     if (chartLicencias) chartLicencias.destroy();
-     if (chartAtrasos) chartAtrasos.destroy();
+  function initReportCharts() {
+    const ctxPermisos = document.getElementById('chartPermisos');
+    const ctxLicencias = document.getElementById('chartLicencias');
+    const ctxAtrasos = document.getElementById('chartAtrasos');
 
-    const commonOptions = {
+    if (!ctxPermisos || !ctxLicencias || !ctxAtrasos) return;
+
+    const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+    if (chartPermisos) chartPermisos.destroy();
+    if (chartLicencias) chartLicencias.destroy();
+    if (chartAtrasos) chartAtrasos.destroy();
+
+    const commonChartOptions = {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#1e293b',
-          titleFont: { size: 12, weight: 'bold' },
-          bodyFont: { size: 12 },
-          padding: 12,
-          cornerRadius: 8,
+          backgroundColor: '#0f172a',
+          titleFont: { size: 12, weight: 'bold', family: "'Inter', sans-serif" },
+          bodyFont: { size: 12, family: "'Inter', sans-serif" },
+          padding: 10,
+          cornerRadius: 10,
           displayColors: false,
-          callbacks: {
-            label: function(context) {
-                return context.parsed.y + (context.datasetIndex === 0 ? ' días' : ' días');
-            }
-          }
         }
       },
       scales: {
-        y: { 
-          beginAtZero: true, 
-          grid: { borderDash: [5, 5], color: '#f1f5f9', drawBorder: false }, 
-          ticks: { 
-            font: { size: 10, weight: '600' }, 
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(226, 232, 240, 0.8)', drawBorder: false },
+          ticks: {
+            font: { size: 10, weight: '600', family: "'Inter', sans-serif" },
             color: '#94a3b8',
-            callback: function(value) { if (value % 1 === 0) return value; }
-          } 
+            callback: function(val) { if (val % 1 === 0) return val; }
+          }
         },
-        x: { 
-          grid: { display: false }, 
-          ticks: { font: { size: 10, weight: '600' }, color: '#94a3b8' } 
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 10, weight: '600', family: "'Inter', sans-serif" }, color: '#94a3b8' }
         }
-      },
-      interaction: {
-        intersect: false,
-        mode: 'index',
-      },
+      }
     };
 
-    chartPermisos = new Chart(ctxPermisos, {
+    chartPermisos = new Chart(ctxPermisos.getContext('2d'), {
       type: 'bar',
       data: {
         labels: labels,
         datasets: [{
           label: 'Días Administrativos',
           data: {{ stats.permisos_mensuales|safe }},
-          backgroundColor: '#6366f1',
-          borderRadius: 4,
-          hoverBackgroundColor: '#4f46e5'
+          backgroundColor: '#4f46e5',
+          borderRadius: 6,
+          hoverBackgroundColor: '#4338ca'
         }]
       },
-      options: commonOptions
+      options: commonChartOptions
     });
 
-chartLicencias = new Chart(ctxLicencias, {
-       type: 'bar',
-       data: {
-         labels: labels,
-         datasets: [{
-           label: 'Días Licencia',
-           data: {{ stats.licencias_mensuales|safe }},
-           backgroundColor: '#7c3aed',
-           borderRadius: 4,
-           hoverBackgroundColor: '#6d28d9'
-         }]
-       },
-       options: commonOptions
-     });
+    chartLicencias = new Chart(ctxLicencias.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Días Licencia',
+          data: {{ stats.licencias_mensuales|safe }},
+          backgroundColor: '#9333ea',
+          borderRadius: 6,
+          hoverBackgroundColor: '#7e22ce'
+        }]
+      },
+      options: commonChartOptions
+    });
 
-     chartAtrasos = new Chart(ctxAtrasos, {
-       type: 'bar',
-       data: {
-         labels: labels,
-         datasets: [{
-           label: 'Minutos de Atraso',
-           data: {{ stats.atrasos_mensuales|safe }},
-           backgroundColor: '#f59e0b',
-           borderRadius: 4,
-           hoverBackgroundColor: '#d97706'
-         }]
-       },
-       options: {
-         responsive: true,
-         maintainAspectRatio: false,
-         plugins: {
-           legend: { display: false },
-           tooltip: {
-             backgroundColor: '#1e293b',
-             titleFont: { size: 12, weight: 'bold' },
-             bodyFont: { size: 12 },
-             padding: 12,
-             cornerRadius: 8,
-             displayColors: false,
-             callbacks: {
-               label: function(context) {
-                 return context.parsed.y + ' min';
-               }
-             }
-           }
-         },
-         scales: {
-           y: { 
-             beginAtZero: true, 
-             grid: { borderDash: [5, 5], color: '#f1f5f9', drawBorder: false }, 
-             ticks: { 
-               font: { size: 10, weight: '600' }, 
-               color: '#94a3b8',
-               callback: function(value) { return value + ' min'; }
-             } 
-           },
-           x: { 
-             grid: { display: false }, 
-             ticks: { font: { size: 10, weight: '600' }, color: '#94a3b8' } 
-           }
-         },
-         interaction: {
-           intersect: false,
-           mode: 'index',
-         },
-       }
-     });
-   }
-
-
-  // Función de diagnóstico
-  window.checkScrollStatus = function() {
-    console.log('=== DIAGNÓSTICO DE SCROLL ===');
-    console.log('body.style.overflow:', document.body.style.overflow);
-    console.log('body.style.overflowY:', document.body.style.overflowY);
-    console.log('body.style.overflowX:', document.body.style.overflowX);
-    console.log('documentElement.style.overflow:', document.documentElement.style.overflow);
-    console.log('documentElement.style.overflowY:', document.documentElement.style.overflowY);
-    console.log('Modales abiertos:', document.querySelectorAll('.rep-overlay.open').length);
-    console.log('Altura body:', document.body.offsetHeight);
-    console.log('Altura window:', window.innerHeight);
-    console.log('Scroll Y disponible:', document.body.scrollHeight > window.innerHeight);
-    return {
-      bodyOverflow: document.body.style.overflow,
-      htmlOverflow: document.documentElement.style.overflow,
-      modalsOpen: document.querySelectorAll('.rep-overlay.open').length,
-      canScroll: document.body.scrollHeight > window.innerHeight
-    };
-  };
-
-  // Verificar estado del scroll cada 5 segundos
-  setInterval(function() {
-    if (document.body.style.overflow === 'hidden' && !document.querySelector('.rep-overlay.open')) {
-      console.warn('Scroll bloqueado sin modal abierto - restaurando...');
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
-      document.documentElement.style.overflow = '';
-    }
-  }, 5000);
-
-  // Agregar eventos para asegurar scroll siempre disponible
-  document.addEventListener('wheel', function(e) {
-    // Permitir scroll con rueda del mouse
-    if (document.body.style.overflow === 'hidden') {
-      e.stopPropagation();
-      window.scrollBy(0, e.deltaY);
-    }
-  }, { passive: true });
-
-  document.addEventListener('touchmove', function(e) {
-    // Permitir scroll táctil
-    if (document.body.style.overflow === 'hidden') {
-      e.stopPropagation();
-    }
-  }, { passive: true });
-
-  // Teclas de navegación
-  document.addEventListener('keydown', function(e) {
-    if (document.body.style.overflow === 'hidden' && (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'PageUp' || e.key === 'PageDown' || e.key === 'Home' || e.key === 'End')) {
-      // Permitir navegación con teclado
-      return true;
-    }
-  });
-
-  /*
-  CORRECCIONES PARA EL SCROLL:
-  - Script inmediato al cargar para restaurar scroll
-  - CSS de respaldo para asegurar overflow-y: auto
-  - Eventos de wheel y touchmove para permitir scroll
-  - Función de diagnóstico checkScrollStatus()
-  - Función de emergencia forceScrollRestore()
-  - Verificación automática cada 5 segundos
-  */
+    chartAtrasos = new Chart(ctxAtrasos.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Minutos Atraso',
+          data: {{ stats.atrasos_mensuales|safe }},
+          backgroundColor: '#d97706',
+          borderRadius: 6,
+          hoverBackgroundColor: '#b45309'
+        }]
+      },
+      options: {
+        ...commonChartOptions,
+        plugins: {
+          ...commonChartOptions.plugins,
+          tooltip: {
+            ...commonChartOptions.plugins.tooltip,
+            callbacks: {
+              label: function(ctx) { return ctx.parsed.y + ' min de atraso'; }
+            }
+          }
+        }
+      }
+    });
+  }
 </script>
-
-</div></div>
 {% endblock %}

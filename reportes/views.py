@@ -32,170 +32,172 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
 
     def get_context_data(self, **kwargs):
+        from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+        from django.db.models import Sum, Count, Q
+        from .calc_utils import calcular_inasistencias_en_lote
+        import calendar
+
         context = super().get_context_data(**kwargs)
         
         # Obtener parámetros de filtro
-        search = self.request.GET.get('search', '')
-        year = self.request.GET.get('year', '')
+        search = self.request.GET.get('search', '').strip()
+        
+        # Si 'year' no está en GET (primera carga), se usa el año actual por defecto
+        current_year_str = str(now().year)
+        if 'year' in self.request.GET:
+            year = self.request.GET.get('year', '')
+        else:
+            year = current_year_str
+
         mes = self.request.GET.get('mes', '')
         fecha_inicio = self.request.GET.get('fecha_inicio', '')
         fecha_fin = self.request.GET.get('fecha_fin', '')
         sort_by = self.request.GET.get('sort', 'name')
-        
-        # Base queryset: incluir todos los funcionarios del sistema
-        funcionarios = CustomUser.objects.filter(role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN'])
-        
-        # Filtro de búsqueda por nombre o RUN
+        page_num = self.request.GET.get('page', 1)
+        paginate_by_param = self.request.GET.get('paginate_by', '25')
+
+        # Convertir fechas string a date para rango de cálculo
+        def parse_date(d_val):
+            if isinstance(d_val, str) and d_val:
+                try:
+                    return datetime.strptime(d_val, '%Y-%m-%d').date()
+                except ValueError:
+                    return None
+            elif isinstance(d_val, datetime):
+                return d_val.date()
+            return d_val
+
+        f_inicio_calc = None
+        f_fin_calc = None
+
+        if fecha_inicio:
+            f_inicio_calc = parse_date(fecha_inicio)
+        elif year and year.isdigit():
+            y_int = int(year)
+            if mes and mes.isdigit():
+                m_int = int(mes)
+                f_inicio_calc = date(y_int, m_int, 1)
+            else:
+                f_inicio_calc = date(y_int, 1, 1)
+        elif not year and not fecha_inicio:
+            # Si se selecciona "Todos los años", acotamos inicio al año escolar o año actual para inasistencias
+            f_inicio_calc = date(now().year, 1, 1)
+
+        if fecha_fin:
+            f_fin_calc = parse_date(fecha_fin)
+        elif year and year.isdigit():
+            y_int = int(year)
+            if mes and mes.isdigit():
+                m_int = int(mes)
+                _, last_day = calendar.monthrange(y_int, m_int)
+                f_fin_calc = date(y_int, m_int, last_day)
+            else:
+                f_fin_calc = date(y_int, 12, 31)
+        elif not year and not fecha_fin:
+            f_fin_calc = date(now().year, 12, 31)
+
+        # Base queryset: funcionarios activos del sistema
+        funcionarios_qs = CustomUser.objects.filter(
+            is_active=True,
+            role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA', 'ADMIN']
+        )
         if search:
-            funcionarios = funcionarios.filter(
+            funcionarios_qs = funcionarios_qs.filter(
                 Q(first_name__icontains=search) |
                 Q(last_name__icontains=search) |
                 Q(run__icontains=search)
             )
-        
-        # Preparar datos de cada funcionario
+
+        funcionarios = list(funcionarios_qs)
+        user_ids = [u.id for u in funcionarios]
+
+        # 1. Agregación en bloque para Permisos Administrativos
+        permisos_filter = Q(usuario_id__in=user_ids, estado='APROBADO')
+        if year and year.isdigit():
+            permisos_filter &= Q(fecha_inicio__year=int(year))
+        elif not year and not (fecha_inicio or fecha_fin):
+            permisos_filter &= Q(fecha_inicio__year=now().year)
+        if mes and mes.isdigit():
+            permisos_filter &= Q(fecha_inicio__month=int(mes))
+        if fecha_inicio and f_inicio_calc:
+            permisos_filter &= Q(fecha_inicio__gte=f_inicio_calc)
+        if fecha_fin and f_fin_calc:
+            permisos_filter &= Q(fecha_inicio__lte=f_fin_calc)
+
+        permisos_aggr = SolicitudPermiso.objects.filter(permisos_filter).values('usuario_id').annotate(
+            total_dias=Sum('dias_solicitados')
+        )
+        permisos_usados_map = {row['usuario_id']: float(row['total_dias'] or 0.0) for row in permisos_aggr}
+
+        # 2. Agregación en bloque para Licencias Médicas
+        licencias_filter = Q(usuario_id__in=user_ids)
+        if year and year.isdigit():
+            licencias_filter &= Q(fecha_inicio__year=int(year))
+        elif not year and not (fecha_inicio or fecha_fin):
+            licencias_filter &= Q(fecha_inicio__year=now().year)
+        if mes and mes.isdigit():
+            licencias_filter &= Q(fecha_inicio__month=int(mes))
+        if fecha_inicio and f_inicio_calc:
+            licencias_filter &= Q(fecha_inicio__gte=f_inicio_calc)
+        if fecha_fin and f_fin_calc:
+            licencias_filter &= Q(fecha_inicio__lte=f_fin_calc)
+
+        licencias_aggr = LicenciaMedica.objects.filter(licencias_filter).values('usuario_id').annotate(
+            total_count=Count('id'),
+            total_dias=Sum('dias')
+        )
+        licencias_map = {row['usuario_id']: (row['total_count'] or 0, row['total_dias'] or 0) for row in licencias_aggr}
+
+        # 3. Agregación en bloque para Atrasos
+        asistencia_filter = Q(funcionario_id__in=user_ids, estado='RETRASO')
+        if year and year.isdigit():
+            asistencia_filter &= Q(fecha__year=int(year))
+        elif not year and not (fecha_inicio or fecha_fin):
+            asistencia_filter &= Q(fecha__year=now().year)
+        if mes and mes.isdigit():
+            asistencia_filter &= Q(fecha__month=int(mes))
+        if fecha_inicio and f_inicio_calc:
+            asistencia_filter &= Q(fecha__gte=f_inicio_calc)
+        if fecha_fin and f_fin_calc:
+            asistencia_filter &= Q(fecha__lte=f_fin_calc)
+
+        atrasos_aggr = RegistroAsistencia.objects.filter(asistencia_filter).values('funcionario_id').annotate(
+            total_count=Count('id'),
+            total_minutos=Sum('minutos_retraso')
+        )
+        atrasos_map = {row['funcionario_id']: (row['total_count'] or 0, row['total_minutos'] or 0) for row in atrasos_aggr}
+
+        # 4. Inasistencias calculadas en bloque (evaluación rápida en memoria sin N+1)
+        inasistencias_map = calcular_inasistencias_en_lote(funcionarios, f_inicio_calc, f_fin_calc)
+
+        # 5. Consolidación de datos de cada funcionario
         empleados_data = []
-        for functorio in funcionarios:
-            # Obtener permisos aprobados (sin filtros para cálculo cronológico completo)
-            todos_permisos = SolicitudPermiso.objects.filter(
-                usuario=functorio,
-                estado='APROBADO'
-            ).order_by('fecha_inicio', 'created_at')
-            
-            # Permisos con filtro para mostrar en el reporte
-            permisos = todos_permisos
-            if year:
-                permisos = permisos.filter(fecha_inicio__year=year)
-            if mes:
-                permisos = permisos.filter(fecha_inicio__month=mes)
-            if fecha_inicio:
-                permisos = permisos.filter(fecha_inicio__gte=fecha_inicio)
-            if fecha_fin:
-                permisos = permisos.filter(fecha_inicio__lte=fecha_fin)
-            
-            # Calcular días disponibles cronológicamente por cada permiso
-            BASE_DIAS_ADMINISTRATIVOS = 6.0
-            permisos_con_dias = []
-            dias_acumulados = 0.0
-            
-            for p in todos_permisos:
-                dias_acumulados += float(p.dias_solicitados)
-                dias_restantes = max(BASE_DIAS_ADMINISTRATIVOS - dias_acumulados, 0)
-                # Solo incluir si pasa los filtros
-                include = True
-                if year and p.fecha_inicio.year != int(year):
-                    include = False
-                if mes and p.fecha_inicio.month != int(mes):
-                    include = False
-                if fecha_inicio and p.fecha_inicio < datetime.strptime(fecha_inicio, '%Y-%m-%d').date():
-                    include = False
-                if fecha_fin and p.fecha_inicio > datetime.strptime(fecha_fin, '%Y-%m-%d').date():
-                    include = False
-                
-                if include:
-                    permisos_con_dias.append({
-                        'permiso': p,
-                        'dias_disponibles': dias_restantes,
-                    })
-            
-            dias_usados = sum(p['permiso'].dias_solicitados for p in permisos_con_dias)
-            dias_disponibles_calculados = permisos_con_dias[-1]['dias_disponibles'] if permisos_con_dias else BASE_DIAS_ADMINISTRATIVOS
-            
-            # Obtener licencias médicas
-            licencias = LicenciaMedica.objects.filter(usuario=functorio)
-            
-            if year:
-                licencias = licencias.filter(fecha_inicio__year=year)
-            if mes:
-                licencias = licencias.filter(fecha_inicio__month=mes)
-            if fecha_inicio:
-                licencias = licencias.filter(fecha_inicio__gte=fecha_inicio)
-            if fecha_fin:
-                licencias = licencias.filter(fecha_inicio__lte=fecha_fin)
-            
-            total_licencias = licencias.count()
-            dias_licencias = licencias.aggregate(Sum('dias'))['dias__sum'] or 0
+        BASE_DIAS_ADMINISTRATIVOS = 6.0
 
-            # Obtener registros de asistencia para contar atrasos e inasistencias
-            registros_asistencia = RegistroAsistencia.objects.filter(funcionario=functorio)
-            if year:
-                registros_asistencia = registros_asistencia.filter(fecha__year=year)
-            if mes:
-                registros_asistencia = registros_asistencia.filter(fecha__month=mes)
-            if fecha_inicio:
-                registros_asistencia = registros_asistencia.filter(fecha__gte=fecha_inicio)
-            if fecha_fin:
-                registros_asistencia = registros_asistencia.filter(fecha__lte=fecha_fin)
+        for func in funcionarios:
+            dias_usados = permisos_usados_map.get(func.id, 0.0)
+            dias_disponibles = max(BASE_DIAS_ADMINISTRATIVOS - dias_usados, 0.0)
+            lic_count, lic_dias = licencias_map.get(func.id, (0, 0))
+            atrasos_count, atrasos_minutos = atrasos_map.get(func.id, (0, 0))
+            inasistencias_count = inasistencias_map.get(func.id, 0)
 
-            es_sereno_func = (
-                getattr(functorio, 'funcion', None) == 'SERENO' or
-                getattr(functorio, 'tipo_funcionario', None) == 'SERENO'
-            )
-            if False:  # Excluido: ahora los serenos se calculan normalmente
-                total_atrasos = 0
-                total_inasistencias = 0
-                total_minutos_retraso = 0
-            else:
-                # Determinar rango de fechas para el cálculo de inasistencias reales
-                f_inicio_calc = None
-                f_fin_calc = None
-                
-                # Convertir fechas string a date si es necesario
-                def parse_date(d_val):
-                    if isinstance(d_val, str) and d_val:
-                        return datetime.strptime(d_val, '%Y-%m-%d').date()
-                    elif isinstance(d_val, datetime):
-                        return d_val.date()
-                    return d_val
-
-                if fecha_inicio:
-                    f_inicio_calc = parse_date(fecha_inicio)
-                elif year:
-                    y_int = int(year)
-                    if mes:
-                        m_int = int(mes)
-                        f_inicio_calc = date(y_int, m_int, 1)
-                    else:
-                        f_inicio_calc = date(y_int, 1, 1)
-
-                if fecha_fin:
-                    f_fin_calc = parse_date(fecha_fin)
-                elif year:
-                    y_int = int(year)
-                    if mes:
-                        m_int = int(mes)
-                        import calendar
-                        _, last_day = calendar.monthrange(y_int, m_int)
-                        f_fin_calc = date(y_int, m_int, last_day)
-                    else:
-                        f_fin_calc = date(y_int, 12, 31)
-
-                total_atrasos = registros_asistencia.filter(estado='RETRASO').count()
-                total_inasistencias = calcular_inasistencias_reales(functorio, f_inicio_calc, f_fin_calc)
-                total_minutos_retraso = registros_asistencia.filter(estado='RETRASO').aggregate(
-                    total=Sum('minutos_retraso'))['total'] or 0
-            
             empleados_data.append({
-                'funcionario': functorio,
-                'cargo': functorio.get_funcion_display() or functorio.get_tipo_funcionario_display() or functorio.get_role_display(),
-                # Días disponibles calculados cronológicamente hasta la fecha del filtro
-                'dias_disponibles': dias_disponibles_calculados,
+                'funcionario': func,
+                'cargo': func.get_funcion_display() or func.get_tipo_funcionario_display() or func.get_role_display(),
+                'dias_disponibles': dias_disponibles,
                 'dias_usados': dias_usados,
-                'total_licencias': total_licencias,
-                'dias_licencias': dias_licencias,
-                'permisos': [p['permiso'] for p in permisos_con_dias],
-                'permisos_con_dias': permisos_con_dias,
-                'licencias': licencias.order_by('fecha_inicio'),
-                'total_atrasos': total_atrasos,
-                'total_inasistencias': total_inasistencias,
-                'total_minutos_retraso': total_minutos_retraso,
+                'total_licencias': lic_count,
+                'dias_licencias': lic_dias,
+                'total_atrasos': atrasos_count,
+                'total_inasistencias': inasistencias_count,
+                'total_minutos_retraso': atrasos_minutos,
             })
-        
-        # Aplicar ordenamiento
+
+        # 6. Ordenamiento sobre toda la lista
         if sort_by == 'name':
-            empleados_data.sort(key=lambda x: (x['funcionario'].first_name, x['funcionario'].last_name))
+            empleados_data.sort(key=lambda x: (x['funcionario'].first_name or '', x['funcionario'].last_name or ''))
         elif sort_by == 'name_desc':
-            empleados_data.sort(key=lambda x: (x['funcionario'].first_name, x['funcionario'].last_name), reverse=True)
+            empleados_data.sort(key=lambda x: (x['funcionario'].first_name or '', x['funcionario'].last_name or ''), reverse=True)
         elif sort_by == 'dias':
             empleados_data.sort(key=lambda x: x['dias_disponibles'], reverse=True)
         elif sort_by == 'dias_asc':
@@ -220,49 +222,95 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             empleados_data.sort(key=lambda x: x['total_atrasos'], reverse=True)
         elif sort_by == 'atrasos_asc':
             empleados_data.sort(key=lambda x: x['total_atrasos'])
-        
-        context['empleados_data'] = empleados_data
+
+        # 7. Resumen de métricas globales (KPIs para tarjetas de cabecera)
+        total_funcionarios_count = len(empleados_data)
+        total_dias_usados = sum(e['dias_usados'] for e in empleados_data)
+        promedio_dias_disp = round(sum(e['dias_disponibles'] for e in empleados_data) / max(total_funcionarios_count, 1), 1)
+        total_licencias_count = sum(e['total_licencias'] for e in empleados_data)
+        total_dias_licencias = sum(e['dias_licencias'] for e in empleados_data)
+        total_atrasos_count = sum(e['total_atrasos'] for e in empleados_data)
+        total_minutos_atraso = sum(e['total_minutos_retraso'] for e in empleados_data)
+        total_inasistencias_count = sum(e['total_inasistencias'] for e in empleados_data)
+
+        context['kpi_summary'] = {
+            'total_funcionarios': total_funcionarios_count,
+            'total_dias_usados': total_dias_usados,
+            'promedio_dias_disponibles': promedio_dias_disp,
+            'total_licencias': total_licencias_count,
+            'total_dias_licencias': total_dias_licencias,
+            'total_atrasos': total_atrasos_count,
+            'total_minutos_atraso': total_minutos_atraso,
+            'total_inasistencias': total_inasistencias_count,
+        }
+
+        # 8. Paginación
+        if paginate_by_param == 'todos':
+            page_obj = empleados_data
+            paginator = None
+            is_paginated = False
+        else:
+            try:
+                per_page = int(paginate_by_param)
+            except ValueError:
+                per_page = 25
+            paginator = Paginator(empleados_data, per_page)
+            try:
+                page_obj = paginator.page(page_num)
+            except PageNotAnInteger:
+                page_obj = paginator.page(1)
+            except EmptyPage:
+                page_obj = paginator.page(paginator.num_pages)
+            is_paginated = paginator.num_pages > 1
+
+        context['empleados_data'] = page_obj
+        context['page_obj'] = page_obj
+        context['paginator'] = paginator
+        context['is_paginated'] = is_paginated
+        context['paginate_by'] = paginate_by_param
+        context['total_count'] = total_funcionarios_count
+
         context['filtros'] = {
             'search': search,
             'year': year,
             'mes': mes,
             'fecha_inicio': fecha_inicio,
             'fecha_fin': fecha_fin,
+            'paginate_by': paginate_by_param,
         }
-        
-        # Años disponibles para filtro
-        from datetime import datetime
+
+        # Años disponibles para selector de filtro
         permisos_years = set(SolicitudPermiso.objects.dates('fecha_inicio', 'year').values_list('fecha_inicio', flat=True))
         licencias_years = set(LicenciaMedica.objects.dates('fecha_inicio', 'year').values_list('fecha_inicio', flat=True))
-        all_years = sorted(set([d.year for d in permisos_years] + [d.year for d in licencias_years]), reverse=True)
-        context['years'] = all_years if all_years else [datetime.now().year]
+        all_years = sorted(set([d.year for d in permisos_years] + [d.year for d in licencias_years] + [now().year]), reverse=True)
+        context['years'] = all_years
         context['current_sort'] = sort_by
-        
+
         # --- Estadísticas para gráficos ---
         stats_year = int(year) if year and year.isdigit() else now().year
-        
+
         # Permisos por mes
         permisos_mes = SolicitudPermiso.objects.filter(
             estado='APROBADO',
             fecha_inicio__year=stats_year
         ).values('fecha_inicio__month').annotate(total=Sum('dias_solicitados')).order_by('fecha_inicio__month')
-        
+
         permisos_data = [0] * 12
         for p in permisos_mes:
             if p['fecha_inicio__month']:
                 permisos_data[p['fecha_inicio__month'] - 1] = float(p['total'] or 0)
-        
+
         # Licencias por mes
         licencias_mes = LicenciaMedica.objects.filter(
             fecha_inicio__year=stats_year
         ).values('fecha_inicio__month').annotate(total=Sum('dias')).order_by('fecha_inicio__month')
-        
+
         licencias_data = [0] * 12
         for l in licencias_mes:
             if l['fecha_inicio__month']:
                 licencias_data[l['fecha_inicio__month'] - 1] = int(l['total'] or 0)
-        
-# Atrasos por mes (minutos acumulados) - excluir serenos
+
+        # Atrasos por mes (minutos acumulados)
         atrasos_mes = RegistroAsistencia.objects.filter(
             estado='RETRASO',
             fecha__year=stats_year
@@ -282,7 +330,7 @@ class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             'total_licencias_anual': sum(licencias_data),
             'total_atrasos_anual': sum(atrasos_data),
         }
-        
+
         return context
 
 
@@ -2355,7 +2403,7 @@ class ExportarJustificacionesPDFView(LoginRequiredMixin, UserPassesTestMixin, Vi
 
 
 class ExportarCLAExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
-    """Exportar CLA - Informe de Asistencia Laboral (igual que DAEM3 pero incluye registros sin marcación)"""
+    """Exportar CLA - Informe de Asistencia Laboral a Excel con omisiones de marcación"""
 
     def test_func(self):
         return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
@@ -2376,145 +2424,8 @@ class ExportarCLAExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
                 tipo_funcionario='ASISTENTE'
             ).order_by('first_name', 'last_name')
 
-        registros_mes = RegistroAsistencia.objects.filter(
-            fecha__year=int(year),
-            fecha__month=int(mes),
-            funcionario__in=funcionarios
-        ).select_related('funcionario')
-
-        from asistencia.models import DiaFestivo, AnoEscolar, HorarioFuncionario
-        from permisos.models import SolicitudPermiso
-        from licencias.models import LicenciaMedica
-        from datetime import date as date_cls, timedelta
-        import calendar as cal_module
-
-        today = date_cls.today()
-        primer_dia_mes = date_cls(int(year), int(mes), 1)
-        ultimo_dia_mes = date_cls(int(year), int(mes), cal_module.monthrange(int(year), int(mes))[1])
-        ultimo_dia = min(ultimo_dia_mes, today)
-
-        festivos = set(DiaFestivo.objects.filter(
-            fecha__year=int(year), fecha__month=int(mes)
-        ).values_list('fecha', flat=True))
-
-        ano_escolar = AnoEscolar.objects.filter(ano=int(year)).first()
-
-        horarios_dict = {}
-        dias_configurados = {}
-        for horario in HorarioFuncionario.objects.filter(
-            funcionario__in=funcionarios, activo=True
-        ).prefetch_related('dias'):
-            horarios_dict[horario.funcionario_id] = set(
-                horario.dias.filter(activo=True).values_list('dia_semana', flat=True)
-            )
-            for dh in horario.dias.filter(activo=True):
-                dias_configurados[(horario.funcionario_id, dh.dia_semana, dh.semana_tipo)] = True
-
-        from asistencia.models import SemanaAsignadaSereno
-        semanas_asignadas_dict = {}
-        sereno_ids = [f.id for f in funcionarios if getattr(f, 'funcion', None) == 'SERENO' or getattr(f, 'tipo_funcionario', None) == 'SERENO']
-        if sereno_ids:
-            qs = SemanaAsignadaSereno.objects.filter(
-                funcionario_id__in=sereno_ids,
-                anio=int(year)
-            )
-            for sa in qs:
-                semanas_asignadas_dict[(sa.funcionario_id, sa.semana_iso)] = sa.turno
-
-        funcionarios_data = []
-        for func in funcionarios:
-            func_registros = registros_mes.filter(funcionario=func)
-
-            total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
-
-            ausencias_db = func_registros.filter(estado='AUSENTE').count()
-            sin_marcacion_db = func_registros.filter(estado='SIN_MARCACION_ENTRADA').count()
-            olvido_salida_db = sum(
-                1 for r in func_registros
-                if r.hora_entrada_real and not r.hora_salida_real and r.estado not in ('AUSENTE', 'SIN_MARCACION_ENTRADA', 'JUSTIFICADO')
-            )
-            ausencias_bd = ausencias_db + sin_marcacion_db + olvido_salida_db
-
-            licencias_func = set()
-            for lic in LicenciaMedica.objects.filter(
-                usuario=func, fecha_inicio__lte=ultimo_dia_mes
-            ):
-                fin_lic = lic.fecha_inicio + timedelta(days=lic.dias - 1)
-                inicio = max(lic.fecha_inicio, primer_dia_mes)
-                fin = min(fin_lic, ultimo_dia_mes)
-                d_lic = inicio
-                while d_lic <= fin:
-                    licencias_func.add(d_lic)
-                    d_lic += timedelta(days=1)
-
-            permisos_func = set()
-            for perm in SolicitudPermiso.objects.filter(
-                usuario=func, estado='APROBADO',
-                fecha_inicio__lte=ultimo_dia_mes
-            ).filter(
-                Q(fecha_termino__gte=primer_dia_mes) | Q(fecha_termino__isnull=True)
-            ):
-                inicio = max(perm.fecha_inicio, primer_dia_mes)
-                fin = perm.fecha_termino or ultimo_dia_mes
-                fin = min(fin, ultimo_dia_mes)
-                d_perm = inicio
-                while d_perm <= fin:
-                    permisos_func.add(d_perm)
-                    d_perm += timedelta(days=1)
-
-            fechas_con_registro = set(func_registros.values_list('fecha', flat=True))
-            es_sereno = (func.funcion == 'SERENO') or (func.tipo_funcionario == 'SERENO')
-
-            tiene_horario = func.id in horarios_dict
-            if not tiene_horario:
-                total_atrasos = 0
-                total_inasistencias = 0
-            else:
-                dias_laborales = horarios_dict.get(func.id, set())
-
-                ausencias_virtuales = 0
-                d = primer_dia_mes
-                while d <= ultimo_dia:
-                    if d not in fechas_con_registro and d >= func.date_joined.date():
-                        dia_semana = d.weekday()
-                        if dia_semana >= 5 and not es_sereno:
-                            d += timedelta(days=1)
-                            continue
-                        if d in festivos or d in licencias_func or d in permisos_func:
-                            d += timedelta(days=1)
-                            continue
-                        if func.is_on_baja_on_date(d):
-                            d += timedelta(days=1)
-                            continue
-                        en_ano_escolar = True
-                        if ano_escolar:
-                            en_ano_escolar = (
-                                ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin or
-                                ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
-                            )
-                        if not en_ano_escolar:
-                            d += timedelta(days=1)
-                            continue
-                        if es_sereno:
-                            iso_year, iso_week, _ = d.isocalendar()
-                            semana_t = semanas_asignadas_dict.get((func.id, iso_week))
-                            if semana_t is None:
-                                semana_t = 1 if iso_week % 2 != 0 else 2
-                            es_laboral = (func.id, dia_semana, semana_t) in dias_configurados or (func.id, dia_semana, None) in dias_configurados
-                        else:
-                            es_laboral = dia_semana in dias_laborales
-                        if es_laboral:
-                            ausencias_virtuales += 1
-                    d += timedelta(days=1)
-
-                total_inasistencias = ausencias_bd + ausencias_virtuales
-
-            if total_inasistencias > 0 or total_atrasos >= 60:
-                funcionarios_data.append({
-                    'funcionario': func,
-                    'atrasos': total_atrasos,
-                    'inasistencias': total_inasistencias
-                })
+        from .calc_utils import calcular_metricas_cla_en_lote
+        funcionarios_data = calcular_metricas_cla_en_lote(funcionarios, year, mes)
 
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -2522,54 +2433,71 @@ class ExportarCLAExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         ws['A1'] = "Informe Asistencia Laboral - CLA"
         ws['A1'].font = openpyxl.styles.Font(bold=True, size=14)
-        ws.merge_cells('A1:D1')
+        ws.merge_cells('A1:G1')
 
         ws['A3'] = "Establecimiento: Colegio Los Alerces"
 
         meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-        ws['A5'] = f"Mes de Informe: {meses[int(mes)-1]}"
+        ws['A5'] = f"Mes de Informe: {meses[int(mes)-1]} {year}"
 
-        ws['A7'] = tipo_display
+        ws['A7'] = f"Estamento: {tipo_display}"
 
-        headers = ['Nombre y Apellidos', 'RUN', 'Atrasos', 'Inasistencias']
+        headers = [
+            'Nombre y Apellidos',
+            'RUN',
+            'Atrasos',
+            'Inasistencias',
+            'Sin Entrada',
+            'Sin Salida',
+            'Sin Ambas'
+        ]
+        thin_border = openpyxl.styles.Border(
+            left=openpyxl.styles.Side(style='thin', color='CBD5E1'),
+            right=openpyxl.styles.Side(style='thin', color='CBD5E1'),
+            top=openpyxl.styles.Side(style='thin', color='CBD5E1'),
+            bottom=openpyxl.styles.Side(style='thin', color='CBD5E1')
+        )
+        header_fill = openpyxl.styles.PatternFill(start_color='F1F5F9', end_color='F1F5F9', fill_type='solid')
+
         for col, header in enumerate(headers, 1):
             cell = ws.cell(row=9, column=col)
             cell.value = header
             cell.font = openpyxl.styles.Font(bold=True)
-            cell.border = openpyxl.styles.Border(
-                left=openpyxl.styles.Side(style='thin'),
-                right=openpyxl.styles.Side(style='thin'),
-                top=openpyxl.styles.Side(style='thin'),
-                bottom=openpyxl.styles.Side(style='thin')
-            )
-            cell.alignment = openpyxl.styles.Alignment(horizontal='center')
+            cell.border = thin_border
+            cell.fill = header_fill
+            cell.alignment = openpyxl.styles.Alignment(horizontal='center', vertical='center')
 
         for i, data in enumerate(funcionarios_data, 10):
             ws.cell(row=i, column=1).value = data['funcionario'].get_full_name() or data['funcionario'].username
+            ws.cell(row=i, column=1).alignment = openpyxl.styles.Alignment(horizontal='left')
             ws.cell(row=i, column=2).value = data['funcionario'].run
-            total_minutes = data['atrasos']
-            hrs = total_minutes // 60
-            mins = total_minutes % 60
-            ws.cell(row=i, column=3).value = f"{hrs}h {mins}m"
+            ws.cell(row=i, column=2).alignment = openpyxl.styles.Alignment(horizontal='center')
+            ws.cell(row=i, column=3).value = data['atrasos_formato']
+            ws.cell(row=i, column=3).alignment = openpyxl.styles.Alignment(horizontal='center')
             ws.cell(row=i, column=4).value = data['inasistencias']
+            ws.cell(row=i, column=4).alignment = openpyxl.styles.Alignment(horizontal='center')
+            ws.cell(row=i, column=5).value = data['sin_entrada']
+            ws.cell(row=i, column=5).alignment = openpyxl.styles.Alignment(horizontal='center')
+            ws.cell(row=i, column=6).value = data['sin_salida']
+            ws.cell(row=i, column=6).alignment = openpyxl.styles.Alignment(horizontal='center')
+            ws.cell(row=i, column=7).value = data['sin_ambas']
+            ws.cell(row=i, column=7).alignment = openpyxl.styles.Alignment(horizontal='center')
 
-            for col in range(1, 5):
-                cell = ws.cell(row=i, column=col)
-                cell.border = openpyxl.styles.Border(
-                    left=openpyxl.styles.Side(style='thin'),
-                    right=openpyxl.styles.Side(style='thin'),
-                    top=openpyxl.styles.Side(style='thin'),
-                    bottom=openpyxl.styles.Side(style='thin')
-                )
+            for col in range(1, 8):
+                ws.cell(row=i, column=col).border = thin_border
 
         firma_row = len(funcionarios_data) + 12
         ws.cell(row=firma_row, column=1).value = "Firma y Timbre Director"
+        ws.cell(row=firma_row, column=1).font = openpyxl.styles.Font(bold=True)
 
-        ws.column_dimensions['A'].width = 30
-        ws.column_dimensions['B'].width = 15
-        ws.column_dimensions['C'].width = 15
-        ws.column_dimensions['D'].width = 15
+        ws.column_dimensions['A'].width = 34
+        ws.column_dimensions['B'].width = 16
+        ws.column_dimensions['C'].width = 14
+        ws.column_dimensions['D'].width = 14
+        ws.column_dimensions['E'].width = 14
+        ws.column_dimensions['F'].width = 14
+        ws.column_dimensions['G'].width = 14
 
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         filename = f'Informe_CLA_{tipo_display}_{year}_{int(mes):02d}.xlsx'
@@ -2600,156 +2528,21 @@ class ExportarCLAPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
                 tipo_funcionario='ASISTENTE'
             ).order_by('first_name', 'last_name')
 
-        registros_mes = RegistroAsistencia.objects.filter(
-            fecha__year=int(year),
-            fecha__month=int(mes),
-            funcionario__in=funcionarios
-        ).select_related('funcionario')
-
-        from asistencia.models import DiaFestivo, AnoEscolar, HorarioFuncionario
-        from permisos.models import SolicitudPermiso
-        from licencias.models import LicenciaMedica
-        from datetime import date as date_cls, timedelta
-        import calendar as cal_module
-
-        today = date_cls.today()
-        primer_dia_mes = date_cls(int(year), int(mes), 1)
-        ultimo_dia_mes = date_cls(int(year), int(mes), cal_module.monthrange(int(year), int(mes))[1])
-        ultimo_dia = min(ultimo_dia_mes, today)
-
-        festivos = set(DiaFestivo.objects.filter(
-            fecha__year=int(year), fecha__month=int(mes)
-        ).values_list('fecha', flat=True))
-
-        ano_escolar = AnoEscolar.objects.filter(ano=int(year)).first()
-
-        horarios_dict = {}
-        dias_configurados = {}
-        for horario in HorarioFuncionario.objects.filter(
-            funcionario__in=funcionarios, activo=True
-        ).prefetch_related('dias'):
-            horarios_dict[horario.funcionario_id] = set(
-                horario.dias.filter(activo=True).values_list('dia_semana', flat=True)
-            )
-            for dh in horario.dias.filter(activo=True):
-                dias_configurados[(horario.funcionario_id, dh.dia_semana, dh.semana_tipo)] = True
-
-        from asistencia.models import SemanaAsignadaSereno
-        semanas_asignadas_dict = {}
-        sereno_ids = [f.id for f in funcionarios if getattr(f, 'funcion', None) == 'SERENO' or getattr(f, 'tipo_funcionario', None) == 'SERENO']
-        if sereno_ids:
-            qs = SemanaAsignadaSereno.objects.filter(
-                funcionario_id__in=sereno_ids,
-                anio=int(year)
-            )
-            for sa in qs:
-                semanas_asignadas_dict[(sa.funcionario_id, sa.semana_iso)] = sa.turno
-
-        funcionarios_data = []
-        for func in funcionarios:
-            func_registros = registros_mes.filter(funcionario=func)
-
-            total_atrasos = sum(r.minutos_retraso or 0 for r in func_registros if r.estado == 'RETRASO')
-
-            ausencias_db = func_registros.filter(estado='AUSENTE').count()
-            sin_marcacion_db = func_registros.filter(estado='SIN_MARCACION_ENTRADA').count()
-            olvido_salida_db = sum(
-                1 for r in func_registros
-                if r.hora_entrada_real and not r.hora_salida_real and r.estado not in ('AUSENTE', 'SIN_MARCACION_ENTRADA', 'JUSTIFICADO')
-            )
-            ausencias_bd = ausencias_db + sin_marcacion_db + olvido_salida_db
-
-            licencias_func = set()
-            for lic in LicenciaMedica.objects.filter(
-                usuario=func, fecha_inicio__lte=ultimo_dia_mes
-            ):
-                fin_lic = lic.fecha_inicio + timedelta(days=lic.dias - 1)
-                inicio = max(lic.fecha_inicio, primer_dia_mes)
-                fin = min(fin_lic, ultimo_dia_mes)
-                d_lic = inicio
-                while d_lic <= fin:
-                    licencias_func.add(d_lic)
-                    d_lic += timedelta(days=1)
-
-            permisos_func = set()
-            for perm in SolicitudPermiso.objects.filter(
-                usuario=func, estado='APROBADO',
-                fecha_inicio__lte=ultimo_dia_mes
-            ).filter(
-                Q(fecha_termino__gte=primer_dia_mes) | Q(fecha_termino__isnull=True)
-            ):
-                inicio = max(perm.fecha_inicio, primer_dia_mes)
-                fin = perm.fecha_termino or ultimo_dia_mes
-                fin = min(fin, ultimo_dia_mes)
-                d_perm = inicio
-                while d_perm <= fin:
-                    permisos_func.add(d_perm)
-                    d_perm += timedelta(days=1)
-
-            fechas_con_registro = set(func_registros.values_list('fecha', flat=True))
-            es_sereno = (func.funcion == 'SERENO') or (func.tipo_funcionario == 'SERENO')
-
-            tiene_horario = func.id in horarios_dict
-            if not tiene_horario:
-                total_atrasos = 0
-                total_inasistencias = 0
-            else:
-                dias_laborales = horarios_dict.get(func.id, set())
-
-                ausencias_virtuales = 0
-                d = primer_dia_mes
-                while d <= ultimo_dia:
-                    if d not in fechas_con_registro and d >= func.date_joined.date():
-                        dia_semana = d.weekday()
-                        if dia_semana >= 5 and not es_sereno:
-                            d += timedelta(days=1)
-                            continue
-                        if d in festivos or d in licencias_func or d in permisos_func:
-                            d += timedelta(days=1)
-                            continue
-                        if func.is_on_baja_on_date(d):
-                            d += timedelta(days=1)
-                            continue
-                        en_ano_escolar = True
-                        if ano_escolar:
-                            en_ano_escolar = (
-                                ano_escolar.sem1_inicio <= d <= ano_escolar.sem1_fin or
-                                ano_escolar.sem2_inicio <= d <= ano_escolar.sem2_fin
-                            )
-                        if not en_ano_escolar:
-                            d += timedelta(days=1)
-                            continue
-                        if es_sereno:
-                            iso_year, iso_week, _ = d.isocalendar()
-                            semana_t = semanas_asignadas_dict.get((func.id, iso_week))
-                            if semana_t is None:
-                                semana_t = 1 if iso_week % 2 != 0 else 2
-                            es_laboral = (func.id, dia_semana, semana_t) in dias_configurados or (func.id, dia_semana, None) in dias_configurados
-                        else:
-                            es_laboral = dia_semana in dias_laborales
-                        if es_laboral:
-                            ausencias_virtuales += 1
-                    d += timedelta(days=1)
-
-                total_inasistencias = ausencias_bd + ausencias_virtuales
-
-            if total_inasistencias > 0 or total_atrasos >= 60:
-                funcionarios_data.append({
-                    'funcionario': func,
-                    'atrasos': f"{total_atrasos // 60}h {total_atrasos % 60}m",
-                    'inasistencias': total_inasistencias
-                })
+        from .calc_utils import calcular_metricas_cla_en_lote
+        funcionarios_data = calcular_metricas_cla_en_lote(funcionarios, year, mes)
 
         meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
         mes_texto = meses[int(mes)-1]
 
-        html_string = render_to_string('reportes/daem3_pdf.html', {
-            'funcionarios_data': funcionarios_data,
-            'tipo_display': tipo_display,
-            'mes_texto': mes_texto,
+        html_string = render_to_string('reportes/cla_pdf.html', {
+            'titulo': 'Informe Asistencia Laboral - CLA',
+            'establecimiento': 'Colegio Los Alerces',
+            'mes_informe': mes_texto,
             'year': year,
             'mes': mes,
+            'tipo_personal': tipo_display,
+            'funcionarios': funcionarios_data,
             'fecha_exportacion': now().strftime('%d/%m/%Y %H:%M'),
         })
 
@@ -2761,6 +2554,7 @@ class ExportarCLAPDFView(LoginRequiredMixin, UserPassesTestMixin, View):
         response['Content-Disposition'] = f'inline; filename={filename}'
         response.write(result)
         return response
+
 
 
 

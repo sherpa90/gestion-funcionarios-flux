@@ -1,0 +1,199 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ titulo|default:"Informe Asistencia Laboral - CLA" }}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 14mm 12mm 16mm 12mm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 8px;
+                color: #64748b;
+                font-family: Arial, Helvetica, sans-serif;
+            }
+        }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10px;
+            color: #0f172a;
+            line-height: 1.35;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #0d9488;
+            padding-bottom: 12px;
+        }
+        .title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            font-size: 11px;
+            color: #0d9488;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .meta-grid {
+            display: table;
+            width: 100%;
+            margin-top: 8px;
+            font-size: 9.5px;
+        }
+        .meta-row {
+            display: table-row;
+        }
+        .meta-cell-left {
+            display: table-cell;
+            text-align: left;
+            width: 50%;
+            color: #475569;
+        }
+        .meta-cell-right {
+            display: table-cell;
+            text-align: right;
+            width: 50%;
+            color: #475569;
+        }
+        .meta-label {
+            font-weight: bold;
+            color: #1e293b;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+            margin-bottom: 24px;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 6px 5px;
+            font-size: 9px;
+        }
+        th {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            font-weight: bold;
+            text-align: center;
+            vertical-align: middle;
+        }
+        th.col-name {
+            text-align: left;
+            padding-left: 8px;
+        }
+        td.col-name {
+            text-align: left;
+            padding-left: 8px;
+            font-weight: 500;
+        }
+        td.col-center {
+            text-align: center;
+        }
+        tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+        .badge-danger {
+            color: #b91c1c;
+            font-weight: bold;
+        }
+        .badge-warning {
+            color: #b45309;
+            font-weight: bold;
+        }
+        .empty-row td {
+            text-align: center;
+            padding: 16px;
+            color: #64748b;
+            font-style: italic;
+        }
+        .signature-section {
+            margin-top: 50px;
+            page-break-inside: avoid;
+        }
+        .signature-box {
+            width: 250px;
+            text-align: center;
+            margin-top: 40px;
+        }
+        .signature-line {
+            border-bottom: 1px solid #0f172a;
+            margin-bottom: 6px;
+        }
+        .signature-title {
+            font-size: 9.5px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        .signature-subtitle {
+            font-size: 8.5px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">{{ titulo|default:"Informe Asistencia Laboral - CLA" }}</div>
+        <div class="subtitle">{{ establecimiento|default:"Colegio Los Alerces" }}</div>
+        <div class="meta-grid">
+            <div class="meta-row">
+                <div class="meta-cell-left">
+                    <span class="meta-label">Mes de Informe:</span> {{ mes_informe }} {{ year }}<br>
+                    <span class="meta-label">Estamento:</span> {{ tipo_personal }}
+                </div>
+                <div class="meta-cell-right">
+                    <span class="meta-label">Fecha de Emisión:</span> {{ fecha_exportacion }}<br>
+                    <span class="meta-label">Total reportados:</span> {{ funcionarios|length }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="col-name" style="width: 32%;">Nombre y Apellidos</th>
+                <th style="width: 14%;">RUN</th>
+                <th style="width: 11%;">Atrasos</th>
+                <th style="width: 11%;">Inasistencias</th>
+                <th style="width: 11%;">Sin Entrada</th>
+                <th style="width: 11%;">Sin Salida</th>
+                <th style="width: 10%;">Sin Ambas</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in funcionarios %}
+            <tr>
+                <td class="col-name">{{ data.funcionario.get_full_name|default:data.funcionario.username }}</td>
+                <td class="col-center">{{ data.funcionario.run }}</td>
+                <td class="col-center">{{ data.atrasos_formato }}</td>
+                <td class="col-center {% if data.inasistencias > 0 %}badge-danger{% endif %}">{{ data.inasistencias }}</td>
+                <td class="col-center {% if data.sin_entrada > 0 %}badge-warning{% endif %}">{{ data.sin_entrada }}</td>
+                <td class="col-center {% if data.sin_salida > 0 %}badge-warning{% endif %}">{{ data.sin_salida }}</td>
+                <td class="col-center {% if data.sin_ambas > 0 %}badge-danger{% endif %}">{{ data.sin_ambas }}</td>
+            </tr>
+            {% empty %}
+            <tr class="empty-row">
+                <td colspan="7">No se registran funcionarios con atrasos superiores a 60 minutos, inasistencias ni omisiones de marcación en el periodo.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="signature-section">
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-title">Firma y Timbre Director</div>
+            <div class="signature-subtitle">{{ establecimiento|default:"Colegio Los Alerces" }}</div>
+        </div>
+    </div>
+</body>
+</html>
