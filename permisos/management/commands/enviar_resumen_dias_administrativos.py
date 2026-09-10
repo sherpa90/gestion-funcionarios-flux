@@ -5,6 +5,7 @@ from django.core.management.base import BaseCommand
 from django.core.mail import send_mail, send_mass_mail
 from django.conf import settings
 from django.db.models import Q
+from django.db import connection
 from django.utils import timezone
 from users.models import CustomUser
 from permisos.models import SolicitudPermiso
@@ -25,11 +26,19 @@ handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)
 logger.addHandler(handler)
 
 
+def get_pg_date():
+    """Obtiene la fecha actual desde PostgreSQL en zona horaria America/Santiago."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT (now() AT TIME ZONE 'America/Santiago')::date")
+        row = cursor.fetchone()
+        return row[0] if row else date.today()
+
+
 class Command(BaseCommand):
     help = 'Envía resumen diario de días administrativos y licencias a directores (lunes-viernes, periodo escolar)'
 
     def handle(self, *args, **options):
-        hoy = timezone.localdate()
+        hoy = get_pg_date()
 
         if hoy.weekday() >= 5:
             msg = 'Fin de semana: no se envía resumen'
