@@ -40,6 +40,7 @@ RUN apt-get update && apt-get install -y \
     libgdk-pixbuf-2.0-0 \
     shared-mime-info \
     fonts-freefont-ttf \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user

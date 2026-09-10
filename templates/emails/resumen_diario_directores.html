@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumen Diario de Ausencias Administrativas</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:1.5rem 1rem;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" style="max-width:700px;background-color:#ffffff;border-radius:1rem;overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -1px rgba(0,0,0,0.06);">
+                    <tr>
+                        <td style="background-color:#1e40af;padding:1.5rem;text-align:center;">
+                            <h1 style="margin:0;color:#ffffff;font-size:1.25rem;font-weight:800;letter-spacing:0.025em;">Resumen Diario</h1>
+                            <p style="margin:0.5rem 0 0;color:#dbeafe;font-size:0.875rem;">Ausencias administrativas y licencias médicas</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:1.5rem;color:#1f2937;">
+                            <p style="margin:0 0 0.5rem;font-size:1.125rem;font-weight:700;color:#111827;">
+                                {{ fecha_display }}
+                            </p>
+                            <p style="margin:0 0 1.5rem;font-size:0.875rem;color:#6b7280;">
+                                Funcionarios con día administrativo, medio día, licencia médica o solicitud pendiente vigente
+                            </p>
+                            {% if hay_novedades %}
+                                {% if html_docentes %}
+                                <h2 style="margin:1.25rem 0 0.75rem;font-size:1rem;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;padding-bottom:0.5rem;">
+                                    📚 Docentes
+                                </h2>
+                                {{ html_docentes|safe }}
+                                {% endif %}
+                                {% if html_asistentes %}
+                                <h2 style="margin:1.25rem 0 0.75rem;font-size:1rem;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;padding-bottom:0.5rem;">
+                                    🏫 Asistentes y Otros
+                                </h2>
+                                {{ html_asistentes|safe }}
+                                {% endif %}
+                            {% else %}
+                                <p style="color:#9ca3af;font-size:0.875rem;font-style:italic;">Sin novedades para hoy.</p>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:1rem 1.5rem;border-top:1px solid #e5e7eb;text-align:center;">
+                            <p style="margin:0;font-size:0.75rem;color:#9ca3af;">
+                                Generado automáticamente a las {{ hora_envio }}. No responder.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
