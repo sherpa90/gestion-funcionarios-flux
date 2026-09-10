@@ -455,6 +455,7 @@
                     <div class="flex items-center space-x-2 text-slate-600 bg-slate-100/70 border border-slate-200/80 rounded-full py-1 px-3 text-xs">
                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                         <span class="font-medium text-slate-800 truncate max-w-[120px] sm:max-w-none">{{ user.first_name }}</span>
+                        <span id="header-clock" class="text-[10px] font-semibold text-slate-500 tabular-nums">{{ server_time }}</span>
                     </div>
                     {% if user.role == 'ADMIN' %}
                     <a href="{% url 'system_settings' %}" class="flex items-center px-2 py-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900">
@@ -770,9 +771,31 @@
                     $(this).addClass('text-blue-600 font-semibold').removeClass('text-slate-500');
                 }
             });
+
+            // Reloj sincronizado con la hora del servidor, sin usar la hora del cliente
+            (function () {
+                const clockEl = document.getElementById('header-clock');
+                if (!clockEl || !window.__SERVER_TIME__) return;
+                const base = window.__SERVER_TIME__.split(':').map(Number);
+                let baseDate = new Date();
+                baseDate.setHours(base[0], base[1], base[2], 0);
+                function pad(n) { return String(n).padStart(2, '0'); }
+                function update() {
+                    const diff = Math.floor((Date.now() - window.__SERVER_TIME__.__ts) / 1000);
+                    const current = new Date(baseDate.getTime() + diff * 1000);
+                    clockEl.textContent = pad(current.getHours()) + ':' + pad(current.getMinutes()) + ':' + pad(current.getSeconds());
+                }
+                update();
+                setInterval(update, 1000);
+            })();
         });
     </script>
+    <script>
+        window.__SERVER_TIME__ = {
+            __ts: {{ server_timestamp|default:0|safe }},
+            time: '{{ server_time|default:""|safe }}'
+        };
+    </script>
 </body>
-
 </html>
 
