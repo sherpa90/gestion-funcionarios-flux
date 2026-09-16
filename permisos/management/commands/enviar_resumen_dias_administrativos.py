@@ -37,52 +37,74 @@ def get_pg_date():
 class Command(BaseCommand):
     help = 'Envía resumen diario de días administrativos y licencias a directores (lunes-viernes, periodo escolar)'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--force',
+            action='store_true',
+            help='Fuerza el envío ignorando validaciones de fin de semana, periodo escolar y switch de configuración',
+        )
+        parser.add_argument(
+            '--email',
+            type=str,
+            help='Envía una prueba exclusivamente al correo especificado',
+        )
+
     def handle(self, *args, **options):
         hoy = get_pg_date()
-
-        if hoy.weekday() >= 5:
-            msg = 'Fin de semana: no se envía resumen'
-            logger.info(msg)
-            self.stdout.write(msg)
-            return
-
-        ano_escolar = AnoEscolar.objects.filter(activo=True).first()
-        if not ano_escolar:
-            msg = 'No hay año escolar activo'
-            logger.info(msg)
-            self.stdout.write(msg)
-            return
-
-        en_sem1 = ano_escolar.sem1_inicio <= hoy <= ano_escolar.sem1_fin
-        en_sem2 = ano_escolar.sem2_inicio <= hoy <= ano_escolar.sem2_fin
-        if not (en_sem1 or en_sem2):
-            msg = 'Fuera de período lectivo: no se envía resumen'
-            logger.info(msg)
-            self.stdout.write(msg)
-            return
-
+        force = options.get('force', False)
+        test_email = options.get('email')
         sys_settings = SystemSettings.get_solo()
-        if not sys_settings.notifications_enabled or not sys_settings.director_daily_summary_enabled:
-            msg = 'Resumen diario desactivado'
-            logger.info(msg)
-            self.stdout.write(msg)
-            return
 
-        directores = CustomUser.objects.filter(
-            role='DIRECTOR', is_active=True,
-            email__isnull=False, notifications_disabled=False
-        ).exclude(email='')
-        correos = [d.email for d in directores if d.categoria_funcionario == 'ADMINISTRATIVO']
+        if force:
+            self.stdout.write(self.style.WARNING("Modo --force activado: ignorando restricciones de calendario y configuración."))
+        else:
+            if hoy.weekday() >= 5:
+                msg = 'Fin de semana: no se envía resumen'
+                logger.info(msg)
+                self.stdout.write(msg)
+                return
+
+            ano_escolar = AnoEscolar.objects.filter(activo=True).first()
+            if not ano_escolar:
+                msg = 'No hay año escolar activo configurado'
+                logger.info(msg)
+                self.stdout.write(self.style.WARNING(msg))
+                return
+
+            en_sem1 = ano_escolar.sem1_inicio and ano_escolar.sem1_fin and (ano_escolar.sem1_inicio <= hoy <= ano_escolar.sem1_fin)
+            en_sem2 = ano_escolar.sem2_inicio and ano_escolar.sem2_fin and (ano_escolar.sem2_inicio <= hoy <= ano_escolar.sem2_fin)
+            if not (en_sem1 or en_sem2):
+                msg = 'Fuera de período lectivo: no se envía resumen'
+                logger.info(msg)
+                self.stdout.write(self.style.WARNING(msg))
+                return
+
+            if not sys_settings.notifications_enabled or not sys_settings.director_daily_summary_enabled:
+                msg = 'Resumen diario desactivado en la Configuración del Sistema'
+                logger.info(msg)
+                self.stdout.write(self.style.WARNING(msg))
+                return
+
+        if test_email:
+            correos = [test_email.strip()]
+            self.stdout.write(f"Modo de prueba: enviando exclusivamente a {test_email}")
+        else:
+            directores = CustomUser.objects.filter(
+                role='DIRECTOR', is_active=True,
+                email__isnull=False, notifications_disabled=False
+            ).exclude(email='')
+            correos = list(set(d.email.strip() for d in directores if d.email and d.email.strip()))
+            
         if not correos:
-            msg = 'No hay directores con email'
+            msg = 'No se encontraron directores activos con email configurado y notificaciones habilitadas'
             logger.info(msg)
-            self.stdout.write(msg)
+            self.stdout.write(self.style.ERROR(msg))
             return
 
         funcionarios = CustomUser.objects.filter(
             is_active=True
         ).select_related().order_by('funcion', 'last_name', 'first_name')
-        funcionarios = [f for f in funcionarios if f.categoria_funcionario in ('DOCENTE', 'ASISTENTE')]
+        funcionarios = [f for f in funcionarios if f.categoria_funcionario in ('DOCENTE', 'ASISTENTE', 'ADMINISTRATIVO')]
 
         permisos_hoy = SolicitudPermiso.objects.filter(
             estado='APROBADO',

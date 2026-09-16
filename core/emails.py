@@ -47,43 +47,54 @@ def notify_director_new_request(solicitud):
     settings_obj = SystemSettings.get_solo()
     if not settings_obj.notifications_enabled:
         return
-    directores = CustomUser.objects.filter(role='DIRECTOR', is_active=True, email__isnull=False, notifications_disabled=False)
-    correos_directores = [d.email for d in directores if d.email]
+    directores = CustomUser.objects.filter(
+        role='DIRECTOR', is_active=True, notifications_disabled=False
+    ).exclude(email__isnull=True).exclude(email='')
+    correos_directores = list(set(d.email.strip() for d in directores if d.email and d.email.strip()))
     
     if not correos_directores:
+        logger.warning("No hay directores con correo configurado para notificar nueva solicitud.")
         return
 
-    subject = f"Nueva Solicitud de Permiso - {solicitud.usuario.get_full_name()}"
+    funcionario = solicitud.usuario
+    nombre_funcionario = funcionario.get_full_name() or funcionario.username
+    cargo = funcionario.get_funcion_display() or funcionario.get_tipo_funcionario_display() or funcionario.get_role_display() or "Funcionario"
+
+    subject = f"Nueva Solicitud de Permiso - {nombre_funcionario}"
     message = (
         f"Se ha ingresado una nueva solicitud de día administrativo.\n\n"
-        f"Funcionario: {solicitud.usuario.get_full_name()}\n"
+        f"Funcionario: {nombre_funcionario}\n"
+        f"Cargo/Función: {cargo}\n"
         f"Fecha inicio: {solicitud.fecha_inicio}\n"
         f"Días solicitados: {solicitud.dias_solicitados}\n\n"
         f"Por favor revise el sistema para aprobar o rechazar esta solicitud."
     )
     
-    datatuple = (
+    datatuple = tuple(
         (subject, message, settings.DEFAULT_FROM_EMAIL, [email])
         for email in correos_directores
     )
-    AsyncMassEmailThread(tuple(datatuple)).start()
+    AsyncMassEmailThread(datatuple).start()
 
 def notify_user_request_status(solicitud):
-    """Notifica al funcionario sobre la respuesta de su solicitud."""
+    """Notifica al funcionario sobre la respuesta de su solicitud (aprobado/rechazado)."""
     settings_obj = SystemSettings.get_solo()
     if not settings_obj.notifications_enabled:
         return
     usuario = solicitud.usuario
     if usuario.notifications_disabled:
+        logger.info(f"Notificación omitida para {usuario}: notificaciones desactivadas en su perfil.")
         return
-    email = usuario.email
+    email = usuario.email.strip() if usuario.email else None
     if not email:
+        logger.warning(f"No se pudo enviar notificación de permiso a {usuario}: no tiene correo configurado.")
         return
 
+    nombre_usuario = usuario.get_full_name() or usuario.first_name or usuario.username
     estado = solicitud.get_estado_display().lower()
     subject = f"Resolución de su Solicitud de Permiso"
     message = (
-        f"Hola {usuario.first_name},\n\n"
+        f"Hola {nombre_usuario},\n\n"
         f"Su solicitud de permiso para la fecha {solicitud.fecha_inicio} ha sido {estado}.\n\n"
     )
     if solicitud.estado == 'RECHAZADO' and solicitud.motivo_rechazo:

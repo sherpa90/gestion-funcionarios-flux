@@ -110,6 +110,25 @@
                 {% endif %}
             </div>
 
+            <!-- Aviso Licencia por Fallecimiento (oculto por defecto, activado por JS) -->
+            <div id="aviso-fallecimiento"
+                class="hidden p-5 bg-amber-50 rounded-[2rem] border border-amber-200 flex items-start gap-4 animate-in">
+                <div class="w-10 h-10 rounded-xl bg-amber-400 text-white flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-black text-amber-800 uppercase tracking-widest mb-1">
+                        Licencia por Fallecimiento — Días Hábiles
+                    </h3>
+                    <p class="text-xs text-amber-700 font-bold leading-relaxed">
+                        Para este tipo de licencia, la cantidad de días ingresada se contará en
+                        <strong>días hábiles</strong> (lunes a viernes, excluyendo feriados). La fecha de
+                        término se calculará automáticamente saltando fines de semana y días festivos registrados
+                        en el sistema.
+                    </p>
+                </div>
+            </div>
+
             <!-- Date and Duration -->
             <div
                 class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -124,10 +143,13 @@
                     {% endif %}
                 </div>
                 <div class="space-y-3">
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <label id="label-dias" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
                         Cantidad de Días
                     </label>
                     {{ form.dias }}
+                    <p id="hint-dias-habiles" class="hidden text-[10px] text-amber-600 font-bold uppercase tracking-widest">
+                        <i class="fas fa-info-circle mr-1"></i>Se contarán solo días hábiles (L–V, sin feriados)
+                    </p>
                     {% if form.dias.errors %}
                     <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{ form.dias.errors.0 }}
                     </p>
@@ -202,6 +224,33 @@
             placeholder: 'BUSCA POR RUT O NOMBRE...',
             plugins: ['dropdown_input'],
         });
+    });
+
+    // Aviso días hábiles para Licencia por Fallecimiento
+    function toggleAvisoFallecimiento(valor) {
+        const aviso = document.getElementById('aviso-fallecimiento');
+        const hint = document.getElementById('hint-dias-habiles');
+        const labelDias = document.getElementById('label-dias');
+        if (valor === 'FALLECIMIENTO') {
+            aviso.classList.remove('hidden');
+            hint.classList.remove('hidden');
+            labelDias.textContent = 'Cantidad de Días Hábiles';
+        } else {
+            aviso.classList.add('hidden');
+            hint.classList.add('hidden');
+            labelDias.textContent = 'Cantidad de Días';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const tipoSelect = document.getElementById('id_tipo');
+        if (tipoSelect) {
+            // Evaluar estado inicial (útil si hay error de validación y el form se recarga)
+            toggleAvisoFallecimiento(tipoSelect.value);
+            tipoSelect.addEventListener('change', function () {
+                toggleAvisoFallecimiento(this.value);
+            });
+        }
     });
 
     function handleFileSelect(input) {

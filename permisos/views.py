@@ -698,6 +698,11 @@ class SolicitudAdminEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView
                      descripcion=f'Se editó permiso de {solicitud.usuario.get_full_name()} (Estado anterior: {estado_anterior} -> {nuevo_estado})',
                      ip_address=get_client_ip(self.request)
                  )
+
+                 # 9. Notificar al funcionario si la solicitud fue resuelta
+                 if estado_anterior != nuevo_estado and nuevo_estado in ['APROBADO', 'RECHAZADO']:
+                     from core.emails import notify_user_request_status
+                     notify_user_request_status(solicitud)
                  
                  messages.success(self.request, f'Solicitud de {solicitud.usuario.get_full_name()} actualizada exitosamente.')
                  return redirect(self.success_url)

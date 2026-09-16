@@ -33,6 +33,14 @@ class BusinessDayCalculator:
             
         if day in cls.HOLIDAYS:
             return False
+
+        try:
+            from asistencia.models import DiaFestivo
+            if DiaFestivo.es_dia_festivo(day):
+                return False
+        except Exception:
+            pass
+
         return True
 
     @classmethod
