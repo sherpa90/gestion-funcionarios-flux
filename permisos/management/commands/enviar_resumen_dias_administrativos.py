@@ -1,5 +1,5 @@
 import logging
-import os
+
 from datetime import date, timedelta
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail, send_mass_mail
@@ -14,16 +14,14 @@ from asistencia.models import AnoEscolar
 from core.models import SystemSettings
 from django.template.loader import render_to_string
 
-# Configurar logging a archivo
-LOG_DIR = getattr(settings, 'LOG_DIR', os.path.join(settings.BASE_DIR, 'logs'))
-os.makedirs(LOG_DIR, exist_ok=True)
-LOG_FILE = os.path.join(LOG_DIR, 'resumen_diario_directores.log')
+logger = logging.getLogger('django')
 
-logger = logging.getLogger('resumen_diario')
-logger.setLevel(logging.INFO)
-handler = logging.FileHandler(LOG_FILE, encoding='utf-8')
-handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-logger.addHandler(handler)
+def get_pg_date():
+    """Obtiene la fecha actual desde PostgreSQL en zona horaria America/Santiago."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT (now() AT TIME ZONE 'America/Santiago')::date")
+        row = cursor.fetchone()
+        return row[0] if row else date.today()
 
 
 def get_pg_date():
