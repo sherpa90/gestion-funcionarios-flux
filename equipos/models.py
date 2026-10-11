@@ -171,21 +171,22 @@ class Equipo(models.Model):
     
     def clean(self):
         if self.numero_serie:
-            # Verificar que el número de serie sea único
-            if Equipo.objects.filter(numero_serie=self.numero_serie).exclude(pk=self.pk).exists():
-                raise ValidationError('El número de serie ya está registrado en otro equipo.')
+            self.numero_serie = self.numero_serie.strip().upper()
             # Verificar que no contenga caracteres de plantilla Django
             if '{{' in self.numero_serie or '}}' in self.numero_serie:
                 raise ValidationError('El número de serie no puede contener caracteres de plantilla.')
-            self.numero_serie = self.numero_serie.upper()
+            # Verificar que el número de serie sea único
+            if Equipo.objects.filter(numero_serie=self.numero_serie).exclude(pk=self.pk).exists():
+                raise ValidationError('El número de serie ya está registrado en otro equipo.')
+
         if self.numero_inventario:
-            # Verificar que el número de inventario sea único
-            if Equipo.objects.filter(numero_inventario=self.numero_inventario).exclude(pk=self.pk).exists():
-                raise ValidationError('El número de inventario ya está registrado en otro equipo.')
+            self.numero_inventario = self.numero_inventario.strip().upper()
             # Verificar que no contenga caracteres de plantilla Django
             if '{{' in self.numero_inventario or '}}' in self.numero_inventario:
                 raise ValidationError('El número de inventario no puede contener caracteres de plantilla.')
-            self.numero_inventario = self.numero_inventario.upper()
+            # Verificar que el número de inventario sea único
+            if Equipo.objects.filter(numero_inventario=self.numero_inventario).exclude(pk=self.pk).exists():
+                raise ValidationError('El número de inventario ya está registrado en otro equipo.')
 
 
 class PrestamoEquipo(models.Model):

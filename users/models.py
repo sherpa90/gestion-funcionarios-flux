@@ -1,7 +1,14 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from core.validators import validate_run
 from core.utils import clean_rut_for_matching
+
+
+class CustomUserManager(UserManager):
+    """Manager personalizado para CustomUser"""
+    def create_superuser(self, username, email=None, password=None, **extra_fields):
+        extra_fields.setdefault('role', 'ADMIN')
+        return super().create_superuser(username, email, password, **extra_fields)
 
 
 class GrupoCorreo(models.Model):
@@ -126,6 +133,8 @@ class CustomUser(AbstractUser):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['run', 'first_name', 'last_name']
+
+    objects = CustomUserManager()
 
     @property
     def dias_disponibles_pct(self):

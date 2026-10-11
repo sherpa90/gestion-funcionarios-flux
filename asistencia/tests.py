@@ -237,3 +237,98 @@ class SerenoAsistenciaTest(TestCase):
         )
         self.assertEqual(registro_tarde.calcular_retraso(), 15)
         self.assertEqual(registro_tarde.estado, 'RETRASO')
+
+
+class AlegacionAsistenciaTest(TestCase):
+    """Tests para el flujo de alegaciones y justificaciones sobre registros de asistencia"""
+
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(
+            username='func_aleg',
+            email='func_aleg@test.com',
+            run='12345678-5',
+            first_name='Funcionario',
+            last_name='Aleg',
+            password='testpass123'
+        )
+        self.admin = CustomUser.objects.create_user(
+            username='admin_aleg',
+            email='admin_aleg@test.com',
+            run='11111111-1',
+            first_name='Admin',
+            last_name='Aleg',
+            password='testpass123',
+            role='ADMIN'
+        )
+        self.horario = HorarioFuncionario.objects.filter(funcionario=self.user).first()
+        self.registro = RegistroAsistencia.objects.create(
+            funcionario=self.user,
+            fecha=date(2026, 10, 5),
+            horario_asignado=self.horario,
+            estado='RETRASO',
+            minutos_retraso=25
+        )
+
+    def test_crear_y_revisar_alegacion(self):
+        """Un funcionario crea una alegación y un administrador la revisa y aprueba"""
+        from asistencia.models import AlegacionAsistencia
+        alegacion = AlegacionAsistencia.objects.create(
+            registro_asistencia=self.registro,
+            motivo='Corte imprevisto en la vía pública',
+            estado='PENDIENTE'
+        )
+        self.assertEqual(alegacion.estado, 'PENDIENTE')
+        self.assertTrue(alegacion.puede_revisar(self.admin))
+        self.assertFalse(alegacion.puede_revisar(self.user))
+
+        # Admin aprueba
+        alegacion.estado = 'APROBADA'
+        alegacion.respuesta_admin = 'Comprobado y justificado'
+        alegacion.revisado_por = self.admin
+        alegacion.fecha_revision = timezone.now()
+        alegacion.save()
+
+        self.assertEqual(alegacion.estado, 'APROBADA')
+        self.assertEqual(alegacion.revisado_por, self.admin)
+
+
+class HorarioExcepcionalTest(TestCase):
+    """Tests para horarios excepcionales (actos escolares, salidas tempranas)"""
+
+    def setUp(self):
+        self.docente = CustomUser.objects.create_user(
+            username='docente_exc',
+            email='docente_exc@test.com',
+            run='12345678-5',
+            first_name='Docente',
+            last_name='Exc',
+            password='testpass123',
+            role='FUNCIONARIO',
+            tipo_funcionario='DOCENTE'
+        )
+        self.sereno = CustomUser.objects.create_user(
+            username='sereno_exc',
+            email='sereno_exc@test.com',
+            run='11111111-1',
+            first_name='Sereno',
+            last_name='Exc',
+            password='testpass123',
+            role='FUNCIONARIO',
+            funcion='SERENO'
+        )
+
+    def test_horario_excepcional_aplica_a_grupos(self):
+        """Verificar filtro de aplicación: TODOS, SERENOS o FUNCIONARIOS"""
+        from asistencia.models import HorarioExcepcional
+        fecha = date(2026, 10, 8)
+
+        # Excepcional solo para funcionarios (no serenos)
+        exc_func = HorarioExcepcional(fecha=fecha, motivo='Capacitación', aplica_a='FUNCIONARIOS')
+        self.assertTrue(exc_func.aplica_a_funcionario(self.docente))
+        self.assertFalse(exc_func.aplica_a_funcionario(self.sereno))
+
+        # Excepcional solo para serenos
+        exc_sereno = HorarioExcepcional(fecha=fecha, motivo='Ronda especial', aplica_a='SERENOS')
+        self.assertFalse(exc_sereno.aplica_a_funcionario(self.docente))
+        self.assertTrue(exc_sereno.aplica_a_funcionario(self.sereno))
+

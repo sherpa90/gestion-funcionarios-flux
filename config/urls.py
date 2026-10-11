@@ -34,12 +34,19 @@ def serve_media(request, path):
     if path.startswith('liquidaciones/'):
         if request.user.role not in ['ADMIN', 'SECRETARIA', 'DIRECTOR']:
             # For regular users, only allow access to their own liquidaciones
-            # Assuming the filename format contains the user's run: liquidacion_YYYY_MM_RUN.pdf
-            # Let's ensure their run is in the filename
             from core.utils import normalize_rut
             user_run = request.user.run
             # We check if run is in the path directly or normalized without dash
             if user_run not in path and user_run.replace('-', '') not in path:
+                from django.core.exceptions import PermissionDenied
+                raise PermissionDenied("Access denied")
+
+    # Check authorization for licencias médicas (datos sensibles de salud)
+    if path.startswith('licencias/'):
+        if request.user.role not in ['ADMIN', 'SECRETARIA', 'DIRECTOR']:
+            from licencias.models import LicenciaMedica
+            licencia = LicenciaMedica.objects.filter(archivo=path).first()
+            if not licencia or licencia.usuario != request.user:
                 from django.core.exceptions import PermissionDenied
                 raise PermissionDenied("Access denied")
     
