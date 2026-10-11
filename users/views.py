@@ -38,7 +38,7 @@ class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     
     def get_queryset(self):
         # Orden por defecto: Más reciente primero
-        queryset = CustomUser.objects.all().select_related('horario').order_by('-date_joined')
+        queryset = CustomUser.objects.all().order_by('-date_joined')
         
         # Búsqueda
         search_query = self.request.GET.get('search', '')

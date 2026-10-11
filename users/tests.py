@@ -245,3 +245,27 @@ class ModulosAuxiliaresUserTest(TestCase):
             creado_por=self.user
         )
         self.assertEqual(str(directorio), 'Dirección - 101')
+
+
+class UserListViewTest(TestCase):
+    """Test para la vista UserListView (/usuarios/)"""
+
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username='admin_list',
+            email='admin_list@test.com',
+            run='11111111-1',
+            first_name='Admin',
+            last_name='List',
+            password='adminpass123',
+            role='ADMIN'
+        )
+
+    def test_user_list_view_get(self):
+        """Verifica que /usuarios/ carga correctamente sin errores de select_related"""
+        self.client.force_login(self.admin)
+        from django.urls import reverse
+        response = self.client.get(reverse('user_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Admin List')
+
