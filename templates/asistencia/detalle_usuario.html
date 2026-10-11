@@ -444,7 +444,11 @@
                             <h3 class="text-base font-black text-gray-900 uppercase tracking-widest">Configuración Semanal</h3>
                              <div class="flex items-center gap-2 mt-1">
                                  <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                                     Configuración semanal
+                                     {% if horario_actual and horario_actual.fecha_desde %}
+                                         Horario actual vigente desde: <strong class="text-blue-600">{{ horario_actual.fecha_desde|date:"d/m/Y" }}</strong>
+                                     {% else %}
+                                         Horario base inicial
+                                     {% endif %}
                                  </span>
                              </div>
                         </div>
@@ -544,14 +548,53 @@
                          </div>
                     </div>
 
-                    <!-- Botón Guardar -->
-                    <button type="button" @click="guardarHorario()"
-                        :disabled="guardando || (!{{ es_sereno|lower }} && Math.max(totalMinutosS1, totalMinutosS2) > 2640)"
-                        class="group relative inline-flex items-center justify-center px-8 py-4 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-600 shadow-xl shadow-gray-200 hover:shadow-blue-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                        <i class="fas fa-save mr-3 group-hover:scale-110 transition-transform"></i>
-                        <span x-text="guardando ? 'Sincronizando...' : 'Guardar Configuración'"></span>
-                    </button>
+                    <!-- Selector de Fecha de Vigencia y Botón Guardar -->
+                    <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+                        <div class="flex items-center gap-2 bg-white px-3 py-2.5 rounded-2xl border border-gray-200 shadow-sm">
+                            <label for="fecha-desde-input" class="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5 whitespace-nowrap">
+                                <i class="fas fa-calendar-alt text-blue-500"></i>
+                                Vigente desde:
+                            </label>
+                            <input type="date" id="fecha-desde-input" x-model="fechaDesde"
+                                   class="text-xs font-bold text-gray-900 border border-gray-100 bg-gray-50 rounded-xl px-2.5 py-1.5 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none cursor-pointer transition-all">
+                        </div>
+
+                        <!-- Botón Guardar -->
+                        <button type="button" @click="guardarHorario()"
+                            :disabled="guardando || (!{{ es_sereno|lower }} && Math.max(totalMinutosS1, totalMinutosS2) > 2640)"
+                            class="group relative inline-flex items-center justify-center px-8 py-4 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-blue-600 shadow-xl shadow-gray-200 hover:shadow-blue-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-save mr-3 group-hover:scale-110 transition-transform"></i>
+                            <span x-text="guardando ? 'Sincronizando...' : 'Guardar Configuración'"></span>
+                        </button>
+                    </div>
                 </div>
+
+                {% if horarios_historial and horarios_historial|length > 1 %}
+                <!-- Historial de versiones de horario -->
+                <div class="px-6 py-4 bg-gray-50/30 border-t border-gray-100">
+                    <details class="group">
+                        <summary class="cursor-pointer text-[10px] font-black text-gray-400 hover:text-blue-600 uppercase tracking-widest flex items-center gap-2 select-none">
+                            <i class="fas fa-history text-xs text-blue-500"></i>
+                            <span>Historial de Versiones de Horario ({{ horarios_historial|length }} registradas)</span>
+                            <i class="fas fa-chevron-down text-[8px] group-open:rotate-180 transition-transform"></i>
+                        </summary>
+                        <div class="mt-3 divide-y divide-gray-100 bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+                            {% for h in horarios_historial %}
+                            <div class="py-2.5 flex items-center justify-between text-xs">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-2.5 h-2.5 rounded-full {% if forloop.first and h.activo %}bg-emerald-500 ring-4 ring-emerald-50{% else %}bg-gray-300{% endif %}"></span>
+                                    <span class="font-bold text-gray-800">
+                                        Vigencia: {{ h.fecha_desde|date:"d/m/Y" }}
+                                        {% if h.fecha_hasta %}al {{ h.fecha_hasta|date:"d/m/Y" }}{% else %}en adelante <span class="text-emerald-600 text-[10px] font-black uppercase tracking-wider ml-1">(Actual)</span>{% endif %}
+                                    </span>
+                                </div>
+                                <span class="font-mono text-gray-500 text-[11px] bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">Entrada base: {{ h.hora_entrada|time:"H:i" }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </details>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -654,6 +697,7 @@ document.addEventListener('alpine:init', () => {
         activeTab: 'registros',
         currentSemanaTab: 1,
         guardando: false,
+        fechaDesde: '{{ hoy|date:"Y-m-d" }}',
         totalHorasS1: '0h 0m',
         totalHorasS2: '0h 0m',
         totalMinutosS1: 0,
@@ -776,7 +820,8 @@ document.addEventListener('alpine:init', () => {
                     },
                     body: JSON.stringify({ 
                         dias: this.dias,
-                        total_minutos: Math.max(this.totalMinutosS1, this.totalMinutosS2)
+                        total_minutos: Math.max(this.totalMinutosS1, this.totalMinutosS2),
+                        fecha_desde: this.fechaDesde
                     })
                 });
                 
@@ -785,7 +830,7 @@ document.addEventListener('alpine:init', () => {
                 if (response.ok) {
                     Swal.fire({
                         title: '¡Sincronizado!',
-                        text: 'El horario semanal ha sido actualizado.',
+                        text: result.message || 'El horario semanal ha sido actualizado.',
                         icon: 'success',
                         confirmButtonText: 'Genial',
                         confirmButtonColor: '#111827',
@@ -794,6 +839,8 @@ document.addEventListener('alpine:init', () => {
                             popup: 'rounded-3xl',
                             confirmButton: 'rounded-xl font-black uppercase tracking-widest text-xs px-6 py-3'
                         }
+                    }).then(() => {
+                        window.location.reload();
                     });
                 } else {
                     Swal.fire({

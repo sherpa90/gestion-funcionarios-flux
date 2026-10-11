@@ -1888,8 +1888,10 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
             'usuario': usuario,
             'registros_por_anio': registros_por_anio,
             'horario_actual': horario_actual,
+            'horarios_historial': usuario.horarios.all().order_by('-fecha_desde'),
             'horario_semanal': horario_semanal,
             'es_sereno': es_sereno,
+            'hoy': timezone.localdate(),
             'todos_los_usuarios': todos_los_usuarios,
             'estadisticas_funcionario': {
                 'total_registros': total_registros,
@@ -3100,33 +3102,50 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
             data = json.loads(request.body)
             hoy = timezone.localdate()
             
+            # Obtener fecha de vigencia especificada o por defecto hoy
+            fecha_desde_str = data.get('fecha_desde')
+            if fecha_desde_str:
+                try:
+                    fecha_vigencia = datetime.strptime(fecha_desde_str, '%Y-%m-%d').date()
+                except (ValueError, TypeError):
+                    fecha_vigencia = hoy
+            else:
+                fecha_vigencia = hoy
+
             with transaction.atomic():
                 # Obtener el horario activo actual
                 horario_actual = usuario.horario
 
-                # Solución estructural: si el funcionario ya tiene un horario cuya vigencia
-                # inició antes de hoy, cerramos su vigencia al día de ayer y creamos una nueva
-                # versión para que rija exclusivamente desde hoy en adelante.
+                # Solución estructural: cerramos la vigencia del horario anterior al día previo
+                # a la fecha de inicio del nuevo horario, garantizando que el pasado no se altere.
                 if not horario_actual:
                     horario_vigente = HorarioFuncionario.objects.create(
                         funcionario=usuario,
                         hora_entrada=time(7, 55),
-                        fecha_desde=hoy,
+                        fecha_desde=fecha_vigencia,
                         fecha_hasta=None,
                         activo=True
                     )
-                elif horario_actual.fecha_desde < hoy:
-                    horario_actual.fecha_hasta = hoy - timedelta(days=1)
+                elif horario_actual.fecha_desde < fecha_vigencia:
+                    horario_actual.fecha_hasta = fecha_vigencia - timedelta(days=1)
                     horario_actual.save()
                     horario_vigente = HorarioFuncionario.objects.create(
                         funcionario=usuario,
                         hora_entrada=horario_actual.hora_entrada,
-                        fecha_desde=hoy,
+                        fecha_desde=fecha_vigencia,
                         fecha_hasta=None,
                         activo=True
                     )
-                else:
+                elif horario_actual.fecha_desde == fecha_vigencia:
                     horario_vigente = horario_actual
+                else:
+                    horario_vigente = HorarioFuncionario.objects.create(
+                        funcionario=usuario,
+                        hora_entrada=horario_actual.hora_entrada,
+                        fecha_desde=fecha_vigencia,
+                        fecha_hasta=None,
+                        activo=True
+                    )
 
                 dias_data = data.get('dias', [])
                 primera_hora_entrada = None
@@ -3187,10 +3206,10 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
                     horario_vigente.save()
 
                 # REGLA CRÍTICA DE NEGOCIO:
-                # El cambio es válido desde el día del cambio en adelante.
-                # BAJO NINGÚN CONCEPTO se tocan registros pasados (fecha < hoy),
+                # El cambio es válido desde la fecha de vigencia en adelante.
+                # BAJO NINGÚN CONCEPTO se tocan registros pasados (fecha < fecha_vigencia),
                 # garantizando que las métricas pasadas se mantengan inalteradas.
-                for registro in RegistroAsistencia.objects.filter(funcionario=usuario, fecha__gte=hoy):
+                for registro in RegistroAsistencia.objects.filter(funcionario=usuario, fecha__gte=fecha_vigencia):
                     registro.horario_asignado = horario_vigente
                     dia_sem = registro.fecha.weekday()
                     semana_t = DiaHorario.get_semana_tipo(registro.fecha, usuario)
@@ -3202,7 +3221,11 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
                         registro.hora_salida_teorica = dh.hora_salida
                     registro.save()
 
-            return JsonResponse({'status': 'success', 'message': 'Horario semanal guardado correctamente.'})
+            return JsonResponse({
+                'status': 'success', 
+                'message': f'Horario semanal guardado correctamente (vigente desde {fecha_vigencia.strftime("%d/%m/%Y")}).',
+                'fecha_vigencia': fecha_vigencia.strftime('%Y-%m-%d')
+            })
             
         except Exception as e:
             logger.error(f"Error guardando horario semanal para {user_id}: {str(e)}")

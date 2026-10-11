@@ -474,4 +474,39 @@ class VigenciaHistoricaHorarioTest(TestCase):
         # Fecha de hoy retorna horario_v2
         self.assertEqual(self.user.get_horario_para_fecha(self.hoy).id, horario_v2.id)
 
+    def test_cambio_horario_con_fecha_especifica_futura(self):
+        """Verifica que guardar_horario_semanal con fecha_desde específica rija exactamente desde esa fecha"""
+        from datetime import time, timedelta
+        from django.urls import reverse
+        import json
+
+        self.client.force_login(self.admin)
+        fecha_futura = self.hoy + timedelta(days=7)
+
+        dias_payload = [
+            {'dia_semana': 0, 'activo': True, 'hora_entrada': '09:00', 'hora_salida': '18:00', 'semana_tipo': None},
+            {'dia_semana': 1, 'activo': True, 'hora_entrada': '09:00', 'hora_salida': '18:00', 'semana_tipo': None},
+        ]
+
+        response = self.client.post(
+            reverse('asistencia:guardar_horario_semanal', kwargs={'user_id': self.user.id}),
+            data=json.dumps({
+                'dias': dias_payload,
+                'total_minutos': 1080,
+                'fecha_desde': fecha_futura.strftime('%Y-%m-%d')
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # El horario anterior debe quedar cerrado el día antes de la fecha futura
+        self.horario_inicial.refresh_from_db()
+        self.assertEqual(self.horario_inicial.fecha_hasta, fecha_futura - timedelta(days=1))
+
+        # El nuevo horario debe tener fecha_desde == fecha_futura
+        horario_nuevo = HorarioFuncionario.objects.filter(funcionario=self.user, fecha_desde=fecha_futura).first()
+        self.assertIsNotNone(horario_nuevo)
+        self.assertEqual(horario_nuevo.fecha_desde, fecha_futura)
+        self.assertIsNone(horario_nuevo.fecha_hasta)
+
 
