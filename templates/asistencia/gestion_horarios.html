@@ -84,7 +84,7 @@
                                     <span class="text-[9px] font-black">{{ data.funcionario.first_name.0 }}{{ data.funcionario.last_name.0 }}</span>
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="text-xs font-bold text-gray-900 truncate">{{ data.funcionario.get_full_name }}</div>
+                                    <div class="text-xs font-bold {% if data.funcionario.es_baja_actualmente or data.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ data.funcionario.get_full_name }}</div>
                                     <div class="text-[10px] text-gray-400">{{ data.funcionario.get_role_display }}</div>
                                 </div>
                             </div>
@@ -139,7 +139,7 @@
                             <span class="text-[10px] font-black">{{ data.funcionario.first_name.0 }}{{ data.funcionario.last_name.0 }}</span>
                         </div>
                         <div class="min-w-0 flex-1">
-                            <div class="text-xs font-bold text-gray-900 truncate">{{ data.funcionario.get_full_name }}</div>
+                            <div class="text-xs font-bold {% if data.funcionario.es_baja_actualmente or data.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ data.funcionario.get_full_name }}</div>
                             <div class="text-[10px] text-gray-400">
                                 {% if data.horario %}{{ data.horario.hora_entrada|time:"H:i" }}{% else %}Sin horario{% endif %}
                             </div>

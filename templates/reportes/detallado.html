@@ -27,7 +27,7 @@
                         <option value="">Todos los usuarios</option>
                         {% for u in usuarios %}
                         <option value="{{ u.id }}" {% if filtros.usuario_id == u.id|stringformat:"s" %}selected{% endif %}>
-                            {{ u.run }} - {{ u.get_full_name }}
+                            {{ u.run }} - {{ u.get_full_name }}{% if u.es_baja_actualmente or u.is_on_leave %} [DE BAJA]{% endif %}
                         </option>
                         {% endfor %}
                     </select>
@@ -115,8 +115,7 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         {% for solicitud in solicitudes %}
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{
-                                solicitud.usuario.get_full_name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ solicitud.usuario.get_full_name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ solicitud.usuario.run }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{
@@ -159,8 +158,7 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         {% for licencia in licencias %}
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{
-                                licencia.usuario.get_full_name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm {% if licencia.usuario.es_baja_actualmente or licencia.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ licencia.usuario.get_full_name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ licencia.usuario.run }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{

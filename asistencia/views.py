@@ -312,11 +312,10 @@ class GestionHorariosView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
                 Q(run__icontains=search)
             )
 
-        # Agrupar todos los horarios activos en un diccionario (O(1) lookup)
-        horarios_dict = {
-            h.funcionario_id: h 
-            for h in HorarioFuncionario.objects.filter(activo=True)
-        }
+        # Agrupar los horarios activos más recientes en un diccionario (O(1) lookup)
+        horarios_dict = {}
+        for h in HorarioFuncionario.objects.filter(activo=True).order_by('fecha_desde', 'id'):
+            horarios_dict[h.funcionario_id] = h
 
         # Preparar datos con horarios
         funcionarios_data = []
@@ -389,16 +388,25 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             fecha__month=mes
         ).select_related('horario_asignado')
 
-        # Horario asignado actual para determinar días laborales
-        horario_actual = HorarioFuncionario.objects.filter(
-            funcionario=usuario_objetivo, activo=True
-        ).first()
+        # Horario asignado al funcionario (para el mes consultado)
+        primer_dia_mes_consultado = datetime(anio_int, mes_int, 1).date()
+        horario_actual = usuario_objetivo.get_horario_para_fecha(primer_dia_mes_consultado) or usuario_objetivo.horario
 
-        dias_configurados = {}
-        if horario_actual:
-            for dh in horario_actual.dias.all():
-                # Mapeamos por una tupla (dia_semana, semana_tipo)
-                dias_configurados[(dh.dia_semana, dh.semana_tipo)] = dh
+        # Cache de días configurados por horario para soporte multiversión en el calendario
+        dias_configurados_cache = {}
+        def get_dia_configurado_para_fecha(d_fecha):
+            h_v = usuario_objetivo.get_horario_para_fecha(d_fecha)
+            if not h_v:
+                return None
+            if h_v.id not in dias_configurados_cache:
+                dias_configurados_cache[h_v.id] = {
+                    (dh.dia_semana, dh.semana_tipo): dh
+                    for dh in h_v.dias.all()
+                }
+            dias_map = dias_configurados_cache[h_v.id]
+            dia_sem = d_fecha.weekday()
+            sem_t = DiaHorario.get_semana_tipo(d_fecha, usuario_objetivo)
+            return dias_map.get((dia_sem, sem_t)) or dias_map.get((dia_sem, None))
 
         # Sumar minutos de retraso acumulados del mes (Para la alerta visual de umbral)
         total_retraso_mes = registros_qs.filter(estado='RETRASO').aggregate(Sum('minutos_retraso'))['minutos_retraso__sum'] or 0
@@ -568,11 +576,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                     dia_semana = fecha.weekday()
                     semana_t = DiaHorario.get_semana_tipo(fecha, usuario_objetivo)
 
-                    # Buscar primero horario específico para esta semana (1 o 2)
-                    # Si no existe, cae al horario universal (semana_tipo=None)
-                    dia_h = dias_configurados.get((dia_semana, semana_t))
-                    if not dia_h:
-                        dia_h = dias_configurados.get((dia_semana, None))
+                    dia_h = get_dia_configurado_para_fecha(fecha)
 
                     if dia_h:
                         es_dia_activo_base = dia_h.activo
@@ -1750,7 +1754,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                         semana_t = DiaHorario.get_semana_tipo(d_fecha, usuario)
                         reg.semana_tipo = semana_t
                         
-                        horario_ref = getattr(reg, 'horario_asignado', None) or horario_actual
+                        horario_ref = getattr(reg, 'horario_asignado', None) or usuario.get_horario_para_fecha(d_fecha)
                         dh = None
                         if horario_ref:
                             dh = horario_ref.dias.filter(dia_semana=dia_sem, semana_tipo=semana_t).first()
@@ -1761,22 +1765,28 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                         if hasattr(reg, '__class__') and reg.__class__.__name__ == 'RegistroVirtual':
                             reg.horario_dia = dh
 
-                        h_entrada_teorica = None
-                        h_salida_teorica = None
+                        h_entrada_teorica = getattr(reg, 'hora_entrada_teorica', None)
+                        h_salida_teorica = getattr(reg, 'hora_salida_teorica', None)
 
-                        if dh and dh.hora_entrada:
-                            h_entrada_teorica = dh.hora_entrada
-                            h_salida_teorica = dh.hora_salida
-                        elif horario_ref and horario_ref.hora_entrada:
-                            h_entrada_teorica = horario_ref.hora_entrada
-                            h_salida_teorica = None  # La salida viene de DiaHorario, no del horario principal
-                        else:
-                            if es_sereno:
-                                h_entrada_teorica = datetime.strptime("20:00" if semana_t == 1 else "08:00", "%H:%M").time()
-                                h_salida_teorica = datetime.strptime("08:00" if semana_t == 1 else "20:00", "%H:%M").time()
+                        if not h_entrada_teorica:
+                            if dh and dh.hora_entrada:
+                                h_entrada_teorica = dh.hora_entrada
+                            elif horario_ref and horario_ref.hora_entrada:
+                                h_entrada_teorica = horario_ref.hora_entrada
                             else:
-                                h_entrada_teorica = datetime.strptime("07:55", "%H:%M").time()
-                                h_salida_teorica = datetime.strptime("17:00", "%H:%M").time()
+                                if es_sereno:
+                                    h_entrada_teorica = datetime.strptime("20:00" if semana_t == 1 else "08:00", "%H:%M").time()
+                                else:
+                                    h_entrada_teorica = datetime.strptime("07:55", "%H:%M").time()
+
+                        if not h_salida_teorica:
+                            if dh and dh.hora_salida:
+                                h_salida_teorica = dh.hora_salida
+                            else:
+                                if es_sereno:
+                                    h_salida_teorica = datetime.strptime("08:00" if semana_t == 1 else "20:00", "%H:%M").time()
+                                else:
+                                    h_salida_teorica = datetime.strptime("17:00", "%H:%M").time()
 
                         reg.hora_entrada_teorica = h_entrada_teorica
                         reg.hora_salida_teorica = h_salida_teorica
@@ -3088,18 +3098,39 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
         try:
             usuario = get_object_or_404(CustomUser, pk=user_id)
             data = json.loads(request.body)
+            hoy = timezone.localdate()
             
             with transaction.atomic():
-                # Obtener o crear el HorarioFuncionario base
-                horario_base, created = HorarioFuncionario.objects.get_or_create(
-                    funcionario=usuario,
-                    defaults={
-                        'hora_entrada': time(7, 55),
-                        'activo': True
-                    }
-                )
+                # Obtener el horario activo actual
+                horario_actual = usuario.horario
+
+                # Solución estructural: si el funcionario ya tiene un horario cuya vigencia
+                # inició antes de hoy, cerramos su vigencia al día de ayer y creamos una nueva
+                # versión para que rija exclusivamente desde hoy en adelante.
+                if not horario_actual:
+                    horario_vigente = HorarioFuncionario.objects.create(
+                        funcionario=usuario,
+                        hora_entrada=time(7, 55),
+                        fecha_desde=hoy,
+                        fecha_hasta=None,
+                        activo=True
+                    )
+                elif horario_actual.fecha_desde < hoy:
+                    horario_actual.fecha_hasta = hoy - timedelta(days=1)
+                    horario_actual.save()
+                    horario_vigente = HorarioFuncionario.objects.create(
+                        funcionario=usuario,
+                        hora_entrada=horario_actual.hora_entrada,
+                        fecha_desde=hoy,
+                        fecha_hasta=None,
+                        activo=True
+                    )
+                else:
+                    horario_vigente = horario_actual
 
                 dias_data = data.get('dias', [])
+                primera_hora_entrada = None
+
                 for dia_data in dias_data:
                     dia_semana = int(dia_data.get('dia_semana'))
                     activo = bool(dia_data.get('activo', False))
@@ -3114,6 +3145,8 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
                             try:
                                 h, m = map(int, hora_entrada_str.split(':'))
                                 hora_entrada = time(h, m)
+                                if primera_hora_entrada is None and hora_entrada:
+                                    primera_hora_entrada = hora_entrada
                             except ValueError:
                                 pass
                         
@@ -3129,12 +3162,7 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
                     total_minutos_periodo = data.get('total_minutos', 0)
                     es_sereno = usuario.funcion == 'SERENO'
                     
-                    # Si es rotativo, el total_minutos enviado es la suma de ambas semanas.
-                    # Debemos validar por semana independiente (aproximadamente la mitad)
                     if not es_sereno and total_minutos_periodo > 44 * 60:
-                        # Si hay semanas tipo 2, permitimos hasta 88 (44*2) porque el frontend suma ambos
-                        # Pero lo ideal es que el frontend envíe el máximo de ambas.
-                        # Por ahora, si es regular (no sereno), no debería tener semana_tipo.
                          return JsonResponse({
                              'status': 'error', 
                              'message': 'No se puede exceder el límite de 44 horas semanales.'
@@ -3144,7 +3172,7 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
                     if semana_tipo == "": semana_tipo = None
                     
                     DiaHorario.objects.update_or_create(
-                        horario=horario_base,
+                        horario=horario_vigente,
                         dia_semana=dia_semana,
                         semana_tipo=semana_tipo,
                         defaults={
@@ -3154,9 +3182,24 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
                         }
                     )
                 
-                # Recalcular todos los registros de asistencia para este usuario
-                # Esto permite que la vista 'mi_asistencia' refleje instantáneamente el nuevo horario
-                for registro in RegistroAsistencia.objects.filter(funcionario=usuario):
+                if primera_hora_entrada:
+                    horario_vigente.hora_entrada = primera_hora_entrada
+                    horario_vigente.save()
+
+                # REGLA CRÍTICA DE NEGOCIO:
+                # El cambio es válido desde el día del cambio en adelante.
+                # BAJO NINGÚN CONCEPTO se tocan registros pasados (fecha < hoy),
+                # garantizando que las métricas pasadas se mantengan inalteradas.
+                for registro in RegistroAsistencia.objects.filter(funcionario=usuario, fecha__gte=hoy):
+                    registro.horario_asignado = horario_vigente
+                    dia_sem = registro.fecha.weekday()
+                    semana_t = DiaHorario.get_semana_tipo(registro.fecha, usuario)
+                    dh = horario_vigente.dias.filter(dia_semana=dia_sem, semana_tipo=semana_t).first()
+                    if not dh:
+                        dh = horario_vigente.dias.filter(dia_semana=dia_sem, semana_tipo__isnull=True).first()
+                    if dh:
+                        registro.hora_entrada_teorica = dh.hora_entrada
+                        registro.hora_salida_teorica = dh.hora_salida
                     registro.save()
 
             return JsonResponse({'status': 'success', 'message': 'Horario semanal guardado correctamente.'})

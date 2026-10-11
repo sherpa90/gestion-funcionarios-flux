@@ -111,7 +111,7 @@
     <div class="header">
         <h1>Calendario de Hitos y Efemérides</h1>
         <h2>{{ establecimiento }} - Año {{ year }}</h2>
-        <p>Generado por: {{ solicitante.get_full_name|default:solicitante.username }}</p>
+        <p>Generado por: <span{% if solicitante.es_baja_actualmente or solicitante.is_on_leave %} style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ solicitante.get_full_name|default:solicitante.username }}</span></p>
     </div>
 
     <div class="summary-box">

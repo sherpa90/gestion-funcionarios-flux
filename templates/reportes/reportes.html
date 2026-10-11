@@ -436,7 +436,7 @@
                     {{ emp.funcionario.first_name|first }}{{ emp.funcionario.last_name|first }}
                   </div>
                   <div class="min-w-0">
-                    <p class="font-bold text-slate-900 text-xs sm:text-sm truncate leading-snug">{{ emp.funcionario.get_full_name }}</p>
+                    <p class="font-bold {% if emp.funcionario.es_baja_actualmente or emp.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-slate-900{% endif %} text-xs sm:text-sm truncate leading-snug">{{ emp.funcionario.get_full_name }}</p>
                     <div class="flex items-center gap-2 text-[11px] text-slate-400 font-medium mt-0.5">
                       <span>RUN: {{ emp.funcionario.run }}</span>
                       {% if emp.cargo %}
@@ -555,7 +555,7 @@
               {{ emp.funcionario.first_name|first }}{{ emp.funcionario.last_name|first }}
             </div>
             <div class="min-w-0">
-              <p class="font-bold text-slate-900 text-sm truncate">{{ emp.funcionario.get_full_name }}</p>
+              <p class="font-bold {% if emp.funcionario.es_baja_actualmente or emp.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-slate-900{% endif %} text-sm truncate">{{ emp.funcionario.get_full_name }}</p>
               <p class="text-[11px] text-slate-400">RUN: {{ emp.funcionario.run }}</p>
             </div>
           </div>

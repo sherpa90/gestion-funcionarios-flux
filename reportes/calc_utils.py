@@ -84,18 +84,29 @@ def calcular_inasistencias_en_lote(usuarios, fecha_inicio_calc=None, fecha_fin_c
 
     # 3. Horarios y días configurados
     horarios_qs = HorarioFuncionario.objects.filter(
-        funcionario__in=usuarios_validos,
-        activo=True
-    ).prefetch_related('dias')
+        funcionario__in=usuarios_validos
+    ).prefetch_related('dias').order_by('fecha_desde', 'id')
 
-    horarios_map = {}
-    dias_configurados_map = {}
+    # Guardar por usuario: lista de tuplas (horario, dias_configurados_dict)
+    horarios_por_usuario = {u.id: [] for u in usuarios_validos}
     for h in horarios_qs:
-        horarios_map[h.funcionario_id] = h
-        dias_configurados_map[h.funcionario_id] = {
+        dias_dict = {
             (dh.dia_semana, dh.semana_tipo): dh
             for dh in h.dias.all() if dh.activo
         }
+        horarios_por_usuario[h.funcionario_id].append((h, dias_dict))
+
+    def _resolver_dias_configurados(u_id, d_fecha):
+        versiones = horarios_por_usuario.get(u_id, [])
+        if not versiones:
+            return None, {}
+        for h, d_dict in reversed(versiones):
+            if h.fecha_desde <= d_fecha and (h.fecha_hasta is None or h.fecha_hasta >= d_fecha):
+                return h, d_dict
+        for h, d_dict in reversed(versiones):
+            if h.fecha_desde <= d_fecha:
+                return h, d_dict
+        return versiones[0]
 
     # 4. Periodos de baja activos
     from users.models import BajaPeriodo
@@ -192,8 +203,6 @@ def calcular_inasistencias_en_lote(usuarios, fecha_inicio_calc=None, fecha_fin_c
             continue
 
         es_sereno = usuario.id in serenos_ids
-        horario = horarios_map.get(usuario.id)
-        dias_configurados = dias_configurados_map.get(usuario.id, {})
         baja_periodos = bajas_map.get(usuario.id, [])
         dias_permiso = dias_permiso_map.get(usuario.id, set())
         permisos_por_fecha = permisos_map.get(usuario.id, {})
@@ -248,7 +257,8 @@ def calcular_inasistencias_en_lote(usuarios, fecha_inicio_calc=None, fecha_fin_c
             if en_ano_escolar:
                 dia_semana = d.weekday()
                 es_laboral = False
-                if horario:
+                horario_d, dias_configurados = _resolver_dias_configurados(usuario.id, d)
+                if horario_d:
                     if es_sereno:
                         iso_year, iso_week, _ = d.isocalendar()
                         semana_t = semanas_map.get((usuario.id, iso_year, iso_week))

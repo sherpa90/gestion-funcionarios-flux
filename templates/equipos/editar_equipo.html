@@ -161,13 +161,13 @@
                         <select name="funcionario" id="id_funcionario" class="w-full">
                             <option value="">— Ninguno (Desvincular) —</option>
                             {% for func in funcionarios %}
-                            <option value="{{ func.id }}" {% if prestamo_actual.funcionario.id == func.id %}selected{% endif %}>{{ func.get_full_name }} ({{ func.run }})</option>
+                            <option value="{{ func.id }}" {% if prestamo_actual.funcionario.id == func.id %}selected{% endif %}>{{ func.get_full_name }}{% if func.es_baja_actualmente or func.is_on_leave %} [DE BAJA]{% endif %} ({{ func.run }})</option>
                             {% endfor %}
                         </select>
                         {% if prestamo_actual %}
                         <p class="text-[10px] text-indigo-500 font-bold italic-none mt-2 flex items-center">
                             <i class="fas fa-check-circle mr-1 opacity-50"></i>
-                            Vinculado actualmente a: {{ prestamo_actual.funcionario.get_full_name }} desde el {{
+                            Vinculado actualmente a: <span class="{% if prestamo_actual.funcionario.es_baja_actualmente or prestamo_actual.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ prestamo_actual.funcionario.get_full_name }}</span> desde el {{
                             prestamo_actual.fecha_asignacion|date:"d/m/Y" }}.
                         </p>
                         {% else %}

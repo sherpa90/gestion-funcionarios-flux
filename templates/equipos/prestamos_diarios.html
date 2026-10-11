@@ -97,7 +97,7 @@
                             <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">INV: #{{ p.equipo.numero_inventario|default:'S/N' }}</span>
                         </div>
                         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-500">
-                            <span><i class="fa-solid fa-user text-slate-400 mr-1"></i><strong>{{ p.funcionario.get_full_name }}</strong> ({{ p.funcionario.get_role_display }})</span>
+                            <span><i class="fa-solid fa-user text-slate-400 mr-1"></i><strong class="{% if p.funcionario.es_baja_actualmente or p.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ p.funcionario.get_full_name }}</strong> ({{ p.funcionario.get_role_display }})</span>
                             <span><i class="fa-regular fa-clock text-slate-400 mr-1"></i>Entregado a las {{ p.fecha_asignacion|date:"H:i" }} hrs</span>
                             {% if p.observaciones %}
                             <span class="text-slate-600 italic"><i class="fa-solid fa-comment-dots text-slate-400 mr-1"></i>"{{ p.observaciones }}"</span>
@@ -147,7 +147,7 @@
                     class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none">
                     <option value="">— Seleccionar Funcionario —</option>
                     {% for f in funcionarios %}
-                    <option value="{{ f.id }}">{{ f.get_full_name }} ({{ f.get_role_display }})</option>
+                    <option value="{{ f.id }}">{{ f.get_full_name }}{% if f.es_baja_actualmente or f.is_on_leave %} [DE BAJA]{% endif %} ({{ f.get_role_display }})</option>
                     {% endfor %}
                 </select>
             </div>
@@ -212,7 +212,7 @@
                         <td class="px-5 py-3 whitespace-nowrap font-medium text-slate-800">
                             {{ p.fecha_asignacion|date:"d/m/Y - H:i" }}
                         </td>
-                        <td class="px-4 py-3 font-semibold text-slate-900">
+                        <td class="px-4 py-3 font-semibold {% if p.funcionario.es_baja_actualmente or p.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-slate-900{% endif %}">
                             {{ p.funcionario.get_full_name }}
                         </td>
                         <td class="px-4 py-3">

@@ -64,7 +64,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             <div>
-                                <div class="font-medium">{{ alegacion.registro_asistencia.funcionario.get_full_name }}</div>
+                                <div class="font-medium {% if alegacion.registro_asistencia.funcionario.es_baja_actualmente or alegacion.registro_asistencia.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ alegacion.registro_asistencia.funcionario.get_full_name }}</div>
                                 <div class="text-gray-500">{{ alegacion.registro_asistencia.funcionario.run }}</div>
                             </div>
                         </td>

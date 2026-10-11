@@ -337,7 +337,7 @@
         <div class="profile-grid">
             <div class="profile-item">
                 <span class="profile-label">Nombre:</span>
-                <span class="profile-value">{{ functorio.get_full_name }}</span>
+                <span class="profile-value" {% if functorio.es_baja_actualmente or functorio.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ functorio.get_full_name }}</span>
             </div>
             <div class="profile-item">
                 <span class="profile-label">RUT:</span>

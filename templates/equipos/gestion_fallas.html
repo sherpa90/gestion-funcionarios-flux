@@ -189,7 +189,7 @@
                     <div>
                         <span class="font-bold text-slate-400 uppercase text-[10px] block">Funcionario Atendido</span>
                         {% if t.funcionario %}
-                        <span class="font-bold text-slate-800"><i class="fa-solid fa-user text-slate-400 mr-1"></i>{{ t.funcionario.get_full_name }}</span>
+                        <span class="font-bold {% if t.funcionario.es_baja_actualmente or t.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-slate-800{% endif %}"><i class="fa-solid fa-user text-slate-400 mr-1"></i>{{ t.funcionario.get_full_name }}</span>
                         {% else %}
                         <span class="text-slate-400 italic">General / Institucional</span>
                         {% endif %}
@@ -301,7 +301,7 @@
                     </div>
 
                     <div class="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
-                        <span><i class="fa-solid fa-user mr-1"></i>{{ falla.funcionario.get_full_name }}</span>
+                        <span class="{% if falla.funcionario.es_baja_actualmente or falla.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}"><i class="fa-solid fa-user mr-1"></i>{{ falla.funcionario.get_full_name }}</span>
                         <form action="{% url 'actualizar_estado_falla' falla.id %}" method="POST">
                             {% csrf_token %}
                             <input type="hidden" name="estado" value="EN_REVISION">
@@ -425,7 +425,7 @@
                         class="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-blue-100">
                         <option value="">— Ninguno / Soporte General —</option>
                         {% for func in funcionarios %}
-                        <option value="{{ func.id }}">{{ func.get_full_name }} ({{ func.get_role_display }})</option>
+                        <option value="{{ func.id }}">{{ func.get_full_name }}{% if func.es_baja_actualmente or func.is_on_leave %} [DE BAJA]{% endif %} ({{ func.get_role_display }})</option>
                         {% endfor %}
                     </select>
                 </div>

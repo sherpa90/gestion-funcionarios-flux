@@ -126,7 +126,7 @@
                                             <span class="text-[8px] font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
                                         </div>
                                         <div class="min-w-0">
-                                            <div class="text-xs font-bold text-gray-900 truncate">{{ solicitud.usuario.get_full_name }}</div>
+                                            <div class="text-xs font-bold {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ solicitud.usuario.get_full_name }}</div>
                                             <div class="text-[10px] text-gray-400">{{ solicitud.usuario.run }}</div>
                                         </div>
                                     </div>
@@ -183,7 +183,7 @@
                                     <span class="text-[8px] font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <div class="text-xs font-bold text-gray-900 truncate">{{ solicitud.usuario.get_full_name }}</div>
+                                    <div class="text-xs font-bold {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ solicitud.usuario.get_full_name }}</div>
                                     <div class="text-[10px] text-gray-400">{{ solicitud.fecha_inicio|date:"d/m" }} · {{ solicitud.usuario.run }}</div>
                                 </div>
                             </div>

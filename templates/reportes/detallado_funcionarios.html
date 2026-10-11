@@ -175,8 +175,7 @@
                                     empleado.funcionario.last_name|first|upper }}
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ empleado.funcionario.get_full_name
-                                        }}</div>
+                                    <div class="text-sm font-medium {% if empleado.funcionario.es_baja_actualmente or empleado.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ empleado.funcionario.get_full_name }}</div>
                                     <div class="text-xs text-gray-500">{{ empleado.funcionario.run }}</div>
                                 </div>
                             </div>

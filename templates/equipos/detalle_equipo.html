@@ -76,7 +76,7 @@
                                 {{ prestamo_actual.funcionario.first_name.0 }}{{ prestamo_actual.funcionario.last_name.0 }}
                             </div>
                             <div>
-                                <p class="text-sm font-black">{{ prestamo_actual.funcionario.get_full_name }}</p>
+                                <p class="text-sm font-black {% if prestamo_actual.funcionario.es_baja_actualmente or prestamo_actual.funcionario.is_on_leave %}funcionario-baja line-through text-red-300{% endif %}">{{ prestamo_actual.funcionario.get_full_name }}</p>
                                 <p class="text-[10px] text-blue-200 uppercase">{{ prestamo_actual.fecha_asignacion|date:"d M Y" }}</p>
                             </div>
                         </div>
@@ -148,7 +148,7 @@
                                 <p class="text-sm text-gray-600 leading-relaxed mb-3">
                                     {% if evento.tipo_evento == 'HITO' %}{{ evento.descripcion }}
                                     {% elif evento.tipo_evento == 'FALLA' %}{{ evento.descripcion }}
-                                    {% else %}Asignado a {{ evento.funcionario.get_full_name }}. {% if evento.observaciones %}{{ evento.observaciones }}{% endif %}{% endif %}
+                                    {% else %}Asignado a <span class="{% if evento.funcionario.es_baja_actualmente or evento.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ evento.funcionario.get_full_name }}</span>. {% if evento.observaciones %}{{ evento.observaciones }}{% endif %}{% endif %}
                                 </p>
                                 
                                 <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100/50 text-[10px] text-gray-400 font-medium">
@@ -156,7 +156,7 @@
                                     {% if evento.tipo_evento == 'HITO' %}
                                     Registrado por: {{ evento.creado_por.get_full_name|default:"Sistema" }}
                                     {% elif evento.tipo_evento == 'FALLA' %}
-                                    Reportado por: {{ evento.funcionario.get_full_name|default:"Sistema" }} - Estado: <span class="font-bold text-gray-600">{{ evento.get_estado_display }}</span>
+                                    Reportado por: <span class="{% if evento.funcionario.es_baja_actualmente or evento.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ evento.funcionario.get_full_name|default:"Sistema" }}</span> - Estado: <span class="font-bold text-gray-600">{{ evento.get_estado_display }}</span>
                                     {% else %}
                                     Asignado por: {{ evento.asignado_por.get_full_name|default:"Sistema" }}
                                     {% endif %}

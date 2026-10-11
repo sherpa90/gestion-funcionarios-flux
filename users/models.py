@@ -182,7 +182,9 @@ class CustomUser(AbstractUser):
         if self.is_on_leave or self.baja_date:
             if self.alta_date and fecha >= self.alta_date:
                 return False
-            return self.baja_date is not None and fecha >= self.baja_date
+            if self.baja_date is not None:
+                return fecha >= self.baja_date
+            return bool(self.is_on_leave)
         
         return False
 
@@ -228,6 +230,54 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.run})"
 
+    @property
+    def es_baja_actualmente(self):
+        """Retorna True si el funcionario está de baja hoy (global o por periodo).
+        Usado en templates para aplicar estilos tachado/rojo."""
+        from django.utils import timezone
+        return self.is_on_baja_on_date(timezone.localdate())
+
+    @property
+    def horario(self):
+        """Retorna el horario activo actual del funcionario"""
+        return self.horarios.filter(activo=True).order_by('-fecha_desde', '-id').first()
+
+    def get_horario_para_fecha(self, fecha):
+        """
+        Retorna el horario vigente para una fecha específica.
+        Busca el horario cuyo rango [fecha_desde, fecha_hasta] cubra la fecha.
+        Si no hay rango explícito cerrado, toma el más reciente cuya fecha_desde <= fecha.
+        """
+        if not fecha:
+            return self.horario
+        
+        # 1. Horario activo cuyo rango cubra exactamente la fecha
+        h = self.horarios.filter(
+            fecha_desde__lte=fecha,
+            activo=True
+        ).filter(
+            models.Q(fecha_hasta__isnull=True) | models.Q(fecha_hasta__gte=fecha)
+        ).order_by('-fecha_desde', '-id').first()
+        if h:
+            return h
+
+        # 2. Si no coincide con activo, buscar cualquier versión histórica que cubra el rango
+        h_prev = self.horarios.filter(
+            fecha_desde__lte=fecha
+        ).filter(
+            models.Q(fecha_hasta__isnull=True) | models.Q(fecha_hasta__gte=fecha)
+        ).order_by('-fecha_desde', '-id').first()
+        if h_prev:
+            return h_prev
+
+        # 3. Buscar el más cercano previo a la fecha
+        h_cercano = self.horarios.filter(fecha_desde__lte=fecha).order_by('-fecha_desde', '-id').first()
+        if h_cercano:
+            return h_cercano
+
+        # 4. Fallback al horario más antiguo disponible o al actual
+        return self.horarios.order_by('fecha_desde', 'id').first() or self.horario
+
     def esta_ausente(self):
         """Determina si el usuario debería contarse como ausente en reportes.
         
@@ -245,12 +295,10 @@ class CustomUser(AbstractUser):
         """
         Determina si una fecha dada es un día laboral activo para el funcionario.
         """
-        from asistencia.models import HorarioFuncionario, DiaHorario, HorarioExcepcional
+        from asistencia.models import DiaHorario, HorarioExcepcional
         
-        # Primero, obtener su horario activo
-        horario_actual = HorarioFuncionario.objects.filter(
-            funcionario=self, activo=True
-        ).first()
+        # Primero, obtener su horario vigente para la fecha dada
+        horario_vigente = self.get_horario_para_fecha(fecha)
         
         dia_semana = fecha.weekday()
         
@@ -261,17 +309,17 @@ class CustomUser(AbstractUser):
             getattr(self, 'role', None) == 'SERENO'
         )
         
-        if horario_actual:
+        if horario_vigente:
             semana_t = DiaHorario.get_semana_tipo(fecha, self)
             
             # Buscar primero horario específico para esta semana (1 o 2)
-            dia_horario = horario_actual.dias.filter(
+            dia_horario = horario_vigente.dias.filter(
                 dia_semana=dia_semana, 
                 semana_tipo=semana_t
             ).first()
             
             if not dia_horario:
-                dia_horario = horario_actual.dias.filter(
+                dia_horario = horario_vigente.dias.filter(
                     dia_semana=dia_semana, 
                     semana_tipo__isnull=True
                 ).first()

@@ -18,7 +18,7 @@
                 <dl class="space-y-2">
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Funcionario:</dt>
-                        <dd class="text-sm text-gray-900">{{ solicitud.usuario.get_full_name }} ({{ solicitud.usuario.run }})</dd>
+                        <dd class="text-sm {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ solicitud.usuario.get_full_name }} ({{ solicitud.usuario.run }})</dd>
                     </div>
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Fecha de inicio:</dt>

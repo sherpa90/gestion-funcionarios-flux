@@ -31,7 +31,7 @@
                     <span class="text-xl font-black text-white">{{ usuario.first_name.0 }}{{ usuario.last_name.0 }}</span>
                 </div>
                 <div class="flex-1">
-                    <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight leading-tight">{{ usuario.get_full_name }}</h2>
+                    <h2 class="text-2xl sm:text-3xl font-black {% if usuario.es_baja_actualmente or usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} tracking-tight leading-tight">{{ usuario.get_full_name }}</h2>
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">
                         {{ usuario.run }} <span class="mx-2 text-gray-200">|</span>
                         <span class="text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">{{ usuario.funcion|default:usuario.get_role_display }}</span>
@@ -78,7 +78,7 @@
                     <option value="">Selecciona un funcionario...</option>
                     {% for user_option in todos_los_usuarios %}
                     <option value="{{ user_option.id }}" {% if user_option.id == usuario.id %}selected{% endif %}>
-                        {{ user_option.first_name }} {{ user_option.last_name }} ({{ user_option.run }})
+                        {{ user_option.first_name }} {{ user_option.last_name }} ({{ user_option.run }}){% if user_option.es_baja_actualmente or user_option.is_on_leave %} [DE BAJA]{% endif %}
                     </option>
                     {% endfor %}
                 </select>

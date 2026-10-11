@@ -45,6 +45,12 @@
             color: #0f172a;
         }
 
+        /* Estilo global para funcionarios de baja: tachado y rojo */
+        .funcionario-baja, .is-baja, .text-baja {
+            text-decoration: line-through !important;
+            color: #ef4444 !important;
+        }
+
         /* Select2 & Inputs Refinement */
         .select2-container--default .select2-selection--single {
             height: 40px;
@@ -248,7 +254,7 @@
                         {{ user.first_name.0 }}{{ user.last_name.0 }}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-xs font-semibold text-slate-100 truncate">{{ user.get_full_name }}</p>
+                        <p class="text-xs font-semibold {% if user.es_baja_actualmente or user.is_on_leave %}funcionario-baja line-through text-red-500{% else %}text-slate-100{% endif %} truncate">{{ user.get_full_name }}</p>
                         <p class="text-[11px] text-slate-400 truncate">{{ user.get_role_display }}</p>
                     </div>
                 </div>
@@ -535,7 +541,7 @@
                         <span>{{ user.first_name.0 }}{{ user.last_name.0 }}</span>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-xs font-semibold text-white truncate">{{ user.get_full_name }}</p>
+                        <p class="text-xs font-semibold {% if user.es_baja_actualmente or user.is_on_leave %}funcionario-baja line-through text-red-500{% else %}text-white{% endif %} truncate">{{ user.get_full_name }}</p>
                         <p class="text-[11px] text-slate-400 truncate">{{ user.get_role_display }}</p>
                     </div>
                 </div>

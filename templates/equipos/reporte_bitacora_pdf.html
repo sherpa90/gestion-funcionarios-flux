@@ -183,7 +183,7 @@
                 <div><strong>Fecha:</strong> {{ t.fecha_actividad|date:"d/m/Y" }}{% if t.hora_actividad %} a las {{ t.hora_actividad|time:"H:i" }}{% endif %}</div>
                 <div><strong>Categoría:</strong> {{ t.get_categoria_display }}</div>
                 <div><strong>Lugar:</strong> {{ t.lugar.nombre|default:t.lugar_personalizado|default:"No especificado" }}</div>
-                <div><strong>Funcionario Atendido:</strong> {{ t.funcionario.get_full_name|default:"General / Sin asignar" }}</div>
+                <div><strong>Funcionario Atendido:</strong> <span {% if t.funcionario and t.funcionario.es_baja_actualmente or t.funcionario and t.funcionario.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ t.funcionario.get_full_name|default:"General / Sin asignar" }}</span></div>
                 {% if t.equipo %}
                 <div><strong>Equipo:</strong> {{ t.equipo.get_tipo_display }} {{ t.equipo.marca }} (#{{ t.equipo.numero_inventario|default:"S/N" }})</div>
                 {% endif %}

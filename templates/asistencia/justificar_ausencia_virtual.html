@@ -13,7 +13,7 @@
                         Justificar Ausencia
                     </h1>
                     <p class="mt-2 text-sm text-gray-600">
-                        Funcionario: {{ usuario.get_full_name }} | Fecha: {{ fecha|date:"d/m/Y" }}
+                        Funcionario: <span class="{% if usuario.es_baja_actualmente or usuario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ usuario.get_full_name }}</span> | Fecha: {{ fecha|date:"d/m/Y" }}
                     </p>
                 </div>
                 <a href="{% url 'asistencia:detalle_usuario' user_id=usuario.id %}"

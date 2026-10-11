@@ -264,7 +264,7 @@
                                     </span>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-black text-gray-900">{{ user_stats.usuario.get_full_name }}</p>
+                                    <p class="text-sm font-black {% if user_stats.usuario.es_baja_actualmente or user_stats.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ user_stats.usuario.get_full_name }}</p>
                                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ user_stats.usuario.get_role_display }}</p>
                                 </div>
                             </div>
@@ -319,7 +319,7 @@
                             <span class="text-xs font-black">{{ user_stats.usuario.first_name.0 }}{{ user_stats.usuario.last_name.0 }}</span>
                         </div>
                         <div>
-                            <p class="text-sm font-black text-gray-900">{{ user_stats.usuario.get_full_name }}</p>
+                            <p class="text-sm font-black {% if user_stats.usuario.es_baja_actualmente or user_stats.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ user_stats.usuario.get_full_name }}</p>
                             <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{{ user_stats.usuario.run }}</p>
                         </div>
                     </div>

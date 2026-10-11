@@ -235,7 +235,7 @@
                         <td class="px-4 py-3.5">
                             {% if eq.prestamo_activo %}
                             <div>
-                                <div class="font-bold text-slate-800 text-xs sm:text-sm">{{ eq.prestamo_activo.funcionario.get_full_name }}</div>
+                                <div class="font-bold {% if eq.prestamo_activo.funcionario.es_baja_actualmente or eq.prestamo_activo.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-slate-800{% endif %} text-xs sm:text-sm">{{ eq.prestamo_activo.funcionario.get_full_name }}</div>
                                 <div class="text-[11px] text-slate-400 font-medium">
                                     {% if eq.prestamo_activo.es_prestamo_diario %}
                                     <span class="text-amber-600 font-semibold"><i class="fa-regular fa-clock mr-1"></i>Préstamo Diario</span>

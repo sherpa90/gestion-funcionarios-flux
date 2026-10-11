@@ -13,7 +13,7 @@
                         Editar Registro de Asistencia
                     </h1>
                     <p class="mt-2 text-sm text-gray-600">
-                        Funcionario: {{ registro.funcionario.get_full_name }} | Fecha: {{ registro.fecha|date:"d/m/Y" }}
+                        Funcionario: <span class="{% if registro.funcionario.es_baja_actualmente or registro.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ registro.funcionario.get_full_name }}</span> | Fecha: {{ registro.fecha|date:"d/m/Y" }}
                     </p>
                 </div>
                 <a href="{% url 'asistencia:detalle_usuario' user_id=registro.funcionario.id %}"

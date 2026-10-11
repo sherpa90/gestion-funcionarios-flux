@@ -82,7 +82,7 @@
                         {{ u.first_name.0 }}{{ u.last_name.0 }}</div>
                     <div class="min-w-0">
                         <h3
-                            class="text-xs font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition-colors truncate">
+                            class="text-xs font-bold {% if u.es_baja_actualmente or u.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900 group-hover:text-blue-600{% endif %} leading-tight transition-colors truncate">
                             {{ u.get_full_name }}</h3>
                         <div class="flex items-center gap-1 mt-0.5">
                             <span class="text-[9px] text-gray-400 font-semibold uppercase tracking-wider">{{ u.get_funcion_display|default:u.get_tipo_funcionario_display|default:u.get_role_display }}</span>

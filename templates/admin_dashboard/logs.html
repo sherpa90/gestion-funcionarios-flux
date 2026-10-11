@@ -95,7 +95,7 @@
                                     {{ log.usuario.first_name.0|default:'S' }}{{ log.usuario.last_name.0|default:'S' }}
                                 </div>
                                 <div class="ml-4 flex flex-col">
-                                    <p class="text-sm font-black text-gray-900 leading-tight">
+                                    <p class="text-sm font-black leading-tight {% if log.usuario.es_baja_actualmente or log.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">
                                          {{ log.usuario.get_full_name }}
                                     </p>
                                     <div class="flex items-center gap-2 mt-1">

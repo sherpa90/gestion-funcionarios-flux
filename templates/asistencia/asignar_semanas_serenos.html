@@ -55,7 +55,7 @@
                             {{ sereno.first_name|first|upper }}{{ sereno.last_name|first|upper }}
                         </div>
                         <div>
-                            <p class="text-sm font-black text-gray-900 group-hover:text-indigo-600 transition-colors">
+                            <p class="text-sm font-black {% if sereno.es_baja_actualmente or sereno.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900 group-hover:text-indigo-600{% endif %} transition-colors">
                                 {{ sereno.get_full_name }}
                             </p>
                             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">RUN: {{ sereno.run }}</p>
@@ -84,7 +84,7 @@
                         <i class="fas fa-calendar-alt text-indigo-600 text-sm"></i>
                     </div>
                     <div>
-                        <h3 class="text-base font-black text-gray-900 uppercase tracking-widest">Asignar Semanas - {{ funcionario.get_full_name }}</h3>
+                        <h3 class="text-base font-black text-gray-900 uppercase tracking-widest">Asignar Semanas - <span class="{% if funcionario.es_baja_actualmente or funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ funcionario.get_full_name }}</span></h3>
                         <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-0.5">Configura qué turno le corresponde cada semana</p>
                     </div>
                 </div>

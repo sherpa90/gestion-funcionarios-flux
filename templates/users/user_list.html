@@ -196,6 +196,7 @@
     box-shadow: 0 4px 10px rgba(37,99,235,0.2); flex-shrink: 0; text-transform: uppercase;
   }
   .user-name { font-size: 1rem; font-weight: 800; color: #0f172a; line-height: 1.2; margin-bottom: 0.15rem; }
+  .user-name.baja, .funcionario-baja { text-decoration: line-through !important; color: #ef4444 !important; }
   .user-run { font-size: 0.75rem; font-weight: 700; color: #64748b; }
 
   .badge { display: inline-flex; padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; align-items: center; justify-content: center;}
@@ -393,7 +394,7 @@
                       <div class="user-avatar-box">
                           <div class="user-avatar">{{ user.first_name.0 }}{{ user.last_name.0 }}</div>
                           <div>
-                              <div class="user-name">{{ user.get_full_name }}</div>
+                              <div class="user-name {% if user.es_baja_actualmente or user.is_on_leave %}baja funcionario-baja line-through text-red-600{% endif %}">{{ user.get_full_name }}</div>
                               <div class="user-run">{{ user.run }}</div>
                           </div>
                       </div>
@@ -466,7 +467,7 @@
               <div class="user-avatar-box">
                   <div class="user-avatar" style="width:2.5rem; height:2.5rem; font-size:0.9rem;">{{ user.first_name.0 }}{{ user.last_name.0 }}</div>
                   <div>
-                      <div class="user-name" style="font-size:0.95rem;">{{ user.get_full_name }}</div>
+                      <div class="user-name {% if user.es_baja_actualmente or user.is_on_leave %}baja funcionario-baja line-through text-red-600{% endif %}" style="font-size:0.95rem;">{{ user.get_full_name }}</div>
                       <div class="user-run">{{ user.run }}</div>
                   </div>
               </div>

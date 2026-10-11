@@ -10,7 +10,7 @@
         <p class="text-gray-600 mt-2">
             Asignar horario de entrada para
             {% if funcionario %}
-                <strong>{{ funcionario.get_full_name }}</strong> ({{ funcionario.run }})
+                <strong class="{% if funcionario.es_baja_actualmente or funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ funcionario.get_full_name }}</strong> ({{ funcionario.run }})
             {% else %}
                 un funcionario
             {% endif %}

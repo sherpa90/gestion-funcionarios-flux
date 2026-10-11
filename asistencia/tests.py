@@ -8,7 +8,8 @@ from users.models import CustomUser
 from asistencia.models import (
     HorarioFuncionario, 
     RegistroAsistencia, 
-    DiaFestivo
+    DiaFestivo,
+    DiaHorario
 )
 
 
@@ -331,4 +332,146 @@ class HorarioExcepcionalTest(TestCase):
         exc_sereno = HorarioExcepcional(fecha=fecha, motivo='Ronda especial', aplica_a='SERENOS')
         self.assertFalse(exc_sereno.aplica_a_funcionario(self.docente))
         self.assertTrue(exc_sereno.aplica_a_funcionario(self.sereno))
+
+
+class VigenciaHistoricaHorarioTest(TestCase):
+    """
+    Tests de la solución estructural:
+    Garantiza que un cambio de horario (entrada o salida) rige solo desde el día del cambio
+    en adelante y no altera las métricas, retrasos ni estados pasados bajo ningún punto de vista.
+    """
+
+    def setUp(self):
+        from datetime import time, timedelta
+        self.hoy = timezone.localdate()
+        self.user = CustomUser.objects.create_user(
+            username='funcionario_historico',
+            email='func_hist@test.com',
+            run='15555555-5',
+            first_name='Carlos',
+            last_name='Historico',
+            password='testpass123',
+            role='FUNCIONARIO',
+            date_joined=timezone.now() - timedelta(days=30)
+        )
+        self.admin = CustomUser.objects.create_user(
+            username='admin_horarios',
+            email='admin_h@test.com',
+            run='16666666-6',
+            first_name='Admin',
+            last_name='Horarios',
+            password='testpass123',
+            role='ADMIN'
+        )
+
+        # Eliminar cualquier horario por defecto y crear el inicial vigente desde hace 20 días
+        HorarioFuncionario.objects.filter(funcionario=self.user).delete()
+        self.horario_inicial = HorarioFuncionario.objects.create(
+            funcionario=self.user,
+            hora_entrada=time(8, 0),
+            fecha_desde=self.hoy - timedelta(days=20),
+            activo=True
+        )
+        # Configurar todos los días 08:00 a 17:00
+        for dia in range(7):
+            DiaHorario.objects.create(
+                horario=self.horario_inicial,
+                dia_semana=dia,
+                hora_entrada=time(8, 0),
+                hora_salida=time(17, 0),
+                activo=True
+            )
+
+    def test_cambio_horario_no_afecta_metricas_pasadas(self):
+        """
+        Un funcionario que llegó a las 08:15 hace 5 días tuvo 15 min de retraso (horario 08:00).
+        Si hoy su horario se cambia a las 08:30, el registro pasado NO debe cambiar a PUNTUAL
+        ni perder sus 15 minutos de retraso.
+        """
+        from datetime import time, timedelta
+        from django.test import Client
+        import json
+
+        fecha_pasada = self.hoy - timedelta(days=5)
+        # Registro histórico: llegó a las 08:15 (retraso de 15 min respecto a las 08:00)
+        reg_pasado = RegistroAsistencia.objects.create(
+            funcionario=self.user,
+            fecha=fecha_pasada,
+            hora_entrada_real=time(8, 15),
+            hora_salida_real=time(17, 0),
+            horario_asignado=self.horario_inicial
+        )
+        self.assertEqual(reg_pasado.minutos_retraso, 15)
+        self.assertEqual(reg_pasado.estado, 'RETRASO')
+        self.assertEqual(reg_pasado.hora_entrada_teorica, time(8, 0))
+
+        # El administrador cambia el horario semanal hoy: nueva entrada 08:30
+        client = Client()
+        client.force_login(self.admin)
+
+        dias_nuevo_horario = []
+        for dia in range(7):
+            dias_nuevo_horario.append({
+                'dia_semana': dia,
+                'activo': True,
+                'hora_entrada': '08:30',
+                'hora_salida': '17:30',
+                'semana_tipo': ''
+            })
+
+        response = client.post(
+            f'/asistencia/horario/guardar-semanal/{self.user.id}/',
+            data=json.dumps({'dias': dias_nuevo_horario, 'total_minutos': 40 * 60}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # 1. Verificar que el horario anterior fue cerrado y se creó uno nuevo
+        self.horario_inicial.refresh_from_db()
+        self.assertEqual(self.horario_inicial.fecha_hasta, self.hoy - timedelta(days=1))
+
+        horario_nuevo = self.user.horario
+        self.assertNotEqual(horario_nuevo.id, self.horario_inicial.id)
+        self.assertEqual(horario_nuevo.fecha_desde, self.hoy)
+        self.assertIsNone(horario_nuevo.fecha_hasta)
+
+        # 2. VERIFICACIÓN CRÍTICA: El registro pasado NO fue alterado
+        reg_pasado.refresh_from_db()
+        self.assertEqual(reg_pasado.horario_asignado_id, self.horario_inicial.id)
+        self.assertEqual(reg_pasado.minutos_retraso, 15, "El retraso histórico no debe cambiar bajo ningún punto de vista")
+        self.assertEqual(reg_pasado.estado, 'RETRASO', "El estado histórico debe mantenerse en RETRASO")
+        self.assertEqual(reg_pasado.hora_entrada_teorica, time(8, 0), "La hora teórica histórica debe mantenerse en 08:00")
+
+        # 3. Un registro de hoy con la misma hora real (08:15) ahora es PUNTUAL con el nuevo horario (08:30)
+        reg_hoy = RegistroAsistencia.objects.create(
+            funcionario=self.user,
+            fecha=self.hoy,
+            hora_entrada_real=time(8, 15),
+            hora_salida_real=time(17, 30)
+        )
+        self.assertEqual(reg_hoy.horario_asignado_id, horario_nuevo.id)
+        self.assertEqual(reg_hoy.minutos_retraso, 0)
+        self.assertEqual(reg_hoy.estado, 'PUNTUAL')
+        self.assertEqual(reg_hoy.hora_entrada_teorica, time(8, 30))
+
+    def test_consulta_horario_por_fecha(self):
+        """Verifica que get_horario_para_fecha retorne la versión correcta según el día"""
+        from datetime import time, timedelta
+
+        fecha_ayer = self.hoy - timedelta(days=1)
+        self.horario_inicial.fecha_hasta = fecha_ayer
+        self.horario_inicial.save()
+
+        horario_v2 = HorarioFuncionario.objects.create(
+            funcionario=self.user,
+            hora_entrada=time(9, 0),
+            fecha_desde=self.hoy,
+            activo=True
+        )
+
+        # Fecha previa al cambio retorna horario_inicial
+        self.assertEqual(self.user.get_horario_para_fecha(fecha_ayer).id, self.horario_inicial.id)
+        # Fecha de hoy retorna horario_v2
+        self.assertEqual(self.user.get_horario_para_fecha(self.hoy).id, horario_v2.id)
+
 

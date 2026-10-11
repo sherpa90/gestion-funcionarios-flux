@@ -11,7 +11,7 @@
             </div>
             <h1 class="text-2xl font-bold text-gray-900">Dar de Alta a Funcionario</h1>
             <p class="mt-2 text-sm text-gray-600">
-                {{ user.get_full_name }} ({{ user.run }})
+                <span class="{% if user.es_baja_actualmente or user.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ user.get_full_name }}</span> ({{ user.run }})
             </p>
         </div>
 

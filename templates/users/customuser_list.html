@@ -114,7 +114,7 @@
                                         </span>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-bold text-gray-900">{{ usuario_stats.usuario.get_full_name }}</div>
+                                        <div class="text-sm font-bold {% if usuario_stats.usuario.es_baja_actualmente or usuario_stats.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ usuario_stats.usuario.get_full_name }}</div>
                                         <div class="text-sm text-gray-500">{{ usuario_stats.usuario.run }}</div>
                                     </div>
                                 </div>

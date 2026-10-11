@@ -131,7 +131,7 @@
             <strong>Mes de Informe:</strong> {{ nombre_mes }} {{ anio }}
         </div>
         <div class="info">
-            <strong>Funcionario:</strong> {{ funcionario.get_full_name }}
+            <strong>Funcionario:</strong> <span {% if funcionario.es_baja_actualmente or funcionario.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ funcionario.get_full_name }}</span>
         </div>
         <div class="info">
             <strong>RUT:</strong> {{ funcionario.run }}

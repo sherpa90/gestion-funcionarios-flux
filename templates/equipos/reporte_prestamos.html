@@ -79,7 +79,7 @@
     <p><strong>Fecha:</strong> {{ fecha|date:"d/m/Y H:i" }}</p>
 
     {% for usuario_id, data in prestamos_por_usuario.items %}
-    <h3>{{ data.funcionario.first_name }} {{ data.funcionario.last_name }} ({{ data.funcionario.run }})</h3>
+    <h3><span{% if data.funcionario.es_baja_actualmente or data.funcionario.is_on_leave %} style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ data.funcionario.first_name }} {{ data.funcionario.last_name }}</span> ({{ data.funcionario.run }})</h3>
     <table>
         <thead>
             <tr>

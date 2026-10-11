@@ -41,7 +41,7 @@
                         <option value="">Todos los usuarios</option>
                         {% for usuario in usuarios %}
                         <option value="{{ usuario.id }}" {% if filtros_aplicados.usuario == usuario.id|stringformat:"s" %}selected{% endif %}>
-                            {{ usuario.run }} - {{ usuario.get_full_name }}
+                            {{ usuario.run }} - {{ usuario.get_full_name }}{% if usuario.es_baja_actualmente or usuario.is_on_leave %} [DE BAJA]{% endif %}
                         </option>
                         {% endfor %}
                     </select>
@@ -107,7 +107,7 @@
                                         </div>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">
+                                        <div class="text-sm font-medium {% if liquidacion.funcionario.es_baja_actualmente or liquidacion.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">
                                             {{ liquidacion.funcionario.get_full_name }}
                                         </div>
                                     </div>

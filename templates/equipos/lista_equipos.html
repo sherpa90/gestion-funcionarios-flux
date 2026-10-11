@@ -42,7 +42,7 @@
                     <option value="">— Buscar o Seleccionar Funcionario —</option>
                     {% for func in funcionarios %}
                     <option value="{{ func.id }}" {% if selected_funcionario and selected_funcionario.id == func.id %}selected{% endif %}>
-                        {{ func.get_full_name }} ({{ func.get_role_display }})
+                        {{ func.get_full_name }}{% if func.es_baja_actualmente or func.is_on_leave %} [DE BAJA]{% endif %} ({{ func.get_role_display }})
                     </option>
                     {% endfor %}
                 </select>
@@ -67,7 +67,7 @@
                     {{ selected_funcionario.first_name.0 }}{{ selected_funcionario.last_name.0 }}
                 </div>
                 <div>
-                    <h3 class="text-base sm:text-lg font-bold">{{ selected_funcionario.get_full_name }}</h3>
+                    <h3 class="text-base sm:text-lg font-bold {% if selected_funcionario.es_baja_actualmente or selected_funcionario.is_on_leave %}funcionario-baja line-through text-red-300{% endif %}">{{ selected_funcionario.get_full_name }}</h3>
                     <p class="text-xs text-blue-200 font-medium">{{ selected_funcionario.get_role_display }} &bull; RUT: {{ selected_funcionario.run|default:"Sin registrar" }}</p>
                 </div>
             </div>

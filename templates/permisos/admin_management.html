@@ -102,7 +102,7 @@
                     <option value="">Todos</option>
                     {% for usuario in usuarios %}
                     <option value="{{ usuario.id }}" {% if filtros_aplicados.usuario == usuario.id|stringformat:"s" %}selected{% endif %}>
-                        {{ usuario.get_full_name }}
+                        {{ usuario.get_full_name }}{% if usuario.es_baja_actualmente or usuario.is_on_leave %} (DE BAJA){% endif %}
                     </option>
                     {% endfor %}
                 </select>
@@ -188,7 +188,7 @@
                                     <span class="text-[10px] font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="text-xs font-bold text-gray-900 truncate">{{ solicitud.usuario.get_full_name }}</div>
+                                    <div class="text-xs font-bold {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ solicitud.usuario.get_full_name }}</div>
                                     <div class="text-[10px] text-gray-400">{{ solicitud.usuario.run }}</div>
                                 </div>
                             </div>
@@ -269,7 +269,7 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-1.5">
-                                <span class="text-xs font-bold text-gray-900 truncate">{{ solicitud.usuario.get_full_name }}</span>
+                                <span class="text-xs font-bold {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ solicitud.usuario.get_full_name }}</span>
                                 <span class="flex-shrink-0 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-600{% elif solicitud.usuario.tipo_funcionario %}bg-blue-50 text-blue-600{% else %}bg-gray-50 text-gray-600{% endif %}">
                                     {{ solicitud.usuario.get_funcion_display|default:solicitud.usuario.get_tipo_funcionario_display|default:solicitud.usuario.get_role_display }}
                                 </span>

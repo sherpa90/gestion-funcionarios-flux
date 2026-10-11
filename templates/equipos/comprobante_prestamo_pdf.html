@@ -184,7 +184,7 @@
         <table>
             <tr>
                 <td class="label">Funcionario:</td>
-                <td>{{ funcionario.get_full_name }}</td>
+                <td {% if funcionario.es_baja_actualmente or funcionario.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ funcionario.get_full_name }}</td>
                 <td class="label">RUN:</td>
                 <td>{{ funcionario.run }}</td>
             </tr>
@@ -239,7 +239,7 @@
             <tr>
                 <td>
                     <div class="signature-line"></div>
-                    <div class="signature-name">{{ funcionario.get_full_name }}</div>
+                    <div class="signature-name" {% if funcionario.es_baja_actualmente or funcionario.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ funcionario.get_full_name }}</div>
                     <div class="signature-label">{{ funcionario.get_funcion_display|default:funcionario.get_role_display }}</div>
                 </td>
                 <td>

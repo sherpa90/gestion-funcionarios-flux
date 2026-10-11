@@ -13,7 +13,7 @@
         <div class="flex-1 min-w-0">
             <span class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Vista de Administrador</span>
             <p class="text-sm font-black text-indigo-800 truncate">
-                Viendo calendario de: {{ usuario_visto.get_full_name }}
+                Viendo calendario de: <span class="{% if usuario_visto.es_baja_actualmente or usuario_visto.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ usuario_visto.get_full_name }}</span>
                 <span class="text-indigo-400 font-bold text-xs">({{ usuario_visto.run }})</span>
             </p>
         </div>
@@ -28,7 +28,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
             {% if viendo_otro_usuario %}
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Registro de Asistencia — {{ usuario_visto.first_name }}</h2>
+            <h2 class="text-xl sm:text-2xl font-bold tracking-tight {% if usuario_visto.es_baja_actualmente or usuario_visto.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">Registro de Asistencia — {{ usuario_visto.first_name }}</h2>
             {% else %}
             <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Mi Registro de Asistencia</h2>
             {% endif %}

@@ -124,7 +124,7 @@
                                         {{ solicitud.usuario.first_name.0|upper }}{{ solicitud.usuario.last_name.0|upper }}
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="font-black text-gray-900 truncate text-base leading-tight">{{ solicitud.usuario.get_full_name }}</p>
+                                        <p class="font-black {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate text-base leading-tight">{{ solicitud.usuario.get_full_name }}</p>
                                         <div class="flex items-center gap-2 mt-0.5">
                                             <span class="text-xs text-gray-400 font-bold uppercase tracking-tight">{{ solicitud.usuario.run }}</span>
                                             <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
@@ -202,7 +202,7 @@
                                                 <i class="fas fa-check-circle"></i>
                                             </div>
                                             <h3 class="text-xl font-bold text-gray-900 mb-2">¿Aprobar Solicitud?</h3>
-                                            <p class="text-gray-500 text-sm mb-6">Se confirmarán <strong>{{ solicitud.dias_solicitados }} días</strong> para {{ solicitud.usuario.get_full_name }}.</p>
+                                            <p class="text-gray-500 text-sm mb-6">Se confirmarán <strong>{{ solicitud.dias_solicitados }} días</strong> para <span class="{% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ solicitud.usuario.get_full_name }}</span>.</p>
                                             <div class="flex flex-col gap-3">
                                                 <button type="submit" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700">Sí, Aprobar Permiso</button>
                                                 <button type="button" onclick="document.getElementById('modal-approve-{{ solicitud.pk }}').classList.add('hidden')" class="w-full py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200">Cancelar</button>
@@ -287,7 +287,7 @@
                             {% for solicitud in historial_page %}
                             <tr class="hover:bg-gray-50/50 transition-colors">
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <p class="text-sm font-black text-gray-900">{{ solicitud.usuario.get_full_name }}</p>
+                                    <p class="text-sm font-black {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ solicitud.usuario.get_full_name }}</p>
                                     <p class="text-[10px] text-gray-400 font-bold uppercase">{{ solicitud.usuario.run }}</p>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">

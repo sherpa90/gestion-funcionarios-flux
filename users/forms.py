@@ -104,13 +104,12 @@ class UserCreateForm(forms.ModelForm):
             user.save()
             # Crear horario para el usuario si no existe
             from asistencia.models import HorarioFuncionario
-            horario, created = HorarioFuncionario.objects.get_or_create(
-                funcionario=user,
-                defaults={
-                    'hora_entrada': '08:00',
-                    'activo': True
-                }
-            )
+            if not HorarioFuncionario.objects.filter(funcionario=user).exists():
+                HorarioFuncionario.objects.create(
+                    funcionario=user,
+                    hora_entrada='08:00',
+                    activo=True
+                )
         # Guardar la contraseña generada para mostrarla
         user.generated_password = password if password else temp_password
         return user
@@ -177,13 +176,12 @@ class UserEditForm(forms.ModelForm):
             user.save()
             # Actualizar o crear horario para el usuario
             from asistencia.models import HorarioFuncionario
-            horario, created = HorarioFuncionario.objects.get_or_create(
-                funcionario=user,
-                defaults={
-                    'hora_entrada': '08:00',
-                    'activo': True
-                }
-            )
+            if not HorarioFuncionario.objects.filter(funcionario=user).exists():
+                HorarioFuncionario.objects.create(
+                    funcionario=user,
+                    hora_entrada='08:00',
+                    activo=True
+                )
         return user
     
     def clean_email(self):

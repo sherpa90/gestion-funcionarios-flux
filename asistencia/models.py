@@ -6,16 +6,24 @@ from django.core.exceptions import ValidationError
 
 
 class HorarioFuncionario(models.Model):
-    """Horario de entrada asignado a cada funcionario"""
-    funcionario = models.OneToOneField(
+    """Horario de entrada asignado a cada funcionario con vigencia temporal"""
+    funcionario = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="horario"
+        related_name="horarios"
     )
     hora_entrada = models.TimeField(
         help_text="Hora de entrada asignada (ej: 08:00:00)"
     )
-
+    fecha_desde = models.DateField(
+        default=timezone.localdate,
+        help_text="Fecha desde la cual este horario entra en vigencia"
+    )
+    fecha_hasta = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Fecha hasta la cual este horario estuvo vigente (None si es el actual)"
+    )
     activo = models.BooleanField(
         default=True,
         help_text="Si el horario está activo"
@@ -26,10 +34,11 @@ class HorarioFuncionario(models.Model):
     class Meta:
         verbose_name = "Horario de Funcionario"
         verbose_name_plural = "Horarios de Funcionarios"
-        ordering = ["funcionario__last_name", "funcionario__first_name"]
+        ordering = ["funcionario__last_name", "funcionario__first_name", "-fecha_desde"]
 
     def __str__(self):
-        return f"{self.funcionario.get_full_name()} - {self.hora_entrada}"
+        vigencia = f" (desde {self.fecha_desde})" if self.fecha_desde else ""
+        return f"{self.funcionario.get_full_name()} - {self.hora_entrada}{vigencia}"
 
 
 class DiaHorario(models.Model):
@@ -316,6 +325,16 @@ class RegistroAsistencia(models.Model):
         blank=True,
         help_text="Horario que tenía asignado en esa fecha"
     )
+    hora_entrada_teorica = models.TimeField(
+        null=True,
+        blank=True,
+        help_text="Hora de entrada teórica/esperada vigente para este día"
+    )
+    hora_salida_teorica = models.TimeField(
+        null=True,
+        blank=True,
+        help_text="Hora de salida teórica/esperada vigente para este día"
+    )
     procesado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -377,11 +396,12 @@ class RegistroAsistencia(models.Model):
 
         # PRIORIDAD: Si hay edición manual justificada, usar horario regular (ignorar excepcional)
         if self.justificado_por:
-            if not self.horario_asignado:
+            horario_ref = self.horario_asignado or self.funcionario.get_horario_para_fecha(self.fecha)
+            if not horario_ref:
                 return None
-            dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
+            dia_horario = horario_ref.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
             if not dia_horario:
-                dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo__isnull=True).first()
+                dia_horario = horario_ref.dias.filter(dia_semana=dia_semana, semana_tipo__isnull=True).first()
             return dia_horario
 
         # Si no hay justificación manual, verificar horario excepcional
@@ -393,12 +413,13 @@ class RegistroAsistencia(models.Model):
                     self.hora_salida = ex.hora_salida
             return VirtualHorario(excepcional)
 
-        if not self.horario_asignado:
+        horario_ref = self.horario_asignado or self.funcionario.get_horario_para_fecha(self.fecha)
+        if not horario_ref:
             return None
 
-        dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
+        dia_horario = horario_ref.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
         if not dia_horario:
-            dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo__isnull=True).first()
+            dia_horario = horario_ref.dias.filter(dia_semana=dia_semana, semana_tipo__isnull=True).first()
 
         return dia_horario
 
@@ -407,23 +428,27 @@ class RegistroAsistencia(models.Model):
         if not self.hora_entrada_real:
             return 0
 
-
-
         # dia_semana siempre definido antes de cualquier bifurcación
         dia_semana = self.fecha.weekday()
+        horario_ref = self.horario_asignado or self.funcionario.get_horario_para_fecha(self.fecha)
 
         # PRIORIDAD: Si hay edición manual justificada, usar horario regular (ignorar excepcional)
         if self.justificado_por:
-            if not self.horario_asignado:
-                return 0
-            dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana).first()
-
-            if dia_horario:
-                if not dia_horario.activo or not dia_horario.hora_entrada:
+            if not horario_ref:
+                if self.hora_entrada_teorica:
+                    hora_esperada = self.hora_entrada_teorica
+                else:
                     return 0
-                hora_esperada = dia_horario.hora_entrada
             else:
-                hora_esperada = self.horario_asignado.hora_entrada
+                dia_horario = horario_ref.dias.filter(dia_semana=dia_semana).first()
+                if dia_horario:
+                    if not dia_horario.activo or not dia_horario.hora_entrada:
+                        return 0
+                    hora_esperada = dia_horario.hora_entrada
+                elif self.hora_entrada_teorica:
+                    hora_esperada = self.hora_entrada_teorica
+                else:
+                    hora_esperada = horario_ref.hora_entrada
         else:
             # Verificar horario excepcional
             excepcional = HorarioExcepcional.objects.filter(fecha=self.fecha).first()
@@ -432,38 +457,50 @@ class RegistroAsistencia(models.Model):
                     hora_esperada = excepcional.hora_entrada
                 else:
                     # Si no hay hora_entrada en excepcional, usar horario regular
-                    if not self.horario_asignado:
+                    if not horario_ref:
+                        if self.hora_entrada_teorica:
+                            hora_esperada = self.hora_entrada_teorica
+                        else:
+                            return 0
+                    else:
+                        semana_t = DiaHorario.get_semana_tipo(self.fecha, self.funcionario)
+                        dia_horario = horario_ref.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
+                        if not dia_horario:
+                            dia_horario = horario_ref.dias.filter(dia_semana=dia_semana, semana_tipo=None).first()
+                        if dia_horario:
+                            if not dia_horario.activo or not dia_horario.hora_entrada:
+                                return 0
+                            hora_esperada = dia_horario.hora_entrada
+                        elif self.hora_entrada_teorica:
+                            hora_esperada = self.hora_entrada_teorica
+                        else:
+                            hora_esperada = getattr(horario_ref, 'hora_entrada', None)
+                            if not hora_esperada:
+                                return 0
+            else:
+                if not horario_ref:
+                    if self.hora_entrada_teorica:
+                        hora_esperada = self.hora_entrada_teorica
+                    else:
                         return 0
+                else:
+                    # Obtener tipo de semana
                     semana_t = DiaHorario.get_semana_tipo(self.fecha, self.funcionario)
-                    dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
+                    # Primero buscar específico para esta semana, si no el universal
+                    dia_horario = horario_ref.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
                     if not dia_horario:
-                        dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=None).first()
+                        dia_horario = horario_ref.dias.filter(dia_semana=dia_semana, semana_tipo=None).first()
+
                     if dia_horario:
                         if not dia_horario.activo or not dia_horario.hora_entrada:
                             return 0
                         hora_esperada = dia_horario.hora_entrada
+                    elif self.hora_entrada_teorica:
+                        hora_esperada = self.hora_entrada_teorica
                     else:
-                        hora_esperada = getattr(self.horario_asignado, 'hora_entrada', None)
+                        hora_esperada = getattr(horario_ref, 'hora_entrada', None)
                         if not hora_esperada:
                             return 0
-            else:
-                if not self.horario_asignado:
-                    return 0
-                # Obtener tipo de semana
-                semana_t = DiaHorario.get_semana_tipo(self.fecha, self.funcionario)
-                # Primero buscar específico para esta semana, si no el universal
-                dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=semana_t).first()
-                if not dia_horario:
-                    dia_horario = self.horario_asignado.dias.filter(dia_semana=dia_semana, semana_tipo=None).first()
-
-                if dia_horario:
-                    if not dia_horario.activo or not dia_horario.hora_entrada:
-                        return 0
-                    hora_esperada = dia_horario.hora_entrada
-                else:
-                    hora_esperada = getattr(self.horario_asignado, 'hora_entrada', None)
-                    if not hora_esperada:
-                        return 0
 
         minutos_asignados = hora_esperada.hour * 60 + hora_esperada.minute
         minutos_reales = self.hora_entrada_real.hour * 60 + self.hora_entrada_real.minute
@@ -720,19 +757,19 @@ class RegistroAsistencia(models.Model):
         # Determinar si es un día laboral activo base en su horario semanal
         dia_semana = self.fecha.weekday()
         semana_t = DiaHorario.get_semana_tipo(self.fecha, self.funcionario)
+        horario_ref = self.horario_asignado or self.funcionario.get_horario_para_fecha(self.fecha)
         
-        # Buscar primero horario específico para esta semana (1 o 2)
-        # Si no existe, cae al horario universal (semana_tipo=None)
-        dia_horario = self.horario_asignado.dias.filter(
-            dia_semana=dia_semana, 
-            semana_tipo=semana_t
-        ).first()
-        
-        if not dia_horario:
-            dia_horario = self.horario_asignado.dias.filter(
+        dia_horario = None
+        if horario_ref:
+            dia_horario = horario_ref.dias.filter(
                 dia_semana=dia_semana, 
-                semana_tipo__isnull=True
+                semana_tipo=semana_t
             ).first()
+            if not dia_horario:
+                dia_horario = horario_ref.dias.filter(
+                    dia_semana=dia_semana, 
+                    semana_tipo__isnull=True
+                ).first()
         
         if dia_horario:
             es_dia_activo_base = dia_horario.activo
@@ -783,16 +820,29 @@ class RegistroAsistencia(models.Model):
             return "RETRASO"
 
     def save(self, *args, **kwargs):
-        # Asignar horario actual activo del funcionario
-        try:
-            horario_actual = HorarioFuncionario.objects.filter(
-                funcionario=self.funcionario, activo=True
-            ).first()
-            if horario_actual:
-                self.horario_asignado = horario_actual
-        except:
-            # Si hay error, continuar sin asignar horario
-            pass
+        # Asignar horario vigente para la fecha del registro si no tiene uno
+        if not self.horario_asignado:
+            try:
+                horario_vigente = self.funcionario.get_horario_para_fecha(self.fecha)
+                if horario_vigente:
+                    self.horario_asignado = horario_vigente
+            except Exception:
+                pass
+
+        # Capturar snapshot de horas teóricas esperadas si aún no están fijadas
+        if not self.hora_entrada_teorica or not self.hora_salida_teorica:
+            try:
+                hd = self.horario_dia
+                if hd:
+                    if not self.hora_entrada_teorica and getattr(hd, 'hora_entrada', None):
+                        self.hora_entrada_teorica = hd.hora_entrada
+                    if not self.hora_salida_teorica and getattr(hd, 'hora_salida', None):
+                        self.hora_salida_teorica = hd.hora_salida
+                elif self.horario_asignado:
+                    if not self.hora_entrada_teorica and getattr(self.horario_asignado, 'hora_entrada', None):
+                        self.hora_entrada_teorica = self.horario_asignado.hora_entrada
+            except Exception:
+                pass
 
         # Calcular tiempo trabajado si hay entrada y salida
         self.minutos_trabajados = self.calcular_tiempo_trabajado()

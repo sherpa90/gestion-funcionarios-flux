@@ -109,7 +109,7 @@
                         </div>
                         <div class="min-w-0">
                             <div class="flex items-center gap-2">
-                                <span class="text-sm font-black text-gray-900 truncate">{{ info.usuario.get_full_name }}</span>
+                                <span class="text-sm font-black {% if info.usuario.es_baja_actualmente or info.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ info.usuario.get_full_name }}</span>
                                 <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter
                                     {% if info.usuario.role == 'FUNCIONARIO' %}bg-blue-50 text-blue-700
                                     {% elif info.usuario.role == 'DIRECTOR' %}bg-amber-50 text-amber-700
@@ -163,7 +163,7 @@
                             </span>
                         </div>
                         <div class="min-w-0">
-                            <p class="text-sm font-black text-gray-900 truncate">{{ info.usuario.get_full_name }}</p>
+                            <p class="text-sm font-black {% if info.usuario.es_baja_actualmente or info.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ info.usuario.get_full_name }}</p>
                             <p class="text-[10px] font-bold text-gray-400 tracking-widest uppercase">{{ info.usuario.run }}</p>
                         </div>
                     </div>
