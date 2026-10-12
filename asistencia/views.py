@@ -3128,6 +3128,7 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
                     )
                 elif horario_actual.fecha_desde < fecha_vigencia:
                     horario_actual.fecha_hasta = fecha_vigencia - timedelta(days=1)
+                    horario_actual.activo = False  # Se cierra: ya no es el horario vigente
                     horario_actual.save()
                     horario_vigente = HorarioFuncionario.objects.create(
                         funcionario=usuario,
@@ -3139,6 +3140,16 @@ class GuardarHorarioSemanalView(LoginRequiredMixin, UserPassesTestMixin, View):
                 elif horario_actual.fecha_desde == fecha_vigencia:
                     horario_vigente = horario_actual
                 else:
+                    # El horario actual tiene fecha_desde POSTERIOR a fecha_vigencia.
+                    # Esto ocurre cuando se desea retrotraer la vigencia.
+                    # REGLA: todos los horarios activos con fecha_desde >= fecha_vigencia
+                    # quedan subordinados al nuevo horario retroactivo. Los cerramos/desactivamos
+                    # para que no "compitan" con el nuevo horario en get_horario_para_fecha.
+                    HorarioFuncionario.objects.filter(
+                        funcionario=usuario,
+                        activo=True,
+                        fecha_desde__gte=fecha_vigencia
+                    ).update(activo=False, fecha_hasta=fecha_vigencia - timedelta(days=1))
                     horario_vigente = HorarioFuncionario.objects.create(
                         funcionario=usuario,
                         hora_entrada=horario_actual.hora_entrada,

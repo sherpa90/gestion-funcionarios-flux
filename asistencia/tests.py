@@ -509,4 +509,102 @@ class VigenciaHistoricaHorarioTest(TestCase):
         self.assertEqual(horario_nuevo.fecha_desde, fecha_futura)
         self.assertIsNone(horario_nuevo.fecha_hasta)
 
+    def test_cambio_horario_backdating_con_horario_posterior_activo(self):
+        """
+        Caso: el horario actual tiene fecha_desde POSTERIOR a la fecha_vigencia deseada.
+        Ej: horario vigente desde 2026-10-05, pero el admin quiere aplicar un nuevo
+        horario desde 2026-10-01. El horario del 05 debe desactivarse para que
+        get_horario_para_fecha devuelva el nuevo retroactivo y los registros entre
+        el 01 y el 05 se recalculen correctamente.
+        """
+        from datetime import time, timedelta, date
+        from django.test import Client
+        from django.urls import reverse
+        import json
+
+        # Preparar: el horario inicial tiene fecha_desde = hoy - 5 días (posterior a vigencia)
+        # Reemplazamos el setUp con un horario más "reciente"
+        HorarioFuncionario.objects.filter(funcionario=self.user).delete()
+        RegistroAsistencia.objects.filter(funcionario=self.user).delete()
+
+        fecha_horario_actual = self.hoy - timedelta(days=5)
+        horario_reciente = HorarioFuncionario.objects.create(
+            funcionario=self.user,
+            hora_entrada=time(8, 0),
+            fecha_desde=fecha_horario_actual,
+            activo=True
+        )
+        for dia in range(7):
+            DiaHorario.objects.create(
+                horario=horario_reciente,
+                dia_semana=dia,
+                hora_entrada=time(8, 0),
+                hora_salida=time(17, 0),
+                activo=True
+            )
+
+        # Registro el día -3: llegó a las 07:50 (puntual con horario 08:00)
+        fecha_registro = self.hoy - timedelta(days=3)
+        reg = RegistroAsistencia.objects.create(
+            funcionario=self.user,
+            fecha=fecha_registro,
+            hora_entrada_real=time(7, 50),
+            hora_salida_real=time(17, 0),
+            horario_asignado=horario_reciente
+        )
+        self.assertEqual(reg.estado, 'PUNTUAL')
+        self.assertEqual(reg.minutos_retraso, 0)
+
+        # El admin cambia el horario con fecha_vigencia = hoy - 7 (anterior al horario activo)
+        fecha_vigencia = self.hoy - timedelta(days=7)
+        self.assertTrue(horario_reciente.fecha_desde > fecha_vigencia,
+                        "El horario activo debe tener fecha_desde > fecha_vigencia para activar el else")
+
+        client = Client()
+        client.force_login(self.admin)
+
+        dias_nuevo_horario = [
+            {'dia_semana': dia, 'activo': True, 'hora_entrada': '07:45',
+             'hora_salida': '16:00', 'semana_tipo': ''}
+            for dia in range(7)
+        ]
+        response = client.post(
+            reverse('asistencia:guardar_horario_semanal', kwargs={'user_id': self.user.id}),
+            data=json.dumps({
+                'dias': dias_nuevo_horario,
+                'total_minutos': 40 * 60,
+                'fecha_desde': fecha_vigencia.strftime('%Y-%m-%d')
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # 1. El horario reciente debe haberse desactivado (activo=False)
+        horario_reciente.refresh_from_db()
+        self.assertFalse(horario_reciente.activo,
+                         "El horario posterior debe desactivarse al crear uno retroactivo")
+
+        # 2. El nuevo horario debe tener fecha_desde == fecha_vigencia y activo=True
+        horario_nuevo = HorarioFuncionario.objects.filter(
+            funcionario=self.user, activo=True
+        ).first()
+        self.assertIsNotNone(horario_nuevo)
+        self.assertEqual(horario_nuevo.fecha_desde, fecha_vigencia)
+        self.assertEqual(horario_nuevo.hora_entrada, time(7, 45))
+
+        # 3. El registro (llegó 07:50) ahora DEBE ser RETRASO con el nuevo horario 07:45
+        reg.refresh_from_db()
+        self.assertEqual(reg.horario_asignado_id, horario_nuevo.id)
+        self.assertEqual(reg.hora_entrada_teorica, time(7, 45))
+        self.assertEqual(reg.minutos_retraso, 5,
+                         "5 minutos de retraso: llegó 07:50 y el horario nuevo es 07:45")
+        self.assertEqual(reg.estado, 'RETRASO',
+                         "Debe marcarse RETRASO, no PUNTUAL")
+
+        # 4. get_horario_para_fecha para la fecha del registro debe devolver el nuevo horario
+        horario_para_fecha = self.user.get_horario_para_fecha(fecha_registro)
+        self.assertEqual(horario_para_fecha.id, horario_nuevo.id,
+                         "get_horario_para_fecha debe devolver el nuevo horario retroactivo")
+
+
 
