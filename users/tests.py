@@ -262,10 +262,13 @@ class UserListViewTest(TestCase):
         )
 
     def test_user_list_view_get(self):
-        """Verifica que /usuarios/ carga correctamente sin errores de select_related"""
+        """Verifica que /usuarios/ carga correctamente y contiene el enlace al apartado Horario en el menú de 3 puntos"""
         self.client.force_login(self.admin)
         from django.urls import reverse
         response = self.client.get(reverse('user_list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Admin List')
+        # Verificar que la opción Horario está presente en el menú de opciones (3 puntos)
+        self.assertContains(response, f'/asistencia/usuario/{self.admin.pk}/?tab=horario')
+        self.assertContains(response, 'Horario')
 

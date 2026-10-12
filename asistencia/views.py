@@ -1884,8 +1884,13 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
             role__in=['FUNCIONARIO', 'DIRECTOR', 'DIRECTIVO', 'SECRETARIA']
         ).exclude(is_active=False).order_by('first_name', 'last_name')
 
+        tab_solicitada = self.request.GET.get('tab', 'registros')
+        if tab_solicitada not in ['registros', 'horario']:
+            tab_solicitada = 'registros'
+
         context.update({
             'usuario': usuario,
+            'active_tab': tab_solicitada,
             'registros_por_anio': registros_por_anio,
             'horario_actual': horario_actual,
             'horarios_historial': usuario.horarios.all().order_by('-fecha_desde'),

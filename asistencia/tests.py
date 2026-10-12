@@ -606,5 +606,16 @@ class VigenciaHistoricaHorarioTest(TestCase):
         self.assertEqual(horario_para_fecha.id, horario_nuevo.id,
                          "get_horario_para_fecha debe devolver el nuevo horario retroactivo")
 
+    def test_detalle_usuario_tab_horario(self):
+        """Verifica que la vista detalle_usuario con ?tab=horario pasa active_tab='horario' en el contexto"""
+        from django.urls import reverse
+        self.client.force_login(self.admin)
+        url = reverse('asistencia:detalle_usuario', kwargs={'user_id': self.user.id})
+        response = self.client.get(f"{url}?tab=horario")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['active_tab'], 'horario')
+        self.assertContains(response, 'Configuración Semanal')
+
+
 
 

@@ -688,13 +688,16 @@
 <script>
 function cambiarUsuario(userId) {
     if (userId && userId !== '{{ usuario.id }}') {
-        window.location.href = `/asistencia/usuario/${userId}/`;
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+        const tabSuffix = tab ? `?tab=${encodeURIComponent(tab)}` : '';
+        window.location.href = `/asistencia/usuario/${userId}/${tabSuffix}`;
     }
 }
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('horarioTabs', () => ({
-        activeTab: 'registros',
+        activeTab: '{{ active_tab|default:"registros" }}',
         currentSemanaTab: 1,
         guardando: false,
         fechaDesde: '{{ hoy|date:"Y-m-d" }}',
@@ -719,6 +722,13 @@ document.addEventListener('alpine:init', () => {
                 this.dias = [];
             }
             this.calcularTotal();
+
+            // Activar pestaña según parámetro de URL (?tab=horario) o hash (#horario)
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            if (tabParam === 'horario' || window.location.hash === '#horario') {
+                this.activeTab = 'horario';
+            }
         },
 
         calcularHorasDia(dia) {
