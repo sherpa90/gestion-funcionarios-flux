@@ -616,6 +616,61 @@ class VigenciaHistoricaHorarioTest(TestCase):
         self.assertEqual(response.context['active_tab'], 'horario')
         self.assertContains(response, 'Configuración Semanal')
 
+    def test_recalculo_registro_existente_con_nuevo_horario(self):
+        """
+        Verifica que un registro ya existente en la base de datos (que era PUNTUAL al llegar a las 07:50
+        bajo el horario 08:00) actualice correctamente su estado a RETRASO (5 min) al recalcular
+        o guardar cuando el horario cambia a 07:45.
+        """
+        from datetime import time, timedelta
+        from django.urls import reverse
+
+        # Registro creado hace 3 días llegando a las 07:50 (con horario inicial 08:00 => PUNTUAL)
+        fecha_registro = self.hoy - timedelta(days=3)
+        reg = RegistroAsistencia.objects.create(
+            funcionario=self.user,
+            fecha=fecha_registro,
+            hora_entrada_real=time(7, 50),
+            hora_salida_real=time(17, 0)
+        )
+        self.assertEqual(reg.estado, 'PUNTUAL')
+        self.assertEqual(reg.minutos_retraso, 0)
+
+        # Ahora el horario cambia desde hace 4 días: nueva entrada 07:45
+        fecha_vigencia = self.hoy - timedelta(days=4)
+        self.horario_inicial.fecha_hasta = fecha_vigencia - timedelta(days=1)
+        self.horario_inicial.activo = False
+        self.horario_inicial.save()
+
+        nuevo_horario = HorarioFuncionario.objects.create(
+            funcionario=self.user,
+            hora_entrada=time(7, 45),
+            fecha_desde=fecha_vigencia,
+            activo=True
+        )
+        for d in range(7):
+            DiaHorario.objects.create(
+                horario=nuevo_horario,
+                dia_semana=d,
+                activo=True,
+                hora_entrada=time(7, 45),
+                hora_salida=time(16, 0)
+            )
+
+        # Al recalcular mediante la vista de recálculo de usuario:
+        self.client.force_login(self.admin)
+        url_recalc = reverse('asistencia:recalcular_asistencia_usuario', kwargs={'user_id': self.user.id})
+        resp = self.client.post(url_recalc)
+        self.assertEqual(resp.status_code, 302)
+
+        # El registro debe actualizarse a RETRASO con 5 minutos de retraso
+        reg.refresh_from_db()
+        self.assertEqual(reg.horario_asignado_id, nuevo_horario.id)
+        self.assertEqual(reg.hora_entrada_teorica, time(7, 45))
+        self.assertEqual(reg.minutos_retraso, 5)
+        self.assertEqual(reg.estado, 'RETRASO')
+
+
 
 
 

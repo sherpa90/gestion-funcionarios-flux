@@ -1431,8 +1431,18 @@ class EditarHorarioView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return self.request.user.role in ['ADMIN', 'SECRETARIA', 'DIRECTOR', 'DIRECTIVO']
 
     def form_valid(self, form):
-        messages.success(self.request, f'Horario actualizado exitosamente para {form.instance.funcionario.get_full_name()}')
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        horario = self.object
+        # Sincronizar DiaHorario activos con la nueva hora de entrada si existen
+        horario.dias.filter(activo=True).update(hora_entrada=horario.hora_entrada)
+        
+        # Recalcular registros vigentes desde la fecha_desde de este horario
+        fecha_desde = horario.fecha_desde or timezone.localdate()
+        for registro in RegistroAsistencia.objects.filter(funcionario=horario.funcionario, fecha__gte=fecha_desde):
+            registro.save()
+
+        messages.success(self.request, f'Horario actualizado exitosamente para {horario.funcionario.get_full_name()}')
+        return response
 
     def get_success_url(self):
         return reverse('asistencia:gestion_horarios')
@@ -2537,15 +2547,6 @@ class RecalcularTodaAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View
         registros_actualizados = 0
 
         for registro in registros:
-            try:
-                horario_actual = HorarioFuncionario.objects.filter(
-                    funcionario=registro.funcionario, activo=True
-                ).first()
-                if horario_actual:
-                    registro.horario_asignado = horario_actual
-            except Exception:
-                pass
-
             registro.save()
             registros_actualizados += 1
 
@@ -2593,15 +2594,6 @@ class RecalcularAsistenciaUsuarioView(LoginRequiredMixin, UserPassesTestMixin, V
         registros_actualizados = 0
 
         for registro in registros:
-            try:
-                horario_actual = HorarioFuncionario.objects.filter(
-                    funcionario=registro.funcionario, activo=True
-                ).first()
-                if horario_actual:
-                    registro.horario_asignado = horario_actual
-            except Exception:
-                pass
-
             registro.save()
             registros_actualizados += 1
 
