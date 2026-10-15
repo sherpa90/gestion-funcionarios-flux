@@ -213,3 +213,33 @@ class SolicitudActionWorkflowTest(TestCase):
         response = self.client.post(url)
         # UserPassesTestMixin devuelve 403 Forbidden cuando el test_func falla
         self.assertEqual(response.status_code, 403)
+
+    def test_enviar_resumen_dias_administrativos_fecha_es(self):
+        """Test que el comando enviar_resumen_dias_administrativos formatea la fecha en español"""
+        from django.core.management import call_command
+        from django.core import mail
+        import io
+
+        out = io.StringIO()
+        mail.outbox = []
+        call_command('enviar_resumen_dias_administrativos', force=True, email='director_test@test.com', stdout=out)
+
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.to, ['director_test@test.com'])
+        
+        dias_es = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+        meses_es = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+        
+        # Debe contener alguno de los nombres de día y mes en español
+        html = email.extra_headers.get('html_message', '') or getattr(email, 'html_message', '') or ''
+        # send_mail passes html_message in alternatives or extra_headers
+        if not html and hasattr(email, 'alternatives'):
+            for content, mimetype in email.alternatives:
+                if mimetype == 'text/html':
+                    html = content
+                    break
+
+        self.assertTrue(any(dia in html for dia in dias_es))
+        self.assertTrue(any(mes in html for mes in meses_es))
+

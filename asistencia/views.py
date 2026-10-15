@@ -408,6 +408,15 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             sem_t = DiaHorario.get_semana_tipo(d_fecha, usuario_objetivo)
             return dias_map.get((dia_sem, sem_t)) or dias_map.get((dia_sem, None))
 
+        dias_configurados = {}
+        if horario_actual:
+            if horario_actual.id not in dias_configurados_cache:
+                dias_configurados_cache[horario_actual.id] = {
+                    (dh.dia_semana, dh.semana_tipo): dh
+                    for dh in horario_actual.dias.all()
+                }
+            dias_configurados = dias_configurados_cache[horario_actual.id]
+
         # Sumar minutos de retraso acumulados del mes (Para la alerta visual de umbral)
         total_retraso_mes = registros_qs.filter(estado='RETRASO').aggregate(Sum('minutos_retraso'))['minutos_retraso__sum'] or 0
         context['total_retraso_mes'] = total_retraso_mes
@@ -707,8 +716,18 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
 
         # Para el resumen semanal, usamos la paridad de HOY
         from django.utils import timezone
-        semana_actual_t = DiaHorario.get_semana_tipo(timezone.now().date(), usuario_objetivo)
+        hoy_fecha = timezone.localdate()
+        semana_actual_t = DiaHorario.get_semana_tipo(hoy_fecha, usuario_objetivo)
         context["semana_tipo_actual"] = semana_actual_t
+
+        horario_semanal_ref = usuario_objetivo.get_horario_para_fecha(hoy_fecha) or horario_actual
+        if horario_semanal_ref:
+            if horario_semanal_ref.id not in dias_configurados_cache:
+                dias_configurados_cache[horario_semanal_ref.id] = {
+                    (dh.dia_semana, dh.semana_tipo): dh
+                    for dh in horario_semanal_ref.dias.all()
+                }
+            dias_configurados = dias_configurados_cache[horario_semanal_ref.id]
 
         for i in range(dias_totales):
             # Buscar primero específico para esta semana, si no, el universal
@@ -733,8 +752,9 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 })
             else:
                 horas = 0
-                if horario_actual and horario_actual.hora_entrada:
-                    min1 = horario_actual.hora_entrada.hour * 60 + horario_actual.hora_entrada.minute
+                ref_h = horario_semanal_ref or horario_actual
+                if ref_h and ref_h.hora_entrada:
+                    min1 = ref_h.hora_entrada.hour * 60 + ref_h.hora_entrada.minute
                     min2 = 17 * 60 # Default 17:00
                     if min2 < min1: min2 += 24 * 60
                     horas = (min2 - min1) / 60
@@ -743,7 +763,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                     'dia_semana': i,
                     'nombre': DIA_CHOICES_DICT[i],
                     'activo': True,
-                    'hora_entrada': horario_actual.hora_entrada.strftime('%H:%M') if horario_actual and horario_actual.hora_entrada else '08:00',
+                    'hora_entrada': ref_h.hora_entrada.strftime('%H:%M') if ref_h and ref_h.hora_entrada else '08:00',
                     'hora_salida': '17:00',
                     'horas_asignadas': round(horas, 1)
                 })
@@ -752,7 +772,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
 
         # Los horarios excepcionales se obtienen más abajo para el calendario
 
-        # Calcular horas esperadas para el mes completo (según horario configurado)
+        # Calcular horas esperadas para el mes completo (según horario configurado para cada día)
         total_minutos_esperados_mes = 0
         from calendar import Calendar
         cal = Calendar(firstweekday=0)
@@ -763,12 +783,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                     if fecha in festivos:
                         continue
                     
-                    dia_semana = fecha.weekday()
-                    semana_t = DiaHorario.get_semana_tipo(fecha, usuario_objetivo)
-                    
-                    dia_h_obj = dias_configurados.get((dia_semana, semana_t))
-                    if not dia_h_obj:
-                        dia_h_obj = dias_configurados.get((dia_semana, None))
+                    dia_h_obj = get_dia_configurado_para_fecha(fecha)
 
                     if dia_h_obj and dia_h_obj.activo:
                         if dia_h_obj.hora_entrada and dia_h_obj.hora_salida:
@@ -1811,9 +1826,10 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                     licencia_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'LICENCIA_MEDICA')
                     medio_dia_mes = sum(1 for r in registros_mes_final if getattr(r, 'estado', None) == 'MEDIO_DIA')
 
+                    meses_es = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
                     registros_por_mes[mes] = {
                         'registros': registros_mes_final,
-                        'nombre': primer_dia_mes.strftime('%B'),
+                        'nombre': meses_es[primer_dia_mes.month - 1],
                         'minutos_retraso_mes': minutos_retraso_mes,
                         'retrasos': retrasos_mes,
                         'total': sum(1 for r in registros_mes_final if getattr(r, 'estado', None) != 'SIN_DATA'),
@@ -3478,7 +3494,9 @@ class ReporteDAEM2ExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Firma
         firma_row = len(permisos) + 10
         ws.cell(row=firma_row, column=2).value = "Director Colegio Los Alerces"
-        ws.cell(row=firma_row + 2, column=2).value = "Puerto Montt, " + datetime.now().strftime("%d de %B de %Y")
+        _meses_es = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+        _ahora = datetime.now()
+        ws.cell(row=firma_row + 2, column=2).value = f"Puerto Montt, {_ahora.day} de {_meses_es[_ahora.month - 1]} de {_ahora.year}"
 
         # Ajustar ancho de columnas
         for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:

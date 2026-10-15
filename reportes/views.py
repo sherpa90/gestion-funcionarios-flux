@@ -1063,9 +1063,12 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
             ])
 
         # Firma
+        _meses_es = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+        _ahora = datetime.now()
+        fecha_firma_str = f"Puerto Montt, {_ahora.day} de {_meses_es[_ahora.month - 1]} de {_ahora.year}"
         firma_row = len(permisos) + 10
         ws_permisos.cell(row=firma_row, column=2).value = "Director Colegio Los Alerces"
-        ws_permisos.cell(row=firma_row + 2, column=2).value = "Puerto Montt, " + datetime.now().strftime("%d de %B de %Y")
+        ws_permisos.cell(row=firma_row + 2, column=2).value = fecha_firma_str
 
         # Ajustar ancho de columnas
         for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
@@ -1100,7 +1103,7 @@ class ExportarDAEMExcelView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Firma en la pestaña de licencias
         firma_row_lic = max(len(licencias) + 5, 5)
         ws_licencias.cell(row=firma_row_lic, column=2).value = "Director Colegio Los Alerces"
-        ws_licencias.cell(row=firma_row_lic + 2, column=2).value = "Puerto Montt, " + datetime.now().strftime("%d de %B de %Y")
+        ws_licencias.cell(row=firma_row_lic + 2, column=2).value = fecha_firma_str
 
         # Pestaña 4: Horarios Funcionarios
         from asistencia.models import HorarioFuncionario, DiaHorario

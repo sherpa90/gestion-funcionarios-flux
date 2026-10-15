@@ -180,7 +180,9 @@ class Command(BaseCommand):
 
         hay_novedades = bool(bloques_docentes or bloques_asistentes)
 
-        fecha_display = hoy.strftime("%A %d de %B de %Y").capitalize()
+        DIAS_ES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+        MESES_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+        fecha_display = f"{DIAS_ES[hoy.weekday()]} {hoy.day} de {MESES_ES[hoy.month - 1]} de {hoy.year}"
         hora_envio = sys_settings.director_daily_summary_time or '07:45'
 
         html = render_to_string('emails/resumen_diario_directores.html', {

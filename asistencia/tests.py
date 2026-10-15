@@ -670,6 +670,25 @@ class VigenciaHistoricaHorarioTest(TestCase):
         self.assertEqual(reg.minutos_retraso, 5)
         self.assertEqual(reg.estado, 'RETRASO')
 
+    def test_mi_asistencia_view_otro_usuario_con_horario(self):
+        """
+        Verifica que MiAsistenciaView no lance NameError: 'dias_configurados' is not defined
+        cuando un administrador u otro rol privilegiado consulta el calendario de otro usuario
+        (?user_id=X).
+        """
+        from django.urls import reverse
+        self.client.force_login(self.admin)
+        url = reverse('asistencia:mi_asistencia')
+        response = self.client.get(f"{url}?user_id={self.user.id}&mes={self.hoy.month}&anio={self.hoy.year}")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['viendo_otro_usuario'])
+        self.assertEqual(response.context['usuario_visto'], self.user)
+        self.assertIn('horario_semanal', response.context)
+        self.assertIn('total_horas_semanales', response.context)
+        self.assertIn('estadisticas', response.context)
+        self.assertTrue(len(response.context['horario_semanal']) > 0)
+
+
 
 
 
