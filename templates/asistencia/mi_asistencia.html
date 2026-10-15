@@ -271,13 +271,41 @@
                         <!-- Celda vacía -->
                         <div class="bg-gray-50/30 rounded-lg min-h-[80px]"></div>
                         {% elif not dia.es_laboral %}
-                        <!-- Día no laboral (fin de semana para no serenos) -->
-                        <div class="rounded-lg border min-h-[80px] p-1.5 {% if dia.excepcional %}border-purple-200 bg-purple-50/30 opacity-70{% elif dia.es_festivo %}bg-rose-900/90 border-rose-950 opacity-100{% else %}bg-gray-50 border-gray-100 opacity-40{% endif %}">
-                            <div class="text-xs font-bold {% if dia.excepcional %}text-purple-600{% elif dia.es_festivo %}text-rose-50{% else %}text-gray-300{% endif %}">{{ dia.dia }}</div>
+                        <!-- Día no laboral (fin de semana o día libre para el funcionario) -->
+                        <div class="rounded-lg border min-h-[80px] p-1.5 transition-all
+                            {% if dia.es_festivo %}bg-rose-900/90 border-rose-950 opacity-100
+                            {% elif dia.excepcional %}border-purple-200 bg-purple-50/30 opacity-70
+                            {% elif dia.es_libre_programado %}bg-emerald-50/70 border-emerald-200 shadow-sm
+                            {% elif dia.es_libre %}bg-emerald-50/40 border-emerald-100
+                            {% else %}bg-gray-50 border-gray-100 opacity-60
+                            {% endif %}">
+                            <div class="flex items-center justify-between mb-0.5">
+                                <span class="text-xs font-bold
+                                    {% if dia.es_festivo %}text-rose-50
+                                    {% elif dia.excepcional %}text-purple-600
+                                    {% elif dia.es_libre_programado %}text-emerald-900
+                                    {% elif dia.es_libre %}text-emerald-800
+                                    {% elif dia.es_fin_de_semana %}text-gray-400
+                                    {% else %}text-gray-400
+                                    {% endif %}">{{ dia.dia }}</span>
+                                {% if dia.es_festivo %}
+                                <span class="text-[7px] font-bold text-rose-200 uppercase">Feriado</span>
+                                {% elif dia.excepcional %}
+                                <span class="text-[7px] font-bold text-purple-600 uppercase">Exc.</span>
+                                {% elif dia.es_libre_programado %}
+                                <span class="text-[7px] font-black text-emerald-700 bg-emerald-100 px-1 py-0.5 rounded border border-emerald-200 uppercase tracking-wider">Libre</span>
+                                {% elif dia.es_fin_de_semana %}
+                                <span class="text-[7px] font-bold text-gray-400 uppercase">Fin</span>
+                                {% else %}
+                                <span class="text-[7px] font-bold text-emerald-700 uppercase">Libre</span>
+                                {% endif %}
+                            </div>
                             {% if dia.es_festivo %}
-                            <div class="text-[8px] text-rose-200 font-bold mt-0.5">Feriado</div>
+                            <div class="text-[8px] text-rose-200 font-bold mt-1 flex items-center gap-1">
+                                <i class="fas fa-star text-[7px] text-rose-300"></i>Feriado
+                            </div>
                             {% elif dia.excepcional %}
-                            <div class="text-[8px] text-purple-500 font-bold mt-0.5">Horario Especial</div>
+                            <div class="text-[8px] text-purple-500 font-bold mt-1">Horario Especial</div>
                             {% if dia.excepcional.hora_entrada %}
                             <div class="text-[7px] text-purple-400 mt-0.5">
                                 E: {{ dia.excepcional.hora_entrada }}
@@ -288,8 +316,19 @@
                                 S: {{ dia.excepcional.hora_salida }}
                             </div>
                             {% endif %}
+                            {% elif dia.es_libre_programado %}
+                            <div class="text-[9px] font-bold text-emerald-700 mt-1.5 flex items-center gap-1">
+                                <i class="fas fa-bed text-[8px] text-emerald-600"></i>Día Libre
+                            </div>
+                            <div class="text-[7px] text-emerald-600/80 font-medium">Sin jornada asignada</div>
+                            {% elif dia.es_fin_de_semana %}
+                            <div class="text-[8px] text-gray-400 font-medium mt-1 flex items-center gap-1">
+                                <i class="fas fa-bed text-[7px] text-gray-400"></i>Libre
+                            </div>
                             {% else %}
-                            <div class="text-[8px] text-gray-300 mt-0.5">No laboral</div>
+                            <div class="text-[8px] text-emerald-600 font-bold mt-1 flex items-center gap-1">
+                                <i class="fas fa-bed text-[7px] text-emerald-500"></i>Día Libre
+                            </div>
                             {% endif %}
                         </div>
                         {% else %}
@@ -308,7 +347,7 @@
                                 {% elif reg.estado == 'DIA_FESTIVO' %}bg-rose-900/95 border-rose-950 shadow-inner
                                 {% elif reg.estado == 'JUSTIFICADO' %}bg-blue-50/50 border-blue-100
                                 {% elif reg.estado == 'SIN_MARCACION_ENTRADA' %}bg-orange-50/50 border-orange-200
-                                {% elif reg.estado == 'DIA_LIBRE' %}bg-green-100/50 border-green-200 opacity-70
+                                {% elif reg.estado == 'DIA_LIBRE' %}bg-emerald-50/70 border-emerald-200
                                 {% else %}bg-gray-50/50 border-gray-100
                                 {% endif %}
                             {% elif dia.es_falta_sin_registro %}bg-red-100 border-red-400 ring-1 ring-red-200
@@ -344,6 +383,8 @@
                                 <span class="text-[7px] font-black text-orange-600 uppercase">Sin E.</span>
                                 {% elif reg and reg.estado == 'BAJA' %}
                                 <span class="text-[7px] font-black text-rose-600 uppercase">Baja</span>
+                                {% elif reg and reg.estado == 'DIA_LIBRE' %}
+                                <span class="text-[7px] font-black text-emerald-700 bg-emerald-100 px-1 py-0.5 rounded border border-emerald-200 uppercase tracking-wider">Libre</span>
                                 {% elif dia.es_falta_sin_registro %}
                                 <span class="text-[7px] font-black text-red-600 uppercase animate-pulse">FALTA</span>
                                 {% elif not dia.es_dia_escolar %}
@@ -476,9 +517,10 @@
                                     <i class="fas fa-star text-[7px] mr-0.5 text-rose-300"></i>Feriado
                                 </div>
                                 {% elif reg.estado == 'DIA_LIBRE' %}
-                                <div class="text-[9px] font-bold text-green-500 mt-1">
-                                    <i class="fas fa-bed text-[7px] mr-0.5 text-green-500"></i>Día Libre
+                                <div class="text-[9px] font-bold text-emerald-700 mt-1 flex items-center gap-1">
+                                    <i class="fas fa-bed text-[7px] text-emerald-600"></i>Día Libre
                                 </div>
+                                <div class="text-[7px] text-emerald-600/80 font-medium">Sin jornada</div>
                                 {% elif reg.estado == 'SIN_DATA' %}
                                 <div class="text-[9px] font-bold text-gray-400 mt-1 italic">
                                     <i class="fas fa-minus-circle text-[7px] mr-0.5"></i>Sin Datos
@@ -538,7 +580,8 @@
                     {% if dia %}
                     {% with reg=dia.registro %}
                     <div class="rounded-lg border p-3 bg-white
-                                {% if not dia.es_laboral %}bg-gray-50/50 border-gray-200 opacity-60
+                                {% if dia.es_libre_programado %}bg-emerald-50/40 border-emerald-200 border-l-4 border-l-emerald-500
+                                {% elif not dia.es_laboral %}bg-gray-50/50 border-gray-200 opacity-70
                                 {% elif reg %}
                                 {% if reg.estado == 'PUNTUAL' %}bg-emerald-50/30 border-emerald-200
                                 {% elif reg.estado == 'RETRASO' %}bg-amber-50/30 border-amber-200
@@ -550,7 +593,7 @@
                                 {% elif reg.estado == 'MEDIO_DIA' %}bg-violet-50/30 border-violet-200 border-l-4
                                 {% elif reg.estado == 'DIA_FESTIVO' %}bg-rose-900/95 border-rose-950
                                 {% elif reg.estado == 'JUSTIFICADO' %}bg-blue-50/30 border-blue-200
-                                {% elif reg.estado == 'DIA_LIBRE' %}bg-green-50/70 border-green-300
+                                {% elif reg.estado == 'DIA_LIBRE' %}bg-emerald-50/60 border-emerald-300 border-l-4 border-l-emerald-500
                                 {% else %}border-gray-200
                                 {% endif %}
                         {% elif dia.es_falta_sin_registro %}bg-red-100 border-red-500 border-l-4
@@ -577,12 +620,14 @@
                                     <div class="text-[10px] font-bold
                                         {% if dia.excepcional %}text-purple-500
                                         {% elif dia.es_falta_sin_registro %}text-red-600
-                                        {% elif not dia.es_laboral %}text-gray-400
+                                        {% elif dia.es_libre_programado %}text-emerald-700
+                                        {% elif not dia.es_laboral %}{% if dia.es_fin_de_semana %}text-gray-400{% else %}text-emerald-600{% endif %}
                                         {% else %}text-gray-500
                                         {% endif %} uppercase">
                                         {% if dia.excepcional %}Exc.
                                         {% elif dia.es_falta_sin_registro %}Falta
-                                        {% elif not dia.es_laboral %}No lab.
+                                        {% elif dia.es_libre_programado %}Libre
+                                        {% elif not dia.es_laboral %}{% if dia.es_fin_de_semana %}Fin{% else %}Libre{% endif %}
                                         {% else %}{{ dia.fecha|date:"D" }}
                                         {% endif %}
                                     </div>
@@ -598,8 +643,15 @@
                                         <div class="text-sm font-bold text-purple-500">
                                             <i class="fas fa-calendar-day text-xs mr-1"></i>Horario Especial
                                         </div>
+                                        {% elif dia.es_libre_programado %}
+                                        <div class="text-sm font-bold text-emerald-700 flex items-center gap-1.5">
+                                            <i class="fas fa-bed text-xs text-emerald-600"></i>Día Libre
+                                        </div>
+                                        <div class="text-[10px] text-emerald-600/70">Sin jornada asignada</div>
                                         {% else %}
-                                        <div class="text-sm font-bold text-gray-400">Día Libre</div>
+                                        <div class="text-sm font-bold text-gray-500 flex items-center gap-1.5">
+                                            <i class="fas fa-bed text-xs text-gray-400"></i>Día Libre {% if dia.es_fin_de_semana %}(Fin de semana){% endif %}
+                                        </div>
                                         {% endif %}
                                     {% elif reg %}
                                         {% if reg.estado == 'PUNTUAL' or reg.estado == 'RETRASO' or reg.estado == 'JUSTIFICADO' or reg.estado == 'SIN_MARCACION_ENTRADA' %}
@@ -744,9 +796,9 @@
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-700">Just.</span>
                                     {% elif reg.estado == 'SIN_MARCACION_ENTRADA' %}
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-orange-100 text-orange-700">Sin E.</span>
-{% elif reg.estado == 'DIA_LIBRE' %}
-                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-green-100 text-green-700">Libre</span>
-                                 {% elif reg.estado == 'SIN_DATA' %}
+                                    {% elif reg.estado == 'DIA_LIBRE' %}
+                                    <span class="px-2 py-1 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Libre</span>
+                                    {% elif reg.estado == 'SIN_DATA' %}
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-gray-100 text-gray-400 italic">S/D</span>
                                     {% else %}
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-gray-100 text-gray-600">{{ reg.estado|truncatechars:6 }}</span>
@@ -757,8 +809,10 @@
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-rose-900 text-rose-50 border border-rose-950">Fer.</span>
                                 {% elif dia.excepcional %}
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-purple-100 text-purple-700">Exc.</span>
+                                {% elif dia.es_libre_programado %}
+                                    <span class="px-2 py-1 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Libre</span>
                                 {% elif not dia.es_laboral %}
-                                    <span class="px-2 py-1 rounded-md text-xs font-bold bg-gray-100 text-gray-500">Libre</span>
+                                    <span class="px-2 py-1 rounded-md text-xs font-bold bg-gray-100 text-gray-500">{% if dia.es_fin_de_semana %}Fin sem.{% else %}Libre{% endif %}</span>
                                 {% elif dia.es_hoy %}
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-700">Hoy</span>
                                 {% else %}
@@ -791,7 +845,8 @@
             <div class="flex items-center gap-1"><div class="w-2 h-2 rounded bg-green-300"></div><span class="text-[9px] text-gray-500">P. Admin</span></div>
             <div class="flex items-center gap-1"><div class="w-2 h-2 rounded bg-red-300"></div><span class="text-[9px] text-gray-500">Lic. Médica</span></div>
             <div class="flex items-center gap-1"><div class="w-2 h-2 rounded bg-rose-900 border border-rose-950"></div><span class="text-[9px] text-gray-500">Feriado</span></div>
-            <div class="flex items-center gap-1"><div class="w-2 h-2 rounded bg-gray-200"></div><span class="text-[9px] text-gray-500">No laboral</span></div>
+            <div class="flex items-center gap-1"><div class="w-2 h-2 rounded bg-emerald-200 border border-emerald-400"></div><span class="text-[9px] text-gray-600 font-bold">Día Libre</span></div>
+            <div class="flex items-center gap-1"><div class="w-2 h-2 rounded bg-gray-200"></div><span class="text-[9px] text-gray-500">Fin de semana</span></div>
             <div class="flex items-center gap-1"><div class="w-2 h-2 rounded bg-gray-300 opacity-50"></div><span class="text-[9px] text-gray-500">Vacaciones</span></div>
             <span class="text-[9px] text-gray-400 ml-1"><b>E</b>=Entrada / <b>S</b>=Salida</span>
         </div>

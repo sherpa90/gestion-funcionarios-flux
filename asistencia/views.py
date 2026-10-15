@@ -502,6 +502,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             'LICENCIA_MEDICA': 'Licencia Médica',
             'BAJA': 'Baja',
             'SIN_DATA': 'Sin Datos',
+            'DIA_LIBRE': 'Día Libre',
         }
 
         class RegistroVirtual:
@@ -607,6 +608,14 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                         and not es_festivo and es_dia_escolar and es_posterior_a_ingreso
                     )
 
+                    # Determinar si el día es libre para el funcionario (sin jornada asignada en su horario)
+                    es_libre = not es_dia_activo and not es_festivo and es_posterior_a_ingreso
+                    # Para serenos aplica a cualquier día; para personal regular aplica a días hábiles (Lun-Vie)
+                    es_libre_programado = es_libre and (es_sereno or not es_fin_de_semana)
+
+                    if not registro and es_libre_programado:
+                        registro = RegistroVirtual('DIA_LIBRE')
+
                     # Asignar registro virtual según si el día es pasado o futuro
                     if not registro and es_dia_activo and es_posterior_a_ingreso and not es_festivo and es_dia_escolar:
                         if fecha < today:
@@ -628,6 +637,8 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                         'es_sereno': es_sereno,
                         'registro': registro,
                         'es_laboral': es_laboral,
+                        'es_libre': es_libre,
+                        'es_libre_programado': es_libre_programado,
                         'es_hoy': es_hoy,
                         'es_falta_sin_registro': es_falta_sin_registro,
                         'es_dia_escolar': es_dia_escolar,
@@ -652,7 +663,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
             if dia and dia.get('es_falta_sin_registro')
         )
         stats = {
-            'total': sum(1 for r in todos_registros if r.estado != 'SIN_DATA') + faltas_sin_registro,
+            'total': sum(1 for r in todos_registros if r.estado not in ['SIN_DATA', 'DIA_LIBRE']) + faltas_sin_registro,
             'puntuales': sum(1 for r in todos_registros if r.estado == 'PUNTUAL'),
             'retraso': sum(1 for r in todos_registros if r.estado == 'RETRASO'),
             'ausente': sum(1 for r in todos_registros if r.estado == 'AUSENTE') + faltas_sin_registro,

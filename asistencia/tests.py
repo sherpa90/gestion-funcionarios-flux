@@ -688,6 +688,32 @@ class VigenciaHistoricaHorarioTest(TestCase):
         self.assertIn('estadisticas', response.context)
         self.assertTrue(len(response.context['horario_semanal']) > 0)
 
+    def test_mi_asistencia_dia_libre_muestra_en_calendario(self):
+        """
+        Verifica que un día no laborable programado para el funcionario (sin jornada asignada)
+        se identifique como 'Día Libre' y se muestre en el calendario mensual.
+        """
+        from django.urls import reverse
+        # Configuramos el viernes (día 4) como inactivo en el horario del usuario
+        DiaHorario.objects.filter(horario=self.horario_inicial, dia_semana=4).update(activo=False)
+
+        self.client.force_login(self.user)
+        url = reverse('asistencia:mi_asistencia')
+        response = self.client.get(f"{url}?mes={self.hoy.month}&anio={self.hoy.year}")
+        self.assertEqual(response.status_code, 200)
+
+        # Buscar si algún día de la semana tiene es_libre_programado == True
+        semanas = response.context['semanas_calendario']
+        dias_libres = [
+            dia for semana in semanas for dia in semana
+            if dia and dia.get('es_libre_programado')
+        ]
+        self.assertTrue(len(dias_libres) > 0, "Debe existir al menos un día libre programado en el mes")
+        self.assertContains(response, 'Día Libre')
+        # Verificar que el registro virtual tenga estado DIA_LIBRE
+        self.assertEqual(dias_libres[0]['registro'].estado, 'DIA_LIBRE')
+
+
 
 
 
