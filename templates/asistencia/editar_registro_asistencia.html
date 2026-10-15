@@ -58,8 +58,15 @@
                 <p class="mt-2 text-sm text-yellow-700">
                     <i class="fas fa-comment-alt mr-1"></i>
                     Última justificación: "{{ registro.justificacion_manual }}"
+                    {% if registro.justificacion_aplica_a == 'ENTRADA' %}
+                        <span class="font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded text-xs ml-1">Solo Entrada</span>
+                    {% elif registro.justificacion_aplica_a == 'SALIDA' %}
+                        <span class="font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded text-xs ml-1">Solo Salida</span>
+                    {% else %}
+                        <span class="font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded text-xs ml-1">Jornada Completa</span>
+                    {% endif %}
                     {% if registro.justificado_por %}
-                        (por {{ registro.justificado_por.get_full_name }})
+                        <span class="text-xs text-yellow-600">(por {{ registro.justificado_por.get_full_name }})</span>
                     {% endif %}
                 </p>
                 {% endif %}
@@ -82,6 +89,46 @@
                 </div>
                 {% endif %}
 
+                <!-- Selección de Alcance de la Justificación / Edición -->
+                <div class="px-6 py-6 bg-slate-50/50 space-y-3 border-b border-gray-100">
+                    <label class="block text-sm font-bold text-gray-800">
+                        <i class="fas fa-bullseye text-blue-600 mr-1.5"></i>
+                        ¿A qué marcación aplica esta modificación o justificación?
+                    </label>
+                    <p class="text-xs text-gray-500">
+                        Seleccione el alcance para evitar justificar o anular registros que no correspondan.
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                        <label class="relative flex flex-col p-3 border rounded-xl cursor-pointer hover:bg-white transition-all border-gray-200 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/50 has-[:checked]:ring-2 has-[:checked]:ring-blue-500/20 shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <input type="radio" name="justificacion_aplica_a" value="ENTRADA" {% if form.justificacion_aplica_a.value == 'ENTRADA' %}checked{% endif %} class="text-blue-600 focus:ring-blue-500 h-4 w-4">
+                                <span class="text-xs font-bold text-gray-900">Solo Entrada</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-1.5 pl-6 leading-tight">
+                                Justifica retraso o entrada. <strong>No justifica la salida</strong> (mantiene falta de salida si no marcó).
+                            </p>
+                        </label>
+                        <label class="relative flex flex-col p-3 border rounded-xl cursor-pointer hover:bg-white transition-all border-gray-200 has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/50 has-[:checked]:ring-2 has-[:checked]:ring-amber-500/20 shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <input type="radio" name="justificacion_aplica_a" value="SALIDA" {% if form.justificacion_aplica_a.value == 'SALIDA' %}checked{% endif %} class="text-amber-600 focus:ring-amber-500 h-4 w-4">
+                                <span class="text-xs font-bold text-gray-900">Solo Salida</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-1.5 pl-6 leading-tight">
+                                Justifica olvido de salida. <strong>No justifica la entrada</strong> (mantiene el retraso o falta de entrada).
+                            </p>
+                        </label>
+                        <label class="relative flex flex-col p-3 border rounded-xl cursor-pointer hover:bg-white transition-all border-gray-200 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50/50 has-[:checked]:ring-2 has-[:checked]:ring-purple-500/20 shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <input type="radio" name="justificacion_aplica_a" value="AMBOS" {% if form.justificacion_aplica_a.value == 'AMBOS' or not form.justificacion_aplica_a.value %}checked{% endif %} class="text-purple-600 focus:ring-purple-500 h-4 w-4">
+                                <span class="text-xs font-bold text-gray-900">Jornada Completa</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-1.5 pl-6 leading-tight">
+                                Aplica a la jornada completa (justifica tanto entrada como salida).
+                            </p>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="px-6 py-6 space-y-6">
                     <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider flex items-center">
                         <i class="fas fa-clock mr-2 text-blue-600"></i>
@@ -89,8 +136,7 @@
                     </h3>
 
                     <p class="text-sm text-gray-600">
-                        Ingrese las horas reales de entrada y/o salida para justificar el registro.
-                        El estado se recalculará automáticamente.
+                        Ingrese o modifique las horas reales de entrada y/o salida según corresponda.
                     </p>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -104,12 +150,16 @@
                             </div>
                             {% if registro.horario_dia and registro.horario_dia.hora_entrada %}
                             <p class="mt-1 text-xs text-indigo-600 font-medium">
-                                Horario esperado (según asignación de semanas): {{ registro.horario_dia.hora_entrada|time:"H:i" }}
+                                Horario esperado: {{ registro.horario_dia.hora_entrada|time:"H:i" }}
                             </p>
                             {% endif %}
                             {% if registro.hora_entrada_real %}
                             <p class="mt-1 text-xs text-gray-500">
                                 Marcación actual: {{ registro.hora_entrada_real|time:"H:i" }}
+                            </p>
+                            {% elif registro.falta_entrada %}
+                            <p class="mt-1 text-xs text-amber-600 font-bold">
+                                <i class="fas fa-exclamation-triangle"></i> Sin marcación de entrada (Falta)
                             </p>
                             {% endif %}
                             {% if form.hora_entrada_real.errors %}
@@ -134,6 +184,10 @@
                             <p class="mt-1 text-xs text-gray-400">
                                 Marcación actual: {{ registro.hora_salida_real|time:"H:i" }}
                             </p>
+                            {% elif registro.falta_salida %}
+                            <p class="mt-1 text-xs text-amber-600 font-bold">
+                                <i class="fas fa-exclamation-triangle"></i> Sin marcación de salida (Olvido)
+                            </p>
                             {% endif %}
                             {% if form.hora_salida_real.errors %}
                             <p class="mt-1 text-sm text-red-600">{{ form.hora_salida_real.errors.0 }}</p>
@@ -150,7 +204,7 @@
 
                     <div>
                         <label for="{{ form.justificacion_manual.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            Motivo de la Justificación <span class="text-red-500">*</span>
+                            Motivo de la Justificación <span class="text-gray-400 font-normal text-xs">(Opcional si se ingresaron horas)</span>
                         </label>
                         <div class="mt-1">
                             {{ form.justificacion_manual }}
@@ -159,7 +213,7 @@
                         <p class="mt-1 text-sm text-red-600">{{ form.justificacion_manual.errors.0 }}</p>
                         {% endif %}
                         <p class="mt-1 text-xs text-gray-500">
-                            Ejemplos: "Llegó tarde por emergencia médica", "Se quedó hasta terminar tarea pendiente", "Problemas de transporte"
+                            Ejemplos: "Llegó tarde por emergencia médica", "Olvidó marcar salida al retirarse", "Problemas de transporte"
                         </p>
                     </div>
                 </div>

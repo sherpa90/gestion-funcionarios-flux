@@ -345,9 +345,20 @@ class RegistroAsistencia(models.Model):
     fecha_procesamiento = models.DateTimeField(
         auto_now_add=True
     )
+    APLICA_JUSTIFICACION_CHOICES = [
+        ("AMBOS", "Jornada Completa / Ambos"),
+        ("ENTRADA", "Solo Entrada"),
+        ("SALIDA", "Solo Salida"),
+    ]
     justificacion_manual = models.TextField(
         blank=True,
         help_text="Justificación manual agregada por administrador"
+    )
+    justificacion_aplica_a = models.CharField(
+        max_length=10,
+        choices=APLICA_JUSTIFICACION_CHOICES,
+        default="AMBOS",
+        help_text="Indica si la justificación o edición aplica a entrada, salida o jornada completa"
     )
     justificado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -369,19 +380,27 @@ class RegistroAsistencia(models.Model):
 
     @property
     def falta_entrada(self):
-        """Retorna True si el registro no tiene hora de entrada y el estado no es permiso/licencia/libre/baja/festivo/justificado"""
-        if getattr(self, 'justificacion_manual', False) or self.estado == 'JUSTIFICADO':
-            return False
+        """Retorna True si el registro no tiene hora de entrada y la entrada no está justificada ni excluida"""
         ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
-        return not self.hora_entrada_real and self.estado not in ESTADOS_EXCLUIDOS
+        if self.estado in ESTADOS_EXCLUIDOS:
+            return False
+        aplica_a = getattr(self, 'justificacion_aplica_a', 'AMBOS') or 'AMBOS'
+        justifica_entrada = bool(self.justificacion_manual) and aplica_a in ['ENTRADA', 'AMBOS']
+        if justifica_entrada or (self.estado == 'JUSTIFICADO' and aplica_a in ['ENTRADA', 'AMBOS']):
+            return False
+        return not self.hora_entrada_real
 
     @property
     def falta_salida(self):
-        """Retorna True si el registro no tiene hora de salida y el estado no es permiso/licencia/libre/baja/festivo/justificado"""
-        if getattr(self, 'justificacion_manual', False) or self.estado == 'JUSTIFICADO':
-            return False
+        """Retorna True si el registro no tiene hora de salida y la salida no está justificada ni excluida"""
         ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
-        return not self.hora_salida_real and self.estado not in ESTADOS_EXCLUIDOS
+        if self.estado in ESTADOS_EXCLUIDOS:
+            return False
+        aplica_a = getattr(self, 'justificacion_aplica_a', 'AMBOS') or 'AMBOS'
+        justifica_salida = bool(self.justificacion_manual) and aplica_a in ['SALIDA', 'AMBOS']
+        if justifica_salida or (self.estado == 'JUSTIFICADO' and aplica_a in ['SALIDA', 'AMBOS']):
+            return False
+        return not self.hora_salida_real
 
     @property
     def tiene_olvido_marcacion(self):
@@ -793,31 +812,49 @@ class RegistroAsistencia(models.Model):
         if not es_dia_activo and not self.hora_entrada_real:
             return "DIA_LIBRE"
 
-        # Calcular retraso base si hay marcación de entrada para que se mantenga actualizado
-        # incluso si el registro está justificado manualmente
+        # Calcular retraso base si hay marcación de entrada
         if self.hora_entrada_real:
             self.minutos_retraso = self.calcular_retraso()
+        else:
+            self.minutos_retraso = 0
 
-        # Verificar justificación manual
-        if self.justificacion_manual:
-            self.minutos_retraso = 0  # Resetear retraso cuando hay justificación
-            return "JUSTIFICADO"
+        # Evaluar alcance de la justificación manual
+        aplica_a = getattr(self, 'justificacion_aplica_a', 'AMBOS') or 'AMBOS'
+        tiene_justificacion = bool(self.justificacion_manual)
+        justifica_entrada = tiene_justificacion and aplica_a in ['ENTRADA', 'AMBOS']
+        justifica_salida = tiene_justificacion and aplica_a in ['SALIDA', 'AMBOS']
 
+        # Si se justifica la entrada, el retraso de llegada se anula
+        if justifica_entrada:
+            self.minutos_retraso = 0
+
+        # Caso 1: No hay marcación de entrada
         if not self.hora_entrada_real:
-            if self.hora_salida_real:
-                # Hay marcación de salida pero no de entrada - no es ausencia
+            if justifica_entrada:
+                # La falta de entrada está justificada
+                return "JUSTIFICADO"
+
+            if self.hora_salida_real or justifica_salida:
+                # Hay salida (real o justificada), pero falta entrada sin justificar
                 return "SIN_MARCACION_ENTRADA"
-            
+
             # Si no hay marcación y es anterior a su fecha de ingreso, no es ausente
             if self.fecha < self.funcionario.date_joined.date():
                 return "SIN_DATA"
-                
+
             return "AUSENTE"
 
-        if self.minutos_retraso == 0:
-            return "PUNTUAL"
-        else:
+        # Caso 2: Hay marcación de entrada
+        # Si tiene retraso y la justificación NO aplica a entrada (por ej. se justificó solo salida),
+        # el retraso se mantiene activo
+        if self.minutos_retraso > 0 and not justifica_entrada:
             return "RETRASO"
+
+        # Si la entrada fue justificada explícitamente o si todo el día fue justificado
+        if justifica_entrada or (tiene_justificacion and aplica_a == 'AMBOS'):
+            return "JUSTIFICADO"
+
+        return "PUNTUAL"
 
     def save(self, *args, **kwargs):
         # Sincronizar horario asignado y horas teóricas con el horario vigente para la fecha del registro

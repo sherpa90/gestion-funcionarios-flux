@@ -100,6 +100,46 @@
                     </div>
                 </div>
 
+                <!-- Selección de Alcance de la Justificación / Edición -->
+                <div class="px-6 py-6 bg-slate-50/50 space-y-3 border-b border-gray-100">
+                    <label class="block text-sm font-bold text-gray-800">
+                        <i class="fas fa-bullseye text-blue-600 mr-1.5"></i>
+                        ¿A qué marcación aplica esta justificación o registro?
+                    </label>
+                    <p class="text-xs text-gray-500">
+                        Indique si está registrando solo la entrada, solo la salida o la jornada completa.
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                        <label class="relative flex flex-col p-3 border rounded-xl cursor-pointer hover:bg-white transition-all border-gray-200 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/50 has-[:checked]:ring-2 has-[:checked]:ring-blue-500/20 shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <input type="radio" name="justificacion_aplica_a" value="ENTRADA" {% if form.justificacion_aplica_a.value == 'ENTRADA' %}checked{% endif %} class="text-blue-600 focus:ring-blue-500 h-4 w-4">
+                                <span class="text-xs font-bold text-gray-900">Solo Entrada</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-1.5 pl-6 leading-tight">
+                                Justifica entrada. <strong>No justifica la salida</strong> (mantiene falta de salida).
+                            </p>
+                        </label>
+                        <label class="relative flex flex-col p-3 border rounded-xl cursor-pointer hover:bg-white transition-all border-gray-200 has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/50 has-[:checked]:ring-2 has-[:checked]:ring-amber-500/20 shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <input type="radio" name="justificacion_aplica_a" value="SALIDA" {% if form.justificacion_aplica_a.value == 'SALIDA' %}checked{% endif %} class="text-amber-600 focus:ring-amber-500 h-4 w-4">
+                                <span class="text-xs font-bold text-gray-900">Solo Salida</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-1.5 pl-6 leading-tight">
+                                Justifica salida. <strong>No justifica la entrada</strong> (mantiene falta de entrada).
+                            </p>
+                        </label>
+                        <label class="relative flex flex-col p-3 border rounded-xl cursor-pointer hover:bg-white transition-all border-gray-200 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50/50 has-[:checked]:ring-2 has-[:checked]:ring-purple-500/20 shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <input type="radio" name="justificacion_aplica_a" value="AMBOS" {% if form.justificacion_aplica_a.value == 'AMBOS' or not form.justificacion_aplica_a.value %}checked{% endif %} class="text-purple-600 focus:ring-purple-500 h-4 w-4">
+                                <span class="text-xs font-bold text-gray-900">Jornada Completa</span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-1.5 pl-6 leading-tight">
+                                Justifica la jornada completa (entrada y salida).
+                            </p>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="px-6 py-6 space-y-4">
                     <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wider flex items-center">
                         <i class="fas fa-comment-alt mr-2 text-blue-600"></i>

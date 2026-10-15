@@ -192,6 +192,19 @@ class EditarRegistroAsistenciaForm(forms.Form):
             "class": "mt-1 block w-full h-11 px-4 py-2 border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
         })
     )
+    justificacion_aplica_a = forms.ChoiceField(
+        required=False,
+        label="La modificación / justificación aplica a",
+        choices=[
+            ("AMBOS", "Jornada Completa / Ambos"),
+            ("ENTRADA", "Solo Entrada (justificar retraso o marcar entrada)"),
+            ("SALIDA", "Solo Salida (justificar olvido de salida o marcar salida)"),
+        ],
+        widget=forms.Select(attrs={
+            "class": "mt-1 block w-full h-11 px-4 py-2 border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium"
+        }),
+        initial="AMBOS"
+    )
     justificacion_manual = forms.CharField(
         required=False,
         label="Justificación",

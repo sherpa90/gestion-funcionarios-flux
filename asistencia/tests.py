@@ -713,6 +713,129 @@ class VigenciaHistoricaHorarioTest(TestCase):
         # Verificar que el registro virtual tenga estado DIA_LIBRE
         self.assertEqual(dias_libres[0]['registro'].estado, 'DIA_LIBRE')
 
+    def test_editar_entrada_no_justifica_salida(self):
+        """
+        Al editar o justificar solo la entrada de un funcionario,
+        NO debe justificarse la salida si esta falta o no fue marcada.
+        """
+        from django.urls import reverse
+        # Registro con retraso y sin salida
+        reg = RegistroAsistencia.objects.create(
+            funcionario=self.user,
+            fecha=self.hoy - timedelta(days=2),
+            hora_entrada_real=time(8, 30),
+            hora_salida_real=None
+        )
+        self.assertTrue(reg.falta_salida)
+
+        self.client.force_login(self.admin)
+        url = reverse('asistencia:editar_registro_asistencia', kwargs={'pk': reg.pk})
+        resp = self.client.post(url, {
+            'hora_entrada_real': '08:00',
+            'hora_salida_real': '',
+            'justificacion_aplica_a': 'ENTRADA',
+            'justificacion_manual': 'Se corrige hora de entrada',
+        })
+        self.assertEqual(resp.status_code, 302)
+
+        reg.refresh_from_db()
+        self.assertEqual(reg.hora_entrada_real, time(8, 0))
+        self.assertIsNone(reg.hora_salida_real)
+        self.assertEqual(reg.justificacion_aplica_a, 'ENTRADA')
+        # La salida sigue faltando (no fue justificada por editar la entrada)
+        self.assertTrue(reg.falta_salida)
+        self.assertTrue(reg.tiene_olvido_marcacion)
+
+    def test_editar_salida_no_justifica_entrada_con_retraso(self):
+        """
+        Al editar o justificar solo la salida de un funcionario,
+        NO debe justificarse la entrada ni anularse el retraso existente.
+        """
+        from django.urls import reverse
+        # Registro con 35 minutos de retraso (horario 08:00) y sin salida
+        reg = RegistroAsistencia.objects.create(
+            funcionario=self.user,
+            fecha=self.hoy - timedelta(days=2),
+            hora_entrada_real=time(8, 35),
+            hora_salida_real=None
+        )
+        self.assertEqual(reg.estado, 'RETRASO')
+        self.assertEqual(reg.minutos_retraso, 35)
+        self.assertTrue(reg.falta_salida)
+
+        self.client.force_login(self.admin)
+        url = reverse('asistencia:editar_registro_asistencia', kwargs={'pk': reg.pk})
+        resp = self.client.post(url, {
+            'hora_entrada_real': '08:35',
+            'hora_salida_real': '17:00',
+            'justificacion_aplica_a': 'SALIDA',
+            'justificacion_manual': 'Olvidó marcar salida al retirarse',
+        })
+        self.assertEqual(resp.status_code, 302)
+
+        reg.refresh_from_db()
+        self.assertEqual(reg.hora_salida_real, time(17, 0))
+        self.assertFalse(reg.falta_salida)
+        # El retraso de la entrada NO debe haberse anulado
+        self.assertEqual(reg.minutos_retraso, 35)
+        self.assertEqual(reg.estado, 'RETRASO')
+
+    def test_editar_salida_no_justifica_falta_de_entrada(self):
+        """
+        Si un funcionario no marcó entrada y solo se edita/justifica la salida,
+        la falta de entrada NO se justifica y el estado sigue siendo SIN_MARCACION_ENTRADA.
+        """
+        from django.urls import reverse
+        reg = RegistroAsistencia.objects.create(
+            funcionario=self.user,
+            fecha=self.hoy - timedelta(days=2),
+            hora_entrada_real=None,
+            hora_salida_real=None
+        )
+        self.client.force_login(self.admin)
+        url = reverse('asistencia:editar_registro_asistencia', kwargs={'pk': reg.pk})
+        resp = self.client.post(url, {
+            'hora_entrada_real': '',
+            'hora_salida_real': '17:00',
+            'justificacion_aplica_a': 'SALIDA',
+            'justificacion_manual': 'Se registra salida manual',
+        })
+        self.assertEqual(resp.status_code, 302)
+
+        reg.refresh_from_db()
+        self.assertEqual(reg.hora_salida_real, time(17, 0))
+        self.assertIsNone(reg.hora_entrada_real)
+        self.assertTrue(reg.falta_entrada)
+        self.assertEqual(reg.estado, 'SIN_MARCACION_ENTRADA')
+
+    def test_editar_ambos_justifica_todo(self):
+        """
+        Si se selecciona 'AMBOS', la justificación aplica a la jornada completa.
+        """
+        from django.urls import reverse
+        reg = RegistroAsistencia.objects.create(
+            funcionario=self.user,
+            fecha=self.hoy - timedelta(days=2),
+            hora_entrada_real=time(8, 30),
+            hora_salida_real=None
+        )
+        self.client.force_login(self.admin)
+        url = reverse('asistencia:editar_registro_asistencia', kwargs={'pk': reg.pk})
+        resp = self.client.post(url, {
+            'hora_entrada_real': '08:30',
+            'hora_salida_real': '',
+            'justificacion_aplica_a': 'AMBOS',
+            'justificacion_manual': 'Comisión de servicio autorizada para todo el día',
+        })
+        self.assertEqual(resp.status_code, 302)
+
+        reg.refresh_from_db()
+        self.assertEqual(reg.estado, 'JUSTIFICADO')
+        self.assertEqual(reg.minutos_retraso, 0)
+        self.assertFalse(reg.falta_entrada)
+        self.assertFalse(reg.falta_salida)
+
+
 
 
 

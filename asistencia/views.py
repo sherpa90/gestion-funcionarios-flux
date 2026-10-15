@@ -517,6 +517,7 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 self.horario_asignado = None
                 self.alegacion = None
                 self.justificacion_manual = False
+                self.justificacion_aplica_a = 'AMBOS'
                 self._estado_display = ESTADO_DISPLAY.get(estado, estado)
                 self._tipo_licencia = tipo_licencia
             @property
@@ -524,16 +525,24 @@ class MiAsistenciaView(LoginRequiredMixin, TemplateView):
                 return None
             @property
             def falta_entrada(self):
-                if getattr(self, 'justificacion_manual', False) or self.estado == 'JUSTIFICADO':
-                    return False
                 ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
-                return not self.hora_entrada_real and self.estado not in ESTADOS_EXCLUIDOS
+                if self.estado in ESTADOS_EXCLUIDOS:
+                    return False
+                aplica_a = getattr(self, 'justificacion_aplica_a', 'AMBOS') or 'AMBOS'
+                justifica_entrada = bool(self.justificacion_manual) and aplica_a in ['ENTRADA', 'AMBOS']
+                if justifica_entrada or (self.estado == 'JUSTIFICADO' and aplica_a in ['ENTRADA', 'AMBOS']):
+                    return False
+                return not self.hora_entrada_real
             @property
             def falta_salida(self):
-                if getattr(self, 'justificacion_manual', False) or self.estado == 'JUSTIFICADO':
-                    return False
                 ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
-                return not self.hora_salida_real and self.estado not in ESTADOS_EXCLUIDOS
+                if self.estado in ESTADOS_EXCLUIDOS:
+                    return False
+                aplica_a = getattr(self, 'justificacion_aplica_a', 'AMBOS') or 'AMBOS'
+                justifica_salida = bool(self.justificacion_manual) and aplica_a in ['SALIDA', 'AMBOS']
+                if justifica_salida or (self.estado == 'JUSTIFICADO' and aplica_a in ['SALIDA', 'AMBOS']):
+                    return False
+                return not self.hora_salida_real
             @property
             def tiene_olvido_marcacion(self):
                 return self.falta_entrada or self.falta_salida
@@ -1558,6 +1567,7 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 self.horario_asignado = None
                 self.alegacion = None
                 self.justificacion_manual = False
+                self.justificacion_aplica_a = 'AMBOS'
                 self.nombre_festivo = nombre_festivo
                 self._estado_display = ESTADO_DISPLAY.get(estado, estado)
                 self._tipo_licencia = tipo_licencia
@@ -1571,16 +1581,24 @@ class DetalleUsuarioAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, Temp
                 return None
             @property
             def falta_entrada(self):
-                if getattr(self, 'justificacion_manual', False) or self.estado == 'JUSTIFICADO':
-                    return False
                 ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
-                return not self.hora_entrada_real and self.estado not in ESTADOS_EXCLUIDOS
+                if self.estado in ESTADOS_EXCLUIDOS:
+                    return False
+                aplica_a = getattr(self, 'justificacion_aplica_a', 'AMBOS') or 'AMBOS'
+                justifica_entrada = bool(self.justificacion_manual) and aplica_a in ['ENTRADA', 'AMBOS']
+                if justifica_entrada or (self.estado == 'JUSTIFICADO' and aplica_a in ['ENTRADA', 'AMBOS']):
+                    return False
+                return not self.hora_entrada_real
             @property
             def falta_salida(self):
-                if getattr(self, 'justificacion_manual', False) or self.estado == 'JUSTIFICADO':
-                    return False
                 ESTADOS_EXCLUIDOS = ['DIA_ADMINISTRATIVO', 'LICENCIA_MEDICA', 'MEDIO_DIA', 'DIA_LIBRE', 'DIA_FESTIVO', 'FESTIVO', 'BAJA', 'SIN_DATA']
-                return not self.hora_salida_real and self.estado not in ESTADOS_EXCLUIDOS
+                if self.estado in ESTADOS_EXCLUIDOS:
+                    return False
+                aplica_a = getattr(self, 'justificacion_aplica_a', 'AMBOS') or 'AMBOS'
+                justifica_salida = bool(self.justificacion_manual) and aplica_a in ['SALIDA', 'AMBOS']
+                if justifica_salida or (self.estado == 'JUSTIFICADO' and aplica_a in ['SALIDA', 'AMBOS']):
+                    return False
+                return not self.hora_salida_real
             @property
             def tiene_olvido_marcacion(self):
                 return self.falta_entrada or self.falta_salida
@@ -2174,7 +2192,24 @@ class EditarRegistroAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View
 
     def get(self, request, pk):
         registro = get_object_or_404(RegistroAsistencia, pk=pk)
-        form = EditarRegistroAsistenciaForm()
+        
+        # Determinar valor por defecto inteligente para justificacion_aplica_a
+        default_aplica = registro.justificacion_aplica_a or 'AMBOS'
+        if not registro.justificacion_manual:
+            if registro.falta_salida and not registro.falta_entrada and registro.minutos_retraso == 0:
+                default_aplica = 'SALIDA'
+            elif (registro.falta_entrada or registro.minutos_retraso > 0) and not registro.falta_salida:
+                default_aplica = 'ENTRADA'
+            else:
+                default_aplica = 'AMBOS'
+
+        initial_data = {
+            'hora_entrada_real': registro.hora_entrada_real,
+            'hora_salida_real': registro.hora_salida_real,
+            'justificacion_manual': registro.justificacion_manual,
+            'justificacion_aplica_a': default_aplica,
+        }
+        form = EditarRegistroAsistenciaForm(initial=initial_data)
         es_sereno = (registro.funcionario.funcion == 'SERENO') or (registro.funcionario.tipo_funcionario == 'SERENO')
         context = {
             'registro': registro,
@@ -2192,11 +2227,23 @@ class EditarRegistroAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View
             hora_entrada = form.cleaned_data.get('hora_entrada_real')
             hora_salida = form.cleaned_data.get('hora_salida_real')
             justificacion = form.cleaned_data.get('justificacion_manual', '').strip()
+            aplica_a = form.cleaned_data.get('justificacion_aplica_a') or 'AMBOS'
 
-            # Actualizar horas si se proporcionaron
-            if hora_entrada:
+            registro.justificacion_aplica_a = aplica_a
+
+            # Si aplica solo a entrada: actualizamos entrada
+            # Si aplica solo a salida: actualizamos salida
+            # Si aplica a ambos: actualizamos ambas
+            if aplica_a == 'ENTRADA':
                 registro.hora_entrada_real = hora_entrada
-            if hora_salida:
+                if hora_salida and hora_salida != registro.hora_salida_real:
+                    registro.hora_salida_real = hora_salida
+            elif aplica_a == 'SALIDA':
+                registro.hora_salida_real = hora_salida
+                if hora_entrada and hora_entrada != registro.hora_entrada_real:
+                    registro.hora_entrada_real = hora_entrada
+            else: # AMBOS
+                registro.hora_entrada_real = hora_entrada
                 registro.hora_salida_real = hora_salida
 
             # Actualizar justificación manual
@@ -2204,6 +2251,10 @@ class EditarRegistroAsistenciaView(LoginRequiredMixin, UserPassesTestMixin, View
                 registro.justificacion_manual = justificacion
                 registro.justificado_por = request.user
                 registro.fecha_justificacion = timezone.now()
+            else:
+                registro.justificacion_manual = ''
+                registro.justificado_por = None
+                registro.fecha_justificacion = None
 
             # Recalcular el estado automáticamente
             registro.save()
@@ -2261,6 +2312,7 @@ class JustificarAusenciaVirtualView(LoginRequiredMixin, UserPassesTestMixin, Vie
             hora_entrada = form.cleaned_data.get('hora_entrada_real')
             hora_salida = form.cleaned_data.get('hora_salida_real')
             justificacion = form.cleaned_data.get('justificacion_manual', '').strip()
+            aplica_a = form.cleaned_data.get('justificacion_aplica_a') or 'AMBOS'
 
             if not justificacion and not (hora_entrada or hora_salida):
                 messages.error(request, 'Debe proporcionar una justificación o las horas de marcación.')
@@ -2280,17 +2332,19 @@ class JustificarAusenciaVirtualView(LoginRequiredMixin, UserPassesTestMixin, Vie
                 }
             )
 
-            # Actualizar horas si se proporcionaron
-            if hora_entrada:
-                registro.hora_entrada_real = hora_entrada
-            if hora_salida:
-                registro.hora_salida_real = hora_salida
+            registro.hora_entrada_real = hora_entrada
+            registro.hora_salida_real = hora_salida
+            registro.justificacion_aplica_a = aplica_a
 
             # Actualizar justificación manual
             if justificacion:
                 registro.justificacion_manual = justificacion
                 registro.justificado_por = request.user
                 registro.fecha_justificacion = timezone.now()
+            else:
+                registro.justificacion_manual = ''
+                registro.justificado_por = None
+                registro.fecha_justificacion = None
 
             # Guardar (el estado se recalcula automáticamente en el save)
             registro.save()
