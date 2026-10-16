@@ -1,0 +1,9 @@
+{
+  "buildPath": "code",
+  "detector": {
+    "ignoreFiles": [
+      "*pdf*.html",
+      "*_pdf.html"
+    ]
+  }
+}

@@ -114,7 +114,14 @@
                                         </span>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-bold {% if usuario_stats.usuario.es_baja_actualmente or usuario_stats.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ usuario_stats.usuario.get_full_name }}</div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-bold text-gray-900">{{ usuario_stats.usuario.get_full_name }}</span>
+                                            {% if usuario_stats.usuario.is_on_leave %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">Licencia</span>
+                                            {% elif usuario_stats.usuario.es_baja_actualmente %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">Inactivo</span>
+                                            {% endif %}
+                                        </div>
                                         <div class="text-sm text-gray-500">{{ usuario_stats.usuario.run }}</div>
                                     </div>
                                 </div>

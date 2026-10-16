@@ -30,13 +30,13 @@
         <!-- Resumen Semanal -->
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-2 flex items-center gap-1 sm:gap-2">
             <div class="px-4 py-2 border-r border-gray-100 hidden sm:block">
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Carga Semanal</p>
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Carga Semanal</p>
                 <p class="text-xs font-bold text-emerald-600">Permisos Aceptados</p>
-                <p class="text-[8px] text-gray-500">Doc / Asis</p>
+                <p class="text-xs text-gray-500">Doc / Asis</p>
             </div>
             {% for dia in resumen_semanal %}
             <div class="flex-1 min-w-[50px] sm:min-w-[65px] text-center p-1 rounded-2xl transition-all {% if dia.es_hoy %}bg-blue-50 ring-1 ring-blue-100{% endif %}">
-                <p class="text-[10px] font-bold {% if dia.es_hoy %}text-blue-600{% else %}text-gray-400{% endif %} uppercase mb-0.5">{{ dia.nombre }}</p>
+                <p class="text-xs font-bold {% if dia.es_hoy %}text-blue-600{% else %}text-gray-400{% endif %} uppercase mb-0.5">{{ dia.nombre }}</p>
                 <div class="flex items-center justify-center">
                     <span class="text-sm font-black text-purple-600">{{ dia.docente_count }}</span>
                     <span class="text-xs text-gray-400 mx-0.5">/</span>
@@ -105,15 +105,16 @@
         <div class="mb-10">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest flex items-center">
-                    <span class="w-3 h-3 bg-amber-500 rounded-full mr-3 shadow-md shadow-amber-200 animate-pulse"></span>
+                    <span class="w-2.5 h-2.5 bg-amber-500 rounded-full mr-3"></span>
                     Solicitudes por Aprobar
+                    <span id="pending-count" class="ml-2.5 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">{{ solicitudes|length }}</span>
                 </h3>
             </div>
 
             {% if solicitudes %}
-            <div class="grid grid-cols-1 gap-4">
+            <div class="grid grid-cols-1 gap-4" id="solicitudes-container">
                 {% for solicitud in solicitudes %}
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 group">
+                <div class="solicitud-card bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300 group">
                     <div class="flex">
                         <div class="w-1.5 bg-gradient-to-b from-amber-400 to-orange-500 flex-shrink-0 rounded-l-2xl"></div>
                         <div class="flex-1 p-4 sm:p-5">
@@ -124,23 +125,23 @@
                                         {{ solicitud.usuario.first_name.0|upper }}{{ solicitud.usuario.last_name.0|upper }}
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="font-black {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate text-base leading-tight">{{ solicitud.usuario.get_full_name }}</p>
+                                        <p class="font-black text-gray-900 truncate text-base leading-tight">{{ solicitud.usuario.get_full_name }}</p>
                                         <div class="flex items-center gap-2 mt-0.5">
                                             <span class="text-xs text-gray-400 font-bold uppercase tracking-tight">{{ solicitud.usuario.run }}</span>
                                             <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tight {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-600{% elif solicitud.usuario.tipo_funcionario %}bg-blue-50 text-blue-600{% else %}bg-gray-50 text-gray-600{% endif %}">
+                                            <span class="px-2 py-0.5 rounded-md text-xs font-black uppercase tracking-tight {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-600{% elif solicitud.usuario.tipo_funcionario %}bg-blue-50 text-blue-600{% else %}bg-gray-50 text-gray-600{% endif %}">
                                                 {{ solicitud.usuario.get_funcion_display|default:solicitud.usuario.get_tipo_funcionario_display|default:solicitud.usuario.get_role_display }}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="flex-shrink-0 text-center bg-gray-50 rounded-xl px-4 py-2">
-                                    <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest">Días</p>
+                                    <p class="text-xs text-gray-400 font-black uppercase tracking-widest">Días</p>
                                     <p class="text-2xl font-black text-gray-900 leading-none mt-0.5">
                                         {{ solicitud.dias_solicitados }}
                                     </p>
                                     {% if solicitud.dias_solicitados == 0.5 %}
-                                    <span class="text-[10px] font-black text-blue-600">
+                                    <span class="text-xs font-black text-blue-600">
                                         {% if solicitud.jornada == 'AM' %}AM{% elif solicitud.jornada == 'PM' %}PM{% endif %}
                                     </span>
                                     {% endif %}
@@ -152,14 +153,14 @@
                                 <div class="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
                                     <i class="far fa-calendar-alt text-blue-500"></i>
                                     <div>
-                                        <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Periodo</p>
+                                        <p class="text-xs text-gray-400 font-bold uppercase tracking-widest">Periodo</p>
                                         <p class="text-xs font-bold text-gray-800">{{ solicitud.fecha_inicio|date:"d/m" }} <span class="text-gray-300">→</span> {{ solicitud.fecha_termino|date:"d/m/Y" }}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
                                     <i class="fas fa-wallet {% if solicitud.usuario.dias_disponibles >= 2 %}text-emerald-500{% else %}text-rose-500{% endif %}"></i>
                                     <div>
-                                        <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Saldo</p>
+                                        <p class="text-xs text-gray-400 font-bold uppercase tracking-widest">Saldo</p>
                                         <p class="text-xs font-bold {% if solicitud.usuario.dias_disponibles >= 2 %}text-emerald-600{% else %}text-rose-600{% endif %}">
                                             {{ solicitud.usuario.dias_disponibles|floatformat:1 }} días disp.
                                         </p>
@@ -169,7 +170,7 @@
                                 <div class="flex items-center gap-2 bg-rose-50 rounded-xl px-3 py-2.5 border border-rose-100">
                                     <i class="fas fa-exclamation-triangle text-rose-500"></i>
                                     <div>
-                                        <p class="text-[9px] text-rose-400 font-bold uppercase tracking-widest">Alerta</p>
+                                        <p class="text-xs text-rose-400 font-bold uppercase tracking-widest">Alerta</p>
                                         <p class="text-xs font-bold text-rose-700">Fuera de plazo</p>
                                     </div>
                                 </div>
@@ -179,7 +180,7 @@
                             {% if solicitud.observacion %}
                             <div class="bg-blue-50/40 rounded-xl px-4 py-2.5 mb-4 border-l-[3px] border-blue-300">
                                 <p class="text-xs text-gray-600 italic leading-relaxed">
-                                    <i class="fas fa-quote-left text-blue-300 text-[10px] mr-1"></i>
+                                    <i class="fas fa-quote-left text-blue-300 text-xs mr-1"></i>
                                     {{ solicitud.observacion|truncatechars:120 }}
                                 </p>
                             </div>
@@ -188,32 +189,17 @@
                             <!-- Acciones -->
                             <div class="flex items-center gap-3">
                                 {% if user.role == 'DIRECTOR' or user.role == 'ADMIN' %}
-                                <form action="{% url 'solicitud_action' solicitud.pk 'approve' %}{% if current_filter %}?status={{ current_filter }}{% endif %}" method="post" class="flex-1">
+                                <form action="{% url 'solicitud_action' solicitud.pk 'approve' %}{% if current_filter %}?status={{ current_filter }}{% endif %}" method="post" class="flex-1 form-approve-quick">
                                     {% csrf_token %}
-                                    <button type="button" onclick="document.getElementById('modal-approve-{{ solicitud.pk }}').classList.remove('hidden')"
-                                            class="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-sm font-extrabold rounded-xl hover:from-emerald-600 hover:to-green-700 hover:shadow-lg hover:shadow-emerald-200 active:scale-[0.98] transition-all uppercase tracking-wider">
+                                    <button type="submit"
+                                            class="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-xl hover:bg-emerald-700 active:scale-[0.98] transition-all">
                                         <i class="fas fa-check-circle"></i> Aprobar
                                     </button>
-                                    
-                                    <!-- Modal Aprobar Individual -->
-                                    <div id="modal-approve-{{ solicitud.pk }}" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm transition-opacity px-4">
-                                        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full mx-4 shadow-2xl relative border-t-8 border-emerald-500 text-center mt-0">
-                                            <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
-                                                <i class="fas fa-check-circle"></i>
-                                            </div>
-                                            <h3 class="text-xl font-bold text-gray-900 mb-2">¿Aprobar Solicitud?</h3>
-                                            <p class="text-gray-500 text-sm mb-6">Se confirmarán <strong>{{ solicitud.dias_solicitados }} días</strong> para <span class="{% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ solicitud.usuario.get_full_name }}</span>.</p>
-                                            <div class="flex flex-col gap-3">
-                                                <button type="submit" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700">Sí, Aprobar Permiso</button>
-                                                <button type="button" onclick="document.getElementById('modal-approve-{{ solicitud.pk }}').classList.add('hidden')" class="w-full py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200">Cancelar</button>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </form>
 
                                 <button type="button"
                                         onclick="document.getElementById('reject-{{ solicitud.pk }}').classList.toggle('hidden')"
-                                        class="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white border-2 border-rose-200 text-rose-600 text-sm font-extrabold rounded-xl hover:bg-rose-600 hover:text-white hover:border-rose-600 hover:shadow-lg hover:shadow-rose-200 active:scale-[0.98] transition-all uppercase tracking-wider">
+                                        class="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white border border-rose-200 text-rose-600 text-sm font-bold rounded-xl hover:bg-rose-50 active:scale-[0.98] transition-all">
                                     <i class="fas fa-times-circle"></i> Rechazar
                                 </button>
                                 {% endif %}
@@ -275,20 +261,20 @@
                     <table class="min-w-full divide-y divide-gray-100">
                         <thead class="bg-gray-50/80">
                             <tr>
-                                <th class="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Funcionario</th>
-                                <th class="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Periodo</th>
-                                <th class="px-6 py-3 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Días</th>
-                                <th class="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Estado</th>
-                                <th class="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Observación</th>
-                                <th class="px-6 py-3 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Acciones</th>
+                                <th class="px-6 py-3 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Funcionario</th>
+                                <th class="px-6 py-3 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Periodo</th>
+                                <th class="px-6 py-3 text-center text-xs font-black text-gray-400 uppercase tracking-widest">Días</th>
+                                <th class="px-6 py-3 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Estado</th>
+                                <th class="px-6 py-3 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Observación</th>
+                                <th class="px-6 py-3 text-right text-xs font-black text-gray-400 uppercase tracking-widest">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             {% for solicitud in historial_page %}
                             <tr class="hover:bg-gray-50/50 transition-colors">
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <p class="text-sm font-black {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ solicitud.usuario.get_full_name }}</p>
-                                    <p class="text-[10px] text-gray-400 font-bold uppercase">{{ solicitud.usuario.run }}</p>
+                                    <p class="text-sm font-black text-gray-900">{{ solicitud.usuario.get_full_name }}</p>
+                                    <p class="text-xs text-gray-400 font-bold uppercase">{{ solicitud.usuario.run }}</p>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-xs font-bold text-gray-700 uppercase">
@@ -301,21 +287,21 @@
                                     <span class="bg-gray-100 px-2 py-1 rounded text-xs font-black">
                                         {{ solicitud.dias_solicitados }}
                                         {% if solicitud.dias_solicitados == 0.5 %}
-                                        <span class="text-[9px] text-blue-500 ml-0.5">{% if solicitud.jornada == 'AM' %}AM{% elif solicitud.jornada == 'PM' %}PM{% endif %}</span>
+                                        <span class="text-xs text-blue-500 ml-0.5">{% if solicitud.jornada == 'AM' %}AM{% elif solicitud.jornada == 'PM' %}PM{% endif %}</span>
                                         {% endif %}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
                                     {% if solicitud.estado == 'APROBADO' %}
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase rounded-lg">
-                                        <i class="fas fa-check text-[8px]"></i> Aprobado
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-black uppercase rounded-lg">
+                                        <i class="fas fa-check text-xs"></i> Aprobado
                                     </span>
                                     {% elif solicitud.estado == 'RECHAZADO' %}
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 text-rose-700 text-[10px] font-black uppercase rounded-lg">
-                                        <i class="fas fa-times text-[8px]"></i> Rechazado
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 text-rose-700 text-xs font-black uppercase rounded-lg">
+                                        <i class="fas fa-times text-xs"></i> Rechazado
                                     </span>
                                     {% else %}
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-700 text-[10px] font-black uppercase rounded-lg">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-black uppercase rounded-lg">
                                         {{ solicitud.estado }}
                                     </span>
                                     {% endif %}
@@ -329,7 +315,7 @@
                                         {% csrf_token %}
                                         <input type="hidden" name="motivo_cancelacion" value="Devolución por no uso">
                                         <button type="button" onclick="document.getElementById('modal-return-{{ solicitud.pk }}').classList.remove('hidden')"
-                                                class="text-[10px] font-black uppercase tracking-widest text-rose-600 hover:text-rose-800 transition-colors">
+                                                class="text-xs font-black uppercase tracking-widest text-rose-600 hover:text-rose-800 transition-colors">
                                             <i class="fas fa-undo mr-1"></i> Devolver
                                         </button>
                                         
@@ -358,17 +344,17 @@
 
                 {% if historial_page.has_other_pages %}
                 <div class="px-6 py-3 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-                    <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <div class="text-xs font-black text-gray-400 uppercase tracking-widest">
                         Página {{ historial_page.number }} de {{ historial_page.paginator.num_pages }}
                     </div>
                     <div class="flex gap-1">
                         {% if historial_page.has_previous %}
                         <a href="?h_page={{ historial_page.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'h_page' and key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                           class="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-gray-50 transition">Anterior</a>
+                           class="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-50 transition">Anterior</a>
                         {% endif %}
                         {% if historial_page.has_next %}
                         <a href="?h_page={{ historial_page.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'h_page' and key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                           class="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-gray-50 transition">Siguiente</a>
+                           class="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-50 transition">Siguiente</a>
                         {% endif %}
                     </div>
                 </div>
@@ -392,10 +378,10 @@
                     <div>
                         <h2 class="text-2xl font-black text-gray-900 uppercase tracking-tight leading-none">Efemérides y Hitos</h2>
                         <div class="flex items-center gap-3 mt-2">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Calendario escolar</p>
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Calendario escolar</p>
                             <form method="get" class="inline-block">
                                 <input type="hidden" name="tab" value="efemerides">
-                                <select name="efe_year" onchange="this.form.submit()" class="bg-amber-50 border border-amber-100 rounded-lg text-[10px] font-black text-amber-800 uppercase tracking-widest py-1 px-2 focus:ring-2 focus:ring-amber-500 outline-none cursor-pointer">
+                                <select name="efe_year" onchange="this.form.submit()" class="bg-amber-50 border border-amber-100 rounded-lg text-xs font-black text-amber-800 uppercase tracking-widest py-1 px-2 focus:ring-2 focus:ring-amber-500 outline-none cursor-pointer">
                                     {% for y in efe_years %}
                                     <option value="{{ y }}" {% if y == current_efe_year %}selected{% endif %}>Año {{ y }}</option>
                                     {% endfor %}
@@ -416,7 +402,7 @@
             </div>
 
             <!-- Listado de Efemérides -->
-            <div class="p-8 bg-gray-50/30 rounded-[2.5rem] border border-gray-100 shadow-sm mt-4">
+            <div class="p-8 bg-gray-50/30 rounded-2xl border border-gray-100 shadow-sm mt-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {% for efe in efemerides %}
                     <div class="relative bg-white rounded-3xl p-6 border border-gray-100 shadow-sm hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-300 group overflow-hidden">
@@ -426,19 +412,19 @@
                         <div class="flex items-start gap-5 relative z-10">
                             <!-- Date Badge -->
                             <div class="flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-b from-amber-50 to-white border border-amber-100/50 shadow-sm group-hover:border-amber-200 transition-colors">
-                                <span class="text-[10px] font-black text-amber-500 uppercase tracking-widest">{{ efe.fecha|date:"M" }}</span>
+                                <span class="text-xs font-black text-amber-500 uppercase tracking-widest">{{ efe.fecha|date:"M" }}</span>
                                 <span class="text-xl font-black text-gray-900 leading-none mt-0.5">{{ efe.fecha|date:"d" }}</span>
                             </div>
                             
                             <!-- Content -->
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 mb-1 flex-wrap">
-                                    <span class="px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest bg-gray-100 text-gray-500">
+                                    <span class="px-2.5 py-0.5 rounded-md text-xs font-black uppercase tracking-widest bg-gray-100 text-gray-500">
                                         {{ efe.fecha|date:"l" }}
                                     </span>
                                     {% if efe.fecha_hasta %}
-                                    <span class="text-gray-300 text-[10px]"><i class="fas fa-arrow-right"></i></span>
-                                    <span class="px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest bg-gray-100 text-gray-500">
+                                    <span class="text-gray-300 text-xs"><i class="fas fa-arrow-right"></i></span>
+                                    <span class="px-2.5 py-0.5 rounded-md text-xs font-black uppercase tracking-widest bg-gray-100 text-gray-500">
                                         {{ efe.fecha_hasta|date:"d M" }}
                                     </span>
                                     {% endif %}
@@ -453,7 +439,7 @@
                                 {% if efe.responsable %}
                                 <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-100 mt-1">
                                     <i class="fas fa-user-circle text-gray-400"></i>
-                                    <span class="text-[10px] font-bold text-gray-600 uppercase tracking-wider">{{ efe.responsable }}</span>
+                                    <span class="text-xs font-bold text-gray-600 uppercase tracking-wider">{{ efe.responsable }}</span>
                                 </div>
                                 {% endif %}
                             </div>
@@ -464,17 +450,17 @@
                         
                         <!-- Actions -->
                         <div class="flex items-center justify-end gap-2 relative z-10">
-                            <a href="{{ efe.google_calendar_url }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                            <a href="{{ efe.google_calendar_url }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
                                 <i class="fas fa-calendar-alt"></i> Exportar
                             </a>
                             
                             <a href="{% url 'admin_dashboard:efemeride_update' efe.id %}" class="w-9 h-9 flex items-center justify-center bg-gray-50 text-gray-400 rounded-xl hover:bg-gray-900 hover:text-white transition-all" title="Editar">
-                                <i class="fas fa-pen text-[10px]"></i>
+                                <i class="fas fa-pen text-xs"></i>
                             </a>
                             <form action="{% url 'admin_dashboard:efemeride_delete' efe.id %}" method="post" onsubmit="return confirm('¿Eliminar esta efeméride?')" class="inline">
                                 {% csrf_token %}
                                 <button type="submit" class="w-9 h-9 flex items-center justify-center bg-rose-50 text-rose-400 rounded-xl hover:bg-rose-600 hover:text-white transition-all" title="Eliminar">
-                                    <i class="fas fa-trash-alt text-[10px]"></i>
+                                    <i class="fas fa-trash-alt text-xs"></i>
                                 </button>
                             </form>
                         </div>
@@ -494,4 +480,62 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.form-approve-quick').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = this.querySelector('button');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Aprobando...';
+
+            try {
+                const formData = new FormData(this);
+                const res = await fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    },
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const card = this.closest('.solicitud-card');
+                    if (card) {
+                        card.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.96)';
+                        setTimeout(() => {
+                            card.remove();
+                            const countEl = document.getElementById('pending-count');
+                            if (countEl) {
+                                const current = parseInt(countEl.textContent, 10);
+                                if (!isNaN(current) && current > 0) {
+                                    countEl.textContent = current - 1;
+                                    if (current - 1 === 0) {
+                                        const container = document.getElementById('solicitudes-container');
+                                        if (container) {
+                                            container.innerHTML = '<div class="p-8 text-center text-gray-400 text-sm font-medium">Todas las solicitudes pendientes han sido procesadas.</div>';
+                                        }
+                                    }
+                                }
+                            }
+                        }, 300);
+                    }
+                } else {
+                    alert(data.error || 'No se pudo aprobar la solicitud.');
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            } catch (err) {
+                // Fallback to synchronous standard form submit
+                this.submit();
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

@@ -42,43 +42,43 @@
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
             <div class="flex items-center justify-between text-slate-400 mb-2">
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Total</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total</span>
                 <i class="fa-solid fa-layer-group text-sm"></i>
             </div>
             <div class="text-2xl font-bold text-slate-900">{{ stats.total }}</div>
-            <div class="text-[11px] text-slate-400 mt-0.5">En catálogo</div>
+            <div class="text-xs text-slate-400 mt-0.5">En catálogo</div>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
             <div class="flex items-center justify-between text-emerald-500 mb-2">
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">Disponibles</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Disponibles</span>
                 <i class="fa-solid fa-circle-check text-sm"></i>
             </div>
             <div class="text-2xl font-bold text-emerald-600">{{ stats.disponibles }}</div>
-            <div class="text-[11px] text-emerald-600/80 mt-0.5">Listos para entrega</div>
+            <div class="text-xs text-emerald-600/80 mt-0.5">Listos para entrega</div>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
             <div class="flex items-center justify-between text-blue-500 mb-2">
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-blue-700">Asignados</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-blue-700">Asignados</span>
                 <i class="fa-solid fa-user-check text-sm"></i>
             </div>
             <div class="text-2xl font-bold text-blue-600">{{ stats.asignados }}</div>
-            <div class="text-[11px] text-blue-600/80 mt-0.5">En uso / custodia</div>
+            <div class="text-xs text-blue-600/80 mt-0.5">En uso / custodia</div>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
             <div class="flex items-center justify-between text-amber-500 mb-2">
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-700">Taller / Rep.</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-amber-700">Taller / Rep.</span>
                 <i class="fa-solid fa-wrench text-sm"></i>
             </div>
             <div class="text-2xl font-bold text-amber-600">{{ stats.reparacion }}</div>
-            <div class="text-[11px] text-amber-600/80 mt-0.5">En mantenimiento</div>
+            <div class="text-xs text-amber-600/80 mt-0.5">En mantenimiento</div>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs col-span-2 sm:col-span-1">
             <div class="flex items-center justify-between text-rose-500 mb-2">
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-rose-700">De Baja</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-rose-700">De Baja</span>
                 <i class="fa-solid fa-ban text-sm"></i>
             </div>
             <div class="text-2xl font-bold text-rose-600">{{ stats.baja }}</div>
-            <div class="text-[11px] text-rose-600/80 mt-0.5">Desincorporados</div>
+            <div class="text-xs text-rose-600/80 mt-0.5">Desincorporados</div>
         </div>
     </div>
 
@@ -88,7 +88,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
                 <!-- Search -->
                 <div class="lg:col-span-4">
-                    <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Búsqueda Rápida</label>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Búsqueda Rápida</label>
                     <div class="relative">
                         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                         <input type="text" name="search" value="{{ search|default:'' }}"
@@ -99,7 +99,7 @@
 
                 <!-- Tipo -->
                 <div class="lg:col-span-2">
-                    <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Tipo</label>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Tipo</label>
                     <select name="tipo"
                         class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none">
                         <option value="">Todos los Tipos</option>
@@ -111,7 +111,7 @@
 
                 <!-- Estado -->
                 <div class="lg:col-span-2">
-                    <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Estado</label>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Estado</label>
                     <select name="estado"
                         class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none">
                         <option value="">Todos los Estados</option>
@@ -123,7 +123,7 @@
 
                 <!-- Lugar -->
                 <div class="lg:col-span-2">
-                    <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Lugar / Ubicación</label>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Lugar / Ubicación</label>
                     <select name="lugar"
                         class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none">
                         <option value="">Todos los Lugares</option>
@@ -135,7 +135,7 @@
 
                 <!-- Orden -->
                 <div class="lg:col-span-2">
-                    <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Ordenar por</label>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Ordenar por</label>
                     <select name="orden" onchange="this.form.submit()"
                         class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none">
                         {% for value, label in ordenes %}
@@ -171,7 +171,7 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <tr class="bg-slate-50/80 border-b border-slate-200/80 text-xs font-bold text-slate-500 uppercase tracking-wider">
                         <th class="px-5 py-3.5">Equipo / Modelo</th>
                         <th class="px-4 py-3.5">Identificadores</th>
                         <th class="px-4 py-3.5">Ubicación</th>
@@ -190,7 +190,7 @@
                                 </div>
                                 <div>
                                     <div class="font-bold text-slate-900">{{ eq.marca }} {{ eq.modelo|default:'' }}</div>
-                                    <div class="text-[11px] text-slate-400 font-medium">{{ eq.get_tipo_display }}</div>
+                                    <div class="text-xs text-slate-400 font-medium">{{ eq.get_tipo_display }}</div>
                                 </div>
                             </div>
                         </td>
@@ -199,7 +199,7 @@
                                 <div class="text-xs font-semibold text-slate-700">
                                     INV: <span class="font-mono text-blue-700 font-bold">#{{ eq.numero_inventario|default:'S/N' }}</span>
                                 </div>
-                                <div class="text-[11px] text-slate-400 font-mono">
+                                <div class="text-xs text-slate-400 font-mono">
                                     SN: {{ eq.numero_serie|default:'N/A' }}
                                 </div>
                             </div>
@@ -207,7 +207,7 @@
                         <td class="px-4 py-3.5 whitespace-nowrap">
                             {% if eq.lugar %}
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                                <i class="fa-solid fa-location-dot text-[10px] text-slate-400"></i>{{ eq.lugar.nombre }}
+                                <i class="fa-solid fa-location-dot text-xs text-slate-400"></i>{{ eq.lugar.nombre }}
                             </span>
                             {% else %}
                             <span class="text-xs text-slate-400 italic">Sin ubicación</span>
@@ -215,19 +215,19 @@
                         </td>
                         <td class="px-4 py-3.5 whitespace-nowrap">
                             {% if eq.estado == 'DISPONIBLE' %}
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Disponible
                             </span>
                             {% elif eq.estado == 'ASIGNADO' %}
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5"></span>Asignado
                             </span>
                             {% elif eq.estado == 'EN_REPARACION' %}
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>En Reparación
                             </span>
                             {% else %}
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>De Baja
                             </span>
                             {% endif %}
@@ -235,8 +235,8 @@
                         <td class="px-4 py-3.5">
                             {% if eq.prestamo_activo %}
                             <div>
-                                <div class="font-bold {% if eq.prestamo_activo.funcionario.es_baja_actualmente or eq.prestamo_activo.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-slate-800{% endif %} text-xs sm:text-sm">{{ eq.prestamo_activo.funcionario.get_full_name }}</div>
-                                <div class="text-[11px] text-slate-400 font-medium">
+                                <div class="font-bold text-slate-800 text-xs sm:text-sm">{{ eq.prestamo_activo.funcionario.get_full_name }}</div>
+                                <div class="text-xs text-slate-400 font-medium">
                                     {% if eq.prestamo_activo.es_prestamo_diario %}
                                     <span class="text-amber-600 font-semibold"><i class="fa-regular fa-clock mr-1"></i>Préstamo Diario</span>
                                     {% else %}
@@ -346,7 +346,7 @@
                 <div class="py-2 flex items-center justify-between text-xs">
                     <div>
                         <span class="font-bold text-slate-800">{{ lug.nombre }}</span>
-                        {% if lug.descripcion %}<p class="text-[11px] text-slate-400">{{ lug.descripcion }}</p>{% endif %}
+                        {% if lug.descripcion %}<p class="text-xs text-slate-400">{{ lug.descripcion }}</p>{% endif %}
                     </div>
                     {% if user.role == 'ADMIN' %}
                     <form method="POST" action="{% url 'eliminar_lugar_equipo' lug.id %}" onsubmit="return confirm('¿Desactivar este lugar?')">

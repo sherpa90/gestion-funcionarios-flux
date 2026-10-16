@@ -23,23 +23,23 @@
                     <div class="h-10 w-1.5 bg-blue-600 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.3)]"></div>
                     <div>
                         <h2 class="text-2xl font-black text-gray-900 uppercase tracking-tight leading-none">Esta Semana</h2>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Disponibilidad del personal por día laboral</p>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">Disponibilidad del personal por día laboral</p>
                     </div>
                 </div>
                 
                 <!-- Resumen Diario Actual (L-V) -->
                 <div class="flex items-center gap-1">
                     <div class="px-3 py-1.5 border-r border-gray-100 hidden sm:block">
-                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Carga Semanal</p>
+                        <p class="text-xs font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Carga Semanal</p>
                         <p class="text-xs font-bold text-emerald-600">Permisos Aceptados</p>
-                        <p class="text-[8px] text-gray-500">Doc / Asis</p>
+                        <p class="text-xs text-gray-500">Doc / Asis</p>
                     </div>
                     {% for day in daily_stats_actual %}
                     <div class="flex-1 min-w-[50px] text-center p-1.5 rounded-lg border {% if day.is_today %}bg-blue-50 border-blue-200 ring-1 ring-blue-100{% else %}bg-white border-gray-100 shadow-sm{% endif %} transition-all">
-                        <span class="text-[8px] font-black {% if day.is_today %}text-blue-600{% else %}text-gray-400{% endif %} uppercase tracking-tighter">{{ day.nombre }}</span>
+                        <span class="text-xs font-black {% if day.is_today %}text-blue-600{% else %}text-gray-400{% endif %} uppercase tracking-tighter">{{ day.nombre }}</span>
                         <div class="flex items-center justify-center">
                             <span class="text-xs font-black text-purple-600">{{ day.docente_count }}</span>
-                            <span class="text-[8px] text-gray-300 mx-0.5">/</span>
+                            <span class="text-xs text-gray-300 mx-0.5">/</span>
                             <span class="text-xs font-black text-blue-600">{{ day.asistente_count }}</span>
                         </div>
                     </div>
@@ -50,7 +50,7 @@
             <!-- Layout Vertical Apilado: Permisos arriba, Licencias abajo -->
             <div class="space-y-10">
                 <!-- Permisos Administrativos -->
-                <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-500 group">
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-500 group">
                     <div class="px-6 py-5 border-b border-gray-50 flex items-center justify-between bg-purple-50/40">
                         <h3 class="text-base font-black text-gray-900 flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-purple-100/50 flex items-center justify-center">
@@ -60,7 +60,7 @@
                         </h3>
                         {% if permisos_semana_actual %}
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-bold text-purple-400 uppercase tracking-widest mr-2">Personal Ausente</span>
+                            <span class="text-xs font-bold text-purple-400 uppercase tracking-widest mr-2">Personal Ausente</span>
                             <span class="bg-purple-100 text-purple-700 text-[12px] font-black px-3 py-0.5 rounded-full uppercase">{{ permisos_semana_actual|length }}</span>
                         </div>
                         {% endif %}
@@ -76,14 +76,14 @@
                                      </div>
                                      <div class="flex flex-col">
                                           <div class="flex items-center gap-2">
-                                              <span class="text-sm font-black leading-tight {% if perm.usuario.es_baja_actualmente or perm.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ perm.usuario.get_full_name }}</span>
+                                              <span class="text-sm font-black leading-tight text-gray-900">{{ perm.usuario.get_full_name }}</span>
                                               {% if perm.usuario.get_funcion_display %}
-                                              <span class="text-[10px] font-bold text-gray-400">{{ perm.usuario.get_funcion_display }}</span>
+                                              <span class="text-xs font-bold text-gray-400">{{ perm.usuario.get_funcion_display }}</span>
                                               {% endif %}
                                           </div>
                                           <div class="flex items-center gap-1 mt-1">
-                                              <i class="fas fa-clock text-[9px] text-purple-400"></i>
-                                              <span class="text-[10px] font-bold text-purple-600 uppercase tracking-wide">{{ perm.fecha_inicio|date:"l d M" }} al {{ perm.fecha_termino|date:"l d M" }}</span>
+                                              <i class="fas fa-clock text-xs text-purple-400"></i>
+                                              <span class="text-xs font-bold text-purple-600 uppercase tracking-wide">{{ perm.fecha_inicio|date:"l d M" }} al {{ perm.fecha_termino|date:"l d M" }}</span>
                                           </div>
                                      </div>
                                  </div>
@@ -91,12 +91,12 @@
                                      <div class="flex items-center gap-1 mb-0.5">
                                          <span class="text-base font-black text-gray-900">{{ perm.dias_solicitados|floatformat:1 }}</span>
                                          {% if perm.dias_solicitados == 0.5 %}
-                                         <span class="text-[9px] font-bold text-purple-600 uppercase">({{ perm.jornada }})</span>
+                                         <span class="text-xs font-bold text-purple-600 uppercase">({{ perm.jornada }})</span>
                                          {% else %}
-                                         <span class="text-[9px] font-bold text-gray-400 uppercase">Días</span>
+                                         <span class="text-xs font-bold text-gray-400 uppercase">Días</span>
                                          {% endif %}
                                      </div>
-                                     <span class="text-[9px] font-black text-purple-500 uppercase tracking-widest bg-purple-50 px-2 py-0.5 rounded border border-purple-100/20">{{ perm.get_jornada_display }}</span>
+                                     <span class="text-xs font-black text-purple-500 uppercase tracking-widest bg-purple-50 px-2 py-0.5 rounded border border-purple-100/20">{{ perm.get_jornada_display }}</span>
                                  </div>
                              </div>
                              {% endfor %}
@@ -104,14 +104,14 @@
                         {% else %}
                         <div class="p-16 text-center opacity-40">
                             <i class="fas fa-calendar-check text-gray-200 text-6xl mb-4 block"></i>
-                            <p class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Sin solicitudes administrativas para esta semana</p>
+                            <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Sin solicitudes administrativas para esta semana</p>
                         </div>
                         {% endif %}
                     </div>
                 </div>
 
                 <!-- Licencias Médicas -->
-                <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-rose-500/5 transition-all duration-500 group">
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-rose-500/5 transition-all duration-500 group">
                     <div class="px-6 py-5 border-b border-gray-50 flex items-center justify-between bg-rose-50/40">
                         <h3 class="text-base font-black text-gray-900 flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-rose-100/50 flex items-center justify-center">
@@ -121,7 +121,7 @@
                         </h3>
                         {% if licencias_semana_actual %}
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-bold text-rose-400 uppercase tracking-widest mr-2">Personal con Licencia</span>
+                            <span class="text-xs font-bold text-rose-400 uppercase tracking-widest mr-2">Personal con Licencia</span>
                             <span class="bg-rose-100 text-rose-700 text-[12px] font-black px-3 py-0.5 rounded-full uppercase">{{ licencias_semana_actual|length }}</span>
                         </div>
                         {% endif %}
@@ -145,24 +145,24 @@
                                      </div>
                                      <div class="flex flex-col">
                                           <div class="flex items-center gap-2">
-                                              <span class="text-sm font-black leading-tight {% if lic.usuario.es_baja_actualmente or lic.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ lic.usuario.get_full_name }}</span>
+                                              <span class="text-sm font-black leading-tight text-gray-900">{{ lic.usuario.get_full_name }}</span>
                                               {% if lic.usuario.get_funcion_display %}
-                                              <span class="text-[10px] font-bold text-gray-400">{{ lic.usuario.get_funcion_display }}</span>
+                                              <span class="text-xs font-bold text-gray-400">{{ lic.usuario.get_funcion_display }}</span>
                                               {% endif %}
                                           </div>
                                           <div class="flex items-center gap-1 mt-1">
-                                              <i class="fas fa-calendar-alt text-[9px] text-rose-400"></i>
-                                             <span class="text-[10px] font-bold text-rose-600 uppercase tracking-wide">{{ lic.fecha_inicio|date:"l d M" }} al {{ lic.fecha_retorno|date:"l d M" }}</span>
+                                              <i class="fas fa-calendar-alt text-xs text-rose-400"></i>
+                                             <span class="text-xs font-bold text-rose-600 uppercase tracking-wide">{{ lic.fecha_inicio|date:"l d M" }} al {{ lic.fecha_retorno|date:"l d M" }}</span>
                                          </div>
                                      </div>
                                  </div>
                                  <div class="text-right flex flex-col items-end">
                                      <div class="flex items-center gap-1 mb-0.5">
                                          <span class="text-base font-black text-rose-700">{{ lic.dias }}</span>
-                                         <span class="text-[9px] font-bold text-gray-400 uppercase">Días</span>
+                                         <span class="text-xs font-bold text-gray-400 uppercase">Días</span>
                                      </div>
                                      {% if lic.es_activa %}
-                                     <span class="text-[8px] font-black text-white uppercase tracking-widest mt-0.5 bg-rose-500 px-2 py-0.5 rounded border border-rose-600/20 shadow-sm">Activa</span>
+                                     <span class="text-xs font-black text-white uppercase tracking-widest mt-0.5 bg-rose-500 px-2 py-0.5 rounded border border-rose-600/20 shadow-sm">Activa</span>
                                      {% endif %}
                                  </div>
                              </div>
@@ -171,7 +171,7 @@
                         {% else %}
                         <div class="p-16 text-center opacity-40">
                             <i class="fas fa-heart-pulse text-gray-200 text-6xl mb-4 block"></i>
-                            <p class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Sin licencias médicas reportadas esta semana</p>
+                            <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Sin licencias médicas reportadas esta semana</p>
                         </div>
                         {% endif %}
                     </div>
@@ -186,23 +186,23 @@
                     <div class="h-10 w-1.5 bg-gray-400 rounded-full shadow-[0_0_15px_rgba(156,163,175,0.2)]"></div>
                     <div>
                         <h2 class="text-2xl font-black text-gray-700 uppercase tracking-tight leading-none">Próxima Semana</h2>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Planificación proactiva y cobertura para días hábiles</p>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">Planificación proactiva y cobertura para días hábiles</p>
                     </div>
                 </div>
                 
                 <!-- Resumen Diario Próxima (L-V) -->
                 <div class="flex items-center gap-1 opacity-80">
                     <div class="px-3 py-1.5 border-r border-gray-100 hidden sm:block">
-                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Carga Semanal</p>
+                        <p class="text-xs font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Carga Semanal</p>
                         <p class="text-xs font-bold text-emerald-600">Permisos Aceptados</p>
-                        <p class="text-[8px] text-gray-500">Doc / Asis</p>
+                        <p class="text-xs text-gray-500">Doc / Asis</p>
                     </div>
                     {% for day in daily_stats_proxima %}
                     <div class="flex-1 min-w-[50px] text-center p-1.5 rounded-lg border bg-white border-gray-100 shadow-sm">
-                        <span class="text-[8px] font-black text-gray-400 uppercase tracking-tighter">{{ day.nombre }}</span>
+                        <span class="text-xs font-black text-gray-400 uppercase tracking-tighter">{{ day.nombre }}</span>
                         <div class="flex items-center justify-center">
                             <span class="text-xs font-black text-purple-600">{{ day.docente_count }}</span>
-                            <span class="text-[8px] text-gray-300 mx-0.5">/</span>
+                            <span class="text-xs text-gray-300 mx-0.5">/</span>
                             <span class="text-xs font-black text-blue-600">{{ day.asistente_count }}</span>
                         </div>
                     </div>
@@ -212,7 +212,7 @@
 
             <div class="space-y-10">
                 <!-- Permisos Próximos -->
-                <div class="bg-gray-50/20 rounded-[2.5rem] border border-gray-200 border-dashed overflow-hidden flex flex-col hover:border-solid hover:bg-white transition-all duration-500 group/next">
+                <div class="bg-gray-50/20 rounded-2xl border border-gray-200 border-dashed overflow-hidden flex flex-col hover:border-solid hover:bg-white transition-all duration-500 group/next">
                     <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
                         <h3 class="text-base font-black text-gray-600 flex items-center gap-3">
                             <i class="fas fa-calendar-plus opacity-40 text-lg"></i>
@@ -233,12 +233,12 @@
                                      </div>
                                      <div class="flex flex-col">
                                           <div class="flex items-center gap-2">
-                                              <span class="text-sm font-black leading-tight {% if perm.usuario.es_baja_actualmente or perm.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-700{% endif %}">{{ perm.usuario.get_full_name }}</span>
+                                              <span class="text-sm font-black leading-tight text-gray-700">{{ perm.usuario.get_full_name }}</span>
                                               {% if perm.usuario.get_funcion_display %}
-                                              <span class="text-[10px] font-bold text-gray-400">{{ perm.usuario.get_funcion_display }}</span>
+                                              <span class="text-xs font-bold text-gray-400">{{ perm.usuario.get_funcion_display }}</span>
                                               {% endif %}
                                           </div>
-                                          <span class="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-wide">{{ perm.fecha_inicio|date:"l d M" }} al {{ perm.fecha_termino|date:"l d M" }}</span>
+                                          <span class="text-xs font-bold text-gray-400 uppercase mt-1 tracking-wide">{{ perm.fecha_inicio|date:"l d M" }} al {{ perm.fecha_termino|date:"l d M" }}</span>
                                      </div>
                                  </div>
                                  <div class="text-right">
@@ -251,14 +251,14 @@
                          </div>
                         {% else %}
                         <div class="p-16 text-center opacity-30">
-                            <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Sin solicitudes para la próxima semana laboral</p>
+                            <p class="text-xs font-black text-gray-500 uppercase tracking-widest">Sin solicitudes para la próxima semana laboral</p>
                         </div>
                         {% endif %}
                     </div>
                 </div>
 
                 <!-- Licencias Próximas -->
-                <div class="bg-gray-50/20 rounded-[2.5rem] border border-gray-200 border-dashed overflow-hidden flex flex-col hover:border-solid hover:bg-white transition-all duration-500 group/next">
+                <div class="bg-gray-50/20 rounded-2xl border border-gray-200 border-dashed overflow-hidden flex flex-col hover:border-solid hover:bg-white transition-all duration-500 group/next">
                     <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
                         <h3 class="text-base font-black text-gray-600 flex items-center gap-3">
                             <i class="fas fa-clock-rotate-left opacity-40 text-lg"></i>
@@ -279,12 +279,12 @@
                                      </div>
                                      <div class="flex flex-col">
                                           <div class="flex items-center gap-2">
-                                              <span class="text-sm font-black leading-tight {% if lic.usuario.es_baja_actualmente or lic.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-700{% endif %}">{{ lic.usuario.get_full_name }}</span>
+                                              <span class="text-sm font-black leading-tight text-gray-700">{{ lic.usuario.get_full_name }}</span>
                                               {% if lic.usuario.get_funcion_display %}
-                                              <span class="text-[10px] font-bold text-gray-400">{{ lic.usuario.get_funcion_display }}</span>
+                                              <span class="text-xs font-bold text-gray-400">{{ lic.usuario.get_funcion_display }}</span>
                                               {% endif %}
                                           </div>
-                                          <span class="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-wide">{{ lic.fecha_inicio|date:"l d M" }} al {{ lic.fecha_retorno|date:"l d M" }}</span>
+                                          <span class="text-xs font-bold text-gray-400 uppercase mt-1 tracking-wide">{{ lic.fecha_inicio|date:"l d M" }} al {{ lic.fecha_retorno|date:"l d M" }}</span>
                                      </div>
                                  </div>
                                  <div class="text-right">
@@ -295,7 +295,7 @@
                          </div>
                         {% else %}
                         <div class="p-16 text-center opacity-30">
-                             <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Sin licencias proyectadas para la próxima semana laboral</p>
+                             <p class="text-xs font-black text-gray-500 uppercase tracking-widest">Sin licencias proyectadas para la próxima semana laboral</p>
                         </div>
                         {% endif %}
                     </div>

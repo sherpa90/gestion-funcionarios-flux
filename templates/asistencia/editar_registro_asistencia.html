@@ -13,7 +13,7 @@
                         Editar Registro de Asistencia
                     </h1>
                     <p class="mt-2 text-sm text-gray-600">
-                        Funcionario: <span class="{% if registro.funcionario.es_baja_actualmente or registro.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ registro.funcionario.get_full_name }}</span> | Fecha: {{ registro.fecha|date:"d/m/Y" }}
+                        Funcionario: <span class="font-semibold text-gray-900">{{ registro.funcionario.get_full_name }}</span> | Fecha: {{ registro.fecha|date:"d/m/Y" }}
                     </p>
                 </div>
                 <a href="{% url 'asistencia:detalle_usuario' user_id=registro.funcionario.id %}"
@@ -104,7 +104,7 @@
                                 <input type="radio" name="justificacion_aplica_a" value="ENTRADA" {% if form.justificacion_aplica_a.value == 'ENTRADA' %}checked{% endif %} class="text-blue-600 focus:ring-blue-500 h-4 w-4">
                                 <span class="text-xs font-bold text-gray-900">Solo Entrada</span>
                             </div>
-                            <p class="text-[11px] text-gray-500 mt-1.5 pl-6 leading-tight">
+                            <p class="text-xs text-gray-500 mt-1.5 pl-6 leading-tight">
                                 Justifica retraso o entrada. <strong>No justifica la salida</strong> (mantiene falta de salida si no marcó).
                             </p>
                         </label>
@@ -113,7 +113,7 @@
                                 <input type="radio" name="justificacion_aplica_a" value="SALIDA" {% if form.justificacion_aplica_a.value == 'SALIDA' %}checked{% endif %} class="text-amber-600 focus:ring-amber-500 h-4 w-4">
                                 <span class="text-xs font-bold text-gray-900">Solo Salida</span>
                             </div>
-                            <p class="text-[11px] text-gray-500 mt-1.5 pl-6 leading-tight">
+                            <p class="text-xs text-gray-500 mt-1.5 pl-6 leading-tight">
                                 Justifica olvido de salida. <strong>No justifica la entrada</strong> (mantiene el retraso o falta de entrada).
                             </p>
                         </label>
@@ -122,7 +122,7 @@
                                 <input type="radio" name="justificacion_aplica_a" value="AMBOS" {% if form.justificacion_aplica_a.value == 'AMBOS' or not form.justificacion_aplica_a.value %}checked{% endif %} class="text-purple-600 focus:ring-purple-500 h-4 w-4">
                                 <span class="text-xs font-bold text-gray-900">Jornada Completa</span>
                             </div>
-                            <p class="text-[11px] text-gray-500 mt-1.5 pl-6 leading-tight">
+                            <p class="text-xs text-gray-500 mt-1.5 pl-6 leading-tight">
                                 Aplica a la jornada completa (justifica tanto entrada como salida).
                             </p>
                         </label>

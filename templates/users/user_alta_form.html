@@ -9,9 +9,9 @@
             <div class="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
                 <i class="fa-solid fa-user-check text-2xl text-emerald-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-900">Dar de Alta a Funcionario</h1>
+            <h1 class="text-2xl font-bold text-gray-900">Reactivar Funcionario</h1>
             <p class="mt-2 text-sm text-gray-600">
-                <span class="{% if user.es_baja_actualmente or user.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ user.get_full_name }}</span> ({{ user.run }})
+                <span class="font-semibold text-gray-900">{{ user.get_full_name }}</span> ({{ user.run }})
             </p>
         </div>
 

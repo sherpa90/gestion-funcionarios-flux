@@ -15,7 +15,7 @@
             </li>
             <li>
                 <div class="flex items-center">
-                    <i class="fas fa-chevron-right text-gray-300 text-[10px] mx-2"></i>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs mx-2"></i>
                     <span class="text-xs font-black text-gray-900 uppercase tracking-widest">{% if object %}Editar{% else %}Nueva{% endif %} Efeméride</span>
                 </div>
             </li>
@@ -23,7 +23,7 @@
     </nav>
 
     <!-- Form Card -->
-    <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-2xl shadow-gray-200/50 overflow-hidden">
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-2xl shadow-gray-200/50 overflow-hidden">
         <div class="px-10 py-8 border-b border-gray-50 bg-gradient-to-r from-amber-50/50 to-white">
             <h3 class="text-2xl font-black text-gray-900 flex items-center gap-4">
                 <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center">
@@ -40,46 +40,46 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- Titulo -->
                 <div class="md:col-span-2 space-y-3">
-                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Actividad o Conmemoración</label>
+                    <label class="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Actividad o Conmemoración</label>
                     {{ form.titulo }}
                     {% if form.titulo.errors %}
-                        <p class="text-red-500 text-[10px] font-bold mt-1 uppercase">{{ form.titulo.errors.0 }}</p>
+                        <p class="text-red-500 text-xs font-bold mt-1 uppercase">{{ form.titulo.errors.0 }}</p>
                     {% endif %}
                 </div>
 
                 <!-- Fecha -->
                 <div class="space-y-3">
-                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha de Inicio</label>
+                    <label class="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Fecha de Inicio</label>
                     {{ form.fecha }}
                     {% if form.fecha.errors %}
-                        <p class="text-red-500 text-[10px] font-bold mt-1 uppercase">{{ form.fecha.errors.0 }}</p>
+                        <p class="text-red-500 text-xs font-bold mt-1 uppercase">{{ form.fecha.errors.0 }}</p>
                     {% endif %}
                 </div>
 
                 <!-- Fecha Hasta -->
                 <div class="space-y-3">
-                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Fecha de Término (Opcional)</label>
+                    <label class="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Fecha de Término (Opcional)</label>
                     {{ form.fecha_hasta }}
                     {% if form.fecha_hasta.errors %}
-                        <p class="text-red-500 text-[10px] font-bold mt-1 uppercase">{{ form.fecha_hasta.errors.0 }}</p>
+                        <p class="text-red-500 text-xs font-bold mt-1 uppercase">{{ form.fecha_hasta.errors.0 }}</p>
                     {% endif %}
                 </div>
 
                 <!-- Responsable -->
                 <div class="md:col-span-2 space-y-3">
-                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Responsable / Departamento</label>
+                    <label class="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Responsable / Departamento</label>
                     {{ form.responsable }}
                     {% if form.responsable.errors %}
-                        <p class="text-red-500 text-[10px] font-bold mt-1 uppercase">{{ form.responsable.errors.0 }}</p>
+                        <p class="text-red-500 text-xs font-bold mt-1 uppercase">{{ form.responsable.errors.0 }}</p>
                     {% endif %}
                 </div>
 
                 <!-- Descripcion -->
                 <div class="md:col-span-2 space-y-3">
-                    <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Descripción (Opcional)</label>
+                    <label class="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Descripción (Opcional)</label>
                     {{ form.descripcion }}
                     {% if form.descripcion.errors %}
-                        <p class="text-red-500 text-[10px] font-bold mt-1 uppercase">{{ form.descripcion.errors.0 }}</p>
+                        <p class="text-red-500 text-xs font-bold mt-1 uppercase">{{ form.descripcion.errors.0 }}</p>
                     {% endif %}
                 </div>
             </div>

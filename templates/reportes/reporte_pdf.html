@@ -109,7 +109,7 @@
         <tbody>
             {% for solicitud in solicitudes %}
             <tr>
-                <td {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ solicitud.usuario.get_full_name }}</td>
+                <td >{{ solicitud.usuario.get_full_name }}</td>
                 <td>{{ solicitud.fecha_inicio|date:"d/m/Y" }}</td>
                 <td>{{ solicitud.dias_solicitados }}</td>
                 <td>
@@ -140,7 +140,7 @@
         <tbody>
             {% for licencia in licencias %}
             <tr>
-                <td {% if licencia.usuario.es_baja_actualmente or licencia.usuario.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ licencia.usuario.get_full_name }}</td>
+                <td >{{ licencia.usuario.get_full_name }}</td>
                 <td>{{ licencia.fecha_inicio|date:"d/m/Y" }}</td>
                 <td>{{ licencia.dias }}</td>
                 <td>{{ licencia.created_at|date:"d/m/Y H:i" }}</td>

@@ -222,7 +222,7 @@
                 </td>
                 {% if item.prestamo %}
                 <td class="funcionario-cell">
-                    <span{% if item.prestamo.funcionario.es_baja_actualmente or item.prestamo.funcionario.is_on_leave %} style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ item.prestamo.funcionario.first_name }} {{ item.prestamo.funcionario.last_name }}</span>
+                    <span>{{ item.prestamo.funcionario.first_name }} {{ item.prestamo.funcionario.last_name }}</span>
                 </td>
                 <td class="rut-cell">{{ item.prestamo.funcionario.run }}</td>
                 <td>{{ item.prestamo.fecha_asignacion|date:"d/m/Y" }}</td>

@@ -314,7 +314,7 @@
     <div class="signature-section">
         <div class="signature-box">
             <div class="signature-line"></div>
-            <p class="signature-name"><span{% if director.es_baja_actualmente or director.is_on_leave %} style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ director.get_full_name|default:"Director(a)" }}</span></p>
+            <p class="signature-name"><span>{{ director.get_full_name|default:"Director(a)" }}</span></p>
             <p class="signature-title">Director(a) de Establecimiento</p>
         </div>
     </div>

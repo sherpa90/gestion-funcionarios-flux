@@ -1,85 +1,91 @@
 {% extends 'base.html' %}
 
-{% block title %}Respaldo Global del Sistema - FLUX{% endblock %}
-{% block page_title %}Disaster Recovery{% endblock %}
+{% block title %}Respaldo y Recuperación del Sistema - SGPAL{% endblock %}
+{% block page_title %}Respaldo del Sistema{% endblock %}
 
 {% block content %}
-<div class="p-4 sm:p-6 max-w-6xl mx-auto space-y-8">
+<div class="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
     
     <!-- Heading -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-5">
         <div>
-            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Recuperación Ante Desastres</h2>
-            <p class="text-gray-500 font-medium mt-1">Herramienta militar de Clonación e Inyección. Genera copias espejo o carga la plataforma a tu medida.</p>
+            <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Copia de Seguridad y Restauración</h2>
+            <p class="text-slate-600 text-sm mt-1">Generación de respaldos completos de la base de datos y restauración institucional.</p>
         </div>
-        <a href="{% url 'admin_dashboard:dashboard' %}" class="inline-flex items-center text-sm font-bold text-gray-500 hover:text-gray-800">
-            <i class="fas fa-arrow-left mr-2"></i> Volver al Inicio
+        <a href="{% url 'admin_dashboard:dashboard' %}" class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-slate-900">
+            <i class="fas fa-arrow-left mr-2"></i> Volver al Panel
         </a>
     </div>
 
     <!-- Export Section -->
-    <div class="bg-indigo-900 text-white rounded-3xl p-8 relative overflow-hidden shadow-2xl">
-        <!-- Decoration -->
-        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white opacity-5"></div>
-        <div class="absolute bottom-0 left-0 w-32 h-32 rounded-full border-4 border-white opacity-5 -mb-10 -ml-10"></div>
-        
-        <div class="relative z-10 flex flex-col md:flex-row items-center gap-8">
-            <div class="w-32 h-32 flex-shrink-0 bg-indigo-800 rounded-full flex items-center justify-center border-4 border-indigo-700 shadow-xl">
-                <i class="fas fa-download text-5xl text-indigo-200"></i>
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+        <div class="flex flex-col sm:flex-row items-start gap-6">
+            <div class="w-14 h-14 flex-shrink-0 bg-blue-50 text-blue-700 rounded-2xl flex items-center justify-center border border-blue-100">
+                <i class="fas fa-file-zipper text-2xl"></i>
             </div>
             
             <div class="flex-1">
-                <h3 class="text-2xl font-black mb-2 flex items-center gap-3">
-                    Exportar Todo el Sistema <span class="bg-indigo-500 text-[10px] px-2 py-1 rounded-md uppercase tracking-widest font-black">Clonación Zip</span>
-                </h3>
-                <p class="text-indigo-200 text-sm leading-relaxed max-w-2xl mb-6">
-                    Mapeará y exportará absolutamente toda la base de datos (PostgreSQL), incluyendo cada archivo subido al sistema 
-                    (Liquidaciones, Firmas, Permisos, Inventario de Equipos, Correos). Un archivo .zip lo empacará todo para ti.
+                <div class="flex items-center gap-3 mb-1">
+                    <h3 class="text-lg font-bold text-slate-900">
+                        Exportar Respaldo Global
+                    </h3>
+                    <span class="bg-blue-50 text-blue-700 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-blue-200">
+                        Formato ZIP
+                    </span>
+                </div>
+                <p class="text-slate-600 text-sm leading-relaxed max-w-2xl mb-5">
+                    Empaqueta la totalidad de los datos de PostgreSQL junto con los archivos almacenados en el sistema 
+                    (liquidaciones, comprobantes de licencias, firmas y registros de asistencia) en un archivo comprimido descargable.
                 </p>
-                <div class="flex gap-4">
+                <div>
                     <a href="{% url 'admin_dashboard:system_backup_export' %}"
-                       onclick="return confirm('Generar y descargar el volcado de toda la base de datos junto con los archivos media puede tomar varios segundos o minutos, dependiendo de qué tan grande esté tu base. ¿Deseas descargar el ZIP ahora mismo?');"
-                       class="inline-flex items-center px-8 py-4 bg-white text-indigo-900 text-sm font-black uppercase tracking-widest rounded-2xl hover:bg-gray-100 shadow-xl shadow-indigo-950 transition-all hover:scale-105">
-                        <i class="fas fa-box-open mr-3"></i> Exportar ZIP de Respaldo
+                       onclick="return confirm('Generar la copia completa puede tomar algunos momentos según el volumen de datos. ¿Deseas iniciar la descarga del respaldo ahora?');"
+                       class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-xl hover:bg-slate-800 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2">
+                        <i class="fas fa-download"></i>
+                        <span>Descargar Respaldo ZIP</span>
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Alert Danger -->
-    <div class="mt-8 border-t-2 border-dashed border-gray-200 pt-8">
-        <div class="bg-red-50 border-2 border-red-200 rounded-3xl p-8 relative overflow-hidden">
-            <div class="flex flex-col md:flex-row items-start gap-6">
-                <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <i class="fas fa-radiation-alt text-3xl text-red-600 animate-pulse"></i>
+    <!-- Alert / Restore Section -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+        <div class="flex flex-col sm:flex-row items-start gap-6">
+            <div class="w-14 h-14 bg-amber-50 text-amber-700 rounded-2xl flex items-center justify-center flex-shrink-0 border border-amber-200">
+                <i class="fas fa-triangle-exclamation text-2xl"></i>
+            </div>
+            <div class="flex-1">
+                <div class="flex items-center gap-3 mb-1">
+                    <h3 class="text-lg font-bold text-slate-900">Restauración de Base de Datos</h3>
+                    <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-amber-300">
+                        Operación Crítica
+                    </span>
                 </div>
-                <div class="flex-1">
-                    <h3 class="text-xl font-black text-red-800 uppercase tracking-tight mb-1">Zona de Inserción Crítica</h3>
-                    <p class="text-red-700 text-sm mb-6 font-medium">
-                        Cuidado Absoluto. Cargar un Respaldo Global sobrescribirá la base de datos de PostgreSQL y los archivos Media de Dokploy. 
-                        Este mecanismo se utiliza tras una migración de servidor limpio para repobar todos los datos dejándolos exactos como antes.
-                    </p>
+                <p class="text-slate-600 text-sm mb-5 leading-relaxed">
+                    Cargar un archivo de respaldo reemplazará los registros actuales por los contenidos en el archivo ZIP.
+                    Esta acción debe realizarse únicamente durante procesos de migración o recuperación de desastres.
+                </p>
 
-                    <form method="post" action="{% url 'admin_dashboard:system_backup_restore' %}" enctype="multipart/form-data" 
-                          onsubmit="const pw = prompt('ADVERTENCIA FINAL: Estás insertando un Backup Crítico en Fase Terminal. Escribe la frase RECUPERAR SISTEMA COMPLETAMENTE para ejecutar en el núcleo el reemplazo'); return pw === 'RECUPERAR SISTEMA COMPLETAMENTE';"
-                          class="bg-white border text-center border-red-100 p-6 rounded-2xl shadow-sm max-w-xl">
-                        {% csrf_token %}
-                        
-                        <label for="id_backup_zip" class="block w-full cursor-pointer mb-6 group">
-                            <div class="w-full border-2 border-dashed border-red-200 rounded-xl p-8 bg-red-50 group-hover:bg-red-100 transition-colors">
-                                <i class="fas fa-file-archive text-4xl text-red-400 mb-2"></i>
-                                <h4 class="font-bold text-red-800 text-sm">Selecciona el ZIP (sgpal_disaster_recovery)</h4>
-                                <p class="text-xs text-red-600 mt-1">Haz clic para subir (máx tamaño determinado por memoria)</p>
-                            </div>
-                            <input id="id_backup_zip" name="backup_zip" type="file" class="hidden" accept=".zip" required />
-                        </label>
+                <form method="post" action="{% url 'admin_dashboard:system_backup_restore' %}" enctype="multipart/form-data" 
+                      onsubmit="const pw = prompt('ADVERTENCIA: Esta acción sobrescribirá la información del sistema. Escribe la frase RECUPERAR SISTEMA COMPLETAMENTE para confirmar:'); return pw === 'RECUPERAR SISTEMA COMPLETAMENTE';"
+                      class="bg-slate-50 border border-slate-200 p-5 rounded-xl max-w-xl">
+                    {% csrf_token %}
+                    
+                    <label for="id_backup_zip" class="block w-full cursor-pointer mb-4">
+                        <div class="w-full border-2 border-dashed border-slate-300 rounded-xl p-6 bg-white hover:bg-slate-50 transition-colors text-center">
+                            <i class="fas fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
+                            <h4 class="font-semibold text-slate-800 text-sm">Selecciona el archivo ZIP de respaldo</h4>
+                            <p class="text-xs text-slate-500 mt-1">Archivos compatibles: .zip generados por SGPAL</p>
+                        </div>
+                        <input id="id_backup_zip" name="backup_zip" type="file" class="hidden" accept=".zip" required />
+                    </label>
 
-                        <button type="submit" class="w-full justify-center inline-flex items-center px-6 py-4 bg-red-600 text-white text-sm font-black uppercase tracking-widest rounded-xl hover:bg-red-700 shadow-xl shadow-red-200 transition-all">
-                            <i class="fas fa-skull-crossbones mr-3"></i> EJECUTAR RESTAURACIÓN NACIONAL
-                        </button>
-                    </form>
-                </div>
+                    <button type="submit" class="w-full justify-center inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                        <i class="fas fa-rotate"></i>
+                        <span>Confirmar y Restaurar Sistema</span>
+                    </button>
+                </form>
             </div>
         </div>
     </div>

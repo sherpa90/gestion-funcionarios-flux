@@ -172,7 +172,7 @@
         <tbody>
             {% for data in funcionarios %}
             <tr>
-                <td class="col-name" {% if data.funcionario.es_baja_actualmente or data.funcionario.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ data.funcionario.get_full_name|default:data.funcionario.username }}</td>
+                <td class="col-name" >{{ data.funcionario.get_full_name|default:data.funcionario.username }}</td>
                 <td class="col-center">{{ data.funcionario.run }}</td>
                 <td class="col-center">{{ data.atrasos_formato }}</td>
                 <td class="col-center {% if data.inasistencias > 0 %}badge-danger{% endif %}">{{ data.inasistencias }}</td>

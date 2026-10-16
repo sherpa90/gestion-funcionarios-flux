@@ -19,18 +19,18 @@
     <!-- Stats Inline -->
     <div class="flex flex-wrap gap-2 mb-4">
         <div class="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-full px-3 py-1.5">
-            <i class="fas fa-users text-blue-500 text-[10px]"></i>
-            <span class="text-[10px] font-bold text-blue-600 uppercase">Total</span>
+            <i class="fas fa-users text-blue-500 text-xs"></i>
+            <span class="text-xs font-bold text-blue-600 uppercase">Total</span>
             <span class="text-sm font-black text-blue-700">{{ funcionarios_data|length }}</span>
         </div>
         <div class="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1.5">
-            <i class="fas fa-check-circle text-emerald-500 text-[10px]"></i>
-            <span class="text-[10px] font-bold text-emerald-600 uppercase">Con Horario</span>
+            <i class="fas fa-check-circle text-emerald-500 text-xs"></i>
+            <span class="text-xs font-bold text-emerald-600 uppercase">Con Horario</span>
             <span class="text-sm font-black text-emerald-700">{{ total_con_horario }}</span>
         </div>
         <div class="flex items-center gap-2 bg-rose-50 border border-rose-100 rounded-full px-3 py-1.5">
-            <i class="fas fa-exclamation-triangle text-rose-500 text-[10px]"></i>
-            <span class="text-[10px] font-bold text-rose-600 uppercase">Sin Horario</span>
+            <i class="fas fa-exclamation-triangle text-rose-500 text-xs"></i>
+            <span class="text-xs font-bold text-rose-600 uppercase">Sin Horario</span>
             <span class="text-sm font-black text-rose-700">{{ total_sin_horario }}</span>
         </div>
     </div>
@@ -39,7 +39,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-4">
         <form method="get" class="flex items-end gap-2">
             <div class="flex-1 min-w-0">
-                <label class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Buscar funcionario</label>
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Buscar funcionario</label>
                 <input type="text" name="search" value="{{ search }}"
                        class="block w-full text-xs border-gray-200 rounded-lg h-9"
                        placeholder="Nombre, apellido o RUT...">
@@ -59,7 +59,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
             <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Funcionarios</h3>
-            <span class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{{ funcionarios_data|length }} registros</span>
+            <span class="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{{ funcionarios_data|length }} registros</span>
         </div>
 
         {% if funcionarios_data %}
@@ -68,11 +68,11 @@
             <table class="min-w-full divide-y divide-gray-50">
                 <thead class="bg-gray-50/50 sticky top-0">
                     <tr>
-                        <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Funcionario</th>
-                        <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">RUT</th>
-                        <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Horario Entrada</th>
-                        <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Estado</th>
-                        <th class="px-3 py-2 text-right text-[9px] font-bold text-gray-400 uppercase tracking-widest">Acciones</th>
+                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Funcionario</th>
+                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">RUT</th>
+                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Horario Entrada</th>
+                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Estado</th>
+                        <th class="px-3 py-2 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
@@ -81,11 +81,18 @@
                         <td class="px-3 py-2">
                             <div class="flex items-center gap-2">
                                 <div class="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
-                                    <span class="text-[9px] font-black">{{ data.funcionario.first_name.0 }}{{ data.funcionario.last_name.0 }}</span>
+                                    <span class="text-xs font-black">{{ data.funcionario.first_name.0 }}{{ data.funcionario.last_name.0 }}</span>
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="text-xs font-bold {% if data.funcionario.es_baja_actualmente or data.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ data.funcionario.get_full_name }}</div>
-                                    <div class="text-[10px] text-gray-400">{{ data.funcionario.get_role_display }}</div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-xs font-bold text-gray-900 truncate">{{ data.funcionario.get_full_name }}</span>
+                                        {% if data.funcionario.is_on_leave %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">Licencia</span>
+                                        {% elif data.funcionario.es_baja_actualmente %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">Inactivo</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-xs text-gray-400">{{ data.funcionario.get_role_display }}</div>
                                 </div>
                             </div>
                         </td>
@@ -95,30 +102,30 @@
                         </td>
                         <td class="px-3 py-2">
                             {% if data.horario and data.horario.activo %}
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                                <i class="fas fa-check mr-0.5 text-[8px]"></i>Activo
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-700">
+                                <i class="fas fa-check mr-0.5 text-xs"></i>Activo
                             </span>
                             {% else %}
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700">
-                                <i class="fas fa-times mr-0.5 text-[8px]"></i>Sin horario
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-rose-50 text-rose-700">
+                                <i class="fas fa-times mr-0.5 text-xs"></i>Sin horario
                             </span>
                             {% endif %}
                         </td>
                         <td class="px-3 py-2 text-right">
                             {% if data.horario %}
                             <a href="{% url 'asistencia:editar_horario' data.horario.pk %}"
-                               class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-lg hover:bg-blue-600 hover:text-white transition mr-1">
+                               class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-600 hover:text-white transition mr-1">
                                 <i class="fas fa-edit mr-0.5"></i> Editar
                             </a>
                             <form method="post" action="{% url 'asistencia:toggle_horario' data.horario.pk %}" class="inline" onsubmit="return confirm('¿{% if data.horario.activo %}Desactivar{% else %}Activar{% endif %} este horario?')">
                                 {% csrf_token %}
-                                <button type="submit" class="inline-flex items-center px-2 py-1 {% if data.horario.activo %}bg-amber-50 text-amber-700 hover:bg-amber-600{% else %}bg-emerald-50 text-emerald-700 hover:bg-emerald-600{% endif %} text-[10px] font-bold rounded-lg hover:text-white transition">
+                                <button type="submit" class="inline-flex items-center px-2 py-1 {% if data.horario.activo %}bg-amber-50 text-amber-700 hover:bg-amber-600{% else %}bg-emerald-50 text-emerald-700 hover:bg-emerald-600{% endif %} text-xs font-bold rounded-lg hover:text-white transition">
                                     <i class="fas fa-{% if data.horario.activo %}pause{% else %}play{% endif %} mr-0.5"></i>
                                 </button>
                             </form>
                             {% else %}
                             <a href="{% url 'asistencia:crear_horario' data.funcionario.pk %}"
-                               class="inline-flex items-center px-2 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-lg hover:bg-emerald-600 hover:text-white transition">
+                               class="inline-flex items-center px-2 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg hover:bg-emerald-600 hover:text-white transition">
                                 <i class="fas fa-plus mr-0.5"></i> Asignar
                             </a>
                             {% endif %}
@@ -136,28 +143,35 @@
                 <div class="flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2 min-w-0 flex-1">
                         <div class="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
-                            <span class="text-[10px] font-black">{{ data.funcionario.first_name.0 }}{{ data.funcionario.last_name.0 }}</span>
+                            <span class="text-xs font-black">{{ data.funcionario.first_name.0 }}{{ data.funcionario.last_name.0 }}</span>
                         </div>
                         <div class="min-w-0 flex-1">
-                            <div class="text-xs font-bold {% if data.funcionario.es_baja_actualmente or data.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ data.funcionario.get_full_name }}</div>
-                            <div class="text-[10px] text-gray-400">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs font-bold text-gray-900 truncate">{{ data.funcionario.get_full_name }}</span>
+                                {% if data.funcionario.is_on_leave %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">Licencia</span>
+                                {% elif data.funcionario.es_baja_actualmente %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">Inactivo</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-gray-400">
                                 {% if data.horario %}{{ data.horario.hora_entrada|time:"H:i" }}{% else %}Sin horario{% endif %}
                             </div>
                         </div>
                     </div>
                     <div class="flex items-center gap-1.5 flex-shrink-0">
                         {% if data.horario and data.horario.activo %}
-                        <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-emerald-100 text-emerald-700">OK</span>
+                        <span class="px-1.5 py-0.5 rounded text-xs font-extrabold bg-emerald-100 text-emerald-700">OK</span>
                         {% else %}
-                        <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-100 text-rose-700">-</span>
+                        <span class="px-1.5 py-0.5 rounded text-xs font-extrabold bg-rose-100 text-rose-700">-</span>
                         {% endif %}
                         {% if data.horario %}
                         <a href="{% url 'asistencia:editar_horario' data.horario.pk %}" class="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                            <i class="fas fa-edit text-[10px]"></i>
+                            <i class="fas fa-edit text-xs"></i>
                         </a>
                         {% else %}
                         <a href="{% url 'asistencia:crear_horario' data.funcionario.pk %}" class="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                            <i class="fas fa-plus text-[10px]"></i>
+                            <i class="fas fa-plus text-xs"></i>
                         </a>
                         {% endif %}
                     </div>

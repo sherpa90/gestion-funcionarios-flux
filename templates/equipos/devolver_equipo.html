@@ -31,20 +31,20 @@
                     <!-- Unit Data -->
                     <div class="space-y-4">
                         <h4
-                            class="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2 flex items-center">
+                            class="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2 flex items-center">
                             <i class="fas fa-laptop mr-2 text-gray-300"></i> Datos del Equipo
                         </h4>
                         <div class="space-y-3">
                             <div>
-                                <div class="text-[10px] text-gray-500 font-bold uppercase">Equipo</div>
+                                <div class="text-xs text-gray-500 font-bold uppercase">Equipo</div>
                                 <div class="text-sm font-bold text-gray-900">{{ prestamo.equipo.marca }} {{ prestamo.equipo.modelo }}</div>
                             </div>
                             <div>
-                                <div class="text-[10px] text-gray-500 font-bold uppercase">Inventario / Serie</div>
+                                <div class="text-xs text-gray-500 font-bold uppercase">Inventario / Serie</div>
                                 <div class="text-sm font-mono text-blue-700 italic-none">#{{ prestamo.equipo.numero_inventario }} | SN:{{ prestamo.equipo.numero_serie|striptags }}</div>
                             </div>
                             <div>
-                                <div class="text-[10px] text-gray-500 font-bold uppercase">Fecha de Origen</div>
+                                <div class="text-xs text-gray-500 font-bold uppercase">Fecha de Origen</div>
                                 <div class="text-sm font-bold text-gray-900">{{ prestamo.equipo.fecha_origen|date:"d/m/Y"|default:"No registrada" }}</div>
                             </div>
                         </div>
@@ -53,16 +53,16 @@
                     <!-- Loan Data -->
                     <div class="space-y-4">
                         <h4
-                            class="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2 flex items-center">
+                            class="text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50 pb-2 flex items-center">
                             <i class="fas fa-user mr-2 text-gray-300"></i> Préstamo Actual
                         </h4>
                         <div class="space-y-3">
                             <div>
-                                <div class="text-[10px] text-gray-500 font-bold uppercase">Funcionario</div>
-                                <div class="text-sm font-bold {% if prestamo.funcionario.es_baja_actualmente or prestamo.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ prestamo.funcionario.get_full_name }}</div>
+                                <div class="text-xs text-gray-500 font-bold uppercase">Funcionario</div>
+                                <div class="text-sm font-bold text-gray-900">{{ prestamo.funcionario.get_full_name }}</div>
                             </div>
                             <div>
-                                <div class="text-[10px] text-gray-500 font-bold uppercase">Asignado el</div>
+                                <div class="text-xs text-gray-500 font-bold uppercase">Asignado el</div>
                                 <div class="text-sm font-bold text-gray-900">{{ prestamo.fecha_asignacion|date:"d M, Y" }}</div>
                             </div>
                         </div>
@@ -72,7 +72,7 @@
                 <!-- Observations if any -->
                 {% if prestamo.observaciones %}
                 <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Comentarios de
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Comentarios de
                         Entrega</div>
                     <p class="text-sm text-gray-600 italic">"{{ prestamo.observaciones }}"</p>
                 </div>

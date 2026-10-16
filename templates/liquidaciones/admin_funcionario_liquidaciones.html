@@ -10,15 +10,15 @@
         <ol class="inline-flex items-center space-x-1 md:space-x-2">
             <li class="inline-flex items-center">
                 <a href="{% url 'admin_liquidaciones_overview' %}"
-                    class="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-blue-600 transition-colors">
+                    class="inline-flex items-center text-xs font-black uppercase tracking-widest text-gray-500 hover:text-blue-600 transition-colors">
                     <i class="fas fa-th-large mr-2 text-[12px]"></i>
                     Panel General
                 </a>
             </li>
             <li>
                 <div class="flex items-center">
-                    <i class="fas fa-chevron-right text-gray-300 text-[8px] mx-1"></i>
-                    <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">Detalle Funcionario</span>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs mx-1"></i>
+                    <span class="text-xs font-black uppercase tracking-widest text-gray-400">Detalle Funcionario</span>
                 </div>
             </li>
         </ol>
@@ -35,12 +35,12 @@
                     </span>
                 </div>
                 <div>
-                    <h2 class="text-2xl font-black {% if funcionario.es_baja_actualmente or funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} tracking-tight">{{ funcionario.get_full_name }}</h2>
+                    <h2 class="text-2xl font-black text-gray-900 tracking-tight">{{ funcionario.get_full_name }}</h2>
                     <div class="flex flex-wrap items-center gap-3 mt-1.5">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-700">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black uppercase tracking-widest bg-gray-100 text-gray-700">
                             {{ funcionario.run }}
                         </span>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-700">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black uppercase tracking-widest bg-blue-50 text-blue-700">
                             {{ funcionario.get_role_display }}
                         </span>
                     </div>
@@ -51,15 +51,15 @@
             <div class="flex items-center gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
                 <div class="bg-gray-50/50 px-4 py-2.5 rounded-2xl border border-gray-100 text-center min-w-[80px]">
                     <p class="text-xl font-black text-gray-900 leading-none">{{ estadisticas_funcionario.total_liquidaciones }}</p>
-                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1.5">Archivos</p>
+                    <p class="text-xs font-black text-gray-400 uppercase tracking-widest mt-1.5">Archivos</p>
                 </div>
                 <div class="bg-gray-50/50 px-4 py-2.5 rounded-2xl border border-gray-100 text-center min-w-[80px]">
                     <p class="text-xl font-black text-gray-900 leading-none">{{ estadisticas_funcionario.anios_con_liquidaciones }}</p>
-                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1.5">Años</p>
+                    <p class="text-xs font-black text-gray-400 uppercase tracking-widest mt-1.5">Años</p>
                 </div>
                 <div class="bg-blue-50/50 px-4 py-2.5 rounded-2xl border border-blue-50 text-center min-w-[80px]">
                     <p class="text-xl font-black text-blue-700 leading-none">{{ estadisticas_funcionario.promedio_por_anio }}</p>
-                    <p class="text-[9px] font-black text-blue-400 uppercase tracking-widest mt-1.5">Promedio</p>
+                    <p class="text-xs font-black text-blue-400 uppercase tracking-widest mt-1.5">Promedio</p>
                 </div>
             </div>
             {% endif %}
@@ -76,18 +76,18 @@
                 onclick="toggleYear('{{ anio }}')">
                 <div class="flex items-center gap-4">
                     <div id="wrapper-icon-{{ anio }}" class="w-8 h-8 rounded-xl bg-white border border-gray-200 flex items-center justify-center transition-all group-hover:border-blue-500 group-hover:bg-blue-50">
-                        <i id="icon-{{ anio }}" class="fas fa-plus text-[10px] text-gray-400 group-hover:text-blue-600 transition-all"></i>
+                        <i id="icon-{{ anio }}" class="fas fa-plus text-xs text-gray-400 group-hover:text-blue-600 transition-all"></i>
                     </div>
                     <div>
                         <span class="text-sm font-black text-gray-900 uppercase tracking-widest">Año {{ anio }}</span>
-                        <span class="ml-2 text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full uppercase">
+                        <span class="ml-2 text-xs font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full uppercase">
                             {{ liquidaciones_anio|length }} registro{{ liquidaciones_anio|length|pluralize }}
                         </span>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
                     <a href="{% url 'admin_descargar_liquidaciones_funcionario' funcionario.id anio %}"
-                        class="px-4 py-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 transition-all shadow-sm hover:shadow-blue-100" 
+                        class="px-4 py-2 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 transition-all shadow-sm hover:shadow-blue-100" 
                         onclick="event.stopPropagation()">
                         <i class="fas fa-file-zipper mr-2"></i>Descargar Todo
                     </a>
@@ -102,13 +102,13 @@
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 rounded-2xl bg-white border border-gray-100 flex items-center justify-center flex-shrink-0 group-hover/item:border-blue-200 shadow-sm">
                             <div class="text-center">
-                                <p class="text-[10px] font-black text-blue-600 leading-none">{{ liquidacion.mes_nombre|slice:":3"|upper }}</p>
+                                <p class="text-xs font-black text-blue-600 leading-none">{{ liquidacion.mes_nombre|slice:":3"|upper }}</p>
                                 <p class="text-xs font-black text-gray-900 mt-0.5">{{ liquidacion.anio }}</p>
                             </div>
                         </div>
                         <div>
                             <p class="text-sm font-black text-gray-900">Liquidación de Sueldo</p>
-                            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{{ liquidacion.mes_nombre }} {{ liquidacion.anio }}</p>
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">{{ liquidacion.mes_nombre }} {{ liquidacion.anio }}</p>
                         </div>
                     </div>
 
@@ -147,7 +147,7 @@
     </div>
     {% else %}
     <!-- Empty State -->
-    <div class="bg-white rounded-[40px] border border-gray-100 shadow-sm p-12 text-center">
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
         <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
             <i class="fas fa-file-invoice-dollar text-gray-200 text-4xl"></i>
         </div>

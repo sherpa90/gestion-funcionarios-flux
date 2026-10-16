@@ -74,7 +74,7 @@
         <tbody>
             {% for data in funcionarios %}
             <tr>
-                <td {% if data.funcionario.es_baja_actualmente or data.funcionario.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ data.funcionario.get_full_name|default:data.funcionario.username }}</td>
+                <td >{{ data.funcionario.get_full_name|default:data.funcionario.username }}</td>
                 <td>{{ data.funcionario.run }}</td>
                 <td>{{ data.atrasos }}</td>
                 <td>{{ data.inasistencias }}</td>

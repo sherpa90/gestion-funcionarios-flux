@@ -24,15 +24,15 @@
         <div>
           <div class="flex flex-wrap items-center gap-2 mb-1">
             <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Reportes Institucionales</h1>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-wider">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-wider">
               Consolidado
             </span>
             {% if filtros.year %}
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
               Año {{ filtros.year }}
             </span>
             {% else %}
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
               Todos los años
             </span>
             {% endif %}
@@ -64,7 +64,7 @@
                   class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition-all cursor-pointer">
             <i class="fa-solid fa-layer-group"></i>
             <span>Más Informes</span>
-            <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+            <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
           </button>
 
           <div x-show="open"
@@ -77,9 +77,9 @@
                class="absolute right-0 mt-2 w-72 max-w-[90vw] rounded-2xl bg-white border border-slate-200 shadow-2xl py-2 z-50 focus:outline-none ring-1 ring-black/5"
                style="display: none;">
             
-            <div class="px-3.5 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center justify-between">
+            <div class="px-3.5 py-1.5 text-xs font-black text-slate-400 uppercase tracking-wider flex items-center justify-between">
               <span>Asistencia & Horarios</span>
-              <i class="fa-solid fa-clock text-[10px] text-slate-300"></i>
+              <i class="fa-solid fa-clock text-xs text-slate-300"></i>
             </div>
             
             <button type="button" @click="open = false; openModal('horarios')"
@@ -89,7 +89,7 @@
               </div>
               <div class="min-w-0">
                 <p class="truncate font-bold">Horarios Semanales</p>
-                <p class="text-[10px] text-slate-400 font-normal">Excel y PDF por funcionario</p>
+                <p class="text-xs text-slate-400 font-normal">Excel y PDF por funcionario</p>
               </div>
             </button>
 
@@ -100,7 +100,7 @@
               </div>
               <div class="min-w-0">
                 <p class="truncate font-bold">Informe DAEM (General)</p>
-                <p class="text-[10px] text-slate-400 font-normal">Consolidado mensual</p>
+                <p class="text-xs text-slate-400 font-normal">Consolidado mensual</p>
               </div>
             </button>
 
@@ -111,7 +111,7 @@
               </div>
               <div class="min-w-0">
                 <p class="truncate font-bold">Informe DAEM 2 (Asistencia)</p>
-                <p class="text-[10px] text-slate-400 font-normal">Detalle de atrasos e inasistencias</p>
+                <p class="text-xs text-slate-400 font-normal">Detalle de atrasos e inasistencias</p>
               </div>
             </button>
 
@@ -122,7 +122,7 @@
               </div>
               <div class="min-w-0">
                 <p class="truncate font-bold">Informe DAEM 3</p>
-                <p class="text-[10px] text-slate-400 font-normal">Docentes / Asistentes</p>
+                <p class="text-xs text-slate-400 font-normal">Docentes / Asistentes</p>
               </div>
             </button>
 
@@ -133,15 +133,15 @@
               </div>
               <div class="min-w-0">
                 <p class="truncate font-bold">Informe CLA</p>
-                <p class="text-[10px] text-slate-400 font-normal">Asistencia laboral CLA</p>
+                <p class="text-xs text-slate-400 font-normal">Asistencia laboral CLA</p>
               </div>
             </button>
 
             <div class="my-1.5 border-t border-slate-100"></div>
 
-            <div class="px-3.5 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center justify-between">
+            <div class="px-3.5 py-1.5 text-xs font-black text-slate-400 uppercase tracking-wider flex items-center justify-between">
               <span>Permisos & Justificaciones</span>
-              <i class="fa-solid fa-calendar-check text-[10px] text-slate-300"></i>
+              <i class="fa-solid fa-calendar-check text-xs text-slate-300"></i>
             </div>
 
             <button type="button" @click="open = false; openModal('mensual')"
@@ -151,7 +151,7 @@
               </div>
               <div class="min-w-0">
                 <p class="truncate font-bold">Mensual Días Administrativos</p>
-                <p class="text-[10px] text-slate-400 font-normal">Control mensual de saldos</p>
+                <p class="text-xs text-slate-400 font-normal">Control mensual de saldos</p>
               </div>
             </button>
 
@@ -162,7 +162,7 @@
               </div>
               <div class="min-w-0">
                 <p class="truncate font-bold">Justificaciones Aprobadas</p>
-                <p class="text-[10px] text-slate-400 font-normal">Excel y PDF de justificaciones</p>
+                <p class="text-xs text-slate-400 font-normal">Excel y PDF de justificaciones</p>
               </div>
             </button>
           </div>
@@ -181,7 +181,7 @@
         <i class="fa-solid fa-users text-sm"></i>
       </div>
       <div class="min-w-0">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Funcionarios</p>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider truncate">Funcionarios</p>
         <p class="text-lg sm:text-xl font-black text-slate-900">{{ kpi_summary.total_funcionarios }}</p>
       </div>
     </div>
@@ -192,10 +192,10 @@
         <i class="fa-solid fa-calendar-check text-sm"></i>
       </div>
       <div class="min-w-0">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Días Adm. Usados</p>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider truncate">Días Adm. Usados</p>
         <div class="flex items-baseline gap-1.5">
           <p class="text-lg sm:text-xl font-black text-slate-900">{{ kpi_summary.total_dias_usados|floatformat:1 }}</p>
-          <span class="text-[10px] text-slate-400 font-semibold truncate">prom. {{ kpi_summary.promedio_dias_disponibles }} disp.</span>
+          <span class="text-xs text-slate-400 font-semibold truncate">prom. {{ kpi_summary.promedio_dias_disponibles }} disp.</span>
         </div>
       </div>
     </div>
@@ -206,10 +206,10 @@
         <i class="fa-solid fa-notes-medical text-sm"></i>
       </div>
       <div class="min-w-0">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Licencias Médicas</p>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider truncate">Licencias Médicas</p>
         <div class="flex items-baseline gap-1.5">
           <p class="text-lg sm:text-xl font-black text-slate-900">{{ kpi_summary.total_licencias }}</p>
-          <span class="text-[10px] text-slate-400 font-semibold truncate">({{ kpi_summary.total_dias_licencias }} días)</span>
+          <span class="text-xs text-slate-400 font-semibold truncate">({{ kpi_summary.total_dias_licencias }} días)</span>
         </div>
       </div>
     </div>
@@ -220,12 +220,12 @@
         <i class="fa-solid fa-clock text-sm"></i>
       </div>
       <div class="min-w-0">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Atrasos</p>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider truncate">Atrasos</p>
         <div class="flex items-baseline gap-1.5">
           <p class="text-lg sm:text-xl font-black {% if kpi_summary.total_atrasos > 0 %}text-amber-600{% else %}text-slate-900{% endif %}">
             {{ kpi_summary.total_atrasos }}
           </p>
-          <span class="text-[10px] text-slate-400 font-semibold truncate">({{ kpi_summary.total_minutos_atraso }} min)</span>
+          <span class="text-xs text-slate-400 font-semibold truncate">({{ kpi_summary.total_minutos_atraso }} min)</span>
         </div>
       </div>
     </div>
@@ -236,7 +236,7 @@
         <i class="fa-solid fa-user-xmark text-sm"></i>
       </div>
       <div class="min-w-0">
-        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Inasistencias</p>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider truncate">Inasistencias</p>
         <p class="text-lg sm:text-xl font-black {% if kpi_summary.total_inasistencias > 0 %}text-rose-600{% else %}text-slate-900{% endif %}">
           {{ kpi_summary.total_inasistencias }}
         </p>
@@ -253,7 +253,7 @@
               class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white text-slate-900 shadow-sm">
         <i class="fa-solid fa-table-list text-blue-600"></i>
         <span>Listado Consolidado</span>
-        <span class="px-1.5 py-0.5 rounded-full bg-slate-100 text-[10px] text-slate-600">{{ total_count }}</span>
+        <span class="px-1.5 py-0.5 rounded-full bg-slate-100 text-xs text-slate-600">{{ total_count }}</span>
       </button>
       <button type="button" id="tab-btn-estadisticas" onclick="switchMainTab('estadisticas')"
               class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900">
@@ -288,7 +288,7 @@
 
         <!-- Search Bar (5 cols) -->
         <div class="sm:col-span-2 lg:col-span-4">
-          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 ml-0.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 ml-0.5">
             Búsqueda de Funcionario
           </label>
           <div class="relative">
@@ -306,7 +306,7 @@
 
         <!-- Year Selector (2 cols) -->
         <div class="lg:col-span-2">
-          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 ml-0.5">Año</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 ml-0.5">Año</label>
           <select name="year" class="w-full py-2 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none font-medium">
             <option value="" {% if not filtros.year %}selected{% endif %}>— Todos los años —</option>
             {% for y in years %}
@@ -317,7 +317,7 @@
 
         <!-- Month Selector (2 cols) -->
         <div class="lg:col-span-2">
-          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 ml-0.5">Mes</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 ml-0.5">Mes</label>
           <select name="mes" class="w-full py-2 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none font-medium">
             <option value="" {% if not filtros.mes %}selected{% endif %}>— Todos los meses —</option>
             <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
@@ -337,7 +337,7 @@
 
         <!-- Date Range Desde (2 cols) -->
         <div class="lg:col-span-2">
-          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 ml-0.5">Desde</label>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 ml-0.5">Desde</label>
           <input type="date" name="fecha_inicio" value="{{ filtros.fecha_inicio }}"
                  class="w-full py-2 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none font-medium">
         </div>
@@ -346,7 +346,7 @@
         <div class="sm:col-span-2 lg:col-span-2 flex gap-2">
           <button type="submit"
                   class="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all">
-            <i class="fa-solid fa-filter text-[10px]"></i>
+            <i class="fa-solid fa-filter text-xs"></i>
             <span>Filtrar</span>
           </button>
           {% if filtros.search or filtros.mes or filtros.fecha_inicio or filtros.fecha_fin %}
@@ -365,7 +365,7 @@
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <tr class="bg-slate-50/80 border-b border-slate-200/80 text-xs font-bold uppercase tracking-wider text-slate-500">
               <!-- Funcionario -->
               <th scope="col" class="py-3 px-4 cursor-pointer hover:bg-slate-100/70 transition-colors" onclick="applySort('{% if current_sort == 'name' %}name_desc{% else %}name{% endif %}')">
                 <div class="flex items-center gap-1.5">
@@ -436,8 +436,8 @@
                     {{ emp.funcionario.first_name|first }}{{ emp.funcionario.last_name|first }}
                   </div>
                   <div class="min-w-0">
-                    <p class="font-bold {% if emp.funcionario.es_baja_actualmente or emp.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-slate-900{% endif %} text-xs sm:text-sm truncate leading-snug">{{ emp.funcionario.get_full_name }}</p>
-                    <div class="flex items-center gap-2 text-[11px] text-slate-400 font-medium mt-0.5">
+                    <p class="font-bold text-slate-900 text-xs sm:text-sm truncate leading-snug">{{ emp.funcionario.get_full_name }}</p>
+                    <div class="flex items-center gap-2 text-xs text-slate-400 font-medium mt-0.5">
                       <span>RUN: {{ emp.funcionario.run }}</span>
                       {% if emp.cargo %}
                       <span>•</span>
@@ -473,11 +473,11 @@
               <!-- Días Disponibles Progress Bar -->
               <td class="py-3 px-4">
                 <div class="space-y-1">
-                  <div class="flex items-center justify-between text-[11px] font-bold">
+                  <div class="flex items-center justify-between text-xs font-bold">
                     <span class="{% if emp.dias_disponibles < 2 %}text-rose-600{% elif emp.dias_disponibles < 4 %}text-amber-600{% else %}text-emerald-700{% endif %}">
                       {{ emp.dias_disponibles|floatformat:1 }} disp.
                     </span>
-                    <span class="text-slate-400 text-[10px]">tope 6.0</span>
+                    <span class="text-slate-400 text-xs">tope 6.0</span>
                   </div>
                   <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/60">
                     <div class="h-full rounded-full transition-all duration-300 {% if emp.dias_disponibles < 2 %}bg-rose-500{% elif emp.dias_disponibles < 4 %}bg-amber-500{% else %}bg-emerald-500{% endif %}"
@@ -555,8 +555,8 @@
               {{ emp.funcionario.first_name|first }}{{ emp.funcionario.last_name|first }}
             </div>
             <div class="min-w-0">
-              <p class="font-bold {% if emp.funcionario.es_baja_actualmente or emp.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-slate-900{% endif %} text-sm truncate">{{ emp.funcionario.get_full_name }}</p>
-              <p class="text-[11px] text-slate-400">RUN: {{ emp.funcionario.run }}</p>
+              <p class="font-bold text-slate-900 text-sm truncate">{{ emp.funcionario.get_full_name }}</p>
+              <p class="text-xs text-slate-400">RUN: {{ emp.funcionario.run }}</p>
             </div>
           </div>
           <!-- Mobile Row Action Icons -->
@@ -579,21 +579,21 @@
         <!-- Metric Badges Row -->
         <div class="grid grid-cols-3 gap-2 text-center text-xs">
           <div class="bg-slate-50 p-2 rounded-xl border border-slate-100">
-            <span class="block text-[9px] font-bold text-slate-400 uppercase">Inasistencias</span>
+            <span class="block text-xs font-bold text-slate-400 uppercase">Inasistencias</span>
             <span class="font-black {% if emp.total_inasistencias > 0 %}text-rose-600{% else %}text-slate-700{% endif %}">
               {{ emp.total_inasistencias }}
             </span>
           </div>
           <div class="bg-slate-50 p-2 rounded-xl border border-slate-100">
-            <span class="block text-[9px] font-bold text-slate-400 uppercase">Atrasos</span>
+            <span class="block text-xs font-bold text-slate-400 uppercase">Atrasos</span>
             <span class="font-black {% if emp.total_atrasos > 0 %}text-amber-600{% else %}text-slate-700{% endif %}">
               {{ emp.total_atrasos }}
             </span>
           </div>
           <div class="bg-slate-50 p-2 rounded-xl border border-slate-100">
-            <span class="block text-[9px] font-bold text-slate-400 uppercase">Licencias</span>
+            <span class="block text-xs font-bold text-slate-400 uppercase">Licencias</span>
             <span class="font-black {% if emp.total_licencias > 0 %}text-purple-600{% else %}text-slate-700{% endif %}">
-              {{ emp.total_licencias }} <span class="text-[10px] text-slate-400">({{ emp.dias_licencias }}d)</span>
+              {{ emp.total_licencias }} <span class="text-xs text-slate-400">({{ emp.dias_licencias }}d)</span>
             </span>
           </div>
         </div>
@@ -633,7 +633,7 @@
         {% if page_obj.has_previous %}
         <a href="?page=1{% if filtros.search %}&search={{ filtros.search }}{% endif %}{% if filtros.year %}&year={{ filtros.year }}{% endif %}{% if filtros.mes %}&mes={{ filtros.mes }}{% endif %}{% if filtros.fecha_inicio %}&fecha_inicio={{ filtros.fecha_inicio }}{% endif %}{% if filtros.fecha_fin %}&fecha_fin={{ filtros.fecha_fin }}{% endif %}&sort={{ current_sort }}&paginate_by={{ paginate_by }}"
            class="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium" title="Primera">
-          <i class="fa-solid fa-angles-left text-[10px]"></i>
+          <i class="fa-solid fa-angles-left text-xs"></i>
         </a>
         <a href="?page={{ page_obj.previous_page_number }}{% if filtros.search %}&search={{ filtros.search }}{% endif %}{% if filtros.year %}&year={{ filtros.year }}{% endif %}{% if filtros.mes %}&mes={{ filtros.mes }}{% endif %}{% if filtros.fecha_inicio %}&fecha_inicio={{ filtros.fecha_inicio }}{% endif %}{% if filtros.fecha_fin %}&fecha_fin={{ filtros.fecha_fin }}{% endif %}&sort={{ current_sort }}&paginate_by={{ paginate_by }}"
            class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium">
@@ -652,7 +652,7 @@
         </a>
         <a href="?page={{ paginator.num_pages }}{% if filtros.search %}&search={{ filtros.search }}{% endif %}{% if filtros.year %}&year={{ filtros.year }}{% endif %}{% if filtros.mes %}&mes={{ filtros.mes }}{% endif %}{% if filtros.fecha_inicio %}&fecha_inicio={{ filtros.fecha_inicio }}{% endif %}{% if filtros.fecha_fin %}&fecha_fin={{ filtros.fecha_fin }}{% endif %}&sort={{ current_sort }}&paginate_by={{ paginate_by }}"
            class="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium" title="Última">
-          <i class="fa-solid fa-angles-right text-[10px]"></i>
+          <i class="fa-solid fa-angles-right text-xs"></i>
         </a>
         {% endif %}
       </div>
@@ -676,7 +676,7 @@
               </div>
               <h3 class="font-bold text-slate-800 text-sm">Permisos Administrativos</h3>
             </div>
-            <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Año {{ stats.year }}</span>
+            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Año {{ stats.year }}</span>
           </div>
           <div class="h-56 relative w-full">
             <canvas id="chartPermisos"></canvas>
@@ -698,7 +698,7 @@
               </div>
               <h3 class="font-bold text-slate-800 text-sm">Licencias Médicas</h3>
             </div>
-            <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Año {{ stats.year }}</span>
+            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Año {{ stats.year }}</span>
           </div>
           <div class="h-56 relative w-full">
             <canvas id="chartLicencias"></canvas>
@@ -720,7 +720,7 @@
               </div>
               <h3 class="font-bold text-slate-800 text-sm">Minutos de Atraso</h3>
             </div>
-            <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Año {{ stats.year }}</span>
+            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Año {{ stats.year }}</span>
           </div>
           <div class="h-56 relative w-full">
             <canvas id="chartAtrasos"></canvas>
@@ -785,14 +785,14 @@
     </div>
     <div class="space-y-3">
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Año</label>
         <select id="m-daem-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="">— Todos —</option>
           {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
         </select>
       </div>
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Mes</label>
         <select id="m-daem-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="">— Todos —</option>
           <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
@@ -839,13 +839,13 @@
     </div>
     <div class="space-y-3">
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Año</label>
         <select id="m-asistencia-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
         </select>
       </div>
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Mes</label>
         <select id="m-asistencia-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
           <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
@@ -891,20 +891,20 @@
     </div>
     <div class="space-y-3">
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Tipo de Personal</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Tipo de Personal</label>
         <select id="m-daem3-tipo" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="DOCENTE">Docentes</option>
           <option value="ASISTENTE">Asistentes de la Educación</option>
         </select>
       </div>
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Año</label>
         <select id="m-daem3-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
         </select>
       </div>
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Mes</label>
         <select id="m-daem3-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
           <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
@@ -944,7 +944,7 @@
         </div>
         <div>
           <h3 class="font-bold text-slate-900 text-sm">Informe CLA</h3>
-          <p class="text-[10px] text-slate-500">Atrasos, inasistencias y omisiones (sin entrada/salida/ambas)</p>
+          <p class="text-xs text-slate-500">Atrasos, inasistencias y omisiones (sin entrada/salida/ambas)</p>
         </div>
       </div>
       <button type="button" onclick="closeModal('cla')" class="text-slate-400 hover:text-slate-600 text-sm">
@@ -953,20 +953,20 @@
     </div>
     <div class="space-y-3">
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Tipo de Personal</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Tipo de Personal</label>
         <select id="m-cla-tipo" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="DOCENTE">Docentes</option>
           <option value="ASISTENTE">Asistentes de la Educación</option>
         </select>
       </div>
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Año</label>
         <select id="m-cla-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
         </select>
       </div>
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Mes</label>
         <select id="m-cla-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
           <option value="2"  {% if filtros.mes == '2'  %}selected{% endif %}>Febrero</option>
@@ -1012,14 +1012,14 @@
     </div>
     <div class="space-y-3">
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Año</label>
         <select id="m-mensual-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="">— Todos —</option>
           {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
         </select>
       </div>
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Mes</label>
         <select id="m-mensual-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="">— Todos —</option>
           <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
@@ -1066,14 +1066,14 @@
     </div>
     <div class="space-y-3">
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Año</label>
         <select id="m-excel-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="">— Todos —</option>
           {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
         </select>
       </div>
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Mes</label>
         <select id="m-excel-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="">— Todos —</option>
           <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
@@ -1114,14 +1114,14 @@
     </div>
     <div class="space-y-3">
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Año</label>
         <select id="m-pdf-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="">— Todos —</option>
           {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
         </select>
       </div>
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Mes</label>
         <select id="m-pdf-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="">— Todos —</option>
           <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
@@ -1162,14 +1162,14 @@
     </div>
     <div class="space-y-3">
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Año</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Año</label>
         <select id="m-justificaciones-year" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="">— Todos —</option>
           {% for y in years %}<option value="{{ y }}" {% if filtros.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}
         </select>
       </div>
       <div>
-        <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mes</label>
+        <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Mes</label>
         <select id="m-justificaciones-mes" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:bg-white font-medium">
           <option value="">— Todos —</option>
           <option value="1"  {% if filtros.mes == '1'  %}selected{% endif %}>Enero</option>
@@ -1203,7 +1203,7 @@
 <!-- ======================================================= -->
 <!-- 7. SCRIPTS: MODALES, TABS, ORDENAMIENTO & CHARTS         -->
 <!-- ======================================================= -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
   // Manejo de Modales Limpios (sin tocar scroll de body)
   function openModal(id) {

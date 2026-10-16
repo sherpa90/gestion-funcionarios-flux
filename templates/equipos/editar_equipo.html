@@ -13,7 +13,7 @@
             Regresar al Panel de Inventario
         </a>
 
-        <div class="bg-white rounded-[2rem] shadow-2xl shadow-blue-50/50 border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-2xl shadow-blue-50/50 border border-gray-100 overflow-hidden">
             <!-- Header -->
             <div class="px-8 py-6 border-b border-gray-50 bg-gray-50/30 flex items-center justify-between">
                 <div class="flex items-center">
@@ -29,7 +29,7 @@
                     </div>
                 </div>
                 <div class="hidden sm:block">
-                    <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider
+                    <span class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider
                         {% if equipo.estado ==  'DISPONIBLE' %}bg-green-50 text-green-700
                         {% elif equipo.estado ==  'ASIGNADO' %}bg-blue-50 text-blue-700
                         {% elif equipo.estado ==  'EN_REPARACION' %}bg-yellow-50 text-yellow-700
@@ -156,7 +156,7 @@
                     </div>
                     <div class="space-y-3">
                         <label
-                            class="block text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1">Cambiar
+                            class="block text-xs font-black text-indigo-400 uppercase tracking-widest ml-1">Cambiar
                             Funcionario Vinculado</label>
                         <select name="funcionario" id="id_funcionario" class="w-full">
                             <option value="">— Ninguno (Desvincular) —</option>
@@ -165,13 +165,13 @@
                             {% endfor %}
                         </select>
                         {% if prestamo_actual %}
-                        <p class="text-[10px] text-indigo-500 font-bold italic-none mt-2 flex items-center">
+                        <p class="text-xs text-indigo-500 font-bold italic-none mt-2 flex items-center">
                             <i class="fas fa-check-circle mr-1 opacity-50"></i>
-                            Vinculado actualmente a: <span class="{% if prestamo_actual.funcionario.es_baja_actualmente or prestamo_actual.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ prestamo_actual.funcionario.get_full_name }}</span> desde el {{
+                            Vinculado actualmente a: <span class="font-bold text-indigo-700">{{ prestamo_actual.funcionario.get_full_name }}</span> desde el {{
                             prestamo_actual.fecha_asignacion|date:"d/m/Y" }}.
                         </p>
                         {% else %}
-                        <p class="text-[10px] text-gray-400 font-bold italic-none mt-2 flex items-center">
+                        <p class="text-xs text-gray-400 font-bold italic-none mt-2 flex items-center">
                             <i class="fas fa-info-circle mr-1 opacity-50"></i>
                             Esta unidad no tiene responsable asignado actualmente.
                         </p>

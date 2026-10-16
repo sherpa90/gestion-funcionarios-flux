@@ -60,7 +60,7 @@
 
         {% if form.non_field_errors %}
         {% for error in form.non_field_errors %}
-        <div class="p-5 {% if 'Advertencia:' in error %}bg-yellow-50 rounded-[2rem] border border-yellow-100{% else %}bg-red-50 rounded-[2rem] border border-red-100{% endif %} flex items-start gap-4 animate-in">
+        <div class="p-5 {% if 'Advertencia:' in error %}bg-yellow-50 rounded-2xl border border-yellow-100{% else %}bg-red-50 rounded-2xl border border-red-100{% endif %} flex items-start gap-4 animate-in">
             <div class="w-10 h-10 rounded-xl {% if 'Advertencia:' in error %}bg-yellow-500{% else %}bg-red-500{% endif %} text-white flex items-center justify-center flex-shrink-0">
                 <i class="fas {% if 'Advertencia:' in error %}fa-exclamation-triangle{% else %}fa-exclamation-triangle{% endif %}"></i>
             </div>
@@ -79,8 +79,8 @@
         <div class="space-y-6">
             <!-- User Selection (Visible for Admins/Secretaries) -->
             {% if user.role == 'SECRETARIA' or user.role == 'ADMIN' %}
-            <div class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 space-y-4">
-                <label class="block text-[10px] font-black text-blue-600 uppercase tracking-widest">
+            <div class="bg-white p-5 sm:p-8 rounded-2xl border border-gray-100 shadow-xl shadow-blue-50/50 space-y-4">
+                <label class="block text-xs font-black text-blue-600 uppercase tracking-widest">
                     Funcionario Responsable
                 </label>
                 <div class="relative">
@@ -91,28 +91,28 @@
                     </div>
                 </div>
                 {% if form.usuario.errors %}
-                <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{ form.usuario.errors.0 }}
+                <p class="text-xs text-red-500 font-bold uppercase tracking-widest">{{ form.usuario.errors.0 }}
                 </p>
                 {% endif %}
-                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Busca por RUN o nombre
+                <p class="text-xs text-gray-400 font-bold uppercase tracking-widest">Busca por RUN o nombre
                     completo.</p>
             </div>
             {% endif %}
 
             <!-- Type Selection -->
-            <div class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 space-y-4">
-                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            <div class="bg-white p-5 sm:p-8 rounded-2xl border border-gray-100 shadow-xl shadow-blue-50/50 space-y-4">
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest">
                     Tipo de Licencia
                 </label>
                 {{ form.tipo }}
                 {% if form.tipo.errors %}
-                <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{ form.tipo.errors.0 }}</p>
+                <p class="text-xs text-red-500 font-bold uppercase tracking-widest">{{ form.tipo.errors.0 }}</p>
                 {% endif %}
             </div>
 
             <!-- Aviso Licencia por Fallecimiento (oculto por defecto, activado por JS) -->
             <div id="aviso-fallecimiento"
-                class="hidden p-5 bg-amber-50 rounded-[2rem] border border-amber-200 flex items-start gap-4 animate-in">
+                class="hidden p-5 bg-amber-50 rounded-2xl border border-amber-200 flex items-start gap-4 animate-in">
                 <div class="w-10 h-10 rounded-xl bg-amber-400 text-white flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-calendar-check"></i>
                 </div>
@@ -131,40 +131,40 @@
 
             <!-- Date and Duration -->
             <div
-                class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                class="bg-white p-5 sm:p-8 rounded-2xl border border-gray-100 shadow-xl shadow-blue-50/50 grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div class="space-y-3">
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest">
                         Fecha de Inicio
                     </label>
                     {{ form.fecha_inicio }}
                     {% if form.fecha_inicio.errors %}
-                    <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{
+                    <p class="text-xs text-red-500 font-bold uppercase tracking-widest">{{
                         form.fecha_inicio.errors.0 }}</p>
                     {% endif %}
                 </div>
                 <div class="space-y-3">
-                    <label id="label-dias" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <label id="label-dias" class="block text-xs font-black text-gray-400 uppercase tracking-widest">
                         Cantidad de Días
                     </label>
                     {{ form.dias }}
-                    <p id="hint-dias-habiles" class="hidden text-[10px] text-amber-600 font-bold uppercase tracking-widest">
+                    <p id="hint-dias-habiles" class="hidden text-xs text-amber-600 font-bold uppercase tracking-widest">
                         <i class="fas fa-info-circle mr-1"></i>Se contarán solo días hábiles (L–V, sin feriados)
                     </p>
                     {% if form.dias.errors %}
-                    <p class="text-[10px] text-red-500 font-bold uppercase tracking-widest">{{ form.dias.errors.0 }}
+                    <p class="text-xs text-red-500 font-bold uppercase tracking-widest">{{ form.dias.errors.0 }}
                     </p>
                     {% endif %}
                 </div>
             </div>
 
             <!-- File Upload -->
-            <div class="bg-white p-5 sm:p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-blue-50/50 flex flex-col">
-                <label class="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-4 sm:mb-6">
+            <div class="bg-white p-5 sm:p-8 rounded-2xl border border-gray-100 shadow-xl shadow-blue-50/50 flex flex-col">
+                <label class="block text-xs font-black text-blue-600 uppercase tracking-widest mb-4 sm:mb-6">
                     Documento de Respaldo <span class="text-gray-300 ml-2">(Opcional)</span>
                 </label>
 
                 <div id="drop-zone"
-                    class="relative flex-grow border-4 border-dashed border-gray-50 rounded-[2rem] p-6 sm:p-12 flex flex-col items-center justify-center text-center transition-all hover:bg-blue-50/30 group cursor-pointer"
+                    class="relative flex-grow border-4 border-dashed border-gray-50 rounded-2xl p-6 sm:p-12 flex flex-col items-center justify-center text-center transition-all hover:bg-blue-50/30 group cursor-pointer"
                     onclick="document.getElementById('licencia-file-input').click()">
 
                     {{ form.archivo }}
@@ -178,11 +178,11 @@
                         class="text-sm font-black text-gray-400 group-hover:text-gray-600 transition-colors uppercase tracking-widest">
                         Arrastra o haz clic para subir
                     </h4>
-                    <p class="text-[10px] text-gray-300 font-bold uppercase tracking-widest mt-2">Formatos: PDF, JPG,
+                    <p class="text-xs text-gray-300 font-bold uppercase tracking-widest mt-2">Formatos: PDF, JPG,
                         PNG (Recomendado: hasta 10MB)</p>
 
                     <div id="file-preview"
-                        class="hidden absolute inset-0 bg-white rounded-[2rem] p-6 flex-col items-center justify-center text-center">
+                        class="hidden absolute inset-0 bg-white rounded-2xl p-6 flex-col items-center justify-center text-center">
                         <div
                             class="w-16 h-16 rounded-2xl bg-green-50 text-green-500 flex items-center justify-center text-2xl mb-3">
                             <i class="fas fa-check-double"></i>
@@ -191,30 +191,41 @@
                             class="text-xs font-black text-gray-700 uppercase tracking-widest truncate max-w-full px-4">
                         </p>
                         <button type="button" onclick="resetFile(event)"
-                            class="mt-4 text-[9px] font-black text-red-500 uppercase tracking-widest hover:underline">
+                            class="mt-4 text-xs font-black text-red-500 uppercase tracking-widest hover:underline">
                             Quitar archivo
                         </button>
                     </div>
                 </div>
                 {% if form.archivo.errors %}
-                <p class="mt-4 text-[10px] text-red-500 font-bold uppercase tracking-widest">{{ form.archivo.errors.0 }}
+                <p class="mt-4 text-xs text-red-500 font-bold uppercase tracking-widest">{{ form.archivo.errors.0 }}
                 </p>
                 {% endif %}
             </div>
         </div>
 
         <!-- Action Button -->
-        <button type="submit"
-            class="w-full py-6 bg-gray-900 text-white text-[11px] font-black uppercase tracking-widest rounded-[2rem] hover:bg-blue-600 shadow-2xl transition-all flex items-center justify-center gap-3">
-            <i class="fas fa-save"></i> Registrar
+        <button type="submit" id="submit-licencia-btn"
+            class="w-full py-4 bg-slate-900 text-white text-sm font-semibold rounded-xl hover:bg-slate-800 shadow-sm transition-all flex items-center justify-center gap-2">
+            <i class="fas fa-save"></i> <span>Registrar Licencia Médica</span>
         </button>
     </form>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script>
-    // Initialize Tom Select
+    // Initialize Tom Select and Submit hardening
     document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('form');
+        const submitBtn = document.getElementById('submit-licencia-btn');
+        if (form && submitBtn) {
+            form.addEventListener('submit', function() {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Guardando registro...</span>';
+                submitBtn.style.opacity = '0.75';
+                submitBtn.style.cursor = 'wait';
+            });
+        }
+
         new TomSelect('#{{ form.usuario.id_for_label }}', {
             create: false,
             sortField: {

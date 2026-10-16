@@ -148,7 +148,7 @@
                 {% for atraso in data.atrasos %}
                 <tr class="tipo-atraso">
                     {% if forloop.first %}
-                    <td rowspan="{% widthratio data.atrasos|length 1 1 %}" {% if data.funcionario.es_baja_actualmente or data.funcionario.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ data.funcionario.get_full_name }}</td>
+                    <td rowspan="{% widthratio data.atrasos|length 1 1 %}">{{ data.funcionario.get_full_name }}{% if data.funcionario.is_on_leave %} <span style="font-size: 8pt; color: #b45309;">(Licencia)</span>{% elif data.funcionario.es_baja_actualmente %} <span style="font-size: 8pt; color: #64748b;">(Inactivo)</span>{% endif %}</td>
                     <td rowspan="{% widthratio data.atrasos|length 1 1 %}">{{ data.funcionario.run }}</td>
                     {% endif %}
                     {% if forloop.first %}
@@ -169,7 +169,7 @@
                 {% endfor %}
                 {% for inasistencia in data.inasistencias %}
                 <tr class="tipo-inasistencia">
-                    <td {% if data.funcionario.es_baja_actualmente or data.funcionario.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ data.funcionario.get_full_name }}</td>
+                    <td>{{ data.funcionario.get_full_name }}{% if data.funcionario.is_on_leave %} <span style="font-size: 8pt; color: #b45309;">(Licencia)</span>{% elif data.funcionario.es_baja_actualmente %} <span style="font-size: 8pt; color: #64748b;">(Inactivo)</span>{% endif %}</td>
                     <td>{{ data.funcionario.run }}</td>
                     <td style="text-align: center;">{{ inasistencia.fecha|date:"d/m/Y" }}</td>
                     <td class="text-center">
@@ -186,7 +186,7 @@
 
                 <!-- Resumen del funcionario -->
                 <tr class="resumen-funcionario">
-                    <td colspan="2" {% if data.funcionario.es_baja_actualmente or data.funcionario.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ data.funcionario.get_full_name }}</td>
+                    <td colspan="2">{{ data.funcionario.get_full_name }}</td>
                     <td colspan="4" class="text-center">
                         Atrasos: <strong>{{ data.total_atrasos }}</strong> |
                         Min. Retraso: <strong>{{ data.total_minutos_retraso }} min</strong> |

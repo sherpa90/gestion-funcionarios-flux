@@ -100,9 +100,9 @@
             color: #1e40af;
         }
 
-        .badge-purple {
-            background: #f3e8ff;
-            color: #6b21a8;
+        .badge-teal {
+            background: #ccfbf1;
+            color: #0f766e;
         }
 
         .badge-red {
@@ -176,7 +176,7 @@
         <tbody>
             {% for empleado in empleados_data %}
             <tr>
-                <td><strong {% if empleado.funcionario.es_baja_actualmente or empleado.funcionario.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ empleado.funcionario.get_full_name }}</strong></td>
+                <td><strong >{{ empleado.funcionario.get_full_name }}</strong></td>
                 <td>{{ empleado.funcionario.run }}</td>
                 <td class="text-center">
                     <span class="badge badge-red">{{ empleado.total_inasistencias }}</span>
@@ -189,7 +189,7 @@
                     <span class="badge badge-blue">{{ empleado.dias_usados|floatformat:1 }}</span>
                 </td>
                 <td class="text-center">
-                    <span class="badge badge-purple">{{ empleado.total_licencias }}</span>
+                    <span class="badge badge-teal">{{ empleado.total_licencias }}</span>
                 </td>
                 <td class="text-center">{{ empleado.dias_licencias }}</td>
             </tr>

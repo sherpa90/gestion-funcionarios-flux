@@ -1,0 +1,5 @@
+{
+  "devCommand": "python manage.py runserver",
+  "entryPoint": "http://localhost:8000",
+  "cwd": "gestion-funcionarios"
+}

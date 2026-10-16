@@ -43,16 +43,16 @@
 
   .saldo-box {
     display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem;
-    border-radius: 1rem; margin-bottom: 2rem; border-left: 4px solid;
+    border-radius: 1rem; margin-bottom: 2rem;
   }
-  .saldo-box-ok { background: linear-gradient(to right, #eff6ff, #ffffff); border-left-color: #3b82f6; border: 1px solid #dbeafe; }
-  .saldo-box-warn { background: linear-gradient(to right, #fefce8, #ffffff); border-left-color: #eab308; border: 1px solid #fef08a; }
-  .saldo-box-err { background: linear-gradient(to right, #fef2f2, #ffffff); border-left-color: #ef4444; border: 1px solid #fecaca; }
+  .saldo-box-ok { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .saldo-box-warn { background: #fefce8; border: 1px solid #fef08a; }
+  .saldo-box-err { background: #fef2f2; border: 1px solid #fecaca; }
 
   .saldo-icon { font-size: 2rem; }
-  .saldo-box-ok .saldo-icon { color: #3b82f6; }
-  .saldo-box-warn .saldo-icon { color: #eab308; }
-  .saldo-box-err .saldo-icon { color: #ef4444; }
+  .saldo-box-ok .saldo-icon { color: #2563eb; }
+  .saldo-box-warn .saldo-icon { color: #d97706; }
+  .saldo-box-err .saldo-icon { color: #dc2626; }
 
   .saldo-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem;}
   .saldo-value { font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
@@ -64,7 +64,7 @@
   /* Forms */
   .form-group { margin-bottom: 1.5rem; }
   .form-label { display: block; font-size: 0.9rem; font-weight: 600; color: #334155; margin-bottom: 0.5rem; }
-  .form-label span.optional { color: #94a3b8; font-size: 0.75rem; font-weight: 500; }
+  .form-label span.optional { color: #64748b; font-size: 0.75rem; font-weight: 500; }
   
   .form-control, .form-group input:not([type="radio"]):not([type="checkbox"]), .form-group select, .form-group textarea {
     width: 100%; padding: 0.8rem 1rem; border: 1.5px solid #cbd5e1; border-radius: var(--input-radius);
@@ -82,13 +82,13 @@
     text-align: center; background: #fafbff; transition: all 0.2s ease; cursor: pointer;
     position: relative; margin-top: 0.5rem;
   }
-  .upload-area:hover { border-color: #60a5fa; background: #eff6ff; }
-  .upload-icon { font-size: 2.5rem; color: #94a3b8; margin-bottom: 0.75rem; transition: color 0.2s ease; }
-  .upload-area:hover .upload-icon { color: #60a5fa; }
+  .upload-area:hover .upload-icon { color: #2563eb; }
+  .upload-icon { font-size: 2.5rem; color: #64748b; margin-bottom: 0.75rem; transition: color 0.2s ease; }
+  .upload-area:hover .upload-icon { color: #2563eb; }
   .upload-area input[type="file"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
   
   /* Error Message */
-  .error-message { font-size: 0.8rem; color: #ef4444; font-weight: 600; margin-top: 0.4rem; display: flex; align-items: center; gap: 0.3rem; }
+  .error-message { font-size: 0.85rem; color: #dc2626; font-weight: 600; margin-top: 0.4rem; display: flex; align-items: center; gap: 0.3rem; }
   
   /* Buttons */
   .btn-submit {
@@ -139,7 +139,7 @@
            <div class="saldo-icon"><i class="fas fa-wallet"></i></div>
            <div>
              <div class="saldo-label">Días Disponibles</div>
-             <div class="saldo-value">{{ user.dias_disponibles|floatformat:1 }} <span style="font-size:0.45em;font-weight:700;color:inherit;opacity:0.6;text-transform:uppercase;letter-spacing:-0.5px;">de 6.0</span></div>
+             <div class="saldo-value">{{ user.dias_disponibles|floatformat:1 }} <span style="font-size:0.8rem;font-weight:700;color:inherit;opacity:0.75;text-transform:uppercase;letter-spacing:0.02em;">de 6.0</span></div>
            </div>
          </div>
 
@@ -151,9 +151,9 @@
          {% endif %}
 
         {% if form.non_field_errors %}
-        <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:0.75rem;padding:1rem;margin-bottom:1.5rem;border-left:4px solid #ef4444;">
-          <div style="font-size:0.85rem;font-weight:600;color:#b91c1c;display:flex;align-items:flex-start;">
-            <i class="fas fa-exclamation-triangle" style="margin-right:0.4rem;margin-top:0.2rem;"></i> 
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:0.75rem;padding:1rem;margin-bottom:1.5rem;">
+          <div style="font-size:0.875rem;font-weight:600;color:#b91c1c;display:flex;align-items:flex-start;">
+            <i class="fas fa-exclamation-triangle" style="margin-right:0.5rem;margin-top:0.2rem;"></i> 
             <div>{{ form.non_field_errors }}</div>
           </div>
         </div>
@@ -397,6 +397,17 @@
           radio.addEventListener('change', updateRadiosUI);
         });
         updateRadiosUI(); // Inicialización
+
+        const form = document.querySelector('form');
+        const submitBtn = document.querySelector('.btn-submit');
+        if (form && submitBtn) {
+            form.addEventListener('submit', function() {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Enviando solicitud... <i class="fas fa-spinner fa-spin ml-2"></i>';
+                submitBtn.style.opacity = '0.75';
+                submitBtn.style.cursor = 'wait';
+            });
+        }
     });
 </script>
 {% endblock %}

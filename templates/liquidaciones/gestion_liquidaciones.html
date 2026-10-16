@@ -20,7 +20,7 @@
                     <div class="text-sm text-gray-600">Usuarios con Liquidaciones</div>
                 </div>
                 <div class="text-center">
-                    <div class="text-2xl font-bold text-purple-600">{{ estadisticas.promedio_por_usuario }}</div>
+                    <div class="text-2xl font-bold text-slate-800">{{ estadisticas.promedio_por_usuario }}</div>
                     <div class="text-sm text-gray-600">Promedio por Usuario</div>
                 </div>
             </div>
@@ -107,7 +107,7 @@
                                         </div>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium {% if liquidacion.funcionario.es_baja_actualmente or liquidacion.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">
+                                        <div class="text-sm font-medium text-gray-900">
                                             {{ liquidacion.funcionario.get_full_name }}
                                         </div>
                                     </div>

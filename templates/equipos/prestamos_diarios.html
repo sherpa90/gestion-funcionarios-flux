@@ -97,7 +97,7 @@
                             <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">INV: #{{ p.equipo.numero_inventario|default:'S/N' }}</span>
                         </div>
                         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-500">
-                            <span><i class="fa-solid fa-user text-slate-400 mr-1"></i><strong class="{% if p.funcionario.es_baja_actualmente or p.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ p.funcionario.get_full_name }}</strong> ({{ p.funcionario.get_role_display }})</span>
+                            <span><i class="fa-solid fa-user text-slate-400 mr-1"></i><strong class="text-slate-900">{{ p.funcionario.get_full_name }}</strong> ({{ p.funcionario.get_role_display }})</span>
                             <span><i class="fa-regular fa-clock text-slate-400 mr-1"></i>Entregado a las {{ p.fecha_asignacion|date:"H:i" }} hrs</span>
                             {% if p.observaciones %}
                             <span class="text-slate-600 italic"><i class="fa-solid fa-comment-dots text-slate-400 mr-1"></i>"{{ p.observaciones }}"</span>
@@ -196,7 +196,7 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-slate-50/50 border-b border-slate-100 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <tr class="bg-slate-50/50 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
                         <th class="px-5 py-3">Fecha / Hora</th>
                         <th class="px-4 py-3">Funcionario</th>
                         <th class="px-4 py-3">Implemento</th>
@@ -212,20 +212,20 @@
                         <td class="px-5 py-3 whitespace-nowrap font-medium text-slate-800">
                             {{ p.fecha_asignacion|date:"d/m/Y - H:i" }}
                         </td>
-                        <td class="px-4 py-3 font-semibold {% if p.funcionario.es_baja_actualmente or p.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-slate-900{% endif %}">
+                        <td class="px-4 py-3 font-semibold text-slate-900">
                             {{ p.funcionario.get_full_name }}
                         </td>
                         <td class="px-4 py-3">
                             <div class="font-medium text-slate-800">{{ p.equipo.get_tipo_display }}: {{ p.equipo.marca }} {{ p.equipo.modelo|default:'' }}</div>
-                            <div class="text-[11px] text-slate-400 font-mono">#{{ p.equipo.numero_inventario|default:'S/N' }}</div>
+                            <div class="text-xs text-slate-400 font-mono">#{{ p.equipo.numero_inventario|default:'S/N' }}</div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             {% if p.activo %}
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>En Uso
                             </span>
                             {% else %}
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>Devuelto
                             </span>
                             {% endif %}

@@ -53,7 +53,7 @@
             <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
             <span>Fallas Reportadas ({{ total_fallas }})</span>
             {% if total_reportadas > 0 %}
-            <span class="w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center font-bold">
+            <span class="w-5 h-5 rounded-full bg-rose-500 text-white text-xs flex items-center justify-center font-bold">
                 {{ total_reportadas }}
             </span>
             {% endif %}
@@ -68,35 +68,35 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
             <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
                 <div class="flex items-center justify-between text-slate-400 mb-1">
-                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Actividades Mes</span>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Actividades Mes</span>
                     <i class="fa-solid fa-list-check text-sm text-blue-500"></i>
                 </div>
                 <div class="text-2xl font-black text-slate-900">{{ stats_tickets.total }}</div>
-                <div class="text-[11px] text-slate-400 mt-0.5">En {{ nombre_mes_seleccionado }}</div>
+                <div class="text-xs text-slate-400 mt-0.5">En {{ nombre_mes_seleccionado }}</div>
             </div>
             <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
                 <div class="flex items-center justify-between text-emerald-500 mb-1">
-                    <span class="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">Resueltos</span>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Resueltos</span>
                     <i class="fa-solid fa-circle-check text-sm"></i>
                 </div>
                 <div class="text-2xl font-black text-emerald-600">{{ stats_tickets.resueltos }}</div>
-                <div class="text-[11px] text-emerald-600/80 mt-0.5">Atención finalizada</div>
+                <div class="text-xs text-emerald-600/80 mt-0.5">Atención finalizada</div>
             </div>
             <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
                 <div class="flex items-center justify-between text-amber-500 mb-1">
-                    <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-700">En Proceso</span>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-amber-700">En Proceso</span>
                     <i class="fa-solid fa-spinner text-sm"></i>
                 </div>
                 <div class="text-2xl font-black text-amber-600">{{ stats_tickets.en_proceso }}</div>
-                <div class="text-[11px] text-amber-600/80 mt-0.5">En curso / desarrollo</div>
+                <div class="text-xs text-amber-600/80 mt-0.5">En curso / desarrollo</div>
             </div>
             <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
                 <div class="flex items-center justify-between text-rose-500 mb-1">
-                    <span class="text-[11px] font-semibold uppercase tracking-wider text-rose-700">Pendientes</span>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-rose-700">Pendientes</span>
                     <i class="fa-solid fa-clock text-sm"></i>
                 </div>
                 <div class="text-2xl font-black text-rose-600">{{ stats_tickets.pendientes }}</div>
-                <div class="text-[11px] text-rose-600/80 mt-0.5">Por atender</div>
+                <div class="text-xs text-rose-600/80 mt-0.5">Por atender</div>
             </div>
         </div>
 
@@ -187,22 +187,22 @@
                 <!-- Info Badges -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-3 bg-slate-50/60 p-3 rounded-xl border border-slate-100 text-xs">
                     <div>
-                        <span class="font-bold text-slate-400 uppercase text-[10px] block">Funcionario Atendido</span>
+                        <span class="font-bold text-slate-400 uppercase text-xs block">Funcionario Atendido</span>
                         {% if t.funcionario %}
-                        <span class="font-bold {% if t.funcionario.es_baja_actualmente or t.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-slate-800{% endif %}"><i class="fa-solid fa-user text-slate-400 mr-1"></i>{{ t.funcionario.get_full_name }}</span>
+                        <span class="font-bold text-slate-800"><i class="fa-solid fa-user text-slate-400 mr-1"></i>{{ t.funcionario.get_full_name }}</span>
                         {% else %}
                         <span class="text-slate-400 italic">General / Institucional</span>
                         {% endif %}
                     </div>
                     <div>
-                        <span class="font-bold text-slate-400 uppercase text-[10px] block">Lugar / Ubicación</span>
+                        <span class="font-bold text-slate-400 uppercase text-xs block">Lugar / Ubicación</span>
                         <span class="font-semibold text-slate-800">
                             <i class="fa-solid fa-location-dot text-slate-400 mr-1"></i>
                             {{ t.lugar.nombre|default:t.lugar_personalizado|default:"No especificado" }}
                         </span>
                     </div>
                     <div>
-                        <span class="font-bold text-slate-400 uppercase text-[10px] block">Implemento / Equipo</span>
+                        <span class="font-bold text-slate-400 uppercase text-xs block">Implemento / Equipo</span>
                         {% if t.equipo %}
                         <span class="font-semibold text-slate-800"><i class="fa-solid fa-laptop text-slate-400 mr-1"></i>{{ t.equipo.marca }} {{ t.equipo.modelo|default:'' }} (#{{ t.equipo.numero_inventario|default:'S/N' }})</span>
                         {% else %}
@@ -290,18 +290,18 @@
                             <h4 class="font-bold text-slate-900 text-base">{{ falla.equipo.marca }} {{ falla.equipo.modelo }}</h4>
                             <p class="text-xs text-slate-400">INV: #{{ falla.equipo.numero_inventario }} &middot; {{ falla.equipo.get_tipo_display }}</p>
                         </div>
-                        <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                        <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
                             Reportada
                         </span>
                     </div>
 
                     <div class="bg-slate-50 p-3 rounded-xl text-xs text-slate-700 mb-3 border border-slate-100">
-                        <strong class="text-[10px] text-slate-400 uppercase block mb-0.5">Problema reportado:</strong>
+                        <strong class="text-xs text-slate-400 uppercase block mb-0.5">Problema reportado:</strong>
                         "{{ falla.descripcion }}"
                     </div>
 
                     <div class="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
-                        <span class="{% if falla.funcionario.es_baja_actualmente or falla.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}"><i class="fa-solid fa-user mr-1"></i>{{ falla.funcionario.get_full_name }}</span>
+                        <span class="font-medium text-slate-700"><i class="fa-solid fa-user mr-1"></i>{{ falla.funcionario.get_full_name }}</span>
                         <form action="{% url 'actualizar_estado_falla' falla.id %}" method="POST">
                             {% csrf_token %}
                             <input type="hidden" name="estado" value="EN_REVISION">
@@ -330,13 +330,13 @@
                             <h4 class="font-bold text-slate-900 text-base">{{ falla.equipo.marca }} {{ falla.equipo.modelo }}</h4>
                             <p class="text-xs text-slate-400">INV: #{{ falla.equipo.numero_inventario }} &middot; {{ falla.equipo.get_tipo_display }}</p>
                         </div>
-                        <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                        <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
                             En Reparación
                         </span>
                     </div>
 
                     <div class="bg-slate-50 p-3 rounded-xl text-xs text-slate-700 mb-3 border border-slate-100">
-                        <strong class="text-[10px] text-slate-400 uppercase block mb-0.5">Problema:</strong>
+                        <strong class="text-xs text-slate-400 uppercase block mb-0.5">Problema:</strong>
                         "{{ falla.descripcion }}"
                     </div>
 

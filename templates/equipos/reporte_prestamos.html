@@ -37,9 +37,9 @@
         }
 
         th {
-            background-color: #2563eb;
+            background-color: #1e3a8a;
             color: white;
-            font-size: 10px;
+            font-size: 12px;
             text-transform: uppercase;
         }
 
@@ -67,8 +67,8 @@
         .footer {
             margin-top: 30px;
             text-align: center;
-            font-size: 10px;
-            color: #666;
+            font-size: 12px;
+            color: #475569;
         }
     </style>
 </head>
@@ -78,8 +78,7 @@
     <h1>{{ titulo }}</h1>
     <p><strong>Fecha:</strong> {{ fecha|date:"d/m/Y H:i" }}</p>
 
-    {% for usuario_id, data in prestamos_por_usuario.items %}
-    <h3><span{% if data.funcionario.es_baja_actualmente or data.funcionario.is_on_leave %} style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ data.funcionario.first_name }} {{ data.funcionario.last_name }}</span> ({{ data.funcionario.run }})</h3>
+    <h3><span>{{ data.funcionario.first_name }} {{ data.funcionario.last_name }}</span> ({{ data.funcionario.run }}){% if data.funcionario.is_on_leave %} <span style="font-size: 8pt; color: #b45309;">(Licencia)</span>{% elif data.funcionario.es_baja_actualmente %} <span style="font-size: 8pt; color: #64748b;">(Inactivo)</span>{% endif %}</h3>
     <table>
         <thead>
             <tr>

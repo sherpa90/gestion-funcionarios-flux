@@ -32,7 +32,7 @@
             left: 0;
             right: 0;
             height: 2px;
-            background: linear-gradient(90deg, #4F46E5 0%, #7C3AED 100%);
+            background: #1e3a8a;
         }
 
         .header-main {
@@ -45,7 +45,7 @@
         .header-title h1 {
             font-size: 16pt;
             font-weight: 800;
-            color: #1e1b4b;
+            color: #0f172a;
             letter-spacing: -0.5px;
         }
 
@@ -57,15 +57,12 @@
         }
 
         .periodo-badge {
-            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            background: #1e3a8a;
             color: white;
             padding: 5px 12px;
-            border-radius: 7px;
+            border-radius: 6px;
             font-weight: 600;
             font-size: 9pt;
-            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
-        }
-
         }
 
         /* ─── Profile Card ─── */
@@ -120,11 +117,11 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
         }
 
-        .stat-card--danger { border-left: 4px solid #dc2626; }
-        .stat-card--warning { border-left: 4px solid #d97706; }
-        .stat-card--info { border-left: 4px solid #2563eb; }
-        .stat-card--success { border-left: 4px solid #059669; }
-        .stat-card--purple { border-left: 4px solid #7c3aed; }
+        .stat-card--danger { border-top: 2px solid #dc2626; }
+        .stat-card--warning { border-top: 2px solid #d97706; }
+        .stat-card--info { border-top: 2px solid #2563eb; }
+        .stat-card--success { border-top: 2px solid #059669; }
+        .stat-card--teal { border-top: 2px solid #0f766e; }
 
         .stat-icon {
             font-size: 8pt;
@@ -149,7 +146,7 @@
         .stat-value--warning { color: #d97706; }
         .stat-value--info { color: #2563eb; }
         .stat-value--success { color: #059669; }
-        .stat-value--purple { color: #7c3aed; }
+        .stat-value--teal { color: #0f766e; }
 
         /* ─── Profile Card ─── */
         .profile-card {
@@ -337,7 +334,7 @@
         <div class="profile-grid">
             <div class="profile-item">
                 <span class="profile-label">Nombre:</span>
-                <span class="profile-value" {% if functorio.es_baja_actualmente or functorio.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ functorio.get_full_name }}</span>
+                <span class="profile-value" >{{ functorio.get_full_name }}</span>
             </div>
             <div class="profile-item">
                 <span class="profile-label">RUT:</span>
@@ -370,10 +367,10 @@
             <div class="stat-label">Permisos</div>
             <div class="stat-value stat-value--success">{{ permisos_con_dias|length }}</div>
         </div>
-        <div class="stat-card stat-card--purple">
+        <div class="stat-card stat-card--teal">
             <div class="stat-icon">🏥</div>
             <div class="stat-label">Días en Licencia</div>
-            <div class="stat-value stat-value--purple">{{ total_dias_licencias }}</div>
+            <div class="stat-value stat-value--teal">{{ total_dias_licencias }}</div>
         </div>
         <div class="stat-card stat-card--danger">
             <div class="stat-icon">❌</div>

@@ -63,32 +63,32 @@
   }
   
   .btn-success { 
-    background: linear-gradient(135deg, #059669, #10b981); color: #fff; 
-    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+    background: linear-gradient(135deg, #047857, #065f46); color: #fff; 
+    box-shadow: 0 10px 15px -3px rgba(4, 120, 87, 0.3);
   }
   .btn-success:hover { 
     transform: translateY(-3px); 
-    box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 20px 25px -5px rgba(4, 120, 87, 0.4);
     filter: brightness(1.1);
   }
   
   .btn-warning { 
-    background: linear-gradient(135deg, #d97706, #f59e0b); color: #fff; 
-    box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.3);
+    background: linear-gradient(135deg, #b45309, #92400e); color: #fff; 
+    box-shadow: 0 10px 15px -3px rgba(180, 83, 9, 0.3);
   }
   .btn-warning:hover { 
     transform: translateY(-3px); 
-    box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.4);
+    box-shadow: 0 20px 25px -5px rgba(180, 83, 9, 0.4);
     filter: brightness(1.1);
   }
   
   .btn-purple { 
-    background: linear-gradient(135deg, #7c3aed, #8b5cf6); color: #fff; 
-    box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3);
+    background: linear-gradient(135deg, #6d28d9, #5b21b6); color: #fff; 
+    box-shadow: 0 10px 15px -3px rgba(109, 40, 217, 0.3);
   }
   .btn-purple:hover { 
     transform: translateY(-3px); 
-    box-shadow: 0 20px 25px -5px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 20px 25px -5px rgba(109, 40, 217, 0.4);
     filter: brightness(1.1);
   }
 
@@ -119,7 +119,7 @@
     text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none; transition: all 0.2s;
   }
   .dropdown-item:hover { background: #f1f5f9; color: #0f172a; transform: translateX(5px); }
-  .dropdown-item.danger:hover { background: #fef2f2; color: #ef4444; }
+  .dropdown-item.danger:hover { background: #fef2f2; color: #b91c1c; }
 
   /* Panel Búsqueda y Filtros */
   .search-panel {
@@ -152,7 +152,7 @@
   /* Importación Exitosa Box */
   .bulk-box {
     background: linear-gradient(to right, #f0fdf4, #ffffff); border-radius: var(--usr-radius);
-    border: 1px solid #bbf7d0; border-left: 4px solid #22c55e; padding: 1.5rem; margin-top: 1.5rem;
+    border: 1px solid #86efac; padding: 1.5rem; margin-top: 1.5rem;
     box-shadow: 0 4px 15px rgba(34, 197, 94, 0.05);
   }
   .bulk-title { font-size: 1.25rem; font-weight: 800; color: #166534; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
@@ -175,6 +175,10 @@
   }
   .desktop-table td { padding: 1.25rem 1.5rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; transition: background 0.15s; }
   .desktop-table tr:last-child td { border-bottom: none; }
+  .desktop-table tbody tr {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 68px;
+  }
   .desktop-table tbody tr:hover { background: #f8fafc; }
 
   /* Vista Mobile (Cards) */
@@ -185,33 +189,33 @@
   .user-card {
     background: #fff; border-radius: 1rem; border: 1px solid #e2e8f0; padding: 1.25rem;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); transition: all 0.2s; display: flex; flex-direction: column; gap: 1rem;
+    content-visibility: auto;
+    contain-intrinsic-size: 0 160px;
   }
   .user-card:hover { border-color: #cbd5e1; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
 
   /* Componentes de Usuario */
   .user-avatar-box { display: flex; align-items: center; gap: 1rem; }
   .user-avatar {
-    width: 3rem; height: 3rem; border-radius: 0.75rem; background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    width: 3rem; height: 3rem; border-radius: 0.75rem; background: linear-gradient(135deg, #2563eb, #1e40af);
     color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; float: left;
-    box-shadow: 0 4px 10px rgba(37,99,235,0.2); flex-shrink: 0; text-transform: uppercase;
+    box-shadow: 0 4px 10px rgba(37,99,235,0.25); flex-shrink: 0; text-transform: uppercase;
   }
   .user-name { font-size: 1rem; font-weight: 800; color: #0f172a; line-height: 1.2; margin-bottom: 0.15rem; }
-  .user-name.baja, .funcionario-baja { text-decoration: line-through !important; color: #ef4444 !important; }
   .user-run { font-size: 0.75rem; font-weight: 700; color: #64748b; }
-
-  .badge { display: inline-flex; padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; align-items: center; justify-content: center;}
+  .badge { display: inline-flex; padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; align-items: center; justify-content: center;}
   .badge-role { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
   .badge-purple { background: #faf5ff; color: #7e22ce; border: 1px solid #e9d5ff; }
   .badge-pink { background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; }
   .badge-gray { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
-  .badge-baja { background: #fef2f2; color: #be123c; border: 1px solid #fecdd3; }
+  .badge-baja { background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
   .badge-alta { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
 
   .horario-info { display: flex; flex-direction: column; gap: 0.15rem; }
   .horario-time { font-size: 0.85rem; font-weight: 800; color: #334155; display: flex; align-items: center; gap: 0.3rem;}
   .horario-time i { color: #3b82f6; }
   .horario-tol { font-size: 0.7rem; font-weight: 600; color: #94a3b8; }
-  .horario-none { font-size: 0.75rem; font-weight: 700; color: #ef4444; background: #fef2f2; padding: 0.2rem 0.5rem; border-radius: 0.5rem; display: inline-block; width: max-content; }
+  .horario-none { font-size: 0.75rem; font-weight: 700; color: #b91c1c; background: #fef2f2; padding: 0.2rem 0.5rem; border-radius: 0.5rem; display: inline-block; width: max-content; }
 
   /* Barra de Días */
   .progress-wrap { width: 100%; min-width: 80px; max-width: 150px; }
@@ -219,15 +223,15 @@
   .progress-val { color: #0f172a; }
   .progress-bar { width: 100%; height: 0.5rem; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
   .progress-fill { height: 100%; border-radius: 999px; transition: width 0.5s ease; }
-  .fill-green { background: #22c55e; }
-  .fill-amber { background: #f59e0b; }
-  .fill-red { background: #ef4444; }
+  .fill-green { background: #16a34a; }
+  .fill-amber { background: #d97706; }
+  .fill-red { background: #dc2626; }
 
   /* Acciones de Fila */
   .row-actions { display: flex; gap: 0.5rem; align-items: center; justify-content: flex-end; }
   .btn-icon {
     width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;
-    background: #f8fafc; color: #64748b; font-size: 0.9rem; transition: all 0.2s; border: 1px solid transparent; text-decoration: none;
+    background: #f8fafc; color: #475569; font-size: 0.9rem; transition: all 0.2s; border: 1px solid transparent; text-decoration: none;
   }
   .btn-icon:hover { background: #fff; border-color: #cbd5e1; color: #0f172a; transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
@@ -249,8 +253,8 @@
     font-size: 0.75rem; font-weight: 700; color: #475569; text-decoration: none; transition: background 0.2s; width: 100%; box-sizing: border-box; justify-content: flex-start; border: none; background: transparent; cursor: pointer; text-align: left;
   }
   .row-menu-item:hover { background: #f1f5f9; color: #0f172a; }
-  .row-menu-item.danger { color: #ef4444; }
-  .row-menu-item.danger:hover { background: #fef2f2; color: #dc2626; }
+  .row-menu-item.danger { color: #dc2626; }
+  .row-menu-item.danger:hover { background: #fef2f2; color: #b91c1c; }
 </style>
 
 <div class="premium-container">
@@ -318,7 +322,7 @@
                     <i class="fas fa-filter"></i> Filtrar
                 </button>
                 {% if request.GET.search %}
-                <a href="{% url 'user_list' %}" class="btn-action btn-sm" style="background:#fff; color:#ef4444; border:1px solid #fee2e2; width:auto; padding:0 0.75rem;" title="Limpiar búsqueda">
+                <a href="{% url 'user_list' %}" class="btn-action btn-sm" style="background:#fff; color:#dc2626; border:1px solid #fecaca; width:auto; padding:0 0.75rem;" title="Limpiar búsqueda">
                     <i class="fas fa-times"></i>
                 </a>
                 {% endif %}
@@ -345,7 +349,7 @@
             <div style="margin-left:auto; display:flex; align-items:center; gap:0.4rem; background:rgba(241, 245, 249, 0.6); padding:0.4rem 0.85rem; border-radius:0.75rem; border:1px solid #e2e8f0; flex-shrink:0;">
                 <i class="fas fa-users" style="color:#64748b; font-size:0.8rem;"></i>
                 <span style="font-size:0.8rem; font-weight:800; color:#475569;">{{ users.count }}</span>
-                <span style="font-size:0.6rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.025em;">Registros</span>
+                <span style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.025em;">Registros</span>
             </div>
         </div>
     </form>
@@ -394,7 +398,7 @@
                       <div class="user-avatar-box">
                           <div class="user-avatar">{{ user.first_name.0 }}{{ user.last_name.0 }}</div>
                           <div>
-                              <div class="user-name {% if user.es_baja_actualmente or user.is_on_leave %}baja funcionario-baja line-through text-red-600{% endif %}">{{ user.get_full_name }}</div>
+                              <div class="user-name">{{ user.get_full_name }}</div>
                               <div class="user-run">{{ user.run }}</div>
                           </div>
                       </div>
@@ -408,7 +412,9 @@
                           {{ user.get_funcion_display|default:user.get_tipo_funcionario_display|default:user.get_role_display }}
                       </span>
                       {% if user.is_on_leave %}
-                      <span class="badge badge-baja mt-2">Baja desde {{ user.baja_date|date:"d/m/Y" }}</span>
+                      <span class="badge badge-baja mt-2">Licencia activa</span>
+                      {% elif user.es_baja_actualmente %}
+                      <span class="badge badge-baja mt-2">Inactivo desde {{ user.baja_date|date:"d/m/Y" }}</span>
                       {% endif %}
                   </td>
 
@@ -468,7 +474,7 @@
               <div class="user-avatar-box">
                   <div class="user-avatar" style="width:2.5rem; height:2.5rem; font-size:0.9rem;">{{ user.first_name.0 }}{{ user.last_name.0 }}</div>
                   <div>
-                      <div class="user-name {% if user.es_baja_actualmente or user.is_on_leave %}baja funcionario-baja line-through text-red-600{% endif %}" style="font-size:0.95rem;">{{ user.get_full_name }}</div>
+                      <div class="user-name" style="font-size:0.95rem;">{{ user.get_full_name }}</div>
                       <div class="user-run">{{ user.run }}</div>
                   </div>
               </div>
@@ -482,7 +488,9 @@
                         {{ user.get_funcion_display|default:user.get_tipo_funcionario_display|default:user.get_role_display }}
                   </span>
                   {% if user.is_on_leave %}
-                  <span class="badge badge-baja">Baja</span>
+                  <span class="badge badge-baja">Licencia</span>
+                  {% elif user.es_baja_actualmente %}
+                  <span class="badge badge-baja">Inactivo</span>
                   {% endif %}
 
               </div>

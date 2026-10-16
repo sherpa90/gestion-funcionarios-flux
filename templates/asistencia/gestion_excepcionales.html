@@ -9,17 +9,17 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
             <div class="flex items-center gap-2 mb-1">
-                <a href="{% url 'asistencia:gestion_asistencia' %}" class="text-xs text-gray-500 hover:text-indigo-600 transition flex items-center gap-1">
-                    <i class="fas fa-arrow-left text-[10px]"></i> Gestión de Asistencia
+                <a href="{% url 'asistencia:gestion_asistencia' %}" class="text-xs text-slate-600 hover:text-slate-900 transition flex items-center gap-1 font-medium">
+                    <i class="fas fa-arrow-left text-xs"></i> Gestión de Asistencia
                 </a>
             </div>
-            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex-shrink-0">
-                    <i class="fas fa-exclamation-triangle text-sm"></i>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100 text-slate-800 flex-shrink-0">
+                    <i class="fas fa-clock text-sm"></i>
                 </span>
                 Horarios Excepcionales
             </h2>
-            <p class="text-xs text-gray-500 mt-0.5 ml-11">Horarios especiales que aplican a todo el establecimiento para fechas puntuales</p>
+            <p class="text-xs text-slate-600 mt-0.5 ml-11">Horarios especiales que aplican a todo el establecimiento para fechas puntuales</p>
         </div>
     </div>
 
@@ -39,13 +39,13 @@
     {% endif %}
 
     <!-- FORM CARD -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-        <div class="bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-4">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+        <div class="bg-slate-900 px-5 py-4">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                <i class="fas fa-plus-circle"></i>
+                <i class="fas fa-plus-circle text-blue-400"></i>
                 Registrar Horario Excepcional
             </h3>
-            <p class="text-indigo-100 text-xs mt-0.5">Defina el horario alternativo para una fecha específica</p>
+            <p class="text-slate-300 text-xs mt-0.5">Defina el horario alternativo para una fecha específica</p>
         </div>
         <div class="p-6">
             <form method="post" action="{% url 'asistencia:crear_excepcional' %}">
@@ -130,7 +130,7 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
             <h3 class="text-xs font-bold text-gray-800 uppercase tracking-widest">Horarios Registrados</h3>
-            <span class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{{ excepcionales|length }} registro{{ excepcionales|length|pluralize }}</span>
+            <span class="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{{ excepcionales|length }} registro{{ excepcionales|length|pluralize }}</span>
         </div>
 
         {% if excepcionales %}
@@ -138,13 +138,13 @@
             <table class="min-w-full divide-y divide-gray-50">
                 <thead class="bg-gray-50/60">
                     <tr>
-                        <th class="px-4 py-2.5 text-left text-[9px] font-black text-gray-400 uppercase tracking-widest">Fecha</th>
-                        <th class="px-4 py-2.5 text-left text-[9px] font-black text-gray-400 uppercase tracking-widest">Entrada</th>
-                        <th class="px-4 py-2.5 text-left text-[9px] font-black text-gray-400 uppercase tracking-widest">Salida</th>
-                        <th class="px-4 py-2.5 text-left text-[9px] font-black text-gray-400 uppercase tracking-widest">Motivo</th>
-                        <th class="px-4 py-2.5 text-left text-[9px] font-black text-gray-400 uppercase tracking-widest">Creado por</th>
-                        <th class="px-4 py-2.5 text-left text-[9px] font-black text-gray-400 uppercase tracking-widest">Aplica a</th>
-                        <th class="px-4 py-2.5 text-right text-[9px] font-black text-gray-400 uppercase tracking-widest">Acción</th>
+                        <th class="px-4 py-2.5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Fecha</th>
+                        <th class="px-4 py-2.5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Entrada</th>
+                        <th class="px-4 py-2.5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Salida</th>
+                        <th class="px-4 py-2.5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Motivo</th>
+                        <th class="px-4 py-2.5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Creado por</th>
+                        <th class="px-4 py-2.5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Aplica a</th>
+                        <th class="px-4 py-2.5 text-right text-xs font-black text-gray-400 uppercase tracking-widest">Acción</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
@@ -157,14 +157,14 @@
                                 </div>
                                 <div>
                                     <p class="text-xs font-bold text-gray-900 capitalize">{{ exc.fecha|date:"l" }}</p>
-                                    <p class="text-[10px] text-gray-500">{{ exc.fecha|date:"d/m/Y" }}</p>
+                                    <p class="text-xs text-gray-500">{{ exc.fecha|date:"d/m/Y" }}</p>
                                 </div>
                             </div>
                         </td>
                         <td class="px-4 py-3">
                             {% if exc.hora_entrada %}
                             <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold bg-green-50 text-green-700">
-                                <i class="fas fa-sign-in-alt text-[10px]"></i>
+                                <i class="fas fa-sign-in-alt text-xs"></i>
                                 {{ exc.hora_entrada|time:"H:i" }}
                             </span>
                             {% else %}
@@ -174,7 +174,7 @@
                         <td class="px-4 py-3">
                             {% if exc.hora_salida %}
                             <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold bg-orange-50 text-orange-700">
-                                <i class="fas fa-sign-out-alt text-[10px]"></i>
+                                <i class="fas fa-sign-out-alt text-xs"></i>
                                 {{ exc.hora_salida|time:"H:i" }}
                             </span>
                             {% else %}
@@ -185,23 +185,23 @@
                             <p class="text-xs text-gray-700 max-w-[180px] truncate" title="{{ exc.motivo }}">{{ exc.motivo }}</p>
                         </td>
                         <td class="px-4 py-3">
-                            <p class="text-[10px] text-gray-500">{{ exc.creado_por.get_full_name|default:exc.creado_por.username }}</p>
-                            <p class="text-[9px] text-gray-400">{{ exc.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                            <p class="text-xs text-gray-500">{{ exc.creado_por.get_full_name|default:exc.creado_por.username }}</p>
+                            <p class="text-xs text-gray-400">{{ exc.fecha_creacion|date:"d/m/Y H:i" }}</p>
                         </td>
                         <td class="px-4 py-3">
                             {% if exc.aplica_a == 'SERENOS' %}
                             <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700">
-                                <i class="fas fa-user-shield text-[10px]"></i>
+                                <i class="fas fa-user-shield text-xs"></i>
                                 Serenos
                             </span>
                             {% elif exc.aplica_a == 'FUNCIONARIOS' %}
                             <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold bg-gray-50 text-gray-600">
-                                <i class="fas fa-user text-[10px]"></i>
+                                <i class="fas fa-user text-xs"></i>
                                 Funcionarios
                             </span>
                             {% else %}
                             <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700">
-                                <i class="fas fa-users text-[10px]"></i>
+                                <i class="fas fa-users text-xs"></i>
                                 Todos
                             </span>
                             {% endif %}
@@ -210,8 +210,8 @@
                             <form method="post" action="{% url 'asistencia:eliminar_excepcional' exc.pk %}"
                                   onsubmit="return confirm('¿Eliminar este horario excepcional? Se recalcularán todos los registros de ese día.')">
                                     {% csrf_token %}
-                                    <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-50 text-red-600 text-[10px] font-bold rounded-lg hover:bg-red-600 hover:text-white transition">
-                                        <i class="fas fa-trash-alt text-[9px]"></i> Eliminar
+                                    <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-50 text-red-600 text-xs font-bold rounded-lg hover:bg-red-600 hover:text-white transition">
+                                        <i class="fas fa-trash-alt text-xs"></i> Eliminar
                                     </button>
                             </form>
                         </td>

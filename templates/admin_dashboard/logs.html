@@ -14,7 +14,7 @@
                 </div>
                 Logs de Actividad
             </h2>
-            <p class="text-[11px] font-bold text-gray-400 mt-2 uppercase tracking-widest">Auditoría completa y trazabilidad de eventos unificada</p>
+            <p class="text-xs font-bold text-gray-400 mt-2 uppercase tracking-widest">Auditoría completa y trazabilidad de eventos unificada</p>
         </div>
         <div class="flex items-center gap-3">
             <a href="{% url 'admin_dashboard:logs_export' %}"
@@ -32,11 +32,11 @@
     </div>
 
     <!-- Filters Bar -->
-    <div class="mb-8 bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+    <div class="mb-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <form method="GET" class="flex flex-wrap items-end gap-6">
             <!-- Search -->
             <div class="flex-1 min-w-[300px]">
-                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Búsqueda rápida</label>
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Búsqueda rápida</label>
                 <div class="relative group">
                     <input type="text" name="search" value="{{ filtros.search|default:'' }}" 
                         placeholder="Buscar por acción, detalles o usuario..."
@@ -46,7 +46,7 @@
 
             <!-- Role Filter -->
             <div class="w-48">
-                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Filtrar por Rol</label>
+                <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Filtrar por Rol</label>
                 <select name="role" class="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-slate-100 transition-all appearance-none">
                     <option value="">TODOS LOS ROLES</option>
                     {% for val, label in role_choices %}
@@ -70,14 +70,14 @@
     </div>
 
     <!-- Results Table -->
-    <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-slate-500/5 transition-all duration-500">
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-xl hover:shadow-slate-500/5 transition-all duration-500">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-50">
                 <thead class="bg-gray-50/50">
                     <tr>
-                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest w-48">Fecha y Hora</th>
-                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest w-64">Usuario / Rol</th>
-                        <th class="px-10 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Actividad y Detalles de Auditoría</th>
+                        <th class="px-10 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest w-48">Fecha y Hora</th>
+                        <th class="px-10 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest w-64">Usuario / Rol</th>
+                        <th class="px-10 py-5 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Actividad y Detalles de Auditoría</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-50">
@@ -86,24 +86,24 @@
                         <td class="px-10 py-6 whitespace-nowrap">
                             <div class="flex flex-col">
                                 <span class="text-sm font-black text-gray-900 tabular-nums">{{ log.timestamp|date:"d M, Y" }}</span>
-                                <span class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">{{ log.timestamp|date:"H:i:s" }} HRS</span>
+                                <span class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-tighter">{{ log.timestamp|date:"H:i:s" }} HRS</span>
                             </div>
                         </td>
                         <td class="px-10 py-6 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="w-10 h-10 rounded-xl {% if log.es_audit %}bg-indigo-900{% else %}bg-slate-900{% endif %} border border-slate-800 text-white flex items-center justify-center font-black text-[10px] shadow-sm group-hover:scale-105 transition-transform">
+                                <div class="w-10 h-10 rounded-xl {% if log.es_audit %}bg-indigo-900{% else %}bg-slate-900{% endif %} border border-slate-800 text-white flex items-center justify-center font-black text-xs shadow-sm group-hover:scale-105 transition-transform">
                                     {{ log.usuario.first_name.0|default:'S' }}{{ log.usuario.last_name.0|default:'S' }}
                                 </div>
                                 <div class="ml-4 flex flex-col">
-                                    <p class="text-sm font-black leading-tight {% if log.usuario.es_baja_actualmente or log.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">
+                                    <p class="text-sm font-black leading-tight text-gray-900">
                                          {{ log.usuario.get_full_name }}
                                     </p>
                                     <div class="flex items-center gap-2 mt-1">
-                                         <span class="text-[9px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-wider">
+                                         <span class="text-xs font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase tracking-wider">
                                              {{ log.usuario.get_role_display }}
                                          </span>
                                         {% if not log.es_audit %}
-                                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{{ log.ip }}</span>
+                                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">{{ log.ip }}</span>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -112,7 +112,7 @@
                         <td class="px-10 py-6">
                             <div class="flex flex-col gap-2">
                                 <div class="flex items-center gap-3">
-                                    <span class="px-2.5 py-1 text-[9px] font-black rounded-lg border uppercase tracking-tighter
+                                    <span class="px-2.5 py-1 text-xs font-black rounded-lg border uppercase tracking-tighter
                                         {% if log.es_audit %}bg-purple-50 text-purple-700 border-purple-100
                                         {% elif log.tipo_slug == 'AUTH' %}bg-blue-50 text-blue-700 border-blue-100
                                         {% elif log.tipo_slug == 'CREATE' %}bg-emerald-50 text-emerald-700 border-emerald-100
@@ -125,7 +125,7 @@
                                 
                                 <div class="{% if log.es_audit %}bg-gray-50 p-3 rounded-xl border border-gray-100 mt-1{% endif %}">
                                     {% if log.es_audit %}
-                                        <pre class="whitespace-pre-wrap font-mono text-[10px] text-gray-600">{{ log.detalles|default:"Sin cambios registrados" }}</pre>
+                                        <pre class="whitespace-pre-wrap font-mono text-xs text-gray-600">{{ log.detalles|default:"Sin cambios registrados" }}</pre>
                                     {% else %}
                                         <p class="text-xs text-slate-500 font-medium leading-relaxed max-w-2xl">
                                             {{ log.detalles }}
@@ -140,7 +140,7 @@
                         <td colspan="3" class="px-10 py-24 text-center">
                             <div class="flex flex-col items-center opacity-30">
                                 <i class="fas fa-inbox text-5xl mb-4 text-slate-300"></i>
-                                <p class="text-[11px] font-black text-gray-500 uppercase tracking-widest">Sin actividad registrada</p>
+                                <p class="text-xs font-black text-gray-500 uppercase tracking-widest">Sin actividad registrada</p>
                             </div>
                         </td>
                     </tr>
@@ -152,7 +152,7 @@
         <!-- Pagination -->
         {% if page_obj.has_other_pages %}
         <div class="bg-gray-50/50 px-10 py-6 flex items-center justify-between border-t border-gray-50">
-            <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            <div class="text-xs font-black text-gray-400 uppercase tracking-widest">
                 Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }} registros
             </div>
             <div class="flex gap-2">
@@ -190,7 +190,7 @@
     <!-- Optimization Notice -->
     <div class="mt-8 flex items-center justify-center gap-3 py-4 px-6 bg-slate-50 border border-slate-100 rounded-2xl max-w-2xl mx-auto shadow-sm shadow-slate-500/5">
         <i class="fas fa-shield-alt text-slate-400 text-sm"></i>
-        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+        <p class="text-xs font-black text-slate-500 uppercase tracking-widest">
             Auditoría de alta fidelidad optimizada para cumplimiento legal (Chile)
         </p>
     </div>

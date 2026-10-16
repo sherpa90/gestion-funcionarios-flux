@@ -15,10 +15,10 @@
                 <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight leading-tight">Control de Asistencia</h2>
                 <div class="flex flex-wrap items-center gap-2 mt-1.5">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
-                        <i class="fas fa-users mr-1.5 text-[10px]"></i>
+                        <i class="fas fa-users mr-1.5 text-xs"></i>
                         {{ estadisticas.total_usuarios }} Funcionarios
                     </span>
-                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest hidden sm:inline">Administración de Registros</span>
+                    <span class="text-xs font-black text-gray-400 uppercase tracking-widest hidden sm:inline">Administración de Registros</span>
                 </div>
             </div>
         </div>
@@ -26,18 +26,18 @@
         <div class="relative z-10 flex flex-wrap lg:flex-nowrap gap-3 w-full lg:w-auto">
             <form method="post" action="{% url 'asistencia:recalcular_toda_asistencia' %}" class="flex-1 lg:flex-none" onsubmit="return confirm('¿Recalcular todos los registros? Esto puede tardar unos segundos.')">
                 {% csrf_token %}
-                <button type="submit" class="w-full lg:min-w-[160px] h-12 inline-flex items-center justify-center px-6 border border-amber-100 text-[10px] font-black uppercase tracking-widest rounded-xl text-amber-600 bg-amber-50 hover:bg-amber-600 hover:text-white transition-all shadow-sm hover:shadow-amber-100 group">
+                <button type="submit" class="w-full lg:min-w-[160px] h-12 inline-flex items-center justify-center px-6 border border-amber-100 text-xs font-black uppercase tracking-widest rounded-xl text-amber-600 bg-amber-50 hover:bg-amber-600 hover:text-white transition-all shadow-sm hover:shadow-amber-100 group">
                     <i class="fas fa-sync-alt mr-2 group-hover:rotate-180 transition-transform duration-500"></i>
                     Recalcular
                 </button>
             </form>
             <a href="{% url 'asistencia:gestion_excepcionales' %}"
-               class="flex-1 lg:min-w-[160px] h-12 inline-flex items-center justify-center px-6 bg-white border border-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm hover:shadow-indigo-100">
+               class="flex-1 lg:min-w-[160px] h-12 inline-flex items-center justify-center px-6 bg-white border border-indigo-100 text-indigo-700 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm hover:shadow-indigo-100">
                 <i class="fas fa-exclamation-triangle mr-2"></i>
                 Excepcionales
             </a>
             <a href="{% url 'asistencia:carga_registros' %}"
-               class="flex-1 lg:min-w-[160px] h-12 inline-flex items-center justify-center px-6 bg-gray-900 border border-transparent text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 shadow-xl shadow-gray-200 hover:shadow-blue-200 transition-all transform hover:-translate-y-0.5">
+               class="flex-1 lg:min-w-[160px] h-12 inline-flex items-center justify-center px-6 bg-gray-900 border border-transparent text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 shadow-xl shadow-gray-200 hover:shadow-blue-200 transition-all transform hover:-translate-y-0.5">
                 <i class="fas fa-cloud-upload-alt mr-2"></i>
                 Cargar Registros
             </a>
@@ -51,7 +51,7 @@
                 <i class="fas fa-clipboard-list"></i>
             </div>
             <div>
-                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Total Registros</p>
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Total Registros</p>
                 <p class="text-base font-black text-gray-900">{{ estadisticas.total_registros }}</p>
             </div>
         </div>
@@ -60,7 +60,7 @@
                 <i class="fas fa-check-circle"></i>
             </div>
             <div>
-                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Puntuales</p>
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Puntuales</p>
                 <p class="text-base font-black text-gray-900">{{ estadisticas.registros_puntuales }}</p>
             </div>
         </div>
@@ -69,7 +69,7 @@
                 <i class="fas fa-clock"></i>
             </div>
             <div>
-                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Atrasos</p>
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Atrasos</p>
                 <p class="text-base font-black text-gray-900">{{ estadisticas.registros_retraso }}</p>
             </div>
         </div>
@@ -78,7 +78,7 @@
                 <i class="fas fa-percentage"></i>
             </div>
             <div>
-                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Puntualidad</p>
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Puntualidad</p>
                 <p class="text-base font-black text-gray-900">{{ estadisticas.porcentaje_puntualidad }}%</p>
             </div>
         </div>
@@ -87,7 +87,7 @@
                 <i class="fas fa-calendar-day"></i>
             </div>
             <div>
-                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Periodo</p>
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Periodo</p>
                 <p class="text-base font-black text-gray-900">2026</p>
             </div>
         </div>
@@ -116,14 +116,14 @@
             <!-- Exportación Panel -->
             <div class="w-full lg:w-auto bg-gray-50/50 p-3 rounded-2xl border border-gray-100 flex flex-col sm:flex-row items-center gap-4">
                 <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Exportar Atrasos:</span>
-                    <select id="mes-selector" class="text-[11px] font-black border-none bg-white rounded-lg h-9 px-3 shadow-sm focus:ring-2 focus:ring-blue-100 transition-all" onchange="updateExportPeriod()">
+                    <span class="text-xs font-black text-gray-400 uppercase tracking-widest">Exportar Atrasos:</span>
+                    <select id="mes-selector" class="text-xs font-black border-none bg-white rounded-lg h-9 px-3 shadow-sm focus:ring-2 focus:ring-blue-100 transition-all" onchange="updateExportPeriod()">
                         <option value="1">Enero</option><option value="2">Febrero</option><option value="3" selected>Marzo</option>
                         <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
                         <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
                         <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
                     </select>
-                    <select id="anio-selector" class="text-[11px] font-black border-none bg-white rounded-lg h-9 px-3 shadow-sm focus:ring-2 focus:ring-blue-100 transition-all" onchange="updateExportPeriod()">
+                    <select id="anio-selector" class="text-xs font-black border-none bg-white rounded-lg h-9 px-3 shadow-sm focus:ring-2 focus:ring-blue-100 transition-all" onchange="updateExportPeriod()">
                         <option value="2025">2025</option><option value="2026" selected>2026</option>
                     </select>
                 </div>
@@ -131,14 +131,14 @@
                     <form method="get" action="{% url 'asistencia:exportar_retrasos_excel' %}" class="flex-1 sm:flex-none" id="export-excel-form">
                         <input type="hidden" name="mes" id="export-mes-excel" value="3">
                         <input type="hidden" name="anio" id="export-anio-excel" value="2026">
-                        <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100">
+                        <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 bg-emerald-50 text-emerald-700 text-xs font-black uppercase tracking-widest rounded-lg hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100">
                             <i class="fas fa-file-excel mr-2"></i>Excel
                         </button>
                     </form>
                     <form method="get" action="{% url 'asistencia:exportar_retrasos_pdf' %}" class="flex-1 sm:flex-none" id="export-pdf-form">
                         <input type="hidden" name="mes" id="export-mes-pdf" value="3">
                         <input type="hidden" name="anio" id="export-anio-pdf" value="2026">
-                        <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 bg-rose-50 text-rose-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-600 hover:text-white transition-all border border-rose-100">
+                        <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 bg-rose-50 text-rose-700 text-xs font-black uppercase tracking-widest rounded-lg hover:bg-rose-600 hover:text-white transition-all border border-rose-100">
                             <i class="fas fa-file-pdf mr-2"></i>PDF
                         </button>
                     </form>
@@ -155,12 +155,12 @@
                     <i class="fas fa-users text-blue-500"></i>
                     Base de Funcionarios
                 </h3>
-                <p class="text-[11px] text-gray-400 font-bold mt-0.5 uppercase">{{ usuarios_con_stats|length }} funcionarios registrados</p>
+                <p class="text-xs text-gray-400 font-bold mt-0.5 uppercase">{{ usuarios_con_stats|length }} funcionarios registrados</p>
             </div>
 
             <!-- Selector de paginación -->
             <div class="flex items-center gap-3">
-                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Mostrar:</span>
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Mostrar:</span>
                 <form method="get" class="flex items-center gap-2">
                     <!-- Mantener otros parámetros GET -->
                     {% for key, value in request.GET.items %}
@@ -170,7 +170,7 @@
                     {% endfor %}
 
                     <select name="paginate_by" onchange="this.form.submit()"
-                            class="text-[10px] font-bold px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 hover:border-blue-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                            class="text-xs font-bold px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-gray-700 hover:border-blue-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
                         <option value="todos" {% if request.GET.paginate_by == 'todos' or not request.GET.paginate_by %}selected{% endif %}>Todos</option>
                         <option value="20" {% if request.GET.paginate_by == '20' %}selected{% endif %}>20 por página</option>
                         <option value="40" {% if request.GET.paginate_by == '40' %}selected{% endif %}>40 por página</option>
@@ -184,16 +184,16 @@
         <form method="get" class="hidden md:block overflow-x-auto">
             <table class="min-w-full">
                 <thead>
-                    <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">
+                    <tr class="text-xs font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">
                         <th class="px-6 py-4 text-left">
                             <div class="flex items-center justify-between">
                                 <span>Funcionario</span>
                                 <div class="flex flex-col gap-0.5 ml-3">
                                     <button type="submit" name="sort" value="name" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
-                                        <i class="fas fa-chevron-up text-[10px]"></i>
+                                        <i class="fas fa-chevron-up text-xs"></i>
                                     </button>
                                     <button type="submit" name="sort" value="name_desc" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
-                                        <i class="fas fa-chevron-down text-[10px]"></i>
+                                        <i class="fas fa-chevron-down text-xs"></i>
                                     </button>
                                 </div>
                             </div>
@@ -203,10 +203,10 @@
                                 <span>RUT</span>
                                 <div class="flex flex-col gap-0.5 ml-3">
                                     <button type="submit" name="sort" value="rut" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
-                                        <i class="fas fa-chevron-up text-[10px]"></i>
+                                        <i class="fas fa-chevron-up text-xs"></i>
                                     </button>
                                     <button type="submit" name="sort" value="rut_desc" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
-                                        <i class="fas fa-chevron-down text-[10px]"></i>
+                                        <i class="fas fa-chevron-down text-xs"></i>
                                     </button>
                                 </div>
                             </div>
@@ -216,10 +216,10 @@
                                 <span>Registros</span>
                                 <div class="flex flex-col gap-0.5 ml-3">
                                     <button type="submit" name="sort" value="registros" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
-                                        <i class="fas fa-chevron-up text-[10px]"></i>
+                                        <i class="fas fa-chevron-up text-xs"></i>
                                     </button>
                                     <button type="submit" name="sort" value="registros_desc" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
-                                        <i class="fas fa-chevron-down text-[10px]"></i>
+                                        <i class="fas fa-chevron-down text-xs"></i>
                                     </button>
                                 </div>
                             </div>
@@ -229,10 +229,10 @@
                                 <span>Puntualidad</span>
                                 <div class="flex flex-col gap-0.5 ml-3">
                                     <button type="submit" name="sort" value="puntualidad" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
-                                        <i class="fas fa-chevron-up text-[10px]"></i>
+                                        <i class="fas fa-chevron-up text-xs"></i>
                                     </button>
                                     <button type="submit" name="sort" value="puntualidad_desc" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
-                                        <i class="fas fa-chevron-down text-[10px]"></i>
+                                        <i class="fas fa-chevron-down text-xs"></i>
                                     </button>
                                 </div>
                             </div>
@@ -242,10 +242,10 @@
                                 <span>Último Acceso</span>
                                 <div class="flex flex-col gap-0.5 ml-3">
                                     <button type="submit" name="sort" value="ultimo_acceso" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
-                                        <i class="fas fa-chevron-up text-[10px]"></i>
+                                        <i class="fas fa-chevron-up text-xs"></i>
                                     </button>
                                     <button type="submit" name="sort" value="ultimo_acceso_desc" class="w-4 h-4 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-all leading-none">
-                                        <i class="fas fa-chevron-down text-[10px]"></i>
+                                        <i class="fas fa-chevron-down text-xs"></i>
                                     </button>
                                 </div>
                             </div>
@@ -255,7 +255,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                     {% for user_stats in usuarios_con_stats %}
-                    <tr class="group hover:bg-blue-50/30 transition-all duration-300">
+                    <tr class="group hover:bg-blue-50/30 transition-all duration-300" style="content-visibility: auto; contain-intrinsic-size: 0 64px;">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-xl bg-gray-100 border border-gray-100 flex items-center justify-center group-hover:bg-blue-100 group-hover:border-blue-200 transition-all">
@@ -264,8 +264,15 @@
                                     </span>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-black {% if user_stats.usuario.es_baja_actualmente or user_stats.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ user_stats.usuario.get_full_name }}</p>
-                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ user_stats.usuario.get_role_display }}</p>
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-sm font-black text-gray-900">{{ user_stats.usuario.get_full_name }}</p>
+                                        {% if user_stats.usuario.is_on_leave %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">Licencia</span>
+                                        {% elif user_stats.usuario.es_baja_actualmente %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">Inactivo</span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ user_stats.usuario.get_role_display }}</p>
                                 </div>
                             </div>
                         </td>
@@ -273,7 +280,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-black text-gray-900">{{ user_stats.total_registros }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center">
                             <div class="flex items-center justify-center gap-2">
-                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-widest
                                     {% if user_stats.porcentaje_puntualidad >= 80 %}bg-green-50 text-green-700 border border-green-100
                                     {% elif user_stats.porcentaje_puntualidad >= 60 %}bg-amber-50 text-amber-700 border border-amber-100
                                     {% else %}bg-rose-50 text-rose-700 border border-rose-100{% endif %}">
@@ -287,7 +294,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-right">
                             <div class="flex items-center justify-end gap-2">
                                 <a href="{% url 'asistencia:detalle_usuario' user_stats.usuario.id %}"
-                                   class="inline-flex items-center px-4 py-2 bg-white border border-gray-100 text-gray-700 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm">
+                                   class="inline-flex items-center px-4 py-2 bg-white border border-gray-100 text-gray-700 text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm">
                                     <i class="fas fa-eye mr-2"></i> Ver Detalle
                                 </a>
                                 <div class="flex gap-1">
@@ -319,12 +326,19 @@
                             <span class="text-xs font-black">{{ user_stats.usuario.first_name.0 }}{{ user_stats.usuario.last_name.0 }}</span>
                         </div>
                         <div>
-                            <p class="text-sm font-black {% if user_stats.usuario.es_baja_actualmente or user_stats.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %}">{{ user_stats.usuario.get_full_name }}</p>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{{ user_stats.usuario.run }}</p>
+                            <div class="flex items-center gap-2">
+                                <p class="text-sm font-black text-gray-900">{{ user_stats.usuario.get_full_name }}</p>
+                                {% if user_stats.usuario.is_on_leave %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">Licencia</span>
+                                {% elif user_stats.usuario.es_baja_actualmente %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">Inactivo</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ user_stats.usuario.run }}</p>
                         </div>
                     </div>
                     <div class="text-right">
-                        <span class="text-[10px] font-black uppercase px-2 py-1 rounded-lg
+                        <span class="text-xs font-black uppercase px-2 py-1 rounded-lg
                             {% if user_stats.porcentaje_puntualidad >= 80 %}text-green-600 bg-green-50
                             {% elif user_stats.porcentaje_puntualidad >= 60 %}text-amber-600 bg-amber-50
                             {% else %}text-rose-600 bg-rose-50{% endif %}">
@@ -335,17 +349,17 @@
                 
                 <div class="grid grid-cols-3 gap-2 mb-4">
                     <div class="bg-gray-50 p-2 rounded-xl border border-gray-100 text-center">
-                        <p class="text-[8px] font-black text-gray-400 uppercase mb-0.5">Registros</p>
+                        <p class="text-xs font-black text-gray-400 uppercase mb-0.5">Registros</p>
                         <p class="text-xs font-black text-gray-900">{{ user_stats.total_registros }}</p>
                     </div>
                     <div class="bg-gray-50 p-2 rounded-xl border border-gray-100 text-center col-span-2">
-                        <p class="text-[8px] font-black text-gray-400 uppercase mb-0.5">Última Marcación</p>
+                        <p class="text-xs font-black text-gray-400 uppercase mb-0.5">Última Marcación</p>
                         <p class="text-xs font-black text-gray-900">{% if user_stats.ultimo_registro %}{{ user_stats.ultimo_registro|date:"d/m/Y" }}{% else %}-{% endif %}</p>
                     </div>
                 </div>
 
                 <div class="flex gap-2">
-                    <a href="{% url 'asistencia:detalle_usuario' user_stats.usuario.id %}" class="flex-1 inline-flex items-center justify-center px-4 py-2.5 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl">
+                    <a href="{% url 'asistencia:detalle_usuario' user_stats.usuario.id %}" class="flex-1 inline-flex items-center justify-center px-4 py-2.5 bg-gray-900 text-white text-xs font-black uppercase tracking-widest rounded-xl">
                         <i class="fas fa-eye mr-2"></i> Ver Detalle
                     </a>
                     <div class="flex gap-1">
@@ -363,17 +377,17 @@
 
         {% if is_paginated %}
         <div class="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            <span class="text-xs font-black text-gray-400 uppercase tracking-widest">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
             <div class="flex items-center gap-2">
                 {% if page_obj.has_previous %}
                 <a href="?page={{ page_obj.previous_page_number }}{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}" class="w-9 h-9 flex items-center justify-center bg-white border border-gray-100 text-gray-400 rounded-xl hover:text-blue-600 transition-all">
-                    <i class="fas fa-chevron-left text-[10px]"></i>
+                    <i class="fas fa-chevron-left text-xs"></i>
                 </a>
                 {% endif %}
                 <span class="w-9 h-9 flex items-center justify-center bg-blue-600 text-white text-xs font-black rounded-xl shadow-lg shadow-blue-100">{{ page_obj.number }}</span>
                 {% if page_obj.has_next %}
                 <a href="?page={{ page_obj.next_page_number }}{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}" class="w-9 h-9 flex items-center justify-center bg-white border border-gray-100 text-gray-400 rounded-xl hover:text-blue-600 transition-all">
-                    <i class="fas fa-chevron-right text-[10px]"></i>
+                    <i class="fas fa-chevron-right text-xs"></i>
                 </a>
                 {% endif %}
             </div>
@@ -397,7 +411,7 @@
         {% if is_paginated and paginate_by != 'todos' %}
         <div class="px-6 py-4 bg-gray-50/50 border-t border-gray-100">
             <div class="flex items-center justify-between">
-                <div class="text-[11px] text-gray-500 font-bold">
+                <div class="text-xs text-gray-500 font-bold">
                     Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ paginator.count }} funcionarios
                     <span class="text-gray-400">(Página {{ page_obj.number }} de {{ paginator.num_pages }})</span>
                 </div>
@@ -406,23 +420,23 @@
                 <div class="flex items-center gap-1">
                     {% if page_obj.has_previous %}
                         <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}"
-                           class="px-3 py-1.5 text-[10px] font-bold bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all">
+                           class="px-3 py-1.5 text-xs font-bold bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all">
                             <i class="fas fa-chevron-left mr-1"></i>Anterior
                         </a>
                     {% endif %}
 
                     {% for num in page_obj.paginator.page_range %}
                         {% if page_obj.number == num %}
-                            <span class="px-3 py-1.5 text-[10px] font-bold bg-blue-600 border border-blue-600 rounded-lg text-white">{{ num }}</span>
+                            <span class="px-3 py-1.5 text-xs font-bold bg-blue-600 border border-blue-600 rounded-lg text-white">{{ num }}</span>
                         {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                             <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}"
-                               class="px-3 py-1.5 text-[10px] font-bold bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all">{{ num }}</a>
+                               class="px-3 py-1.5 text-xs font-bold bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all">{{ num }}</a>
                         {% endif %}
                     {% endfor %}
 
                     {% if page_obj.has_next %}
                         <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}"
-                           class="px-3 py-1.5 text-[10px] font-bold bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all">
+                           class="px-3 py-1.5 text-xs font-bold bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all">
                             Siguiente<i class="fas fa-chevron-right ml-1"></i>
                         </a>
                     {% endif %}
@@ -431,7 +445,7 @@
         </div>
         {% elif request.GET.paginate_by == 'todos' %}
         <div class="px-6 py-4 bg-gray-50/50 border-t border-gray-100">
-            <div class="text-[11px] text-gray-500 font-bold">
+            <div class="text-xs text-gray-500 font-bold">
                 Mostrando todos los {{ usuarios_con_stats|length }} funcionarios
             </div>
         </div>

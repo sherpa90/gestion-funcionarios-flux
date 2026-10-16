@@ -26,7 +26,7 @@
                     <!-- Usuario -->
                     <div>
                         <label for="{{ form.usuario.id_for_label }}"
-                            class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Funcionario</label>
+                            class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Funcionario</label>
                         {{ form.usuario }}
                         {% if form.usuario.errors %}
                         <p class="mt-0.5 text-xs text-red-600">{{ form.usuario.errors.0 }}</p>
@@ -37,7 +37,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label for="{{ form.fecha_inicio.id_for_label }}"
-                                class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Fecha de Inicio</label>
+                                class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Fecha de Inicio</label>
                             {{ form.fecha_inicio }}
                             {% if form.fecha_inicio.errors %}
                             <p class="mt-0.5 text-xs text-red-600">{{ form.fecha_inicio.errors.0 }}</p>
@@ -45,7 +45,7 @@
                         </div>
                         <div>
                             <label for="{{ form.dias_solicitados.id_for_label }}"
-                                class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Días a Registrar</label>
+                                class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Días a Registrar</label>
                             {{ form.dias_solicitados }}
                             {% if form.dias_solicitados.errors %}
                             <p class="mt-0.5 text-xs text-red-600">{{ form.dias_solicitados.errors.0 }}</p>
@@ -55,7 +55,7 @@
 
                     <!-- Jornada (solo para medio día) -->
                     <div id="jornada-container" style="display: none;">
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Jornada</label>
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Jornada</label>
                         <div class="flex gap-4">
                             {{ form.jornada }}
                         </div>
@@ -67,7 +67,7 @@
                     <!-- Observación -->
                     <div>
                         <label for="{{ form.observacion.id_for_label }}"
-                            class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Observación <span class="font-normal normal-case">(Opcional)</span></label>
+                            class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Observación <span class="font-normal normal-case">(Opcional)</span></label>
                         {{ form.observacion }}
                         {% if form.observacion.errors %}
                         <p class="mt-0.5 text-xs text-red-600">{{ form.observacion.errors.0 }}</p>
@@ -76,7 +76,7 @@
 
                     <!-- Info -->
                     <div class="rounded-lg bg-yellow-50 p-2.5 border border-yellow-100">
-                        <p class="text-[11px] text-yellow-700">
+                        <p class="text-xs text-yellow-700">
                             <i class="fas fa-info-circle text-yellow-500 mr-1"></i>
                             Quedará en estado <strong>PENDIENTE</strong>. El Director deberá aprobarlo.
                         </p>
@@ -101,7 +101,7 @@
         <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden flex flex-col">
             <div class="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
                 <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Ingresos Recientes</h3>
-                <span class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{{ mis_ingresos|length }}</span>
+                <span class="text-xs font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{{ mis_ingresos|length }}</span>
             </div>
             <div class="overflow-y-auto">
                 {% if mis_ingresos %}
@@ -110,11 +110,11 @@
                     <table class="min-w-full divide-y divide-gray-50">
                         <thead class="bg-gray-50/50 sticky top-0">
                             <tr>
-                                <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Funcionario</th>
-                                <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Fecha</th>
-                                <th class="px-3 py-2 text-center text-[9px] font-bold text-gray-400 uppercase tracking-widest">Días</th>
-                                <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Estado</th>
-                                <th class="px-3 py-2 text-right text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ingreso</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Funcionario</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Fecha</th>
+                                <th class="px-3 py-2 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Días</th>
+                                <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Estado</th>
+                                <th class="px-3 py-2 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Ingreso</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
@@ -123,11 +123,11 @@
                                 <td class="px-3 py-2">
                                     <div class="flex items-center gap-2">
                                         <div class="h-6 w-6 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
-                                            <span class="text-[8px] font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
+                                            <span class="text-xs font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
                                         </div>
                                         <div class="min-w-0">
-                                            <div class="text-xs font-bold {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ solicitud.usuario.get_full_name }}</div>
-                                            <div class="text-[10px] text-gray-400">{{ solicitud.usuario.run }}</div>
+                                            <div class="text-xs font-bold text-gray-900 truncate">{{ solicitud.usuario.get_full_name }}</div>
+                                            <div class="text-xs text-gray-400">{{ solicitud.usuario.run }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -143,24 +143,24 @@
                                 </td>
                                 <td class="px-3 py-2">
                                     {% if solicitud.estado == 'APROBADO' %}
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                                        <i class="fas fa-check mr-0.5 text-[8px]"></i>Aprobado
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-700">
+                                        <i class="fas fa-check mr-0.5 text-xs"></i>Aprobado
                                     </span>
                                     {% elif solicitud.estado == 'RECHAZADO' %}
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700">
-                                        <i class="fas fa-times mr-0.5 text-[8px]"></i>Rechazado
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-rose-50 text-rose-700">
+                                        <i class="fas fa-times mr-0.5 text-xs"></i>Rechazado
                                     </span>
                                     {% elif solicitud.estado == 'CANCELADO' %}
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700">
-                                        {% if solicitud.cancelled_by == user %}<i class="fas fa-undo mr-0.5 text-[8px]"></i>Devuelto{% else %}Cancelado{% endif %}
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-blue-50 text-blue-700">
+                                        {% if solicitud.cancelled_by == user %}<i class="fas fa-undo mr-0.5 text-xs"></i>Devuelto{% else %}Cancelado{% endif %}
                                     </span>
                                     {% else %}
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700">
-                                        <i class="fas fa-clock mr-0.5 text-[8px]"></i>Pendiente
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-700">
+                                        <i class="fas fa-clock mr-0.5 text-xs"></i>Pendiente
                                     </span>
                                     {% endif %}
                                 </td>
-                                <td class="px-3 py-2 text-right text-[10px] text-gray-400">
+                                <td class="px-3 py-2 text-right text-xs text-gray-400">
                                     {% if solicitud.estado == 'CANCELADO' and solicitud.cancelled_by == user %}
                                         {{ solicitud.cancelled_at|date:"d/m H:i" }}
                                     {% else %}
@@ -180,11 +180,11 @@
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2 min-w-0 flex-1">
                                 <div class="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
-                                    <span class="text-[8px] font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
+                                    <span class="text-xs font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <div class="text-xs font-bold {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ solicitud.usuario.get_full_name }}</div>
-                                    <div class="text-[10px] text-gray-400">{{ solicitud.fecha_inicio|date:"d/m" }} · {{ solicitud.usuario.run }}</div>
+                                    <div class="text-xs font-bold text-gray-900 truncate">{{ solicitud.usuario.get_full_name }}</div>
+                                    <div class="text-xs text-gray-400">{{ solicitud.fecha_inicio|date:"d/m" }} · {{ solicitud.usuario.run }}</div>
                                 </div>
                             </div>
                             <div class="flex items-center gap-1.5 flex-shrink-0">
@@ -194,13 +194,13 @@
                                     <span class="text-xs font-black text-gray-900">{{ solicitud.dias_solicitados }}</span>
                                 {% endif %}
                                 {% if solicitud.estado == 'APROBADO' %}
-                                <span class="px-1 py-0.5 rounded text-[9px] font-extrabold bg-emerald-100 text-emerald-700">OK</span>
+                                <span class="px-1 py-0.5 rounded text-xs font-extrabold bg-emerald-100 text-emerald-700">OK</span>
                                 {% elif solicitud.estado == 'RECHAZADO' %}
-                                <span class="px-1 py-0.5 rounded text-[9px] font-extrabold bg-rose-100 text-rose-700">Rech.</span>
+                                <span class="px-1 py-0.5 rounded text-xs font-extrabold bg-rose-100 text-rose-700">Rech.</span>
                                 {% elif solicitud.estado == 'CANCELADO' %}
-                                <span class="px-1 py-0.5 rounded text-[9px] font-extrabold bg-blue-100 text-blue-700">Dev.</span>
+                                <span class="px-1 py-0.5 rounded text-xs font-extrabold bg-blue-100 text-blue-700">Dev.</span>
                                 {% else %}
-                                <span class="px-1 py-0.5 rounded text-[9px] font-extrabold bg-amber-100 text-amber-700">Pend.</span>
+                                <span class="px-1 py-0.5 rounded text-xs font-extrabold bg-amber-100 text-amber-700">Pend.</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -296,8 +296,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!warningDiv) {
                 warningDiv = document.createElement('div');
                 warningDiv.id = 'fecha-warning';
-                warningDiv.className = 'mt-2 p-2 bg-amber-50 rounded-lg text-[11px] text-amber-800 font-medium border border-amber-100 flex items-start';
-                warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-1.5 mt-0.5 text-amber-500 text-[10px]"></i><span><strong>Fuera de plazo:</strong> Menos de 2 días de anticipación.</span>';
+                warningDiv.className = 'mt-2 p-2 bg-amber-50 rounded-lg text-xs text-amber-800 font-medium border border-amber-100 flex items-start';
+                warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-1.5 mt-0.5 text-amber-500 text-xs"></i><span><strong>Fuera de plazo:</strong> Menos de 2 días de anticipación.</span>';
                 fechaInicioInput.parentNode.appendChild(warningDiv);
             }
         } else {

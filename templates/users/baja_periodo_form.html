@@ -9,9 +9,9 @@
             <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
                 <i class="fa-solid fa-calendar-plus text-2xl text-blue-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-900">{% if object.pk %}Editar{% else %}Crear{% endif %} Periodo de Baja</h1>
-            <p class="mt-2 text-sm {% if usuario.es_baja_actualmente or usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-600{% endif %}">
-                {{ usuario.get_full_name }} ({{ usuario.run }})
+            <h1 class="text-2xl font-bold text-gray-900">{% if object.pk %}Editar{% else %}Crear{% endif %} Periodo de Inactividad</h1>
+            <p class="mt-2 text-sm text-gray-600">
+                <span class="font-semibold text-gray-900">{{ usuario.get_full_name }}</span> ({{ usuario.run }})
             </p>
         </div>
 

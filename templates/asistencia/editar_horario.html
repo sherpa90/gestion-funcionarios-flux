@@ -9,7 +9,12 @@
         <h2 class="text-3xl font-bold text-gray-900">Editar Horario de Entrada</h2>
         <p class="text-gray-600 mt-2">
             Modificar horario de entrada para
-            <strong class="{% if object.funcionario.es_baja_actualmente or object.funcionario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ object.funcionario.get_full_name }}</strong> ({{ object.funcionario.run }})
+            <strong class="text-gray-900">{{ object.funcionario.get_full_name }}</strong> ({{ object.funcionario.run }})
+            {% if object.funcionario.is_on_leave %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">Licencia</span>
+            {% elif object.funcionario.es_baja_actualmente %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">Inactivo</span>
+            {% endif %}
         </p>
     </div>
 

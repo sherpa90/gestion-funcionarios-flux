@@ -10,7 +10,7 @@
             <i class="fas fa-file-medical text-blue-600"></i>
             Editar Licencia Médica
         </h2>
-        <p class="text-gray-600 mt-2">Modifica los datos de la licencia de <span class="{% if object.usuario.es_baja_actualmente or object.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% endif %}">{{ object.usuario.get_full_name }}</span></p>
+        <p class="text-gray-600 mt-2">Modifica los datos de la licencia de <span class="font-semibold text-gray-900">{{ object.usuario.get_full_name }}</span></p>
     </div>
 
     <div class="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
@@ -32,7 +32,7 @@
 
                 <!-- Funcionario -->
                 <div>
-                    <label for="{{ form.usuario.id_for_label }}" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                    <label for="{{ form.usuario.id_for_label }}" class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
                         Funcionario
                     </label>
                     {{ form.usuario }}
@@ -43,7 +43,7 @@
 
                 <!-- Tipo de Licencia -->
                 <div>
-                    <label for="{{ form.tipo.id_for_label }}" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                    <label for="{{ form.tipo.id_for_label }}" class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
                         Tipo de Licencia
                     </label>
                     {{ form.tipo }}
@@ -55,7 +55,7 @@
                 <!-- Fecha Inicio y Días -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                        <label for="{{ form.fecha_inicio.id_for_label }}" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                        <label for="{{ form.fecha_inicio.id_for_label }}" class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
                             Fecha de Inicio
                         </label>
                         {{ form.fecha_inicio }}
@@ -64,7 +64,7 @@
                         {% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.dias.id_for_label }}" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                        <label for="{{ form.dias.id_for_label }}" class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
                             Cantidad de Días
                         </label>
                         {{ form.dias }}
@@ -76,7 +76,7 @@
 
                 <!-- Archivo -->
                 <div>
-                    <label for="{{ form.archivo.id_for_label }}" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                    <label for="{{ form.archivo.id_for_label }}" class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
                         Documento de Respaldo
                     </label>
                     {% if object.archivo %}
@@ -89,7 +89,7 @@
                     {% if form.archivo.errors %}
                     <p class="mt-1 text-xs text-red-500 font-bold">{{ form.archivo.errors.0 }}</p>
                     {% endif %}
-                    <p class="mt-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest">Subir un nuevo archivo reemplazará el actual</p>
+                    <p class="mt-2 text-xs text-gray-400 font-bold uppercase tracking-widest">Subir un nuevo archivo reemplazará el actual</p>
                 </div>
 
                 <!-- Botones -->

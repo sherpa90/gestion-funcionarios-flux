@@ -28,7 +28,7 @@
                         <div class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-blue-300 hover:bg-blue-50/30 transition-all">
                             <i class="fas fa-file-excel text-3xl text-green-500 mb-2"></i>
                             <p class="text-xs font-bold text-gray-700" id="file-label">Arrastra o haz clic para subir</p>
-                            <p class="text-[10px] text-gray-400 mt-1">Excel (.xlsx/.xls) o PDF</p>
+                            <p class="text-xs text-gray-400 mt-1">Excel (.xlsx/.xls) o PDF</p>
                         </div>
                     </div>
                     {% if form.archivo_excel.errors %}
@@ -59,9 +59,9 @@
                         <table class="min-w-full divide-y divide-gray-100">
                             <thead class="bg-gray-50/50">
                                 <tr>
-                                    <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">RUT</th>
-                                    <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Nombre</th>
-                                    <th class="px-3 py-2 text-left text-[9px] font-bold text-gray-400 uppercase tracking-widest">Fecha/Hora</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">RUT</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Nombre</th>
+                                    <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Fecha/Hora</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
@@ -86,8 +86,8 @@
 
                     <!-- Notas -->
                     <div class="mt-3 bg-amber-50 rounded-lg p-3 border border-amber-100">
-                        <h4 class="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-1">Notas</h4>
-                        <ul class="text-[11px] text-amber-700 space-y-0.5">
+                        <h4 class="text-xs font-bold text-amber-800 uppercase tracking-widest mb-1">Notas</h4>
+                        <ul class="text-xs text-amber-700 space-y-0.5">
                             <li><i class="fas fa-check text-amber-500 mr-1"></i> La primera fila se ignora (encabezados)</li>
                             <li><i class="fas fa-check text-amber-500 mr-1"></i> Múltiples marcaciones por día se agrupan automáticamente</li>
                             <li><i class="fas fa-check text-amber-500 mr-1"></i> Marca antes de 12:00 = entrada / después = salida</li>

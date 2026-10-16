@@ -25,11 +25,11 @@
                     <h3 class="text-xl font-bold mb-4">{{ equipo.marca }} {{ equipo.modelo }}</h3>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <div class="text-[10px] uppercase opacity-60">Inventario</div>
+                            <div class="text-xs uppercase opacity-60">Inventario</div>
                             <div class="font-mono font-bold">{{ equipo.numero_inventario }}</div>
                         </div>
                         <div>
-                            <div class="text-[10px] uppercase opacity-60">Serie</div>
+                            <div class="text-xs uppercase opacity-60">Serie</div>
                             <div class="font-mono text-sm">{{ equipo.numero_serie|striptags }}</div>
                         </div>
                     </div>
@@ -58,7 +58,7 @@
                             <option value="{{ func.id }}">{{ func.get_full_name }} ({{ func.run }}){% if func.es_baja_actualmente or func.is_on_leave %} [DE BAJA]{% endif %}</option>
                             {% endfor %}
                         </select>
-                        <p class="text-[10px] text-gray-400">Solo se muestran usuarios activos en el sistema.</p>
+                        <p class="text-xs text-gray-400">Solo se muestran usuarios activos en el sistema.</p>
                     </div>
 
                     <div class="space-y-2">

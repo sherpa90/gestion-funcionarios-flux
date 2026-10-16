@@ -138,7 +138,7 @@
     {% if data.registros %}
     <div class="usuario-card">
         <span class="total-badge">{{ data.total }} ATRASO{{ data.total|pluralize:"S" }}</span>
-        <h2 {% if data.usuario.es_baja_actualmente or data.usuario.is_on_leave %}style="text-decoration: line-through; color: #dc2626;"{% endif %}>{{ data.usuario.get_full_name }}</h2>
+        <h2>{{ data.usuario.get_full_name }}{% if data.usuario.is_on_leave %} <span style="font-size: 9pt; color: #b45309; font-weight: normal;">(En Licencia)</span>{% elif data.usuario.es_baja_actualmente %} <span style="font-size: 9pt; color: #64748b; font-weight: normal;">(Inactivo)</span>{% endif %}</h2>
         <div class="info">{{ data.usuario.run }} &middot; {{ data.usuario.get_role_display }}</div>
     </div>
 

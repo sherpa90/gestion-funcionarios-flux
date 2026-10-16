@@ -13,28 +13,28 @@
         <!-- Stats Inline -->
         <div class="flex flex-wrap gap-2">
             <div class="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-full px-3 py-1.5">
-                <i class="fas fa-list text-blue-500 text-[10px]"></i>
-                <span class="text-[10px] font-bold text-blue-600 uppercase">Total</span>
+                <i class="fas fa-list text-blue-500 text-xs"></i>
+                <span class="text-xs font-bold text-blue-600 uppercase">Total</span>
                 <span class="text-sm font-black text-blue-700">{{ estadisticas.total }}</span>
             </div>
             <div class="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-full px-3 py-1.5">
-                <i class="fas fa-clock text-amber-500 text-[10px]"></i>
-                <span class="text-[10px] font-bold text-amber-600 uppercase">Pend.</span>
+                <i class="fas fa-clock text-amber-500 text-xs"></i>
+                <span class="text-xs font-bold text-amber-600 uppercase">Pend.</span>
                 <span class="text-sm font-black text-amber-700">{{ estadisticas.pendientes }}</span>
             </div>
             <div class="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1.5">
-                <i class="fas fa-check text-emerald-500 text-[10px]"></i>
-                <span class="text-[10px] font-bold text-emerald-600 uppercase">Apr.</span>
+                <i class="fas fa-check text-emerald-500 text-xs"></i>
+                <span class="text-xs font-bold text-emerald-600 uppercase">Apr.</span>
                 <span class="text-sm font-black text-emerald-700">{{ estadisticas.aprobadas }}</span>
             </div>
             <div class="flex items-center gap-2 bg-rose-50 border border-rose-100 rounded-full px-3 py-1.5">
-                <i class="fas fa-times text-rose-500 text-[10px]"></i>
-                <span class="text-[10px] font-bold text-rose-600 uppercase">Rech.</span>
+                <i class="fas fa-times text-rose-500 text-xs"></i>
+                <span class="text-xs font-bold text-rose-600 uppercase">Rech.</span>
                 <span class="text-sm font-black text-rose-700">{{ estadisticas.rechazadas }}</span>
             </div>
             <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full px-3 py-1.5">
-                <i class="fas fa-ban text-slate-400 text-[10px]"></i>
-                <span class="text-[10px] font-bold text-slate-500 uppercase">Canc.</span>
+                <i class="fas fa-ban text-slate-400 text-xs"></i>
+                <span class="text-xs font-bold text-slate-500 uppercase">Canc.</span>
                 <span class="text-sm font-black text-slate-700">{{ estadisticas.canceladas }}</span>
             </div>
         </div>
@@ -44,16 +44,16 @@
     <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-2.5 border border-blue-100 mb-4">
         <div class="flex items-center gap-2">
             <div class="px-3 py-1.5 border-r border-blue-100 hidden sm:block">
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">Carga Semanal</p>
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest leading-none mb-0.5">Carga Semanal</p>
                 <p class="text-xs font-bold text-emerald-600">Permisos Aceptados</p>
-                <p class="text-[8px] text-gray-500">Doc / Asis</p>
+                <p class="text-xs text-gray-500">Doc / Asis</p>
             </div>
             {% for dia in resumen_semanal %}
             <div class="flex-1 min-w-[45px] sm:min-w-[55px] text-center p-1 rounded-lg transition-all {% if dia.es_hoy %}bg-blue-50 ring-1 ring-blue-200{% endif %}">
-                <p class="text-[9px] font-bold {% if dia.es_hoy %}text-blue-600{% else %}text-gray-400{% endif %} uppercase">{{ dia.nombre }}</p>
+                <p class="text-xs font-bold {% if dia.es_hoy %}text-blue-600{% else %}text-gray-400{% endif %} uppercase">{{ dia.nombre }}</p>
                 <div class="flex items-center justify-center">
                     <span class="text-xs font-black text-purple-600">{{ dia.docente_count }}</span>
-                    <span class="text-[8px] text-gray-300 mx-0.5">/</span>
+                    <span class="text-xs text-gray-300 mx-0.5">/</span>
                     <span class="text-xs font-black text-blue-600">{{ dia.asistente_count }}</span>
                 </div>
             </div>
@@ -65,25 +65,25 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div class="flex items-center gap-1 bg-white rounded-xl border border-gray-100 p-1 shadow-sm">
             <a href="{% url 'admin_management' %}{% if filtros_aplicados.search %}?search={{ filtros_aplicados.search }}{% endif %}"
-               class="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all {% if not filtros_aplicados.estado %}bg-gray-900 text-white shadow{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
+               class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all {% if not filtros_aplicados.estado %}bg-gray-900 text-white shadow{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
                 Todas
             </a>
             <a href="{% url 'admin_management' %}?estado=PENDIENTE{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}"
-               class="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all {% if filtros_aplicados.estado == 'PENDIENTE' %}bg-amber-500 text-white shadow{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
+               class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all {% if filtros_aplicados.estado == 'PENDIENTE' %}bg-amber-500 text-white shadow{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
                 Pendientes
             </a>
             <a href="{% url 'admin_management' %}?estado=APROBADO{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}"
-               class="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all {% if filtros_aplicados.estado == 'APROBADO' %}bg-emerald-500 text-white shadow{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
+               class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all {% if filtros_aplicados.estado == 'APROBADO' %}bg-emerald-500 text-white shadow{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
                 Aceptadas
             </a>
             <a href="{% url 'admin_management' %}?estado=RECHAZADO{% if filtros_aplicados.search %}&search={{ filtros_aplicados.search }}{% endif %}"
-               class="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all {% if filtros_aplicados.estado == 'RECHAZADO' %}bg-rose-500 text-white shadow{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
+               class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all {% if filtros_aplicados.estado == 'RECHAZADO' %}bg-rose-500 text-white shadow{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
                 Rechazadas
             </a>
         </div>
         <div class="flex items-center gap-2">
-            <label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Orden:</label>
-            <select id="sort-selector" class="text-[11px] border-gray-200 rounded-lg h-9 w-64 px-2 shadow-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all" onchange="applySort(this.value)">
+            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest">Orden:</label>
+            <select id="sort-selector" class="text-xs border-gray-200 rounded-lg h-9 w-64 px-2 shadow-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all" onchange="applySort(this.value)">
                 <option value="-created_at" {% if filtros_aplicados.sort == '-created_at' or not filtros_aplicados.sort %}selected{% endif %}>Creación (recientes)</option>
                 <option value="created_at" {% if filtros_aplicados.sort == 'created_at' %}selected{% endif %}>Creación (antiguas)</option>
                 <option value="-fecha_inicio" {% if filtros_aplicados.sort == '-fecha_inicio' %}selected{% endif %}>Permiso (recientes)</option>
@@ -97,7 +97,7 @@
         <form method="get" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 items-end">
             <!-- Funcionario -->
             <div class="col-span-2 sm:col-span-1 min-w-0">
-                <label for="usuario" class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Funcionario</label>
+                <label for="usuario" class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Funcionario</label>
                 <select name="usuario" id="usuario" class="block w-full text-xs border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 h-9 transition-all">
                     <option value="">Todos</option>
                     {% for usuario in usuarios %}
@@ -110,7 +110,7 @@
 
             <!-- Estado -->
             <div>
-                <label for="estado" class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Estado</label>
+                <label for="estado" class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Estado</label>
                 <select name="estado" id="estado" class="block w-full text-xs border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 h-9 transition-all">
                     <option value="">Todos</option>
                     {% for estado_valor, estado_label in estados %}
@@ -123,21 +123,21 @@
 
             <!-- Desde -->
             <div>
-                <label for="fecha_desde" class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Desde</label>
+                <label for="fecha_desde" class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Desde</label>
                 <input type="date" name="fecha_desde" id="fecha_desde" value="{{ filtros_aplicados.fecha_desde }}"
                        class="block w-full text-xs border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 h-9 transition-all">
             </div>
 
             <!-- Hasta -->
             <div>
-                <label for="fecha_hasta" class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Hasta</label>
+                <label for="fecha_hasta" class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Hasta</label>
                 <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ filtros_aplicados.fecha_hasta }}"
                        class="block w-full text-xs border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 h-9 transition-all">
             </div>
 
             <!-- Buscar -->
             <div>
-                <label for="search" class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Buscar</label>
+                <label for="search" class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1 ml-0.5">Buscar</label>
                 <input type="text" name="search" id="search" value="{{ filtros_aplicados.search }}"
                        placeholder="Motivo..."
                        class="block w-full text-xs border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 h-9 transition-all">
@@ -159,7 +159,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="px-3 py-2.5 border-b border-gray-100 flex items-center justify-between">
             <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Registro de Solicitudes</h3>
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700">
                 {{ page_obj.paginator.count }} resultados
             </span>
         </div>
@@ -170,13 +170,13 @@
             <table class="min-w-full divide-y divide-gray-100 whitespace-nowrap">
                 <thead class="bg-gray-50/50">
                     <tr>
-                        <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Funcionario</th>
-                        <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cargo</th>
-                        <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Periodo</th>
-                        <th class="px-3 py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">Días</th>
-                        <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jefatura</th>
-                        <th class="px-3 py-2 text-left text-[10px] font-bold text-gray-400 uppercase tracking-widest">Estado</th>
-                        <th class="px-3 py-2 text-right text-[10px] font-bold text-gray-400 uppercase tracking-widest">Acciones</th>
+                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Funcionario</th>
+                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Cargo</th>
+                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Periodo</th>
+                        <th class="px-3 py-2 text-center text-xs font-bold text-gray-400 uppercase tracking-widest">Días</th>
+                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Jefatura</th>
+                        <th class="px-3 py-2 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Estado</th>
+                        <th class="px-3 py-2 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-50">
@@ -185,16 +185,16 @@
                         <td class="px-3 py-2">
                             <div class="flex items-center gap-2">
                                 <div class="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors flex-shrink-0">
-                                    <span class="text-[10px] font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
+                                    <span class="text-xs font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="text-xs font-bold {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ solicitud.usuario.get_full_name }}</div>
-                                    <div class="text-[10px] text-gray-400">{{ solicitud.usuario.run }}</div>
+                                    <div class="text-xs font-bold text-gray-900 truncate">{{ solicitud.usuario.get_full_name }}</div>
+                                    <div class="text-xs text-gray-400">{{ solicitud.usuario.run }}</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-3 py-2">
-                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-700{% elif solicitud.usuario.tipo_funcionario %}bg-blue-50 text-blue-700{% else %}bg-gray-50 text-gray-600{% endif %}">
+                            <span class="px-1.5 py-0.5 rounded text-xs font-bold uppercase {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-700{% elif solicitud.usuario.tipo_funcionario %}bg-blue-50 text-blue-700{% else %}bg-gray-50 text-gray-600{% endif %}">
                                 {{ solicitud.usuario.get_funcion_display|default:solicitud.usuario.get_tipo_funcionario_display|default:solicitud.usuario.get_role_display }}
                             </span>
                         </td>
@@ -202,7 +202,7 @@
                             <div class="text-xs font-medium text-gray-700">
                                 {{ solicitud.fecha_inicio|date:"d/m" }} <span class="text-gray-300">→</span> {{ solicitud.fecha_termino|date:"d/m/Y" }}
                             </div>
-                            <div class="text-[10px] text-gray-400 truncate max-w-[180px]">
+                            <div class="text-xs text-gray-400 truncate max-w-[180px]">
                                 {{ solicitud.observacion|default:"—" }}
                             </div>
                         </td>
@@ -210,7 +210,7 @@
                             <span class="text-xs font-black text-gray-900 bg-gray-100 px-1.5 py-0.5 rounded">
                                 {{ solicitud.dias_solicitados }}
                                 {% if solicitud.dias_solicitados == 0.5 %}
-                                <span class="text-[9px] text-blue-600 font-black">{% if solicitud.jornada == 'AM' %}AM{% elif solicitud.jornada == 'PM' %}PM{% endif %}</span>
+                                <span class="text-xs text-blue-600 font-black">{% if solicitud.jornada == 'AM' %}AM{% elif solicitud.jornada == 'PM' %}PM{% endif %}</span>
                                 {% endif %}
                             </span>
                         </td>
@@ -218,37 +218,37 @@
                             {% if solicitud.aprobado_por %}
                             <span class="text-xs font-medium text-gray-700 truncate max-w-[110px]">{{ solicitud.aprobado_por.first_name }} {{ solicitud.aprobado_por.last_name|slice:":1" }}.</span>
                             {% else %}
-                            <span class="text-[10px] text-gray-400">—</span>
+                            <span class="text-xs text-gray-400">—</span>
                             {% endif %}
                         </td>
                         <td class="px-3 py-2">
                             {% if solicitud.estado == 'APROBADO' %}
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                                <i class="fas fa-check mr-1 text-[8px]"></i>Aprobado
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-700">
+                                <i class="fas fa-check mr-1 text-xs"></i>Aprobado
                             </span>
                             {% elif solicitud.estado == 'RECHAZADO' %}
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700">
-                                <i class="fas fa-times mr-1 text-[8px]"></i>Rechazado
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-rose-50 text-rose-700">
+                                <i class="fas fa-times mr-1 text-xs"></i>Rechazado
                             </span>
                             {% elif solicitud.estado == 'CANCELADO' %}
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-700">
-                                <i class="fas fa-ban mr-1 text-[8px]"></i>Cancelado
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-slate-50 text-slate-700">
+                                <i class="fas fa-ban mr-1 text-xs"></i>Cancelado
                             </span>
                             {% else %}
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700">
-                                <i class="fas fa-clock mr-1 text-[8px]"></i>Pendiente
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-700">
+                                <i class="fas fa-clock mr-1 text-xs"></i>Pendiente
                             </span>
                             {% endif %}
                         </td>
                         <td class="px-3 py-2 text-right">
                             <a href="{% url 'admin_edit_solicitud' solicitud.pk %}"
-                               class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-lg hover:bg-blue-600 hover:text-white transition-all mr-1">
+                               class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-600 hover:text-white transition-all mr-1">
                                 <i class="fas fa-edit mr-1"></i> Editar
                             </a>
                             <button type="button"
                                     data-solicitud-id="{{ solicitud.pk }}"
                                     data-user-name="{{ solicitud.usuario.get_full_name }}"
-                                    class="delete-btn inline-flex items-center px-2 py-1 bg-rose-50 text-rose-700 text-[10px] font-bold rounded-lg hover:bg-rose-600 hover:text-white transition-all">
+                                    class="delete-btn inline-flex items-center px-2 py-1 bg-rose-50 text-rose-700 text-xs font-bold rounded-lg hover:bg-rose-600 hover:text-white transition-all">
                                 <i class="fas fa-trash-alt mr-1"></i> Eliminar
                             </button>
                         </td>
@@ -265,16 +265,16 @@
                 <div class="flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2 min-w-0 flex-1">
                         <div class="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
-                            <span class="text-[10px] font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
+                            <span class="text-xs font-black">{{ solicitud.usuario.first_name.0 }}{{ solicitud.usuario.last_name.0 }}</span>
                         </div>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-1.5">
-                                <span class="text-xs font-bold {% if solicitud.usuario.es_baja_actualmente or solicitud.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} truncate">{{ solicitud.usuario.get_full_name }}</span>
-                                <span class="flex-shrink-0 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-600{% elif solicitud.usuario.tipo_funcionario %}bg-blue-50 text-blue-600{% else %}bg-gray-50 text-gray-600{% endif %}">
+                                <span class="text-xs font-bold text-gray-900 truncate">{{ solicitud.usuario.get_full_name }}</span>
+                                <span class="flex-shrink-0 px-1.5 py-0.5 rounded text-xs font-black uppercase tracking-tighter {% if solicitud.usuario.funcion %}bg-purple-50 text-purple-600{% elif solicitud.usuario.tipo_funcionario %}bg-blue-50 text-blue-600{% else %}bg-gray-50 text-gray-600{% endif %}">
                                     {{ solicitud.usuario.get_funcion_display|default:solicitud.usuario.get_tipo_funcionario_display|default:solicitud.usuario.get_role_display }}
                                 </span>
                             </div>
-                            <div class="text-[10px] text-gray-400 truncate">
+                            <div class="text-xs text-gray-400 truncate">
                                 {{ solicitud.fecha_inicio|date:"d/m" }} <span class="text-gray-300">→</span> {{ solicitud.fecha_termino|date:"d/m" }}
                                 {% if solicitud.observacion %} · {{ solicitud.observacion|truncatechars:30 }}{% endif %}
                             </div>
@@ -285,7 +285,7 @@
                         <div class="text-center">
                             <span class="text-sm font-black text-gray-900">{{ solicitud.dias_solicitados|floatformat:1 }}</span>
                             {% if solicitud.dias_solicitados == 0.5 %}
-                            <span class="text-[8px] text-blue-600 font-black block -mt-0.5">{{ solicitud.jornada }}</span>
+                            <span class="text-xs text-blue-600 font-black block -mt-0.5">{{ solicitud.jornada }}</span>
                             {% endif %}
                         </div>
                         <!-- Jefatura -->
@@ -294,33 +294,33 @@
                             {{ solicitud.aprobado_por.first_name }} {{ solicitud.aprobado_por.last_name|slice:":1" }}.
                         </div>
                         {% else %}
-                        <span class="text-[10px] text-gray-400">—</span>
+                        <span class="text-xs text-gray-400">—</span>
                         {% endif %}
                         <!-- Estado -->
                         {% if solicitud.estado == 'APROBADO' %}
-                        <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-emerald-100 text-emerald-700">OK</span>
+                        <span class="px-1.5 py-0.5 rounded text-xs font-extrabold uppercase bg-emerald-100 text-emerald-700">OK</span>
                         {% elif solicitud.estado == 'RECHAZADO' %}
-                        <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-rose-100 text-rose-700">Rech.</span>
+                        <span class="px-1.5 py-0.5 rounded text-xs font-extrabold uppercase bg-rose-100 text-rose-700">Rech.</span>
                         {% elif solicitud.estado == 'CANCELADO' %}
-                        <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-slate-100 text-slate-700">Canc.</span>
+                        <span class="px-1.5 py-0.5 rounded text-xs font-extrabold uppercase bg-slate-100 text-slate-700">Canc.</span>
                         {% else %}
-                        <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-amber-100 text-amber-700">Pend.</span>
+                        <span class="px-1.5 py-0.5 rounded text-xs font-extrabold uppercase bg-amber-100 text-amber-700">Pend.</span>
                         {% endif %}
                         <!-- Acciones Dropdown -->
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" class="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-all">
-                                <i class="fas fa-ellipsis-v text-[10px]"></i>
+                                <i class="fas fa-ellipsis-v text-xs"></i>
                             </button>
                             <div x-show="open" @click.away="open = false" x-transition
                                  class="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 w-32 overflow-hidden">
                                 <a href="{% url 'admin_edit_solicitud' solicitud.pk %}" class="flex items-center gap-2 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50 transition">
-                                    <i class="fas fa-edit text-[10px]"></i> Editar
+                                    <i class="fas fa-edit text-xs"></i> Editar
                                 </a>
                                 <button type="button"
                                         data-solicitud-id="{{ solicitud.pk }}"
                                         data-user-name="{{ solicitud.usuario.get_full_name }}"
                                         class="delete-btn w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 transition border-t border-gray-50">
-                                    <i class="fas fa-trash-alt text-[10px]"></i> Eliminar
+                                    <i class="fas fa-trash-alt text-xs"></i> Eliminar
                                 </button>
                             </div>
                         </div>
@@ -333,7 +333,7 @@
         <!-- Paginación Compacta -->
         {% if is_paginated %}
         <div class="bg-gray-50/50 px-3 py-2.5 flex items-center justify-between border-t border-gray-100">
-            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <div class="text-xs font-bold text-gray-400 uppercase tracking-widest">
                 <span class="text-gray-700">{{ page_obj.number }}</span>/{{ page_obj.paginator.num_pages }}
                 <span class="mx-1 text-gray-200">|</span>
                 <span class="text-gray-400 font-medium lowercase">{{ page_obj.paginator.count }} regs.</span>
@@ -341,30 +341,30 @@
             <div class="flex items-center space-x-1">
                 {% if page_obj.has_previous %}
                 <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                   class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-[10px] rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all">
-                    <i class="fas fa-chevron-left text-[8px]"></i>
+                   class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-xs rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all">
+                    <i class="fas fa-chevron-left text-xs"></i>
                 </a>
                 {% endif %}
                 
                 <div class="hidden sm:flex items-center space-x-0.5">
                     {% for num in page_obj.paginator.page_range %}
                         {% if page_obj.number == num %}
-                            <span class="inline-flex items-center justify-center w-7 h-7 bg-blue-600 text-white text-[10px] font-black rounded-lg">{{ num }}</span>
+                            <span class="inline-flex items-center justify-center w-7 h-7 bg-blue-600 text-white text-xs font-black rounded-lg">{{ num }}</span>
                         {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                             <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                               class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-[10px] font-bold rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all">{{ num }}</a>
+                               class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-xs font-bold rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all">{{ num }}</a>
                         {% elif num == 1 or num == page_obj.paginator.num_pages %}
-                            <span class="text-gray-300 text-[10px] px-0.5">..</span>
+                            <span class="text-gray-300 text-xs px-0.5">..</span>
                             <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                               class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-[10px] font-bold rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all">{{ num }}</a>
+                               class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-xs font-bold rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all">{{ num }}</a>
                         {% endif %}
                     {% endfor %}
                 </div>
 
                 {% if page_obj.has_next %}
                 <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
-                   class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-[10px] rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all">
-                    <i class="fas fa-chevron-right text-[8px]"></i>
+                   class="inline-flex items-center justify-center w-7 h-7 bg-white border border-gray-200 text-gray-500 text-xs rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all">
+                    <i class="fas fa-chevron-right text-xs"></i>
                 </a>
                 {% endif %}
             </div>
@@ -420,7 +420,6 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof $ !== 'undefined' && $.fn.select2) {

@@ -20,19 +20,19 @@
                 <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Detalles de la licencia</h3>
                 <dl class="space-y-3">
                     <div>
-                        <dt class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Funcionario</dt>
-                        <dd class="text-sm font-bold {% if licencia.usuario.es_baja_actualmente or licencia.usuario.is_on_leave %}funcionario-baja line-through text-red-600{% else %}text-gray-900{% endif %} mt-1">{{ licencia.usuario.get_full_name }} ({{ licencia.usuario.run }})</dd>
+                        <dt class="text-xs font-black text-gray-400 uppercase tracking-widest">Funcionario</dt>
+                        <dd class="text-sm font-bold text-gray-900 mt-1">{{ licencia.usuario.get_full_name }} ({{ licencia.usuario.run }})</dd>
                     </div>
                     <div>
-                        <dt class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fecha de Inicio</dt>
+                        <dt class="text-xs font-black text-gray-400 uppercase tracking-widest">Fecha de Inicio</dt>
                         <dd class="text-sm font-bold text-gray-900 mt-1">{{ licencia.fecha_inicio|date:"d/m/Y" }}</dd>
                     </div>
                     <div>
-                        <dt class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fecha de Término</dt>
+                        <dt class="text-xs font-black text-gray-400 uppercase tracking-widest">Fecha de Término</dt>
                         <dd class="text-sm font-bold text-gray-900 mt-1">{{ licencia.fecha_termino|date:"d/m/Y" }}</dd>
                     </div>
                     <div>
-                        <dt class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Días</dt>
+                        <dt class="text-xs font-black text-gray-400 uppercase tracking-widest">Días</dt>
                         <dd class="mt-1">
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-blue-50 text-blue-700">
                                 {{ licencia.dias }} días
@@ -41,7 +41,7 @@
                     </div>
                     {% if licencia.created_by %}
                     <div>
-                        <dt class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Registrado Por</dt>
+                        <dt class="text-xs font-black text-gray-400 uppercase tracking-widest">Registrado Por</dt>
                         <dd class="text-sm font-bold text-gray-900 mt-1">{{ licencia.created_by.get_full_name }}</dd>
                     </div>
                     {% endif %}
